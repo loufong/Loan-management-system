@@ -1,0 +1,57 @@
+{
+  "name": "academic-loan-management-system",
+  "version": "1.0.0",
+  "description": "Production-grade backend REST API, database schema, ORM models, migrations, and seed scripts for Academic Loan Management System (LMS)",
+  "main": "dist/src/server.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/src/server.js",
+    "dev": "ts-node src/server.ts",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:validate": "prisma validate",
+    "prisma:seed": "ts-node prisma/seed.ts",
+    "test": "ts-node test/security.test.ts && ts-node test/borrower-product.test.ts && ts-node test/loan-calculator.test.ts && ts-node test/integration-workflow.test.ts && ts-node test/api-endpoints.test.ts && ts-node test/application-approval-workflow.test.ts && ts-node test/loan-disbursement.test.ts && ts-node test/payment-reconciliation.test.ts && ts-node test/overdue-detection.test.ts && ts-node test/kpi-reporting.test.ts",
+    "prisma:studio": "prisma studio",
+    "db:push": "prisma db push",
+    "db:reset": "prisma migrate reset",
+    "frontend:install": "npm --prefix frontend install",
+    "frontend:dev": "npm --prefix frontend run dev",
+    "frontend:build": "npm --prefix frontend run build"
+  },
+  "keywords": [
+    "loan-management-system",
+    "prisma",
+    "postgresql",
+    "express",
+    "fintech",
+    "typescript",
+    "lms"
+  ],
+  "author": "Antigravity Senior Architect",
+  "license": "MIT",
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "node-cron": "^4.6.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^20.14.0",
+    "@types/node-cron": "^3.0.11",
+    "prisma": "^5.22.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  }
+}

@@ -1,0 +1,517 @@
+// Academic Loan Management System (LMS) - Database Schema
+// Database Engine: PostgreSQL | ORM: Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum UserRole {
+  BORROWER
+  LOAN_OFFICER
+  CASHIER
+  MANAGER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum RepaymentFrequency {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
+enum ApplicationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  CANCELLED
+  DISBURSED
+}
+
+enum ReviewRecommendation {
+  RECOMMEND_APPROVAL
+  RECOMMEND_REJECTION
+  NEED_MORE_INFO
+}
+
+enum ApprovalDecision {
+  APPROVED
+  REJECTED
+}
+
+enum LoanStatus {
+  PENDING
+  ACTIVE
+  OVERDUE
+  COMPLETED
+  CANCELLED
+  WRITTEN_OFF
+}
+
+enum DisbursementMethod {
+  CASH
+  BANK_TRANSFER
+  CHEQUE
+}
+
+enum DisbursementStatus {
+  PENDING
+  DISBURSED
+  FAILED
+  CANCELLED
+}
+
+enum ScheduleStatus {
+  UPCOMING
+  UNPAID
+  PARTIAL
+  PAID
+  OVERDUE
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CARD
+  QR_PAYMENT
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  PARTIAL
+  FAILED
+  CANCELLED
+}
+
+enum EntityType {
+  BORROWER
+  APPLICATION
+}
+
+enum DocumentType {
+  ID_CARD
+  INCOME_PROOF
+  EMPLOYMENT_PROOF
+  AGREEMENT
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+// ==========================================
+// 1. USER ENTITY
+// ==========================================
+model User {
+  id           String     @id @default(uuid()) @db.Uuid
+  username     String     @unique @db.VarChar(50)
+  email        String     @unique @db.VarChar(255)
+  passwordHash String     @map("password_hash") @db.VarChar(255)
+  fullName     String     @map("full_name") @db.VarChar(100)
+  phone        String?    @db.VarChar(30)
+  position     String?    @db.VarChar(100)
+  department   String?    @db.VarChar(100)
+  role         UserRole   @default(BORROWER)
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  borrowers              Borrower[]
+  createdApplications    LoanApplication[]          @relation("ApplicationCreatedBy")
+  statusChanges          ApplicationStatusHistory[] @relation("StatusChangedBy")
+  reviews                ApplicationReview[]        @relation("ReviewedBy")
+  approvals              ApplicationApproval[]      @relation("ApprovedBy")
+  disbursements          Disbursement[]             @relation("DisbursedBy")
+  receivedPayments       Payment[]                  @relation("PaymentReceivedBy")
+  uploadedDocuments      LoanDocument[]             @relation("DocumentUploadedBy")
+  notifications          Notification[]
+  auditLogs              AuditLog[]
+  refreshTokens          RefreshToken[]
+
+  @@index([role])
+  @@index([status])
+  @@map("users")
+}
+
+// ==========================================
+// 2. BORROWER ENTITY
+// ==========================================
+model Borrower {
+  id            String     @id @default(uuid()) @db.Uuid
+  borrowerId    String     @unique @map("borrower_id") @db.VarChar(30) // e.g. BOR-2026-0001
+  userId        String?    @map("user_id") @db.Uuid
+  fullName      String     @map("full_name") @db.VarChar(100)
+  gender        String     @db.VarChar(20)
+  dob           DateTime   @db.Date
+  phone         String     @db.VarChar(30)
+  email         String     @db.VarChar(255)
+  address       String     @db.Text
+  occupation    String     @db.VarChar(100)
+  monthlyIncome Decimal    @map("monthly_income") @db.Decimal(15, 2)
+  idNumber      String     @map("id_number") @db.VarChar(50)
+  status        UserStatus @default(ACTIVE)
+  createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  user         User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  applications LoanApplication[]
+  loans        Loan[]
+
+  @@index([userId])
+  @@index([idNumber])
+  @@index([status])
+  @@map("borrowers")
+}
+
+// ==========================================
+// 3. LOAN PRODUCT ENTITY
+// ==========================================
+model LoanProduct {
+  id                 String             @id @default(uuid()) @db.Uuid
+  productName        String             @unique @map("product_name") @db.VarChar(100)
+  minAmount          Decimal            @map("min_amount") @db.Decimal(15, 2)
+  maxAmount          Decimal            @map("max_amount") @db.Decimal(15, 2)
+  interestRate       Decimal            @map("interest_rate") @db.Decimal(5, 2) // annual percentage
+  minTerm            Int                @map("min_term") // in months or payment cycles
+  maxTerm            Int                @map("max_term")
+  repaymentFrequency RepaymentFrequency @default(MONTHLY) @map("repayment_frequency")
+  description        String?            @db.Text
+  status             UserStatus         @default(ACTIVE)
+  createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  applications LoanApplication[]
+  loans        Loan[]
+
+  @@index([status])
+  @@map("loan_products")
+}
+
+// ==========================================
+// 4. LOAN APPLICATION ENTITY
+// ==========================================
+model LoanApplication {
+  id              String            @id @default(uuid()) @db.Uuid
+  applicationNo   String            @unique @map("application_no") @db.VarChar(30) // e.g. APP-2026-0001
+  borrowerId      String            @map("borrower_id") @db.Uuid
+  productId       String            @map("product_id") @db.Uuid
+  requestedAmount Decimal           @map("requested_amount") @db.Decimal(15, 2)
+  requestedTerm   Int               @map("requested_term") // in months
+  purpose         String            @db.Text
+  monthlyIncome   Decimal           @map("monthly_income") @db.Decimal(15, 2)
+  supportingInfo  String?           @map("supporting_info") @db.Text
+  status          ApplicationStatus @default(DRAFT)
+  createdBy       String            @map("created_by") @db.Uuid
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  borrower      Borrower                   @relation(fields: [borrowerId], references: [id], onDelete: Restrict)
+  product       LoanProduct                @relation(fields: [productId], references: [id], onDelete: Restrict)
+  createdByUser User                       @relation("ApplicationCreatedBy", fields: [createdBy], references: [id], onDelete: Restrict)
+  statusHistory ApplicationStatusHistory[]
+  reviews       ApplicationReview[]
+  approvals     ApplicationApproval[]
+  loan          Loan?
+
+  @@index([borrowerId])
+  @@index([productId])
+  @@index([status])
+  @@index([createdBy])
+  @@map("loan_applications")
+}
+
+// ==========================================
+// 5. APPLICATION STATUS HISTORY ENTITY
+// ==========================================
+model ApplicationStatusHistory {
+  id             String             @id @default(uuid()) @db.Uuid
+  applicationId  String             @map("application_id") @db.Uuid
+  previousStatus ApplicationStatus? @map("previous_status")
+  newStatus      ApplicationStatus  @map("new_status")
+  changedBy      String             @map("changed_by") @db.Uuid
+  note           String?            @db.Text
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // Relations
+  application   LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  changedByUser User            @relation("StatusChangedBy", fields: [changedBy], references: [id], onDelete: Restrict)
+
+  @@index([applicationId])
+  @@index([changedBy])
+  @@map("application_status_histories")
+}
+
+// ==========================================
+// 6. APPLICATION REVIEW ENTITY
+// ==========================================
+model ApplicationReview {
+  id             String               @id @default(uuid()) @db.Uuid
+  applicationId  String               @map("application_id") @db.Uuid
+  reviewerId     String               @map("reviewer_id") @db.Uuid
+  recommendation ReviewRecommendation
+  notes          String               @db.Text
+  createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // Relations
+  application LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  reviewer    User            @relation("ReviewedBy", fields: [reviewerId], references: [id], onDelete: Restrict)
+
+  @@index([applicationId])
+  @@index([reviewerId])
+  @@map("application_reviews")
+}
+
+// ==========================================
+// 7. APPLICATION APPROVAL ENTITY
+// ==========================================
+model ApplicationApproval {
+  id                   String           @id @default(uuid()) @db.Uuid
+  applicationId        String           @map("application_id") @db.Uuid
+  approverId           String           @map("approver_id") @db.Uuid
+  decision             ApprovalDecision
+  approvedAmount       Decimal?         @map("approved_amount") @db.Decimal(15, 2)
+  approvedTerm         Int?             @map("approved_term")
+  approvedInterestRate Decimal?         @map("approved_interest_rate") @db.Decimal(5, 2)
+  rejectionReason      String?          @map("rejection_reason") @db.Text
+  decisionDate         DateTime         @default(now()) @map("decision_date") @db.Timestamptz(6)
+  createdAt            DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // Relations
+  application LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  approver    User            @relation("ApprovedBy", fields: [approverId], references: [id], onDelete: Restrict)
+
+  @@index([applicationId])
+  @@index([approverId])
+  @@index([decision])
+  @@map("application_approvals")
+}
+
+// ==========================================
+// 8. LOAN ENTITY
+// ==========================================
+model Loan {
+  id                 String             @id @default(uuid()) @db.Uuid
+  loanNumber         String             @unique @map("loan_number") @db.VarChar(30) // e.g. LN-2026-0001
+  applicationId      String             @unique @map("application_id") @db.Uuid
+  borrowerId         String             @map("borrower_id") @db.Uuid
+  productId          String             @map("product_id") @db.Uuid
+  principalAmount    Decimal            @map("principal_amount") @db.Decimal(15, 2)
+  interestRate       Decimal            @map("interest_rate") @db.Decimal(5, 2) // annual percentage
+  termMonths         Int                @map("term_months")
+  repaymentFrequency RepaymentFrequency @map("repayment_frequency")
+  totalInterest      Decimal            @map("total_interest") @db.Decimal(15, 2)
+  totalRepayment     Decimal            @map("total_repayment") @db.Decimal(15, 2)
+  totalPaid          Decimal            @default(0.00) @map("total_paid") @db.Decimal(15, 2)
+  outstandingBalance Decimal            @map("outstanding_balance") @db.Decimal(15, 2)
+  startDate          DateTime           @map("start_date") @db.Date
+  endDate            DateTime           @map("end_date") @db.Date
+  status             LoanStatus         @default(PENDING)
+  createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  application        LoanApplication     @relation(fields: [applicationId], references: [id], onDelete: Restrict)
+  borrower           Borrower            @relation(fields: [borrowerId], references: [id], onDelete: Restrict)
+  product            LoanProduct         @relation(fields: [productId], references: [id], onDelete: Restrict)
+  disbursements      Disbursement[]
+  repaymentSchedules RepaymentSchedule[]
+  payments           Payment[]
+
+  @@index([borrowerId])
+  @@index([productId])
+  @@index([status])
+  @@index([startDate, endDate])
+  @@map("loans")
+}
+
+// ==========================================
+// 9. DISBURSEMENT ENTITY
+// ==========================================
+model Disbursement {
+  id               String             @id @default(uuid()) @db.Uuid
+  loanId           String             @map("loan_id") @db.Uuid
+  disbursementDate DateTime           @default(now()) @map("disbursement_date") @db.Timestamptz(6)
+  amount           Decimal            @db.Decimal(15, 2)
+  paymentMethod    DisbursementMethod @map("payment_method")
+  referenceNo      String             @map("reference_no") @db.VarChar(100)
+  disbursedBy      String             @map("disbursed_by") @db.Uuid
+  status           DisbursementStatus @default(PENDING)
+  notes            String?            @db.Text
+  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // Relations
+  loan            Loan @relation(fields: [loanId], references: [id], onDelete: Restrict)
+  disbursedByUser User @relation("DisbursedBy", fields: [disbursedBy], references: [id], onDelete: Restrict)
+
+  @@index([loanId])
+  @@index([disbursedBy])
+  @@index([status])
+  @@index([referenceNo])
+  @@map("disbursements")
+}
+
+// ==========================================
+// 10. REPAYMENT SCHEDULE ENTITY
+// ==========================================
+model RepaymentSchedule {
+  id              String         @id @default(uuid()) @db.Uuid
+  loanId          String         @map("loan_id") @db.Uuid
+  installmentNo   Int            @map("installment_no")
+  dueDate         DateTime       @map("due_date") @db.Date
+  principalAmount Decimal        @map("principal_amount") @db.Decimal(15, 2)
+  interestAmount  Decimal        @map("interest_amount") @db.Decimal(15, 2)
+  totalDue        Decimal        @map("total_due") @db.Decimal(15, 2)
+  amountPaid      Decimal        @default(0.00) @map("amount_paid") @db.Decimal(15, 2)
+  remainingAmount Decimal        @map("remaining_amount") @db.Decimal(15, 2)
+  status          ScheduleStatus @default(UPCOMING)
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  loan     Loan      @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  payments Payment[]
+
+  @@unique([loanId, installmentNo])
+  @@index([loanId])
+  @@index([dueDate])
+  @@index([status])
+  @@map("repayment_schedules")
+}
+
+// ==========================================
+// 11. PAYMENT ENTITY
+// ==========================================
+model Payment {
+  id            String        @id @default(uuid()) @db.Uuid
+  receiptNo     String        @unique @map("receipt_no") @db.VarChar(30) // e.g. REC-2026-0001
+  loanId        String        @map("loan_id") @db.Uuid
+  installmentId String?       @map("installment_id") @db.Uuid
+  paymentDate   DateTime      @default(now()) @map("payment_date") @db.Timestamptz(6)
+  amount        Decimal       @db.Decimal(15, 2)
+  paymentMethod PaymentMethod @map("payment_method")
+  referenceNo   String        @map("reference_no") @db.VarChar(100)
+  receivedBy    String        @map("received_by") @db.Uuid
+  status        PaymentStatus @default(PAID)
+  notes         String?       @db.Text
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // Relations
+  loan           Loan               @relation(fields: [loanId], references: [id], onDelete: Restrict)
+  installment    RepaymentSchedule? @relation(fields: [installmentId], references: [id], onDelete: SetNull)
+  receivedByUser User               @relation("PaymentReceivedBy", fields: [receivedBy], references: [id], onDelete: Restrict)
+
+  @@index([loanId])
+  @@index([installmentId])
+  @@index([receivedBy])
+  @@index([paymentDate])
+  @@index([status])
+  @@map("payments")
+}
+
+// ==========================================
+// 12. LOAN DOCUMENT ENTITY
+// ==========================================
+model LoanDocument {
+  id                 String             @id @default(uuid()) @db.Uuid
+  entityType         EntityType         @map("entity_type")
+  entityId           String             @map("entity_id") @db.Uuid
+  documentType       DocumentType       @map("document_type")
+  fileName           String             @map("file_name") @db.VarChar(255)
+  fileUrl            String             @map("file_url") @db.VarChar(500)
+  verificationStatus VerificationStatus @default(PENDING) @map("verification_status")
+  uploadedBy         String             @map("uploaded_by") @db.Uuid
+  uploadedAt         DateTime           @default(now()) @map("uploaded_at") @db.Timestamptz(6)
+  updatedAt          DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  uploadedByUser User @relation("DocumentUploadedBy", fields: [uploadedBy], references: [id], onDelete: Restrict)
+
+  @@index([entityType, entityId])
+  @@index([uploadedBy])
+  @@index([verificationStatus])
+  @@map("loan_documents")
+}
+
+// ==========================================
+// 13. NOTIFICATION ENTITY
+// ==========================================
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  title     String   @db.VarChar(200)
+  message   String   @db.Text
+  isRead    Boolean  @default(false) @map("is_read")
+  type      String   @db.VarChar(50) // e.g. INFO, WARNING, APPROVAL, REPAYMENT_DUE
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+// ==========================================
+// 14. AUDIT LOG ENTITY
+// ==========================================
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String?  @map("user_id") @db.Uuid
+  action     String   @db.VarChar(100) // e.g. CREATE, UPDATE, APPROVE, DISBURSE, CANCEL
+  entityName String   @map("entity_name") @db.VarChar(100) // e.g. LoanApplication, Payment
+  entityId   String   @map("entity_id") @db.VarChar(100)
+  details    Json?    @db.JsonB
+  ipAddress  String?  @map("ip_address") @db.VarChar(50)
+  timestamp  DateTime @default(now()) @db.Timestamptz(6)
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([entityName, entityId])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
+
+// ==========================================
+// 15. REFRESH TOKEN ENTITY
+// ==========================================
+model RefreshToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  tokenHash String   @unique @map("token_hash") @db.VarChar(255)
+  userId    String   @map("user_id") @db.Uuid
+  isRevoked Boolean  @default(false) @map("is_revoked")
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}

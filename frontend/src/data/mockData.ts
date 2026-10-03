@@ -8,6 +8,9 @@ import {
   PaymentReceipt,
   NotificationItem,
   SystemActivityEvent,
+  ManagedUser,
+  RoleDefinition,
+  PermissionMatrixRow,
 } from '../types';
 
 
@@ -765,5 +768,319 @@ export const MOCK_AUDIT_LOGS: SystemActivityEvent[] = [
       applicant: 'Dara Pich'
     }
   },
+];
+
+export const CORE_ROLE_DEFINITIONS: Record<'MANAGER' | 'CASHIER' | 'BORROWER', RoleDefinition> = {
+  MANAGER: {
+    key: 'MANAGER',
+    label: 'Admin / Manager',
+    badge: 'Executive Admin',
+    description:
+      'Full administrative oversight, credit risk underwriting, committee approvals, loan product limits, financial reports, user role administration, and system governance.',
+    color: 'bg-indigo-600 text-white',
+    khmerLabel: 'អ្នកគ្រប់គ្រង / អភិបាលប្រព័ន្ធ',
+    responsibilities: [
+      'Create and manage staff & borrower user accounts',
+      'Assign and modify user roles and access privileges',
+      'Review and underwrite loan applications & DTI scoring',
+      'Final committee approval or rejection of loan proposals',
+      'Configure loan products, interest rate bounds & terms',
+      'Access portfolio aging reports, BI analytics & CSV exports',
+      'Inspect immutable system audit trail and compliance logs'
+    ]
+  },
+  CASHIER: {
+    key: 'CASHIER',
+    label: 'Desk Cashier',
+    badge: 'Cashier & POS',
+    description:
+      'Front-desk treasury operations, executing loan disbursements to approved borrowers, processing multi-installment repayment waterfalls, and printing digital receipts.',
+    color: 'bg-emerald-600 text-white',
+    khmerLabel: 'បេឡាធិការ / អ្នកទទួលប្រាក់',
+    responsibilities: [
+      'Execute fund disbursements for approved loan contracts',
+      'Collect loan repayments across Cash, ABA QR, and Bank Transfer',
+      'Automatic waterfall allocation (Overdue fees -> Interest -> Principal)',
+      'Issue and print official tamper-proof payment receipts (REC-YYYY-XXXX)',
+      'Monitor overdue delinquencies and trigger late payment alerts',
+      'Access daily cash drawer balance & transaction register'
+    ]
+  },
+  BORROWER: {
+    key: 'BORROWER',
+    label: 'Borrower',
+    badge: 'Self-Service Portal',
+    description:
+      'Borrower self-service portal for students and faculty to apply for academic loans, view active loan balances, track repayment schedules, and download receipts.',
+    color: 'bg-amber-600 text-white',
+    khmerLabel: 'អ្នកខ្ចីប្រាក់ / និស្សិត',
+    responsibilities: [
+      'Submit new online loan applications with document uploads',
+      'View personal 360° borrower profile and credit classification',
+      'Track real-time outstanding principal and accrued interest',
+      'Review complete installment amortization schedule & due dates',
+      'View and download digital receipts for historical payments',
+      'Receive automated notifications for upcoming and overdue dues'
+    ]
+  }
+};
+
+export const MOCK_MANAGED_USERS: ManagedUser[] = [
+  {
+    id: 'USR-001',
+    username: 'admin',
+    name: 'Dr. Alexander Wright',
+    email: 'admin@loansystem.edu',
+    role: 'MANAGER',
+    title: 'Chief Information Officer & Systems Admin',
+    department: 'IT & Systems Governance',
+    status: 'ACTIVE',
+    phone: '+855 12 900 111',
+    lastLogin: '2026-10-03 08:45',
+    avatar: 'AW',
+    createdAt: '2025-01-15'
+  },
+  {
+    id: 'USR-002',
+    username: 'm.vance',
+    name: 'Marcus Vance, MBA',
+    email: 'marcus.vance@loansystem.edu',
+    role: 'MANAGER',
+    title: 'Head of Financial Aid & Credit Committee',
+    department: 'Executive Credit Committee',
+    status: 'ACTIVE',
+    phone: '+855 12 888 222',
+    lastLogin: '2026-10-03 09:12',
+    avatar: 'MV',
+    createdAt: '2025-02-01'
+  },
+  {
+    id: 'USR-003',
+    username: 'e.ross',
+    name: 'Emily Ross',
+    email: 'emily.ross@loansystem.edu',
+    role: 'CASHIER',
+    title: 'University Bursar & Lead Cashier',
+    department: 'Treasury & Disbursement',
+    status: 'ACTIVE',
+    phone: '+855 11 345 678',
+    lastLogin: '2026-10-03 09:30',
+    avatar: 'ER',
+    createdAt: '2025-03-10'
+  },
+  {
+    id: 'USR-004',
+    username: 'r.henderson',
+    name: 'Robert Henderson',
+    email: 'robert.henderson@loansystem.edu',
+    role: 'CASHIER',
+    title: 'Assistant Cashier & Counter Teller',
+    department: 'Treasury & Disbursement',
+    status: 'ACTIVE',
+    phone: '+855 16 555 789',
+    lastLogin: '2026-10-02 16:40',
+    avatar: 'RH',
+    createdAt: '2025-06-20'
+  },
+  {
+    id: 'USR-005',
+    username: 's.chan',
+    name: 'Sokha Chan',
+    email: 'sokha.chan@apex-borrower.kh',
+    role: 'BORROWER',
+    title: 'Senior Logistics Specialist',
+    department: 'Borrower Self-Service',
+    status: 'ACTIVE',
+    phone: '+855 12 345 678',
+    lastLogin: '2026-10-01 11:22',
+    avatar: 'SC',
+    borrowerId: 'BOR-2026-0001',
+    createdAt: '2026-01-10'
+  },
+  {
+    id: 'USR-006',
+    username: 'j.doe',
+    name: 'Johnathan Doe',
+    email: 'johnathan.doe@student.edu',
+    role: 'BORROWER',
+    title: 'Graduate Research Fellow',
+    department: 'Borrower Self-Service',
+    status: 'ACTIVE',
+    phone: '+855 98 765 432',
+    lastLogin: '2026-09-28 14:15',
+    avatar: 'JD',
+    borrowerId: 'BOR-2026-0002',
+    createdAt: '2026-02-05'
+  },
+  {
+    id: 'USR-007',
+    username: 'm.garcia',
+    name: 'Maria Garcia',
+    email: 'maria.garcia@student.edu',
+    role: 'BORROWER',
+    title: 'Undergraduate Senior in Computer Science',
+    department: 'Borrower Self-Service',
+    status: 'ACTIVE',
+    phone: '+855 87 234 567',
+    lastLogin: '2026-09-15 10:05',
+    avatar: 'MG',
+    borrowerId: 'BOR-2026-0003',
+    createdAt: '2026-03-12'
+  },
+  {
+    id: 'USR-008',
+    username: 't.visal',
+    name: 'Visal Thon',
+    email: 'visal.thon@student.edu',
+    role: 'BORROWER',
+    title: 'Engineering Masters Candidate',
+    department: 'Borrower Self-Service',
+    status: 'INACTIVE',
+    phone: '+855 70 888 999',
+    lastLogin: '2026-08-11 17:00',
+    avatar: 'VT',
+    borrowerId: 'BOR-2026-0004',
+    createdAt: '2026-04-18'
+  }
+];
+
+export const PERMISSION_MATRIX_DATA: PermissionMatrixRow[] = [
+  // User & System Governance
+  {
+    module: 'User & Role Admin',
+    permission: 'Create, edit & deactivate user accounts',
+    description: 'Manage staff and borrower credentials, passwords, and statuses',
+    manager: true,
+    cashier: false,
+    borrower: false
+  },
+  {
+    module: 'User & Role Admin',
+    permission: 'Assign & switch user roles (RBAC)',
+    description: 'Assign Admin/Manager, Cashier, or Borrower privileges',
+    manager: true,
+    cashier: false,
+    borrower: false
+  },
+  {
+    module: 'System Governance',
+    permission: 'View immutable system audit logs',
+    description: 'Inspect security events, role switches, and financial audit trails',
+    manager: true,
+    cashier: false,
+    borrower: false
+  },
+  {
+    module: 'System Governance',
+    permission: 'Configure system settings & loan products',
+    description: 'Set interest rate ranges, loan term boundaries, and business rules',
+    manager: true,
+    cashier: false,
+    borrower: false
+  },
+
+  // Borrower Management
+  {
+    module: 'Borrower Management',
+    permission: 'View all borrowers directory (360° Dossiers)',
+    description: 'Access complete profiles, national IDs, and financial statements',
+    manager: true,
+    cashier: false,
+    borrower: false
+  },
+  {
+    module: 'Borrower Management',
+    permission: 'View own borrower profile & documents',
+    description: 'Access personal credit info and submitted documentation',
+    manager: true,
+    cashier: false,
+    borrower: true
+  },
+
+  // Loan Applications & Credit Underwriting
+  {
+    module: 'Loan Origination',
+    permission: 'Submit new loan application',
+    description: 'Initiate loan proposal with product selection and proof of income',
+    manager: true,
+    cashier: false,
+    borrower: true
+  },
+  {
+    module: 'Credit Underwriting',
+    permission: 'Perform DTI assessment & risk scoring',
+    description: 'Underwrite applications and evaluate debt-to-income solvency',
+    manager: true,
+    cashier: false,
+    borrower: false
+  },
+  {
+    module: 'Committee Approvals',
+    permission: 'Final Executive Approval / Rejection',
+    description: 'Authorize loan contract generation or reject applications',
+    manager: true,
+    cashier: false,
+    borrower: false
+  },
+
+  // Servicing & Cashier Operations
+  {
+    module: 'Treasury & POS',
+    permission: 'Disburse approved loan capital',
+    description: 'Release loan funds to borrower via Cash, Bank Transfer, or Check',
+    manager: true,
+    cashier: true,
+    borrower: false
+  },
+  {
+    module: 'Treasury & POS',
+    permission: 'Collect payments & waterfall reconciliation',
+    description: 'Accept repayments and allocate to overdue fees, interest, and principal',
+    manager: true,
+    cashier: true,
+    borrower: false
+  },
+  {
+    module: 'Treasury & POS',
+    permission: 'Issue official digital receipts (REC-YYYY-XXXX)',
+    description: 'Generate stamped tamper-proof repayment receipts',
+    manager: true,
+    cashier: true,
+    borrower: false
+  },
+  {
+    module: 'Loan Servicing',
+    permission: 'View full core banking loans ledger',
+    description: 'Monitor active, pending, overdue, and closed loans across the institution',
+    manager: true,
+    cashier: true,
+    borrower: false
+  },
+  {
+    module: 'Loan Servicing',
+    permission: 'View own active loans & payment schedules',
+    description: 'Track own repayment calendar, outstanding balance, and receipts',
+    manager: true,
+    cashier: false,
+    borrower: true
+  },
+
+  // Delinquency & Reports
+  {
+    module: 'Overdue Automation',
+    permission: 'Trigger automated overdue & late penalty scan',
+    description: 'Scan past-due installments and accrue 0.1%/day penalties',
+    manager: true,
+    cashier: true,
+    borrower: false
+  },
+  {
+    module: 'BI & Reports',
+    permission: 'Generate portfolio KPI reports & CSV export',
+    description: 'Export regulatory audit ledgers and delinquency aging buckets',
+    manager: true,
+    cashier: false,
+    borrower: false
+  }
 ];
 

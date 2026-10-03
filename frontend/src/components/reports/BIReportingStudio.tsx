@@ -61,12 +61,12 @@ export const BIReportingStudio: React.FC<BIReportingStudioProps> = ({
 }) => {
   // Top Control Bar State
   const [reportType, setReportType] = useState<
-    | 'Active Portfolio Report'
-    | 'Disbursement Summary'
-    | 'Daily Cashier Collections'
-    | 'Overdue & NPL Aging'
-    | 'Loan Application Pipeline'
-  >('Active Portfolio Report');
+    | 'Active Loan Portfolio Report'
+    | 'Loan Application Pipeline Report'
+    | 'Disbursed Loans Report'
+    | 'Overdue & NPL Aging Report'
+    | 'Daily Cashier Collections Report'
+  >('Active Loan Portfolio Report');
 
   const [datePreset, setDatePreset] = useState<'Today' | 'This Week' | 'This Month' | 'Year to Date'>('This Month');
   const [reportCurrency, setReportCurrency] = useState<Currency>(initialCurrency);
@@ -251,11 +251,11 @@ export const BIReportingStudio: React.FC<BIReportingStudioProps> = ({
               onChange={(e) => setReportType(e.target.value as any)}
               className="px-3 py-1.5 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
             >
-              <option value="Active Portfolio Report">Active Portfolio Report</option>
-              <option value="Disbursement Summary">Disbursement Summary</option>
-              <option value="Daily Cashier Collections">Daily Cashier Collections</option>
-              <option value="Overdue & NPL Aging">Overdue &amp; NPL Aging</option>
-              <option value="Loan Application Pipeline">Loan Application Pipeline</option>
+              <option value="Active Loan Portfolio Report">1. Active Loan Portfolio Report</option>
+              <option value="Loan Application Pipeline Report">2. Loan Application Pipeline Report</option>
+              <option value="Disbursed Loans Report">3. Disbursed Loans Report</option>
+              <option value="Overdue & NPL Aging Report">4. Overdue &amp; NPL Aging Report</option>
+              <option value="Daily Cashier Collections Report">5. Daily Cashier Collections Report</option>
             </select>
           </div>
 

@@ -11,7 +11,9 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
-  ShieldAlert
+  ShieldAlert,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 export interface OverdueWatchlistProps {
@@ -32,6 +34,7 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
   >('ALL');
   const [auditRunning, setAuditRunning] = useState(false);
   const [auditToast, setAuditToast] = useState<string | null>(null);
+  const [revealedPhones, setRevealedPhones] = useState<Record<string, boolean>>({});
 
   // Mock delinquent records based on active loans and overdue statuses
   const [delinquentRecords, setDelinquentRecords] = useState([
@@ -39,6 +42,7 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
       id: 'OD-1',
       loanId: 'LN-2026-0012',
       loanNumber: 'LN-2026-0012',
+      productName: 'Emergency Loan',
       borrowerName: 'Dara Pich',
       borrowerPhone: '+855 92 612 045',
       installmentNo: 4,
@@ -52,6 +56,7 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
       id: 'OD-2',
       loanId: 'LN-2026-0004',
       loanNumber: 'LN-2026-0004',
+      productName: 'SME Working Capital',
       borrowerName: 'Sokha Chea',
       borrowerPhone: '+855 12 889 102',
       installmentNo: 3,
@@ -65,6 +70,7 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
       id: 'OD-3',
       loanId: 'LN-2026-0089',
       loanNumber: 'LN-2026-0089',
+      productName: 'Agricultural Equipment Loan',
       borrowerName: 'Vanna Rath',
       borrowerPhone: '+855 16 772 319',
       installmentNo: 2,
@@ -78,6 +84,7 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
       id: 'OD-4',
       loanId: 'LN-2026-0008',
       loanNumber: 'LN-2026-0008',
+      productName: 'Commercial Vehicle Loan',
       borrowerName: 'Dara Chan',
       borrowerPhone: '+855 89 221 440',
       installmentNo: 5,
@@ -97,6 +104,7 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
   const delinquentLoansCount = delinquentRecords.length;
   const par30Count = delinquentRecords.filter((r) => r.daysOverdue >= 30).length;
   const par30Ratio = ((par30Count / Math.max(1, loans.length)) * 100).toFixed(1);
+  const isParWarning = Number(par30Ratio) >= 3.0;
 
   // Filter records
   const filteredRecords = delinquentRecords.filter((rec) => {
@@ -110,7 +118,7 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
     setAuditRunning(true);
     setTimeout(() => {
       setAuditRunning(false);
-      setAuditToast('Daily Overdue Audit completed: 4 accounts audited, accrued late fees verified.');
+      setAuditToast('Daily Overdue Audit completed: 4 accounts audited, accrued late fees verified against NBC rates.');
       setTimeout(() => setAuditToast(null), 4000);
     }, 1200);
   };
@@ -119,8 +127,20 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
     alert(`Automated SMS & push notification reminder dispatched to ${name} (${phone}).`);
   };
 
+  const togglePhoneReveal = (id: string) => {
+    setRevealedPhones((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const maskPhone = (phone: string) => {
+    const parts = phone.split(' ');
+    if (parts.length >= 4) {
+      return `${parts[0]} ${parts[1]} *** **${parts[3].slice(-2)}`;
+    }
+    return phone.slice(0, 7) + '****' + phone.slice(-2);
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* 1. Top Header with Run Daily Overdue Audit Button */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -140,7 +160,7 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
         <button
           onClick={handleRunAudit}
           disabled={auditRunning}
-          className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 active:bg-slate-950 rounded-xl shadow-xs transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 active:bg-slate-950 rounded-xl shadow-xs transition-colors"
         >
           {auditRunning ? (
             <>
@@ -158,7 +178,7 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
 
       {/* Live Demonstration Toast */}
       {auditToast && (
-        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between animate-in fade-in duration-150">
+        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between animate-in fade-in duration-150 shadow-xs">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span className="font-semibold">{auditToast}</span>
@@ -166,64 +186,80 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
         </div>
       )}
 
-      {/* 2. Metric Header: 3 Summary Cards */}
+      {/* 2. Top Metrics Bar (3 Cards) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.03)] rounded-xl p-5 space-y-1">
+        {/* Card 1: Total Overdue Balance */}
+        <div className="bg-white border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.03)] rounded-2xl p-5 space-y-1">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
-            Total Overdue Amount
+            Total Overdue Balance
           </span>
           <MoneyText
             amount={totalOverdueAmount}
             currency={currency}
-            className="text-2xl font-black text-rose-600 block"
+            className="text-2xl font-black text-rose-600 block font-mono"
           />
-          <span className="text-[11px] text-slate-400">Past due installments &amp; accrued late fees</span>
+          <span className="text-[11px] text-slate-400">Total past-due principal across delinquent accounts</span>
         </div>
 
-        <div className="bg-white border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.03)] rounded-xl p-5 space-y-1">
+        {/* Card 2: Total Overdue Accounts */}
+        <div className="bg-white border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.03)] rounded-2xl p-5 space-y-1">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
-            Delinquent Loans Count
+            Total Overdue Accounts
           </span>
           <span className="text-2xl font-mono tabular-nums font-black text-slate-900 block">
             {delinquentLoansCount} accounts
           </span>
-          <span className="text-[11px] text-slate-400">Accounts requiring immediate outreach</span>
+          <span className="text-[11px] text-slate-400">Borrower accounts requiring active loan recovery</span>
         </div>
 
-        <div className="bg-white border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.03)] rounded-xl p-5 space-y-1">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
-            PAR 30+ Ratio %
-          </span>
+        {/* Card 3: Portfolio at Risk (PAR 30+) */}
+        <div className="bg-white border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.03)] rounded-2xl p-5 space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+              Portfolio at Risk (PAR 30+)
+            </span>
+            {isParWarning ? (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
+                Breach Warning
+              </span>
+            ) : (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                Within Cap
+              </span>
+            )}
+          </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-mono tabular-nums font-black text-amber-600">
+            <span className={`text-2xl font-mono tabular-nums font-black ${isParWarning ? 'text-rose-600' : 'text-amber-600'}`}>
               {par30Ratio}%
             </span>
             <span className="text-xs font-semibold text-slate-500 font-mono">
-              ({par30Count} severe NPL)
+              ({par30Count} severe NPL accounts)
             </span>
           </div>
-          <span className="text-[11px] text-slate-400">&lt; 3.0% institutional tolerance</span>
+          <span className="text-[11px] text-slate-400">
+            NBC Regulatory Cap: <strong className="text-slate-700 font-mono">&lt; 3.0%</strong>
+          </span>
         </div>
       </div>
 
-      {/* 3. Filter Toolbar */}
-      <div className="bg-white border border-slate-200/80 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.03)] p-3">
-        <div className="flex items-center gap-1.5 overflow-x-auto">
+      {/* 3. Severity Filter Tabs */}
+      <div className="bg-white border border-slate-200/80 rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.03)] p-3">
+        <div className="flex items-center gap-2 overflow-x-auto">
           {[
-            { key: 'ALL', label: 'All Overdue' },
-            { key: 'EARLY', label: '1-15 Days (Early)' },
-            { key: 'MODERATE', label: '16-30 Days (Moderate)' },
-            { key: 'SEVERE', label: '30+ Days (Severe/NPL)' },
+            { key: 'ALL', label: 'All Delinquent' },
+            { key: 'EARLY', label: '1–15 Days (Early Watch)' },
+            { key: 'MODERATE', label: '16–30 Days (Moderate Risk)' },
+            { key: 'SEVERE', label: '30+ Days (Severe / NPL)' },
           ].map((tab) => {
             const active = severityFilter === tab.key;
             return (
               <button
                 key={tab.key}
                 onClick={() => setSeverityFilter(tab.key as any)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap ${
+                className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all whitespace-nowrap ${
                   active
-                    ? 'bg-slate-900 text-white font-semibold shadow-xs'
-                    : 'bg-slate-100/80 text-slate-600 hover:bg-slate-200/70 hover:text-slate-900'
+                    ? 'bg-slate-900 text-white shadow-xs'
+                    : 'bg-slate-100/80 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
                 }`}
               >
                 {tab.label}
@@ -233,21 +269,21 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
         </div>
       </div>
 
-      {/* 4. Table */}
-      <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-xs">
+      {/* 4. Delinquency Data Table */}
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50/75 text-[11px] font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-200">
                 <th className="py-3.5 px-4">Borrower Name &amp; Phone</th>
-                <th className="py-3.5 px-4">Loan #</th>
+                <th className="py-3.5 px-4">Loan # &amp; Product</th>
                 <th className="py-3.5 px-4 text-center">Overdue Inst #</th>
-                <th className="py-3.5 px-4">Due Date</th>
+                <th className="py-3.5 px-4">Original Due Date</th>
                 <th className="py-3.5 px-4 text-center">Days Overdue</th>
                 <th className="py-3.5 px-4 text-right">Overdue Amount</th>
                 <th className="py-3.5 px-4 text-right">Simulated Late Fee</th>
                 <th className="py-3.5 px-4">Last Contacted</th>
-                <th className="py-3.5 px-4 text-right">Actions</th>
+                <th className="py-3.5 px-4 text-right">Direct Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -259,26 +295,39 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
                 </tr>
               ) : (
                 filteredRecords.map((r) => {
-                  const isSevere = r.daysOverdue >= 30;
+                  const isRevealed = revealedPhones[r.id];
                   return (
                     <tr
                       key={r.id}
                       className="border-b border-slate-100 hover:bg-slate-50/60 transition-colors text-sm text-slate-700"
                     >
-                      {/* Borrower Name & Phone */}
+                      {/* Borrower Name & Phone (with reveal toggle) */}
                       <td className="py-3.5 px-4">
                         <div className="flex flex-col">
                           <span className="font-semibold text-slate-900">{r.borrowerName}</span>
-                          <span className="text-[11px] font-mono text-slate-400 flex items-center gap-1">
+                          <div className="flex items-center gap-1.5 text-[11px] font-mono text-slate-500 mt-0.5">
                             <Phone className="w-3 h-3 text-slate-400" />
-                            {r.borrowerPhone}
-                          </span>
+                            <span>{isRevealed ? r.borrowerPhone : maskPhone(r.borrowerPhone)}</span>
+                            <button
+                              type="button"
+                              onClick={() => togglePhoneReveal(r.id)}
+                              className="text-slate-400 hover:text-slate-600 transition-colors ml-0.5"
+                              title={isRevealed ? 'Hide phone' : 'Reveal phone'}
+                            >
+                              {isRevealed ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                            </button>
+                          </div>
                         </div>
                       </td>
 
-                      {/* Loan # */}
-                      <td className="py-3.5 px-4 font-mono tabular-nums font-semibold text-indigo-600">
-                        {r.loanNumber}
+                      {/* Loan # & Product */}
+                      <td className="py-3.5 px-4">
+                        <span className="font-mono tabular-nums font-bold text-indigo-600 block">
+                          {r.loanNumber}
+                        </span>
+                        <span className="text-[11px] text-slate-400 block truncate">
+                          {r.productName}
+                        </span>
                       </td>
 
                       {/* Overdue Installment # */}
@@ -286,18 +335,20 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
                         Inst #{r.installmentNo}
                       </td>
 
-                      {/* Due Date */}
+                      {/* Original Due Date */}
                       <td className="py-3.5 px-4 font-mono tabular-nums text-xs text-slate-600">
                         {r.dueDate}
                       </td>
 
-                      {/* Days Overdue (High-contrast Red/Amber badge) */}
+                      {/* Days Overdue (Color-coded badge: Yellow 1-15d, Orange 16-30d, Red 30+d) */}
                       <td className="py-3.5 px-4 text-center">
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full font-mono tabular-nums text-xs font-bold ${
-                            isSevere
-                              ? 'bg-rose-50 text-rose-700 border border-rose-200/60'
-                              : 'bg-amber-50 text-amber-700 border border-amber-200/60'
+                            r.daysOverdue > 30
+                              ? 'bg-rose-50 text-rose-700 border border-rose-300'
+                              : r.daysOverdue > 15
+                              ? 'bg-orange-50 text-orange-700 border border-orange-300'
+                              : 'bg-amber-50 text-amber-800 border border-amber-300'
                           }`}
                         >
                           {r.daysOverdue} Days Late
@@ -309,7 +360,7 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
                         <MoneyText
                           amount={r.overdueAmountUSD}
                           currency={currency}
-                          className="font-bold text-rose-600"
+                          className="font-bold text-rose-600 font-mono"
                         />
                       </td>
 
@@ -327,23 +378,23 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
                         {r.lastContactedDate}
                       </td>
 
-                      {/* Actions */}
+                      {/* Direct Actions: Send Reminder, Collect Payment */}
                       <td className="py-3.5 px-4 text-right">
-                        <div className="inline-flex items-center gap-1.5">
+                        <div className="inline-flex items-center gap-1.5 justify-end">
                           <button
                             onClick={() => handleSendReminder(r.borrowerName, r.borrowerPhone)}
-                            title="Send SMS / Voice Reminder"
+                            title="Send Reminder"
                             className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
                           >
                             <Send className="w-3 h-3" />
-                            <span>Reminder</span>
+                            <span>Send Reminder</span>
                           </button>
                           <button
                             onClick={() => onRecordPaymentForLoan?.(r.loanId)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+                            className="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors"
                           >
                             <DollarSign className="w-3 h-3" />
-                            <span>Collect</span>
+                            <span>Collect Payment</span>
                           </button>
                         </div>
                       </td>

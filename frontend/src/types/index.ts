@@ -246,3 +246,38 @@ export interface SystemActivityEvent {
   details?: Record<string, any>;
 }
 
+export interface ManagedUser {
+  id: string;
+  username: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  title: string;
+  department: string;
+  status: 'ACTIVE' | 'INACTIVE';
+  phone?: string;
+  lastLogin?: string;
+  avatar?: string;
+  borrowerId?: string;
+  createdAt?: string;
+}
+
+export interface RoleDefinition {
+  key: UserRole;
+  label: string;
+  badge: string;
+  description: string;
+  color: string;
+  khmerLabel: string;
+  responsibilities: string[];
+}
+
+export interface PermissionMatrixRow {
+  module: string;
+  permission: string;
+  description: string;
+  manager: boolean;
+  cashier: boolean;
+  borrower: boolean;
+}
+

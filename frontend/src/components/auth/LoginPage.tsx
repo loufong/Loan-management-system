@@ -1,133 +1,68 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ShieldCheck,
-  Lock,
-  Mail,
   Eye,
   EyeOff,
   CheckCircle2,
   AlertCircle,
-  TrendingUp,
-  Landmark,
-  Shield,
   Loader2,
-  Globe,
-  Sparkles,
-  X,
-  ChevronRight,
-  Zap,
-  Layers,
-  Award,
-  CreditCard,
-  Building2,
   ArrowRight,
+  X
 } from 'lucide-react';
 import { UserRole, UserProfile } from '../../types';
 import { USER_PROFILES } from '../../data/mockData';
 import { api } from '../../services/api';
+import { cn } from '../../lib/utils';
 
 interface LoginPageProps {
   onLoginSuccess: (user: UserProfile, token: string) => void;
   initialRole?: UserRole;
 }
 
-type Language = 'EN' | 'KH';
+type AuthMode = 'signin' | 'signup';
 
 export const LoginPage: React.FC<LoginPageProps> = ({
   onLoginSuccess,
-  initialRole = 'MANAGER',
 }) => {
-  // Form State
-  const [usernameOrEmail, setUsernameOrEmail] = useState<string>('manager@apex.local');
-  const [password, setPassword] = useState<string>('Password123!');
+  const [authMode, setAuthMode] = useState<AuthMode>('signin');
+  const [emailOrUsername, setEmailOrUsername] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
   const [rememberMe, setRememberMe] = useState<boolean>(true);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [language, setLanguage] = useState<Language>('EN');
-  const [activeQuickRole, setActiveQuickRole] = useState<string>('MANAGER');
 
-  // Error & Toast States
-  const [errors, setErrors] = useState<{ usernameOrEmail?: string; password?: string }>({});
+  // Sign up fields
+  const [fullName, setFullName] = useState<string>('');
+  const [signupRole, setSignupRole] = useState<UserRole>('BORROWER');
+
+  // Errors & Toasts
+  const [errors, setErrors] = useState<{ emailOrUsername?: string; password?: string; fullName?: string }>({});
   const [authError, setAuthError] = useState<string | null>(null);
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
-  // Quick Login Demo Seeded Credentials with Vibrant 3D Styling
-  const quickFillRoles = [
-    {
-      key: 'MANAGER',
-      label: '👔 Manager',
-      role: 'MANAGER' as UserRole,
-      email: 'manager@apex.local',
-      title: 'Executive Credit Committee & Branch Head',
-      colorClass: 'from-indigo-500/10 via-purple-500/10 to-indigo-500/20 text-indigo-700 border-indigo-300 hover:border-indigo-500 hover:shadow-indigo-500/20',
-      badgeBg: 'bg-indigo-600 text-white',
-    },
-    {
-      key: 'LOAN_OFFICER',
-      label: '📋 Loan Officer',
-      role: 'LOAN_OFFICER' as UserRole,
-      email: 'officer@apex.local',
-      title: 'Senior Loan Origination & DTI Reviewer',
-      colorClass: 'from-emerald-500/10 via-teal-500/10 to-emerald-500/20 text-emerald-700 border-emerald-300 hover:border-emerald-500 hover:shadow-emerald-500/20',
-      badgeBg: 'bg-emerald-600 text-white',
-    },
-    {
-      key: 'CASHIER',
-      label: '💵 Cashier',
-      role: 'CASHIER' as UserRole,
-      email: 'cashier@apex.local',
-      title: 'University Bursar & Cashier Desk',
-      colorClass: 'from-amber-500/10 via-orange-500/10 to-amber-500/20 text-amber-800 border-amber-300 hover:border-amber-500 hover:shadow-amber-500/20',
-      badgeBg: 'bg-amber-600 text-white',
-    },
-    {
-      key: 'BORROWER',
-      label: '👤 Borrower',
-      role: 'BORROWER' as UserRole,
-      email: 'borrower@apex.local',
-      title: 'Logistics Specialist / Applicant',
-      colorClass: 'from-sky-500/10 via-cyan-500/10 to-sky-500/20 text-sky-800 border-sky-300 hover:border-sky-500 hover:shadow-sky-500/20',
-      badgeBg: 'bg-sky-600 text-white',
-    },
-  ];
-
-  // Quick fill handler
-  const handleQuickFill = (roleItem: typeof quickFillRoles[0]) => {
-    setUsernameOrEmail(roleItem.email);
-    setPassword('Password123!');
-    setActiveQuickRole(roleItem.key);
-    setErrors({});
-    setAuthError(null);
-  };
-
-  // Client-Side Input Validation
+  // Validation
   const validateForm = (): boolean => {
-    const newErrors: { usernameOrEmail?: string; password?: string } = {};
+    const newErrors: { emailOrUsername?: string; password?: string; fullName?: string } = {};
 
-    if (!usernameOrEmail.trim()) {
-      newErrors.usernameOrEmail =
-        language === 'EN'
-          ? 'Username or email address is required.'
-          : 'សូមបញ្ចូលឈ្មោះអ្នកប្រើប្រាស់ ឬ អ៊ីមែល។';
+    if (authMode === 'signup' && !fullName.trim()) {
+      newErrors.fullName = 'Full name is required.';
+    }
+
+    if (!emailOrUsername.trim()) {
+      newErrors.emailOrUsername = 'Please enter your email.';
     }
 
     if (!password) {
-      newErrors.password =
-        language === 'EN'
-          ? 'Password is required.'
-          : 'សូមបញ្ចូលពាក្យសម្ងាត់។';
+      newErrors.password = 'Please enter your password.';
     } else if (password.length < 6) {
-      newErrors.password =
-        language === 'EN'
-          ? 'Password must be at least 6 characters long.'
-          : 'ពាក្យសម្ងាត់ត្រូវមានយ៉ាងហោចណាស់ ៦ តួអក្សរ។';
+      newErrors.password = 'Password must be at least 6 characters.';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Form Submit Handler
+  // Submit Handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
@@ -138,436 +73,405 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
     try {
       let selectedRole: UserRole = 'MANAGER';
-      const lowercaseInput = usernameOrEmail.toLowerCase();
+      const input = emailOrUsername.toLowerCase();
 
-      if (lowercaseInput.includes('officer') || lowercaseInput.includes('credit') || lowercaseInput.includes('sarah')) selectedRole = 'LOAN_OFFICER';
-      else if (lowercaseInput.includes('cashier')) selectedRole = 'CASHIER';
-      else if (lowercaseInput.includes('borrower') || lowercaseInput.includes('sokha')) selectedRole = 'BORROWER';
-      else selectedRole = 'MANAGER';
+      if (input.includes('cashier')) {
+        selectedRole = 'CASHIER';
+      } else if (
+        input.includes('borrower') ||
+        input.includes('sokha') ||
+        input.includes('student') ||
+        input.includes('doe')
+      ) {
+        selectedRole = 'BORROWER';
+      } else {
+        selectedRole = 'MANAGER';
+      }
 
-      // Call API Login
-      const result = await api.login(usernameOrEmail, selectedRole);
+      if (authMode === 'signup') {
+        selectedRole = signupRole;
+      }
+
+      const result = await api.login(emailOrUsername, selectedRole);
 
       if (result.token) {
         localStorage.setItem('apex_token', result.token);
       }
 
-      const userProfile = result.user || USER_PROFILES[selectedRole] || USER_PROFILES.MANAGER;
+      const userProfile =
+        result.user || USER_PROFILES[selectedRole] || USER_PROFILES.MANAGER;
 
-      setSuccessToast(
-        language === 'EN'
-          ? `Welcome back, ${userProfile.name}!`
-          : `សូមស្វាគមន៍មកវិញ, ${userProfile.name}!`
-      );
+      setSuccessToast(`Welcome back, ${userProfile.name}!`);
 
       setTimeout(() => {
-        onLoginSuccess(userProfile, result.token);
-      }, 700);
+        onLoginSuccess(userProfile, result.token || 'demo-token');
+      }, 400);
     } catch (err: any) {
       setAuthError(
-        err.message ||
-          (language === 'EN'
-            ? 'Invalid username or password. Please verify your credentials.'
-            : 'ឈ្មោះអ្នកប្រើប្រាស់ ឬ ពាក្យសម្ងាត់មិនត្រឹមត្រូវ។ សូមពិនិត្យឡើងវិញ។')
+        err.message || 'Invalid credentials. Please verify your email and password.'
       );
     } finally {
       setIsLoading(false);
     }
   };
 
+  // OAuth Providers Login Handler (Google, Apple, Facebook)
+  const handleOAuthLogin = (provider: 'Google' | 'Apple' | 'Facebook') => {
+    setIsLoading(true);
+    setTimeout(() => {
+      const userProfile = USER_PROFILES.MANAGER;
+      localStorage.setItem('apex_token', `${provider.toLowerCase()}-oauth-session`);
+      setSuccessToast(`Successfully authenticated with ${provider}!`);
+      setTimeout(() => {
+        onLoginSuccess(userProfile, `${provider.toLowerCase()}-token`);
+      }, 400);
+    }, 500);
+  };
+
+  const handleForgotPassword = () => {
+    alert('Password recovery link has been dispatched to your email.');
+  };
+
   return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-12 bg-[#090D16] font-sans text-slate-900 relative overflow-hidden selection:bg-indigo-500 selection:text-white">
-      
-      {/* Dynamic 3D Mesh Gradient Background Orbs */}
-      <div className="absolute top-[-10%] left-[-5%] w-[600px] h-[600px] bg-gradient-to-br from-indigo-600/35 via-purple-600/25 to-pink-500/20 rounded-full blur-[120px] pointer-events-none animate-pulse-glow"></div>
-      <div className="absolute bottom-[-10%] right-[-5%] w-[700px] h-[700px] bg-gradient-to-tr from-cyan-600/30 via-sky-600/25 to-emerald-500/20 rounded-full blur-[140px] pointer-events-none animate-pulse-glow"></div>
-      <div className="absolute top-[30%] right-[30%] w-[400px] h-[400px] bg-pink-600/20 rounded-full blur-[100px] pointer-events-none animate-float-slow"></div>
-
-      {/* Toast Notification */}
-      {successToast && (
-        <div className="fixed top-6 right-6 z-50 flex items-center gap-3.5 bg-gradient-to-r from-emerald-600 to-teal-700 text-white px-6 py-4 rounded-2xl shadow-2xl shadow-emerald-900/40 border border-emerald-400/40 animate-in fade-in slide-in-from-top-6 duration-300">
-          <div className="p-1 rounded-full bg-white/20">
-            <CheckCircle2 className="w-5 h-5 text-white shrink-0" />
-          </div>
-          <span className="text-sm font-bold tracking-wide">{successToast}</span>
-        </div>
-      )}
-
+    <div className="relative min-h-screen w-full flex items-center justify-center p-4 sm:p-6 lg:p-8 overflow-hidden bg-slate-950 font-sans select-none">
       {/* =================================================================== */}
-      {/* LEFT PANEL: 3D AUTHENTICATION FORM CARD                             */}
+      {/* 1. VIBRANT FLUID INK BACKGROUND (CYAN & ORANGE/RED SMOKE)           */}
       {/* =================================================================== */}
-      <div className="col-span-12 lg:col-span-6 xl:col-span-5 flex flex-col justify-between p-4 sm:p-8 lg:p-10 z-20 my-auto">
-        <div className="perspective-1000 transform-style-3d">
-          
-          {/* Main 3D Glass Card Container */}
-          <div className="glass-form-3d rounded-3xl p-6 sm:p-9 border border-white/80 shadow-2xl shadow-indigo-950/40 transform transition-all">
-            
-            {/* Header: 3D Glowing Brand Logo + Branch + Language Toggle */}
-            <div className="flex items-center justify-between pb-6 border-b border-slate-200/80">
-              <div className="flex items-center gap-3.5">
-                {/* 3D Gradient Icon Shield */}
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/40 transform hover:scale-105 transition-all">
-                  <Landmark className="w-6 h-6 stroke-[2.2]" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-black text-xl tracking-tight text-slate-900">
-                      Apex <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">LMS</span>
-                    </span>
-                    <span className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-extrabold text-[9px] px-2.5 py-0.5 rounded-full uppercase tracking-widest shadow-xs">
-                      ENTERPRISE 3D
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 mt-0.5">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                    </span>
-                    <span>Phnom Penh Main Branch • NBC Live</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Colorful Language Switcher Toggle */}
-              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-inner">
-                <button
-                  type="button"
-                  onClick={() => setLanguage('EN')}
-                  className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
-                    language === 'EN'
-                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
-                      : 'text-slate-500 hover:text-slate-900'
-                  }`}
-                >
-                  EN
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLanguage('KH')}
-                  className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
-                    language === 'KH'
-                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md'
-                      : 'text-slate-500 hover:text-slate-900'
-                  }`}
-                >
-                  KH (ភាសាខ្មែរ)
-                </button>
-              </div>
-            </div>
-
-            {/* Form Title & Subtitle */}
-            <div className="mt-6 mb-6">
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
-                {language === 'EN' ? 'Sign in to Core Banking Portal' : 'ចូលប្រើប្រាស់ប្រព័ន្ធធនាគារស្នូល'}
-              </h1>
-              <p className="text-xs sm:text-sm text-slate-500 leading-relaxed mt-1.5 font-medium">
-                {language === 'EN'
-                  ? 'Enter your institutional credentials to access loan origination, underwriting, and ledger services.'
-                  : 'បញ្ចូលព័ត៌មានសមត្ថកិច្ចរបស់ស្ថាប័នដើម្បីចូលប្រើប្រាស់សេវាកម្មឥណទាន និងបញ្ជីសមតុល្យ។'}
-              </p>
-            </div>
-
-            {/* Dismissible Top Alert Banner */}
-            {authError && (
-              <div className="mb-5 p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-start justify-between gap-3 text-rose-900 text-xs shadow-sm animate-in fade-in duration-200">
-                <div className="flex items-start gap-2.5">
-                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                  <span className="font-semibold leading-relaxed">{authError}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setAuthError(null)}
-                  className="text-rose-400 hover:text-rose-700 p-0.5 rounded-lg"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-
-            {/* Form Inputs */}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Username / Email Field */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-                  {language === 'EN' ? 'Username or Email Address' : 'ឈ្មោះអ្នកប្រើប្រាស់ ឬ អ៊ីមែល'}
-                  <span className="text-rose-500 ml-1">*</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-indigo-500">
-                    <Mail className="w-4 h-4" />
-                  </div>
-                  <input
-                    type="text"
-                    value={usernameOrEmail}
-                    onChange={(e) => {
-                      setUsernameOrEmail(e.target.value);
-                      if (errors.usernameOrEmail) setErrors((prev) => ({ ...prev, usernameOrEmail: undefined }));
-                    }}
-                    placeholder="e.g. manager@apex.local or admin"
-                    className={`w-full pl-10 pr-4 py-3 text-sm bg-slate-50/90 border rounded-xl font-medium text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none transition-all duration-200 shadow-inner ${
-                      errors.usernameOrEmail
-                        ? 'border-rose-500 text-rose-900 focus:ring-4 focus:ring-rose-500/20'
-                        : 'border-slate-200 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15'
-                    }`}
-                  />
-                </div>
-                {errors.usernameOrEmail && (
-                  <p className="border-rose-500 text-rose-600 text-xs mt-1.5 font-bold flex items-center gap-1">
-                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                    {errors.usernameOrEmail}
-                  </p>
-                )}
-              </div>
-
-              {/* Password Field */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
-                  {language === 'EN' ? 'Password' : 'ពាក្យសម្ងាត់'}
-                  <span className="text-rose-500 ml-1">*</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-indigo-500">
-                    <Lock className="w-4 h-4" />
-                  </div>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
-                    }}
-                    placeholder="••••••••••••"
-                    className={`w-full pl-10 pr-11 py-3 text-sm bg-slate-50/90 border rounded-xl font-medium text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none transition-all duration-200 shadow-inner ${
-                      errors.password
-                        ? 'border-rose-500 text-rose-900 focus:ring-4 focus:ring-rose-500/20'
-                        : 'border-slate-200 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15'
-                    }`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-indigo-600 transition-colors"
-                    tabIndex={-1}
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                {errors.password && (
-                  <p className="border-rose-500 text-rose-600 text-xs mt-1.5 font-bold flex items-center gap-1">
-                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                    {errors.password}
-                  </p>
-                )}
-              </div>
-
-              {/* Sub-row: Remember device & Forgot Password */}
-              <div className="flex items-center justify-between pt-1">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 text-indigo-600 rounded-md border-slate-300 focus:ring-indigo-500"
-                  />
-                  <span className="text-xs font-semibold text-slate-600">
-                    {language === 'EN' ? 'Remember this device' : 'ចងចាំឧបករណ៍នេះ'}
-                  </span>
-                </label>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    alert(
-                      language === 'EN'
-                        ? 'Password reset instructions have been routed to your System Administrator.'
-                        : 'ការណែនាំអំពីការកំណត់ពាក្យសម្ងាត់ឡើងវិញត្រូវបានផ្ញើទៅកាន់អ្នកគ្រប់គ្រងប្រព័ន្ធ។'
-                    )
-                  }
-                  className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
-                >
-                  {language === 'EN' ? 'Forgot Password?' : 'ភ្លេចពាក្យសម្ងាត់?'}
-                </button>
-              </div>
-
-              {/* 3D Vibrant Gradient Primary CTA Button */}
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full mt-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg shadow-indigo-600/30 transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 flex items-center justify-center gap-2 group disabled:opacity-75 disabled:cursor-not-allowed"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>
-                      {language === 'EN' ? 'Authenticating session...' : 'កំពុងផ្ទៀងផ្ទាត់សិទ្ធិ...'}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span className="tracking-wide text-sm">
-                      {language === 'EN' ? 'Sign In to Portal' : 'ចូលប្រព័ន្ធ'}
-                    </span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </>
-                )}
-              </button>
-            </form>
-
-            {/* VIBRANT 3D DEMO QUICK-FILL BAR */}
-            <div className="mt-7 pt-5 border-t border-slate-200/80">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-1.5 text-xs font-extrabold text-slate-800 uppercase tracking-wider">
-                  <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500" />
-                  <span>
-                    {language === 'EN'
-                      ? 'Quick Login (Evaluation / Demo Mode)'
-                      : 'ចូលរហ័ស (របៀបវាយតម្លៃ / ដេម៉ូ)'}
-                  </span>
-                </div>
-                <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 rounded-full">
-                  Click to Auto-Fill
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {quickFillRoles.map((rf) => {
-                  const isActive = activeQuickRole === rf.key;
-                  return (
-                    <button
-                      key={rf.key}
-                      type="button"
-                      onClick={() => handleQuickFill(rf)}
-                      title={rf.title}
-                      className={`px-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center justify-between border bg-gradient-to-r shadow-xs ${
-                        rf.colorClass
-                      } ${isActive ? 'ring-2 ring-indigo-600 scale-[1.02]' : 'hover:scale-[1.02]'}`}
-                    >
-                      <span className="truncate">{rf.label}</span>
-                      {isActive && (
-                        <span className={`w-2 h-2 rounded-full ${rf.badgeBg}`}></span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-              <p className="text-[11px] text-slate-400 mt-2.5 font-medium text-center sm:text-left">
-                🔒 256-Bit TLS Bank-Grade Encryption • Institutional Access Only
-              </p>
-            </div>
-
-          </div>
-        </div>
+      <div className="absolute inset-0 z-0">
+        <img
+          src="/ink-bg.jpg"
+          alt="Fluid Ink Art"
+          className="w-full h-full object-cover object-center scale-105"
+        />
+        {/* Soft Vignette Overlay for Dramatic Focus on the Centered Card */}
+        <div className="absolute inset-0 bg-slate-950/45" />
+        <div className="absolute inset-0 bg-radial from-transparent via-black/30 to-black/80" />
       </div>
 
+      {/* Success Notification Toast */}
+      <AnimatePresence>
+        {successToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 bg-slate-900/90 backdrop-blur-xl border border-white/20 text-white px-5 py-2.5 rounded-2xl shadow-2xl text-sm font-semibold"
+          >
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <span>{successToast}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* =================================================================== */}
-      {/* RIGHT PANEL: 3D INSTITUTIONAL HERO & FLOATING FINANCIAL snapshot     */}
+      {/* 2. CENTERED, LARGER FROSTED GLASS SIGN IN CARD                      */}
       {/* =================================================================== */}
-      <div className="hidden lg:flex lg:col-span-6 xl:col-span-7 flex-col justify-between p-12 text-white z-20 my-auto relative">
-        
-        {/* Top Status Badge Pill with Neon Glow */}
-        <div className="relative z-10">
-          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-slate-900/80 border border-emerald-500/40 text-xs font-bold text-emerald-400 backdrop-blur-xl shadow-xl shadow-emerald-950/40">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-            </span>
-            <span>● Operational Core Banking System • NBC Sandbox Mode</span>
+      <motion.div
+        initial={{ opacity: 0, y: 18, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10 w-full max-w-[490px] rounded-[32px] p-8 sm:p-11 backdrop-blur-3xl bg-white/[0.12] border border-white/[0.24] shadow-[0_30px_70px_-15px_rgba(0,0,0,0.7)] text-white before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-white/60 before:to-transparent before:rounded-t-[32px]"
+      >
+        {/* Brand Header */}
+        <div className="flex items-center gap-2.5 mb-6">
+          <div className="flex items-center -space-x-1">
+            <span className="w-3.5 h-3.5 rounded-full bg-amber-400 shadow-xs" />
+            <span className="w-3.5 h-3.5 rounded-full bg-rose-500 shadow-xs" />
+            <span className="w-3.5 h-3.5 rounded-full bg-sky-400 shadow-xs" />
           </div>
+          <span className="text-base font-bold tracking-tight text-white/95">
+            Apex LMS
+          </span>
         </div>
 
-        {/* Center 3D Showcase Container */}
-        <div className="relative z-10 max-w-xl space-y-6 my-auto py-6">
-          <div>
-            <h2 className="text-3xl xl:text-4xl font-black tracking-tight text-white leading-tight">
-              Next-Generation Microfinance &amp; <span className="bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-400 bg-clip-text text-transparent">Loan Lifecycle</span> Management.
-            </h2>
-            <p className="text-slate-300 text-sm leading-relaxed mt-3 font-medium">
-              Enterprise core banking platform delivering Automated DTI Underwriting, Cashier POS collection terminal, and NBC regulatory reporting.
-            </p>
-          </div>
+        {/* Card Title */}
+        <h2 className="text-3xl font-extrabold tracking-tight text-white mb-1.5">
+          {authMode === 'signin' ? 'Sign in' : 'Create account'}
+        </h2>
+        <p className="text-sm text-white/75 mb-7">
+          {authMode === 'signin'
+            ? 'Good to see you again.'
+            : 'Get started with institutional access.'}
+        </p>
 
-          {/* 3D Glass Floating Market Ticker Card */}
-          <div className="card-3d-tilt glass-card-3d rounded-2xl p-6 shadow-2xl space-y-4 transform-style-3d">
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+        {/* Global Error Banner */}
+        <AnimatePresence>
+          {authError && (
+            <motion.div
+              initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+              animate={{ opacity: 1, height: 'auto', marginBottom: 18 }}
+              exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+              className="p-3 bg-rose-500/25 border border-rose-300/40 rounded-xl flex items-center justify-between text-xs text-white shadow-inner"
+            >
               <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
-                  <TrendingUp className="w-4 h-4" />
-                </div>
-                <span className="text-xs font-extrabold text-slate-100 uppercase tracking-wider">
-                  Live Market FX &amp; Liquidity Ticker
-                </span>
+                <AlertCircle className="w-4 h-4 text-rose-200 shrink-0" />
+                <span>{authError}</span>
               </div>
-              <div className="flex items-center gap-1.5 text-[11px] text-emerald-400 font-mono font-bold bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>Real-Time Sync</span>
-              </div>
-            </div>
+              <button
+                type="button"
+                onClick={() => setAuthError(null)}
+                className="text-white/70 hover:text-white"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-slate-900/80 p-4 rounded-xl border border-white/10 shadow-inner">
-                <div className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Exchange Rate (USD / KHR)</div>
-                <div className="text-xl font-black text-white font-mono mt-1 flex items-center justify-between">
-                  <span>1 USD ≈ 4,100 KHR</span>
-                  <Zap className="w-4 h-4 text-amber-400 fill-amber-400 animate-bounce" />
-                </div>
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {authMode === 'signup' && (
+            <>
+              <div>
+                <label className="block text-xs font-semibold text-white/90 mb-1.5">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => {
+                    setFullName(e.target.value);
+                    if (errors.fullName) setErrors((prev) => ({ ...prev, fullName: undefined }));
+                  }}
+                  placeholder="enter your full name"
+                  className={cn(
+                    'w-full h-12 px-4 rounded-xl bg-white/[0.12] hover:bg-white/[0.16] focus:bg-white/[0.2] border border-white/20 text-white placeholder:text-white/40 text-sm focus:outline-none focus:ring-2 focus:ring-white/40 focus:border-white/60 transition shadow-inner',
+                    errors.fullName && 'ring-2 ring-rose-400'
+                  )}
+                />
+                {errors.fullName && (
+                  <p className="text-[11px] text-rose-200 mt-1">{errors.fullName}</p>
+                )}
               </div>
 
-              <div className="bg-slate-900/80 p-4 rounded-xl border border-white/10 shadow-inner">
-                <div className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Portfolio Overview</div>
-                <div className="text-sm font-black text-white font-mono mt-1.5 flex items-center gap-2">
-                  <span className="text-emerald-400">Active: 428</span>
-                  <span className="text-slate-600">|</span>
-                  <span className="text-cyan-400">On-Time: 98.2%</span>
+              <div>
+                <label className="block text-xs font-semibold text-white/90 mb-1.5">
+                  Account Role
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['BORROWER', 'CASHIER', 'MANAGER'] as const).map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setSignupRole(r)}
+                      className={cn(
+                        'py-2 px-2.5 rounded-xl text-xs font-semibold border text-center transition-all',
+                        signupRole === r
+                          ? 'bg-white text-slate-950 border-white shadow-xs'
+                          : 'bg-white/10 text-white/80 border-white/20 hover:bg-white/15'
+                      )}
+                    >
+                      {r === 'MANAGER' ? 'Admin' : r === 'CASHIER' ? 'Cashier' : 'Borrower'}
+                    </button>
+                  ))}
                 </div>
               </div>
-            </div>
+            </>
+          )}
+
+          {/* Email Address */}
+          <div>
+            <label className="block text-xs font-semibold text-white/90 mb-1.5">
+              enter your email
+            </label>
+            <input
+              type="text"
+              value={emailOrUsername}
+              onChange={(e) => {
+                setEmailOrUsername(e.target.value);
+                if (errors.emailOrUsername) {
+                  setErrors((prev) => ({ ...prev, emailOrUsername: undefined }));
+                }
+              }}
+              placeholder="enter your email"
+              className={cn(
+                'w-full h-12 px-4 rounded-xl bg-white/[0.12] hover:bg-white/[0.16] focus:bg-white/[0.2] border border-white/20 text-white placeholder:text-white/40 text-sm focus:outline-none focus:ring-2 focus:ring-white/40 focus:border-white/60 transition shadow-inner',
+                errors.emailOrUsername && 'ring-2 ring-rose-400'
+              )}
+            />
+            {errors.emailOrUsername && (
+              <p className="text-[11px] text-rose-200 mt-1 font-medium">{errors.emailOrUsername}</p>
+            )}
           </div>
 
-          {/* 3D Glass Regulatory Governance Card */}
-          <div className="card-3d-tilt glass-card-3d rounded-2xl p-5 flex items-start gap-4 transform-style-3d border border-white/10">
-            <div className="p-3 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white shrink-0 shadow-lg shadow-purple-600/30">
-              <Shield className="w-5 h-5" />
+          {/* Password */}
+          <div>
+            <label className="block text-xs font-semibold text-white/90 mb-1.5">
+              enter your password
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errors.password) {
+                    setErrors((prev) => ({ ...prev, password: undefined }));
+                  }
+                }}
+                placeholder="enter your password"
+                className={cn(
+                  'w-full h-12 px-4 pr-11 rounded-xl bg-white/[0.12] hover:bg-white/[0.16] focus:bg-white/[0.2] border border-white/20 text-white placeholder:text-white/40 text-sm focus:outline-none focus:ring-2 focus:ring-white/40 focus:border-white/60 transition shadow-inner',
+                  errors.password && 'ring-2 ring-rose-400'
+                )}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-white/60 hover:text-white transition-colors cursor-pointer"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
-            <div>
-              <div className="text-xs font-extrabold text-white uppercase tracking-wider">
-                Regulatory Governance &amp; Security Controls
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed mt-1 font-medium">
-                Enforcing Maker-Checker (Four-Eyes Principle), Tiered Credit Limits, and Real-Time Delinquency Detection.
-              </p>
-            </div>
+            {errors.password && (
+              <p className="text-[11px] text-rose-200 mt-1 font-medium">{errors.password}</p>
+            )}
           </div>
 
-          {/* 3D Trust Pills */}
-          <div className="flex flex-wrap gap-3 pt-1">
-            <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900/70 border border-emerald-500/30 text-xs font-bold text-emerald-300 shadow-lg backdrop-blur-md">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>✓ Automated DTI Underwriting</span>
-            </div>
+          {/* Remember me & Forgot password? */}
+          {authMode === 'signin' && (
+            <div className="flex items-center justify-between text-xs text-white/80 pt-1">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 rounded border-white/30 bg-white/20 text-white focus:ring-0 cursor-pointer accent-white"
+                />
+                <span>Remember me</span>
+              </label>
 
-            <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900/70 border border-cyan-500/30 text-xs font-bold text-cyan-300 shadow-lg backdrop-blur-md">
-              <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
-              <span>✓ Dynamic QR &amp; Thermal Receipts</span>
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                className="text-white/80 hover:text-white hover:underline transition-colors cursor-pointer"
+              >
+                Forgot password?
+              </button>
             </div>
+          )}
 
-            <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900/70 border border-purple-500/30 text-xs font-bold text-purple-300 shadow-lg backdrop-blur-md">
-              <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0" />
-              <span>✓ Immutable System Audit Trail</span>
-            </div>
+          {/* Primary Action Button: Solid White "Sign in →" */}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full h-12 bg-white hover:bg-slate-100 active:scale-[0.99] text-slate-950 font-bold text-sm rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 mt-6 cursor-pointer"
+          >
+            {isLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+            ) : (
+              <>
+                <span>{authMode === 'signin' ? 'Sign in' : 'Create account'}</span>
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
+          </button>
+        </form>
+
+        {/* "or continue with" Divider */}
+        <div className="relative my-7 text-center">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-white/20" />
           </div>
+          <span className="relative px-3 text-[11px] text-white/60 bg-transparent uppercase tracking-wider font-semibold">
+            or continue with
+          </span>
         </div>
 
-        {/* Footer */}
-        <div className="relative z-10 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-slate-400 font-medium">
-          <div>© 2026 Apex LMS Enterprise Core Banking. All rights reserved.</div>
-          <div className="flex items-center gap-4">
-            <span className="hover:text-white cursor-pointer transition-colors">Security Policy</span>
-            <span className="hover:text-white cursor-pointer transition-colors">NBC Guidelines</span>
-          </div>
+        {/* Google, Apple, and Facebook SSO Buttons */}
+        <div className="grid grid-cols-3 gap-3">
+          {/* 1. Google Button */}
+          <button
+            type="button"
+            onClick={() => handleOAuthLogin('Google')}
+            className="h-11 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white/90 hover:text-white transition-all shadow-sm cursor-pointer group"
+            title="Continue with Google"
+          >
+            <svg className="w-5 h-5 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+              <path
+                fill="#4285F4"
+                d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.97 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+              />
+            </svg>
+          </button>
+
+          {/* 2. Apple Button */}
+          <button
+            type="button"
+            onClick={() => handleOAuthLogin('Apple')}
+            className="h-11 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white/90 hover:text-white transition-all shadow-sm cursor-pointer group"
+            title="Continue with Apple"
+          >
+            <svg className="w-5 h-5 fill-current text-white group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.64 1.35-.58.65-1.09 1.71-.95 2.73 1 .08 2.05-.48 2.67-1.23" />
+            </svg>
+          </button>
+
+          {/* 3. Facebook Button */}
+          <button
+            type="button"
+            onClick={() => handleOAuthLogin('Facebook')}
+            className="h-11 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white/90 hover:text-white transition-all shadow-sm cursor-pointer group"
+            title="Continue with Facebook"
+          >
+            <svg className="w-5 h-5 fill-[#1877F2] group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+            </svg>
+          </button>
         </div>
 
-      </div>
+        {/* Footer Link & Demo Note */}
+        <div className="mt-7 text-center space-y-1.5">
+          <p className="text-xs text-white/80">
+            {authMode === 'signin' ? (
+              <>
+                New to Apex LMS?{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode('signup');
+                    setAuthError(null);
+                  }}
+                  className="font-semibold text-white underline hover:text-white/90 cursor-pointer"
+                >
+                  Create an account
+                </button>
+              </>
+            ) : (
+              <>
+                Already have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode('signin');
+                    setAuthError(null);
+                  }}
+                  className="font-semibold text-white underline hover:text-white/90 cursor-pointer"
+                >
+                  Sign in
+                </button>
+              </>
+            )}
+          </p>
 
+          <p className="text-[11px] text-white/50">
+            Demo — nothing is sent.
+          </p>
+        </div>
+      </motion.div>
     </div>
   );
 };

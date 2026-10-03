@@ -16,6 +16,7 @@ import { calculatorRouter } from './modules/calculator/calculator.routes';
 import { overdueRouter } from './modules/overdue/overdue.routes';
 import { reportRouter } from './modules/reports/report.routes';
 import { notificationRouter } from './modules/notifications/notification.routes';
+import { userRouter } from './modules/users/user.routes';
 import { sendError, sendSuccess } from './utils/response';
 
 export function createApp(): Application {
@@ -97,6 +98,9 @@ export function createApp(): Application {
 
   // 10. Notifications & Alerts
   app.use(['/api/notifications', '/api/v1/notifications'], notificationRouter);
+
+  // 11. User & Role Management (Admin / Manager, Cashier, Borrower)
+  app.use(['/api/users', '/api/v1/users'], userRouter);
 
   // 404 Route Handler
   app.use((req: Request, res: Response) => {

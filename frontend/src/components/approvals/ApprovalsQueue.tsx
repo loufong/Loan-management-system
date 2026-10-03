@@ -124,6 +124,7 @@ export const ApprovalsQueue: React.FC<ApprovalsQueueProps> = ({
                 <th className="py-3.5 px-4 text-right">Requested vs Recommended</th>
                 <th className="py-3.5 px-4 text-center">Interest Rate</th>
                 <th className="py-3.5 px-4">Reviewer Note &amp; Recommendation</th>
+                <th className="py-3.5 px-4 text-center">SLA Timer</th>
                 <th className="py-3.5 px-4">Submitted</th>
                 <th className="py-3.5 px-4 text-right">Direct Actions</th>
               </tr>
@@ -202,6 +203,14 @@ export const ApprovalsQueue: React.FC<ApprovalsQueueProps> = ({
                             By {app.creditOfficerReview?.reviewerName || 'Dr. Sarah Chen'}
                           </span>
                         </div>
+                      </td>
+
+                      {/* SLA Timer */}
+                      <td className="py-3.5 px-4 text-center">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                          <Clock className="w-3 h-3 text-amber-600" />
+                          <span>02:45h left</span>
+                        </span>
                       </td>
 
                       {/* Submission Date */}

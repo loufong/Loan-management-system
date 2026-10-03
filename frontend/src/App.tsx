@@ -23,6 +23,7 @@ import {
 } from './data/mockData';
 import { Sidebar } from './components/layout/Sidebar';
 import { TopBar, BreadcrumbItem } from './components/layout/TopBar';
+import { AppLayout } from './components/layout/AppLayout';
 import { Dashboard } from './components/dashboard/Dashboard';
 
 // Screen 1: Borrowers Directory & 360° Dossier
@@ -60,7 +61,13 @@ import { BIReportingStudio } from './components/reports/BIReportingStudio';
 // Screen 10: System Audit Trail & Immutable Ledger
 import { AuditTrailLedger } from './components/audit/AuditTrailLedger';
 
-import { Search, X, DollarSign, FileText, User, CreditCard } from 'lucide-react';
+// Screen 11: User Roles & Access Control
+import { UserRoleManagement } from './components/admin/UserRoleManagement';
+
+// Screen 12: System Settings & Policies
+import { SystemSettings } from './components/admin/SystemSettings';
+
+import { Search, X, DollarSign, FileText, User, CreditCard, Shield } from 'lucide-react';
 import { api } from './services/api';
 import { LoginPage } from './components/auth/LoginPage';
 
@@ -96,6 +103,7 @@ export const App: React.FC = () => {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('apex_token');
     api.setToken(null);
     setIsAuthenticated(false);
   };
@@ -213,6 +221,10 @@ export const App: React.FC = () => {
         return [{ label: 'Business Intelligence' }, { label: 'Portfolio Reports Studio', active: true }];
       case 'audit_logs':
         return [{ label: 'System Governance' }, { label: 'Immutable Audit Trail', active: true }];
+      case 'user_management':
+        return [{ label: 'Administration' }, { label: 'User Roles & Access Control', active: true }];
+      case 'system_config':
+        return [{ label: 'Administration' }, { label: 'System Settings & Lending Policies', active: true }];
       default:
         return [{ label: 'Apex LMS Core Banking', active: true }];
     }
@@ -251,6 +263,10 @@ export const App: React.FC = () => {
       setActiveTab('reports');
     } else if (navId === 'audit_logs') {
       setActiveTab('audit_logs');
+    } else if (navId === 'user_management') {
+      setActiveTab('user_management');
+    } else if (navId === 'system_config') {
+      setActiveTab('system_config');
     } else {
       setActiveTab('dashboard');
     }
@@ -409,32 +425,23 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/60 text-slate-900 flex font-sans antialiased selection:bg-indigo-500 selection:text-white">
-      {/* 1. Left Navigation Sidebar */}
-      <Sidebar
+    <>
+      <AppLayout
         currentUser={currentUser}
         activeNavId={activeTab}
         onNavigate={handleNavSelection}
         onLogout={handleLogout}
         branchName={selectedBranch}
-      />
-
-      {/* Main Workspace Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-50/60">
-        {/* 2. Global Topbar */}
-        <TopBar
-          breadcrumbs={getBreadcrumbs()}
-          currentRole={activeRole}
-          onRoleSwitch={handleRoleSwitch}
-          currency={currency}
-          onToggleCurrency={(c) => setCurrency(c)}
-          onSearchOpen={() => setSearchModalOpen(true)}
-          notifications={notifications}
-          onMarkNotificationRead={handleMarkNotificationRead}
-        />
-
-        {/* Dynamic Page Router Body */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50/60">
+        breadcrumbs={getBreadcrumbs()}
+        currentRole={activeRole}
+        onRoleSwitch={handleRoleSwitch}
+        currency={currency}
+        onToggleCurrency={(c) => setCurrency(c)}
+        onSearchOpen={() => setSearchModalOpen(true)}
+        notifications={notifications}
+        onMarkNotificationRead={handleMarkNotificationRead}
+      >
+        <div className="h-full">
           {/* Executive Dashboard */}
           {activeTab === 'dashboard' && (
             <Dashboard
@@ -560,6 +567,7 @@ export const App: React.FC = () => {
                 alert(`Credit recommendation for ${appId} submitted to Executive Committee.`);
                 setActiveTab('approvals');
               }}
+              onExecutiveDecision={handleExecutiveDecision}
             />
           )}
 
@@ -658,8 +666,41 @@ export const App: React.FC = () => {
               currentUserRole={activeRole}
             />
           )}
-        </main>
-      </div>
+
+          {/* SCREEN 11: User Roles & Access Control (Admin/Manager, Cashier, Borrower) */}
+          {activeTab === 'user_management' && (
+            <UserRoleManagement
+              currentUserRole={activeRole}
+              onSwitchUserPersona={(role, user) => {
+                setActiveRole(role);
+                setCurrentUser({
+                  id: user.id,
+                  username: user.username,
+                  name: user.name,
+                  email: user.email,
+                  role: user.role,
+                  title: user.title,
+                  department: user.department,
+                  avatar: user.avatar || user.name.slice(0, 2).toUpperCase(),
+                  branch: 'Phnom Penh Main Branch',
+                  borrowerId: user.borrowerId
+                });
+                alert(`Persona switched to: ${user.name} (${user.role === 'MANAGER' ? 'Admin / Manager' : user.role === 'CASHIER' ? 'Cashier' : 'Borrower'})`);
+              }}
+              onShowToast={(msg) => alert(msg)}
+            />
+          )}
+
+          {/* SCREEN 12: System Settings & Institutional Policies */}
+          {activeTab === 'system_config' && (
+            <SystemSettings
+              currency={currency}
+              onToggleCurrency={(c) => setCurrency(c)}
+              onShowToast={(msg) => alert(msg)}
+            />
+          )}
+        </div>
+      </AppLayout>
 
       {/* Global Quick Search Modal (Ctrl + K) */}
       {searchModalOpen && (
@@ -751,7 +792,7 @@ export const App: React.FC = () => {
           onClose={() => setActiveReceiptModal(null)}
         />
       )}
-    </div>
+    </>
   );
 };
 

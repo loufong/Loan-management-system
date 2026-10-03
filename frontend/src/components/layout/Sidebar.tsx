@@ -1,38 +1,38 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { UserRole, UserProfile } from '../../types';
 import {
   LayoutDashboard,
-  UserCircle,
-  FilePlus,
-  CreditCard,
-  Receipt,
   Users,
   FileText,
-  Sliders,
   ShieldCheck,
-  Scale,
-  Banknote,
-  Send,
-  Printer,
   CheckCircle2,
-  Landmark,
+  Wallet,
+  CreditCard,
   AlertTriangle,
+  Layers,
   BarChart3,
   History,
-  ShieldAlert,
+  UserCircle,
+  FilePlus,
+  Receipt,
   Settings,
+  ShieldAlert,
   ChevronLeft,
   LogOut,
+  Building2,
   Sparkles
 } from 'lucide-react';
+import { cn } from '../../lib/utils';
 
 export interface NavItem {
   id: string;
   label: string;
-  icon: string;
+  icon: React.ComponentType<{ className?: string }>;
   badge?: number | string;
-  badgeColor?: 'emerald' | 'amber' | 'rose' | 'indigo';
+  badgeVariant?: 'amber' | 'emerald' | 'rose' | 'blue' | 'indigo';
   allowedRoles: UserRole[];
+  tooltip?: string;
 }
 
 export interface SidebarProps {
@@ -41,316 +41,383 @@ export interface SidebarProps {
   onNavigate: (navId: string) => void;
   onLogout?: () => void;
   branchName?: string;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 export const ALL_NAV_ITEMS: NavItem[] = [
-  // Common / Management
+  // Executive & Operational Management
   {
     id: 'dashboard',
     label: 'Executive Dashboard',
-    icon: 'LayoutDashboard',
+    icon: LayoutDashboard,
     allowedRoles: ['MANAGER', 'LOAN_OFFICER', 'CASHIER']
   },
-  // Borrower Specific
+
+  // Borrower Self-Service Portal
   {
     id: 'borrower_portal',
     label: 'My 360° Profile',
-    icon: 'UserCircle',
+    icon: UserCircle,
     allowedRoles: ['BORROWER']
   },
   {
     id: 'apply_loan',
     label: 'Apply for Loan',
-    icon: 'FilePlus',
+    icon: FilePlus,
     allowedRoles: ['BORROWER']
   },
   {
     id: 'my_loans',
     label: 'My Active Loans',
-    icon: 'CreditCard',
+    icon: Wallet,
     allowedRoles: ['BORROWER']
   },
   {
     id: 'my_repayments',
     label: 'Repayments & Receipts',
-    icon: 'Receipt',
+    icon: Receipt,
     allowedRoles: ['BORROWER']
   },
-  // Staff / Loan Officers
+
+  // Staff / Loan Officers & Underwriters
   {
     id: 'borrowers',
     label: 'Borrowers Directory',
-    icon: 'Users',
-    badge: '142',
-    badgeColor: 'indigo',
+    icon: Users,
     allowedRoles: ['MANAGER', 'LOAN_OFFICER']
   },
   {
     id: 'applications',
     label: 'Loan Applications',
-    icon: 'FileText',
+    icon: FileText,
     badge: '7',
-    badgeColor: 'amber',
+    badgeVariant: 'amber',
     allowedRoles: ['MANAGER', 'LOAN_OFFICER']
   },
-  {
-    id: 'loan_products',
-    label: 'Loan Products',
-    icon: 'Sliders',
-    allowedRoles: ['MANAGER', 'LOAN_OFFICER']
-  },
-  // Credit Underwriting Workbench
   {
     id: 'credit_reviews',
     label: 'Credit Review Queue',
-    icon: 'ShieldCheck',
+    icon: ShieldCheck,
     badge: '3',
-    badgeColor: 'amber',
+    badgeVariant: 'amber',
     allowedRoles: ['MANAGER', 'LOAN_OFFICER']
   },
-  {
-    id: 'risk_assessment',
-    label: 'DTI Risk Workbench',
-    icon: 'Scale',
-    allowedRoles: ['MANAGER', 'LOAN_OFFICER']
-  },
-  // Cashier & Treasury Desk
-  {
-    id: 'cashier_desk',
-    label: 'Cashier Terminal',
-    icon: 'Banknote',
-    allowedRoles: ['MANAGER', 'CASHIER']
-  },
-
-  {
-    id: 'disbursements',
-    label: 'Pending Disbursements',
-    icon: 'Send',
-    badge: '2',
-    badgeColor: 'indigo',
-    allowedRoles: ['MANAGER', 'CASHIER']
-  },
-  {
-    id: 'receipts',
-    label: 'Issued Receipts',
-    icon: 'Printer',
-    allowedRoles: ['MANAGER', 'CASHIER']
-  },
-  // Executive Committee / Management
   {
     id: 'approvals',
     label: 'Approvals Queue',
-    icon: 'CheckCircle2',
+    icon: CheckCircle2,
     badge: '2',
-    badgeColor: 'emerald',
+    badgeVariant: 'emerald',
     allowedRoles: ['MANAGER']
   },
   {
     id: 'loans',
     label: 'Core Banking Loans',
-    icon: 'Landmark',
+    icon: Wallet,
     allowedRoles: ['MANAGER', 'LOAN_OFFICER', 'CASHIER']
+  },
+  {
+    id: 'cashier',
+    label: 'Cashier Desk / POS',
+    icon: CreditCard,
+    allowedRoles: ['MANAGER', 'CASHIER']
   },
   {
     id: 'overdue',
     label: 'Overdue Watchlist',
-    icon: 'AlertTriangle',
-    badge: '1 Urgent',
-    badgeColor: 'rose',
+    icon: AlertTriangle,
+    badge: '1',
+    badgeVariant: 'rose',
     allowedRoles: ['MANAGER', 'LOAN_OFFICER', 'CASHIER']
   },
   {
+    id: 'loan_products',
+    label: 'Loan Products',
+    icon: Layers,
+    allowedRoles: ['MANAGER', 'LOAN_OFFICER']
+  },
+  {
     id: 'reports',
-    label: 'Portfolio Reports & BI',
-    icon: 'BarChart3',
+    label: 'Reports & BI',
+    icon: BarChart3,
     allowedRoles: ['MANAGER', 'LOAN_OFFICER']
   },
   {
     id: 'audit_logs',
     label: 'System Audit Trail',
-    icon: 'History',
+    icon: History,
     allowedRoles: ['MANAGER']
   },
-  // Administrator Management
   {
     id: 'user_management',
-    label: 'User Management',
-    icon: 'ShieldAlert',
+    label: 'User Roles & Access',
+    icon: ShieldAlert,
     allowedRoles: ['MANAGER']
   },
   {
     id: 'system_config',
     label: 'System Settings',
-    icon: 'Settings',
+    icon: Settings,
     allowedRoles: ['MANAGER']
   }
 ];
-
-function renderNavIcon(iconName: string, className = 'w-4 h-4') {
-  switch (iconName) {
-    case 'LayoutDashboard': return <LayoutDashboard className={className} />;
-    case 'UserCircle': return <UserCircle className={className} />;
-    case 'FilePlus': return <FilePlus className={className} />;
-    case 'CreditCard': return <CreditCard className={className} />;
-    case 'Receipt': return <Receipt className={className} />;
-    case 'Users': return <Users className={className} />;
-    case 'FileText': return <FileText className={className} />;
-    case 'Sliders': return <Sliders className={className} />;
-    case 'ShieldCheck': return <ShieldCheck className={className} />;
-    case 'Scale': return <Scale className={className} />;
-    case 'Banknote': return <Banknote className={className} />;
-    case 'Send': return <Send className={className} />;
-    case 'Printer': return <Printer className={className} />;
-    case 'CheckCircle2': return <CheckCircle2 className={className} />;
-    case 'Landmark': return <Landmark className={className} />;
-    case 'AlertTriangle': return <AlertTriangle className={className} />;
-    case 'BarChart3': return <BarChart3 className={className} />;
-    case 'History': return <History className={className} />;
-    case 'ShieldAlert': return <ShieldAlert className={className} />;
-    case 'Settings': return <Settings className={className} />;
-    default: return <Sparkles className={className} />;
-  }
-}
 
 export const Sidebar: React.FC<SidebarProps> = ({
   currentUser,
   activeNavId,
   onNavigate,
   onLogout,
-  branchName = 'Phnom Penh Main Branch'
+  branchName = 'Phnom Penh Main Branch',
+  isCollapsed: controlledCollapsed,
+  onToggleCollapse
 }) => {
-  const [collapsed, setCollapsed] = useState(false);
+  // Support both internal and controlled collapse state
+  const [internalCollapsed, setInternalCollapsed] = useState(false);
+  const [hoveredItemId, setHoveredItemId] = useState<string | null>(null);
 
-  // Filter navigation items strictly by active role
+  const isCollapsed = controlledCollapsed !== undefined ? controlledCollapsed : internalCollapsed;
+
+  const handleToggle = () => {
+    if (onToggleCollapse) {
+      onToggleCollapse();
+    } else {
+      setInternalCollapsed((prev) => !prev);
+    }
+  };
+
+  // Filter items matching active role
   const visibleNavItems = ALL_NAV_ITEMS.filter((item) =>
     item.allowedRoles.includes(currentUser.role)
   );
 
+  // Helper to determine if a nav item is active
+  const isItemActive = (itemId: string) => {
+    if (activeNavId === itemId) return true;
+    if (itemId === 'borrowers' && activeNavId === 'borrower-detail') return true;
+    if (itemId === 'applications' && activeNavId === 'new-application') return true;
+    if (itemId === 'credit_reviews' && activeNavId === 'risk_assessment') return true;
+    if (itemId === 'loans' && activeNavId === 'loan-detail') return true;
+    if (itemId === 'cashier' && (activeNavId === 'cashier_desk' || activeNavId === 'disbursements' || activeNavId === 'receipts')) return true;
+    if (itemId === 'borrower_portal' && activeNavId === 'borrower-detail') return true;
+    if (itemId === 'apply_loan' && activeNavId === 'new-application') return true;
+    if (itemId === 'my_loans' && (activeNavId === 'loans' || activeNavId === 'loan-detail')) return true;
+    if (itemId === 'my_repayments' && activeNavId === 'cashier') return true;
+    if (itemId === 'system_config' && activeNavId === 'system_config') return true;
+    if (itemId === 'user_management' && activeNavId === 'user_management') return true;
+    return false;
+  };
+
+  // Badge styles
+  const getBadgeStyle = (variant?: 'amber' | 'emerald' | 'rose' | 'blue' | 'indigo') => {
+    switch (variant) {
+      case 'amber':
+        return 'bg-amber-500/15 text-amber-300 border-amber-500/30';
+      case 'emerald':
+        return 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30';
+      case 'rose':
+        return 'bg-rose-500/20 text-rose-300 border-rose-500/30 animate-pulse';
+      case 'blue':
+      case 'indigo':
+      default:
+        return 'bg-blue-500/15 text-blue-300 border-blue-500/30';
+    }
+  };
+
   return (
-    <aside
-      className={`relative flex flex-col bg-gradient-to-b from-[#0F172A] to-[#090D1A] border-r border-slate-800/80 transition-all duration-200 z-30 select-none ${
-        collapsed ? 'w-20' : 'w-64'
-      }`}
+    <motion.aside
+      initial={false}
+      animate={{ width: isCollapsed ? 80 : 256 }}
+      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+      className="h-screen max-h-screen sticky top-0 shrink-0 flex flex-col bg-gradient-to-b from-[#0F172A] to-[#0A0F1D] text-slate-300 border-r border-slate-800/80 z-30 select-none overflow-hidden shadow-2xl"
     >
-      {/* 1. Header Section with Minimalist Logo & Title */}
-      <div className="flex items-center justify-between h-16 px-4 border-b border-slate-800/80 bg-slate-950/40">
-        <div className="flex items-center gap-3 overflow-hidden">
-          {/* Logo Mark */}
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex-shrink-0 flex items-center justify-center text-white shadow-md shadow-indigo-500/25 font-black text-xs tracking-wider border border-indigo-400/30">
-            APX
+      {/* 1. Header: Logo, Brand Title, Collapse Toggle */}
+      <div className="shrink-0 flex items-center justify-between h-16 px-4 border-b border-slate-800/80 bg-slate-950/40">
+        <div className="flex items-center gap-3 min-w-0 overflow-hidden">
+          {/* Logo Image Slot with Fallback */}
+          <div className="relative w-9 h-9 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center bg-gradient-to-br from-blue-600 via-indigo-600 to-[#0B132B] p-0.5 border border-blue-400/30 shadow-lg shadow-blue-500/20">
+            <img
+              src="/logo.png"
+              alt="Apex LMS Logo"
+              className="w-full h-full object-contain rounded-[10px]"
+              onError={(e) => {
+                // Graceful fallback to branded geometric emblem if image fails
+                (e.currentTarget as HTMLElement).style.display = 'none';
+              }}
+            />
+            <div className="absolute inset-0 flex items-center justify-center font-black text-xs tracking-wider text-white select-none pointer-events-none">
+              APX
+            </div>
           </div>
 
-          {!collapsed && (
-            <div className="flex flex-col min-w-0">
-              <span className="text-sm font-bold text-white tracking-tight leading-none truncate">
-                Apex LMS
-              </span>
-              <span className="text-[10px] text-slate-400 font-medium tracking-wide mt-1 truncate">
-                Enterprise Core Banking
-              </span>
-            </div>
-          )}
+          {/* Animated Brand Title */}
+          <AnimatePresence initial={false}>
+            {!isCollapsed && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.15 }}
+                className="flex flex-col min-w-0"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-bold text-white tracking-tight truncate font-sans">
+                    Apex Core Banking
+                  </span>
+                </div>
+                <span className="text-[10px] text-slate-400 font-medium tracking-wider uppercase font-mono truncate">
+                  Institutional Terminal
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        {/* Sidebar Collapse Toggle Button */}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          title={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
-          className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800/60 transition focus:outline-none"
+        {/* Collapse toggle button with rotate animation */}
+        <motion.button
+          onClick={handleToggle}
+          title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+          aria-label={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/70 border border-transparent hover:border-slate-700/60 transition focus:outline-none"
         >
-          <ChevronLeft
-            className={`w-4 h-4 transition-transform duration-200 ${
-              collapsed ? 'rotate-180' : ''
-            }`}
-          />
-        </button>
+          <motion.div
+            animate={{ rotate: isCollapsed ? 180 : 0 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </motion.div>
+        </motion.button>
       </div>
 
-      {/* 2. Branch Context Pill */}
-      {!collapsed && (
-        <div className="px-3.5 py-2.5 border-b border-slate-800/50 bg-slate-950/20">
-          <div className="flex items-center justify-between text-[11px] text-slate-400 bg-slate-900/90 px-2.5 py-1.5 rounded-lg border border-slate-800">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0"></span>
-              <span className="font-medium text-slate-300 truncate">{branchName}</span>
-            </div>
-            <span className="text-[9px] font-mono text-slate-400 uppercase tracking-wider">Live</span>
-          </div>
-        </div>
-      )}
-
-      {/* 3. Navigation Links List */}
-      <nav aria-label="Sidebar Navigation" className="flex-1 overflow-y-auto px-2.5 py-3 space-y-1 scrollbar-thin scrollbar-thumb-slate-800">
+      {/* 2. Navigation Links List */}
+      <nav
+        aria-label="Sidebar Navigation"
+        className="flex-1 overflow-y-auto overscroll-contain px-2.5 py-3 space-y-1 scrollbar-thin scrollbar-thumb-slate-800"
+      >
         {visibleNavItems.map((item) => {
-          const isActive = activeNavId === item.id;
+          const isActive = isItemActive(item.id);
+          const Icon = item.icon;
+
           return (
-            <button
+            <div
               key={item.id}
-              onClick={() => onNavigate(item.id)}
-              title={collapsed ? item.label : undefined}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 group relative ${
-                isActive
-                  ? 'bg-gradient-to-r from-indigo-600/30 to-indigo-600/10 text-white border border-indigo-500/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] shadow-indigo-500/20'
-                  : 'hover:bg-slate-800/60 hover:text-white text-slate-400'
-              }`}
+              className="relative"
+              onMouseEnter={() => setHoveredItemId(item.id)}
+              onMouseLeave={() => setHoveredItemId(null)}
             >
-              <div className="flex items-center gap-3 min-w-0">
-                <span
-                  className={`flex-shrink-0 transition-colors ${
-                    isActive ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-200'
-                  }`}
-                >
-                  {renderNavIcon(item.icon, 'w-4 h-4')}
-                </span>
-
-                {!collapsed && (
-                  <span className="truncate text-left">{item.label}</span>
+              <motion.button
+                onClick={() => onNavigate(item.id)}
+                whileHover={{ x: isCollapsed ? 0 : 4 }}
+                whileTap={{ scale: 0.98 }}
+                className={cn(
+                  'w-full flex items-center justify-between rounded-xl text-xs font-semibold transition-all duration-200 group relative',
+                  isCollapsed ? 'p-2.5 justify-center' : 'px-3 py-2.5',
+                  isActive
+                    ? 'bg-gradient-to-r from-blue-500/20 to-blue-500/5 text-blue-400 border-l-2 border-blue-400 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
+                    : 'text-slate-400 hover:bg-slate-800/60 hover:text-white border-l-2 border-transparent'
                 )}
-              </div>
+              >
+                <div className={cn('flex items-center gap-3 min-w-0', isCollapsed && 'justify-center')}>
+                  <Icon
+                    className={cn(
+                      'w-4 h-4 flex-shrink-0 transition-colors duration-200',
+                      isActive ? 'text-blue-400' : 'text-slate-400 group-hover:text-slate-200'
+                    )}
+                  />
 
-              {/* Minimal Counter Badge */}
-              {!collapsed && item.badge && (
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold flex-shrink-0 ${
-                  isActive ? 'bg-indigo-500/30 text-indigo-300 border border-indigo-400/30' : 'bg-slate-800 text-slate-400'
-                }`}>
-                  {item.badge}
-                </span>
+                  {!isCollapsed && (
+                    <span className="truncate text-left font-sans tracking-tight">
+                      {item.label}
+                    </span>
+                  )}
+                </div>
+
+                {/* Counter Badges (Expanded Mode) */}
+                {!isCollapsed && item.badge && (
+                  <motion.span
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className={cn(
+                      'text-[10px] px-2 py-0.5 rounded-full font-mono font-bold flex-shrink-0 border',
+                      getBadgeStyle(item.badgeVariant)
+                    )}
+                  >
+                    {item.badge}
+                  </motion.span>
+                )}
+              </motion.button>
+
+              {/* Floating Tooltip when Collapsed */}
+              {isCollapsed && hoveredItemId === item.id && (
+                <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 pointer-events-none">
+                  <div className="bg-slate-900 text-white text-xs font-medium px-3 py-1.5 rounded-lg shadow-xl border border-slate-700/80 whitespace-nowrap flex items-center gap-2">
+                    <span>{item.label}</span>
+                    {item.badge && (
+                      <span
+                        className={cn(
+                          'text-[10px] px-1.5 py-0.2 rounded font-mono font-bold border',
+                          getBadgeStyle(item.badgeVariant)
+                        )}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                  </div>
+                </div>
               )}
-            </button>
+            </div>
           );
         })}
       </nav>
 
       {/* 4. Footer User Profile Section */}
-      <div className="p-3 border-t border-slate-800/80 bg-[#070B14]">
+      <div className="shrink-0 p-3 border-t border-slate-800/80 bg-[#070B14]">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center font-bold text-xs flex-shrink-0 border border-slate-700/60">
-              {currentUser.name[0]}
+            {/* User Avatar Circle */}
+            <div className="relative w-8 h-8 rounded-full bg-slate-800 text-blue-400 flex items-center justify-center font-bold text-xs flex-shrink-0 border border-slate-700/80 shadow-md">
+              <span>{currentUser.name ? currentUser.name.charAt(0) : 'U'}</span>
+              <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-[#070B14]" />
             </div>
-            {!collapsed && (
-              <div className="flex flex-col min-w-0">
-                <span className="text-xs font-medium text-slate-200 truncate">
-                  {currentUser.name}
-                </span>
-                <span className="text-[10px] text-slate-400 truncate">
-                  {currentUser.role}
-                </span>
-              </div>
-            )}
+
+            <AnimatePresence initial={false}>
+              {!isCollapsed && (
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  transition={{ duration: 0.15 }}
+                  className="flex flex-col min-w-0"
+                >
+                  <span className="text-xs font-semibold text-slate-200 truncate font-sans">
+                    {currentUser.name}
+                  </span>
+                  <span className="text-[10px] text-slate-400 truncate font-mono uppercase tracking-wider">
+                    {currentUser.role}
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
-          {!collapsed && onLogout && (
-            <button
-              onClick={onLogout}
-              title="Sign Out"
-              className="p-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-            </button>
-          )}
+          <AnimatePresence initial={false}>
+            {!isCollapsed && onLogout && (
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={onLogout}
+                title="Sign Out"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800/60 transition focus:outline-none"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </motion.button>
+            )}
+          </AnimatePresence>
         </div>
       </div>
-    </aside>
+    </motion.aside>
   );
 };

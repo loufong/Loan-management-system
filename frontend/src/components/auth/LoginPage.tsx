@@ -30,26 +30,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   onNavigateToForgotPassword,
   successNotice,
 }) => {
-  const [usernameOrEmail, setUsernameOrEmail] = useState<string>('manager@apex.local');
-  const [password, setPassword] = useState<string>('Password123!');
+  const [usernameOrEmail, setUsernameOrEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
   const [rememberMe, setRememberMe] = useState<boolean>(true);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Demo accounts for quick evaluation
-  const DEMO_ACCOUNTS: Array<{ role: UserRole; label: string; email: string }> = [
-    { role: 'MANAGER', label: 'Manager', email: 'manager@apex.local' },
-    { role: 'LOAN_OFFICER', label: 'Loan Officer', email: 'officer@apex.local' },
-    { role: 'CASHIER', label: 'Cashier', email: 'cashier@apex.local' },
-    { role: 'BORROWER', label: 'Borrower', email: 'borrower@apex.local' },
-  ];
-
-  const handleQuickFill = (acc: (typeof DEMO_ACCOUNTS)[0]) => {
-    setUsernameOrEmail(acc.email);
-    setPassword('Password123!');
-    setError(null);
-  };
 
   const handleLogin = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -140,7 +126,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   type="text"
                   value={usernameOrEmail}
                   onChange={(e) => setUsernameOrEmail(e.target.value)}
-                  placeholder="name@apex.local"
+                  placeholder="you@example.com"
                   required
                   className="w-full h-10 px-3 pl-9 rounded-lg bg-white border border-slate-300 text-slate-900 text-sm focus:outline-hidden focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors font-sans placeholder:text-slate-400"
                 />
@@ -224,30 +210,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               </button>
             </p>
           </div>
-
-          {/* Discreet Demo Account Selector */}
-          <div className="mt-6 pt-5 border-t border-slate-100">
-            <p className="text-[11px] font-medium text-slate-500 text-center mb-2.5">
-              Quick-fill demo credentials:
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-              {DEMO_ACCOUNTS.map((acc) => (
-                <button
-                  key={acc.role}
-                  type="button"
-                  onClick={() => handleQuickFill(acc)}
-                  className={`py-1.5 px-2 text-xs font-medium rounded-md border text-center transition-colors ${
-                    usernameOrEmail === acc.email
-                      ? 'bg-slate-900 text-white border-slate-900 font-semibold'
-                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900'
-                  }`}
-                >
-                  {acc.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
         </div>
 
         {/* Professional Human Footer */}

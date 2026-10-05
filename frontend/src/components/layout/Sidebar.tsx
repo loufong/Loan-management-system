@@ -49,9 +49,9 @@ export const ALL_NAV_ITEMS: NavItem[] = [
   // Executive & Operational Management
   {
     id: 'dashboard',
-    label: 'Executive Dashboard',
+    label: 'Dashboard',
     icon: LayoutDashboard,
-    allowedRoles: ['MANAGER', 'LOAN_OFFICER', 'CASHIER']
+    allowedRoles: ['MANAGER', 'LOAN_OFFICER', 'CASHIER', 'BORROWER']
   },
 
   // Borrower Self-Service Portal
@@ -229,13 +229,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       initial={false}
       animate={{ width: isCollapsed ? 80 : 256 }}
       transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-      className="h-screen max-h-screen sticky top-0 shrink-0 flex flex-col bg-gradient-to-b from-[#0F172A] to-[#0A0F1D] text-slate-300 border-r border-slate-800/80 z-30 select-none overflow-hidden shadow-2xl"
+      className="h-screen max-h-screen sticky top-0 shrink-0 flex flex-col bg-slate-900 text-slate-300 border-r border-slate-800 z-30 select-none overflow-hidden shadow-sm"
     >
       {/* 1. Header: Logo, Brand Title, Collapse Toggle */}
-      <div className="shrink-0 flex items-center justify-between h-16 px-4 border-b border-slate-800/80 bg-slate-950/40">
+      <div className="shrink-0 flex items-center justify-between h-16 px-4 border-b border-slate-800 bg-slate-900">
         <div className="flex items-center gap-3 min-w-0 overflow-hidden">
           {/* Logo Image Slot with Fallback */}
-          <div className="relative w-9 h-9 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center bg-gradient-to-br from-blue-600 via-indigo-600 to-[#0B132B] p-0.5 border border-blue-400/30 shadow-lg shadow-blue-500/20">
+          <div className="relative w-9 h-9 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center bg-blue-600 p-0.5 border border-blue-500 shadow-sm">
             <img
               src="/logo.png"
               alt="Apex LMS Logo"
@@ -312,18 +312,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 whileHover={{ x: isCollapsed ? 0 : 4 }}
                 whileTap={{ scale: 0.98 }}
                 className={cn(
-                  'w-full flex items-center justify-between rounded-xl text-xs font-semibold transition-all duration-200 group relative',
+                  'w-full flex items-center justify-between rounded-lg text-xs font-semibold transition-colors duration-150 group relative',
                   isCollapsed ? 'p-2.5 justify-center' : 'px-3 py-2.5',
                   isActive
-                    ? 'bg-gradient-to-r from-blue-500/20 to-blue-500/5 text-blue-400 border-l-2 border-blue-400 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]'
-                    : 'text-slate-400 hover:bg-slate-800/60 hover:text-white border-l-2 border-transparent'
+                    ? 'bg-blue-600 text-white font-medium shadow-sm'
+                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                 )}
               >
                 <div className={cn('flex items-center gap-3 min-w-0', isCollapsed && 'justify-center')}>
                   <Icon
                     className={cn(
-                      'w-4 h-4 flex-shrink-0 transition-colors duration-200',
-                      isActive ? 'text-blue-400' : 'text-slate-400 group-hover:text-slate-200'
+                      'w-4 h-4 flex-shrink-0 transition-colors duration-150',
+                      isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'
                     )}
                   />
 
@@ -377,10 +377,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
             {/* User Avatar Circle */}
-            <div className="relative w-8 h-8 rounded-full bg-slate-800 text-blue-400 flex items-center justify-center font-bold text-xs flex-shrink-0 border border-slate-700/80 shadow-md">
-              <span>{currentUser.name ? currentUser.name.charAt(0) : 'U'}</span>
-              <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-[#070B14]" />
-            </div>
+            {currentUser.avatarUrl || currentUser.avatar ? (
+              <div className="relative w-8 h-8 rounded-full flex-shrink-0">
+                <img
+                  src={currentUser.avatarUrl || currentUser.avatar}
+                  alt={currentUser.name}
+                  className="w-8 h-8 rounded-full object-cover border border-slate-700/80 shadow-md"
+                />
+                <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-[#070B14]" />
+              </div>
+            ) : (
+              <div className="relative w-8 h-8 rounded-full bg-slate-800 text-blue-400 flex items-center justify-center font-bold text-xs flex-shrink-0 border border-slate-700/80 shadow-md">
+                <span>{currentUser.name ? currentUser.name.charAt(0) : 'U'}</span>
+                <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-[#070B14]" />
+              </div>
+            )}
 
             <AnimatePresence initial={false}>
               {!isCollapsed && (

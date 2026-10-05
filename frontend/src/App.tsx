@@ -70,29 +70,65 @@ import { SystemSettings } from './components/admin/SystemSettings';
 import { Search, X, DollarSign, FileText, User, CreditCard, Shield } from 'lucide-react';
 import { api } from './services/api';
 import { LoginPage } from './components/auth/LoginPage';
+import { RegisterPage } from './components/auth/RegisterPage';
+import { OtpVerificationPage } from './components/auth/OtpVerificationPage';
+import { ForgotPasswordPage } from './components/auth/ForgotPasswordPage';
+import { SetNewPasswordPage } from './components/auth/SetNewPasswordPage';
+import { useAuth } from './context/AuthContext';
+
+type AuthView = 'login' | 'register' | 'otp_verify' | 'forgot_password' | 'set_new_password';
 
 export const App: React.FC = () => {
-  // Auth State
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
-    () => !!localStorage.getItem('apex_token')
-  );
+  // Global Auth Context Hook
+  const {
+    user: authUser,
+    isAuthenticated: authIsAuthenticated,
+    isLoading: authLoading,
+    logout: contextLogout,
+    switchRole: contextSwitchRole,
+  } = useAuth();
+
+  // Modern Auth Sub-Views
+  const [authView, setAuthView] = useState<AuthView>('login');
+  const [authEmail, setAuthEmail] = useState<string>('');
+  const [authDevOtp, setAuthDevOtp] = useState<string | undefined>(undefined);
+  const [authOtpPurpose, setAuthOtpPurpose] = useState<'register_verification' | 'forgot_password'>('register_verification');
+  const [authResetToken, setAuthResetToken] = useState<string>('');
+  const [authNotice, setAuthNotice] = useState<string | null>(null);
 
   // Navigation & Role State
   const [activeTab, setActiveTab] = useState<string>('dashboard');
-  const [activeRole, setActiveRole] = useState<UserRole>('MANAGER');
-  const [currentUser, setCurrentUser] = useState<UserProfile>(USER_PROFILES.MANAGER);
+  const [activeRole, setActiveRole] = useState<UserRole>(() => authUser?.role || 'MANAGER');
+  const [currentUser, setCurrentUser] = useState<UserProfile>(() => authUser || USER_PROFILES.MANAGER);
   const [currency, setCurrency] = useState<Currency>('USD');
-  const selectedBranch = 'Phnom Penh Main Branch';
+  const selectedBranch = currentUser.branch || 'Phnom Penh Main Branch';
+
+  // Sync state when authenticated user profile updates
+  useEffect(() => {
+    if (authUser) {
+      setCurrentUser(authUser);
+      setActiveRole(authUser.role);
+    }
+  }, [authUser]);
 
   // Auth Handlers
-  const handleLoginSuccess = (user: UserProfile, token: string) => {
+  const handleLoginSuccess = (user: UserProfile, token: string, rememberMe = true) => {
     setCurrentUser(user);
     setActiveRole(user.role);
-    setIsAuthenticated(true);
+    setAuthNotice(null);
+
+    // Save tokens
+    if (rememberMe) {
+      localStorage.setItem('apex_token', token);
+      localStorage.setItem('apex_user', JSON.stringify(user));
+    } else {
+      sessionStorage.setItem('apex_token', token);
+      sessionStorage.setItem('apex_user', JSON.stringify(user));
+    }
 
     if (user.role === 'BORROWER') {
-      setSelectedBorrowerId('BOR-2026-0001');
-      setActiveTab('borrower-detail');
+      setSelectedBorrowerId(user.borrowerId || 'BOR-2026-0001');
+      setActiveTab('dashboard'); // Direct to dynamic borrower dashboard
     } else if (user.role === 'CASHIER') {
       setActiveTab('cashier');
     } else if (user.role === 'LOAN_OFFICER') {
@@ -102,10 +138,10 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('apex_token');
-    api.setToken(null);
-    setIsAuthenticated(false);
+  const handleLogout = async () => {
+    await contextLogout();
+    setAuthView('login');
+    setAuthNotice(null);
   };
 
   // Domain Entity State
@@ -420,8 +456,103 @@ export const App: React.FC = () => {
     }
   };
 
-  if (!isAuthenticated) {
-    return <LoginPage onLoginSuccess={handleLoginSuccess} initialRole={activeRole} />;
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center font-sans">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-xs font-semibold text-slate-500 font-mono tracking-wide">
+            Restoring authenticated session...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!authIsAuthenticated) {
+    if (authView === 'register') {
+      return (
+        <RegisterPage
+          onRegisterSuccess={(email, devOtp) => {
+            setAuthEmail(email);
+            setAuthDevOtp(devOtp);
+            setAuthOtpPurpose('register_verification');
+            setAuthView('otp_verify');
+          }}
+          onNavigateToLogin={() => {
+            setAuthNotice(null);
+            setAuthView('login');
+          }}
+        />
+      );
+    }
+
+    if (authView === 'otp_verify') {
+      return (
+        <OtpVerificationPage
+          email={authEmail}
+          purpose={authOtpPurpose}
+          devOtp={authDevOtp}
+          onVerificationSuccess={(resetToken) => {
+            if (authOtpPurpose === 'register_verification') {
+              setAuthNotice('Email verified successfully! Your account is now active. Please sign in.');
+              setAuthView('login');
+            } else if (authOtpPurpose === 'forgot_password' && resetToken) {
+              setAuthResetToken(resetToken);
+              setAuthView('set_new_password');
+            }
+          }}
+          onNavigateBack={() => {
+            setAuthView(authOtpPurpose === 'register_verification' ? 'register' : 'forgot_password');
+          }}
+        />
+      );
+    }
+
+    if (authView === 'forgot_password') {
+      return (
+        <ForgotPasswordPage
+          onOtpSent={(email) => {
+            setAuthEmail(email);
+            setAuthOtpPurpose('forgot_password');
+            setAuthView('otp_verify');
+          }}
+          onNavigateToLogin={() => {
+            setAuthNotice(null);
+            setAuthView('login');
+          }}
+        />
+      );
+    }
+
+    if (authView === 'set_new_password') {
+      return (
+        <SetNewPasswordPage
+          email={authEmail}
+          resetToken={authResetToken}
+          onPasswordResetSuccess={() => {
+            setAuthNotice('Your password has been successfully reset. Please log in with your new credentials.');
+            setAuthView('login');
+          }}
+        />
+      );
+    }
+
+    return (
+      <LoginPage
+        onLoginSuccess={handleLoginSuccess}
+        onNavigateToRegister={() => {
+          setAuthNotice(null);
+          setAuthView('register');
+        }}
+        onNavigateToForgotPassword={() => {
+          setAuthNotice(null);
+          setAuthView('forgot_password');
+        }}
+        successNotice={authNotice}
+        initialRole={activeRole}
+      />
+    );
   }
 
   return (
@@ -704,7 +835,7 @@ export const App: React.FC = () => {
 
       {/* Global Quick Search Modal (Ctrl + K) */}
       {searchModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-slate-950/60 p-4 animate-in fade-in duration-150">
           <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden">
             <div className="flex items-center px-4 py-3 border-b border-slate-200">
               <Search className="w-5 h-5 text-slate-400 mr-3" />

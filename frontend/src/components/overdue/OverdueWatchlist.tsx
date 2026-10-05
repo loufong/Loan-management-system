@@ -124,7 +124,7 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
   };
 
   const handleSendReminder = (name: string, phone: string) => {
-    alert(`Automated SMS & push notification reminder dispatched to ${name} (${phone}).`);
+    alert(`SMS and notification reminder sent to ${name} (${phone}).`);
   };
 
   const togglePhoneReveal = (id: string) => {
@@ -146,9 +146,9 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Overdue Delinquency Watchlist
+              Overdue Watchlist
             </h1>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-rose-50 text-rose-700 border border-rose-200/60">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-rose-50 text-rose-700 border border-rose-200">
               {delinquentLoansCount} Delinquent
             </span>
           </div>
@@ -160,7 +160,7 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
         <button
           onClick={handleRunAudit}
           disabled={auditRunning}
-          className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 active:bg-slate-950 rounded-xl shadow-xs transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 active:bg-slate-950 rounded-lg shadow-sm transition-colors"
         >
           {auditRunning ? (
             <>
@@ -176,9 +176,9 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
         </button>
       </div>
 
-      {/* Live Demonstration Toast */}
+      {/* Audit Notification Toast */}
       {auditToast && (
-        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between animate-in fade-in duration-150 shadow-xs">
+        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between animate-in fade-in duration-150 shadow-sm">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span className="font-semibold">{auditToast}</span>
@@ -189,47 +189,47 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
       {/* 2. Top Metrics Bar (3 Cards) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Card 1: Total Overdue Balance */}
-        <div className="bg-white border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.03)] rounded-2xl p-5 space-y-1">
+        <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-5 space-y-1">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
             Total Overdue Balance
           </span>
           <MoneyText
             amount={totalOverdueAmount}
             currency={currency}
-            className="text-2xl font-black text-rose-600 block font-mono"
+            className="text-2xl font-bold text-rose-600 block font-mono"
           />
           <span className="text-[11px] text-slate-400">Total past-due principal across delinquent accounts</span>
         </div>
 
         {/* Card 2: Total Overdue Accounts */}
-        <div className="bg-white border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.03)] rounded-2xl p-5 space-y-1">
+        <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-5 space-y-1">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
             Total Overdue Accounts
           </span>
-          <span className="text-2xl font-mono tabular-nums font-black text-slate-900 block">
+          <span className="text-2xl font-mono tabular-nums font-bold text-slate-900 block">
             {delinquentLoansCount} accounts
           </span>
           <span className="text-[11px] text-slate-400">Borrower accounts requiring active loan recovery</span>
         </div>
 
         {/* Card 3: Portfolio at Risk (PAR 30+) */}
-        <div className="bg-white border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.03)] rounded-2xl p-5 space-y-1">
+        <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-5 space-y-1">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
               Portfolio at Risk (PAR 30+)
             </span>
             {isParWarning ? (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
                 Breach Warning
               </span>
             ) : (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
                 Within Cap
               </span>
             )}
           </div>
           <div className="flex items-baseline gap-2">
-            <span className={`text-2xl font-mono tabular-nums font-black ${isParWarning ? 'text-rose-600' : 'text-amber-600'}`}>
+            <span className={`text-2xl font-mono tabular-nums font-bold ${isParWarning ? 'text-rose-600' : 'text-amber-600'}`}>
               {par30Ratio}%
             </span>
             <span className="text-xs font-semibold text-slate-500 font-mono">
@@ -243,7 +243,7 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
       </div>
 
       {/* 3. Severity Filter Tabs */}
-      <div className="bg-white border border-slate-200/80 rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.03)] p-3">
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-3">
         <div className="flex items-center gap-2 overflow-x-auto">
           {[
             { key: 'ALL', label: 'All Delinquent' },
@@ -256,10 +256,10 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
               <button
                 key={tab.key}
                 onClick={() => setSeverityFilter(tab.key as any)}
-                className={`px-3.5 py-1.5 text-xs font-semibold rounded-xl transition-all whitespace-nowrap ${
+                className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
                   active
                     ? 'bg-slate-900 text-white shadow-xs'
-                    : 'bg-slate-100/80 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
                 }`}
               >
                 {tab.label}
@@ -270,7 +270,7 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
       </div>
 
       {/* 4. Delinquency Data Table */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
@@ -322,7 +322,7 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
 
                       {/* Loan # & Product */}
                       <td className="py-3.5 px-4">
-                        <span className="font-mono tabular-nums font-bold text-indigo-600 block">
+                        <span className="font-mono tabular-nums font-bold text-blue-600 block">
                           {r.loanNumber}
                         </span>
                         <span className="text-[11px] text-slate-400 block truncate">
@@ -391,7 +391,7 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
                           </button>
                           <button
                             onClick={() => onRecordPaymentForLoan?.(r.loanId)}
-                            className="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors"
+                            className="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-colors"
                           >
                             <DollarSign className="w-3 h-3" />
                             <span>Collect Payment</span>

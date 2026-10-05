@@ -17,6 +17,7 @@ import { overdueRouter } from './modules/overdue/overdue.routes';
 import { reportRouter } from './modules/reports/report.routes';
 import { notificationRouter } from './modules/notifications/notification.routes';
 import { userRouter } from './modules/users/user.routes';
+import { demoRouter } from './modules/demo/demo.routes';
 import { sendError, sendSuccess } from './utils/response';
 
 export function createApp(): Application {
@@ -101,6 +102,9 @@ export function createApp(): Application {
 
   // 11. User & Role Management (Admin / Manager, Cashier, Borrower)
   app.use(['/api/users', '/api/v1/users'], userRouter);
+
+  // 12. Live Fast-Forward Demo Trigger (Point 44)
+  app.use(['/api/demo', '/api/v1/demo'], demoRouter);
 
   // 404 Route Handler
   app.use((req: Request, res: Response) => {

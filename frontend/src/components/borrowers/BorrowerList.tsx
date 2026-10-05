@@ -121,7 +121,7 @@ export const BorrowerList: React.FC<BorrowerListProps> = ({
   const handleCreateBorrowerSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFullName.trim()) return;
-    alert(`Borrower ${newFullName} registered successfully in institutional KYC ledger.`);
+    alert(`Borrower ${newFullName} has been registered successfully.`);
     setShowNewBorrowerModal(false);
     setNewFullName('');
     setNewNationalId('');
@@ -135,20 +135,20 @@ export const BorrowerList: React.FC<BorrowerListProps> = ({
       {/* 1. Header with Title, Count Badge, and Primary Action */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-1">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shadow-2xs">
+          <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center">
             <Users className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl font-black tracking-tight text-slate-900 font-sans">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 font-sans">
                 Borrowers Directory
               </h1>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                {borrowers.length} Dossiers
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                {borrowers.length} Borrowers
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
-              Institutional borrower KYC registry, DTI risk exposure, and facility management
+              Manage borrower profiles, identification, credit history, and active loans.
             </p>
           </div>
         </div>
@@ -159,7 +159,7 @@ export const BorrowerList: React.FC<BorrowerListProps> = ({
             if (onOpenNewBorrower) onOpenNewBorrower();
             else setShowNewBorrowerModal(true);
           }}
-          className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-white bg-[#0052FF] hover:bg-[#0040C1] rounded-xl shadow-md shadow-blue-500/25 transition-all active:scale-[0.98] cursor-pointer"
+          className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors cursor-pointer"
         >
           <Plus className="w-4 h-4 stroke-[3]" />
           <span>Register New Borrower</span>
@@ -167,7 +167,7 @@ export const BorrowerList: React.FC<BorrowerListProps> = ({
       </div>
 
       {/* 2. Filter Toolbar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] space-y-3.5">
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3.5">
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
           
           {/* Search Input: Name, ID, Phone, National ID */}
@@ -178,7 +178,7 @@ export const BorrowerList: React.FC<BorrowerListProps> = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by Name, Borrower ID, Phone, National ID..."
-              className="w-full pl-9 pr-8 py-2 rounded-xl bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-xs text-slate-900 placeholder:text-slate-400 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium"
+              className="w-full pl-9 pr-8 py-2 rounded-lg bg-white text-xs text-slate-900 placeholder:text-slate-400 border border-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition-colors"
             />
             {searchTerm && (
               <button
@@ -193,7 +193,7 @@ export const BorrowerList: React.FC<BorrowerListProps> = ({
 
           <div className="flex flex-wrap items-center gap-2.5">
             {/* Status Pills: All, Active, Has Overdue, Archived */}
-            <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200/80 text-xs font-semibold">
+            <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs font-semibold">
               {(
                 [
                   { id: 'ALL', label: 'All' },
@@ -207,9 +207,9 @@ export const BorrowerList: React.FC<BorrowerListProps> = ({
                   type="button"
                   onClick={() => setStatusFilter(tab.id)}
                   className={cn(
-                    'px-3 py-1.5 rounded-lg text-xs transition font-sans cursor-pointer',
+                    'px-3 py-1.5 rounded-md text-xs transition font-sans cursor-pointer',
                     statusFilter === tab.id
-                      ? 'bg-white text-blue-900 shadow-2xs font-bold'
+                      ? 'bg-white text-slate-900 shadow-xs font-semibold'
                       : 'text-slate-500 hover:text-slate-900'
                   )}
                 >
@@ -219,7 +219,7 @@ export const BorrowerList: React.FC<BorrowerListProps> = ({
             </div>
 
             {/* Date Range Picker */}
-            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/90 rounded-xl px-3 py-1.5 text-xs text-slate-600 shadow-2xs">
+            <div className="flex items-center gap-2 bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-600 shadow-xs">
               <Calendar className="w-3.5 h-3.5 text-slate-400" />
               <input
                 type="date"
@@ -244,10 +244,10 @@ export const BorrowerList: React.FC<BorrowerListProps> = ({
       </div>
 
       {/* 3. Data Table */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50/80 text-slate-500 font-semibold border-b border-slate-200/80 uppercase text-[10px] font-mono tracking-wider">
+            <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 uppercase text-[11px] font-mono tracking-wider">
               <tr>
                 <th className="py-3 px-4">Borrower ID</th>
                 <th className="py-3 px-4">Full Name</th>
@@ -301,7 +301,7 @@ export const BorrowerList: React.FC<BorrowerListProps> = ({
                       {/* Full Name & Avatar */}
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-bold flex items-center justify-center text-xs shadow-2xs flex-shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs shadow-sm flex-shrink-0">
                             {borrower.fullName.charAt(0)}
                           </div>
                           <div className="min-w-0">
@@ -412,12 +412,12 @@ export const BorrowerList: React.FC<BorrowerListProps> = ({
       {/* Registration Modal for New Borrowers */}
       <AnimatePresence>
         {showNewBorrowerModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-lg bg-white rounded-3xl border border-slate-200 shadow-2xl p-6 text-slate-900 relative"
+              className="w-full max-w-lg bg-white rounded-xl border border-slate-200 shadow-2xl p-6 text-slate-900 relative"
             >
               <button
                 type="button"
@@ -428,15 +428,15 @@ export const BorrowerList: React.FC<BorrowerListProps> = ({
               </button>
 
               <div className="flex items-center gap-3 mb-5">
-                <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center font-bold">
                   <UserPlus className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-slate-900">
-                    Register Institutional Borrower
+                    Register New Borrower
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Create new borrower profile for credit underwriting and loan facilities
+                    Create a new borrower profile for loan applications
                   </p>
                 </div>
               </div>

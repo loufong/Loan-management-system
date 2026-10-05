@@ -34,8 +34,8 @@ export const QRCodePaymentModal: React.FC<QRCodePaymentModalProps> = ({
   const amountKHR = Math.round(amountUSD * 4100);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-white max-w-sm w-full rounded-2xl p-6 space-y-4 shadow-2xl text-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60">
+      <div className="bg-white max-w-sm w-full rounded-xl p-6 space-y-4 shadow-2xl text-center border border-slate-200">
         
         {/* Header with KHQR & EMVCo Badge */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -59,9 +59,9 @@ export const QRCodePaymentModal: React.FC<QRCodePaymentModalProps> = ({
         </div>
 
         {/* Dynamic High-Contrast KHQR Code Card with Red Ribbon */}
-        <div className="card-3d-floating p-4 flex flex-col items-center justify-center space-y-3 border-rose-200">
+        <div className="banking-card p-4 flex flex-col items-center justify-center space-y-3 border-rose-200">
           {/* Authentic Cambodian KHQR Red Header Ribbon */}
-          <div className="w-full bg-red-600 text-white py-1.5 px-3 rounded-t-xl font-bold text-xs flex items-center justify-between shadow-xs">
+          <div className="w-full bg-red-600 text-white py-1.5 px-3 rounded-lg font-bold text-xs flex items-center justify-between shadow-xs">
             <span className="font-mono tracking-wider">KHQR</span>
             <span className="text-[10px] font-sans opacity-90">National Bank of Cambodia</span>
           </div>
@@ -87,7 +87,7 @@ export const QRCodePaymentModal: React.FC<QRCodePaymentModalProps> = ({
             <svg className="w-3.5 h-3.5 text-amber-500 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span>Scan with any Banking App &bull; Valid for <strong className="font-mono text-indigo-700">{timeFormatted}</strong></span>
+            <span>Scan with any Banking App &bull; Valid for <strong className="font-mono text-slate-900">{timeFormatted}</strong></span>
           </div>
         </div>
 
@@ -97,9 +97,9 @@ export const QRCodePaymentModal: React.FC<QRCodePaymentModalProps> = ({
             const mockRef = `KHQR-BAKONG-${Date.now().toString().slice(-6)}`;
             onPaymentConfirmed(mockRef);
           }}
-          className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition flex items-center justify-center gap-1.5"
+          className="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold shadow-xs transition-colors flex items-center justify-center"
         >
-          <span>⚡</span> Simulate Customer Scan &amp; Pay
+          Simulate Customer Scan &amp; Payment
         </button>
 
       </div>

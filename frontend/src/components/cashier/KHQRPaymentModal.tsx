@@ -34,8 +34,8 @@ export const KHQRPaymentModal: React.FC<KHQRPaymentModalProps> = ({
   const amountKHR = Math.round(amountUSD * 4100);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="bg-white max-w-sm w-full rounded-3xl p-6 space-y-4 shadow-2xl text-center border border-slate-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 animate-in fade-in duration-150">
+      <div className="bg-white max-w-sm w-full rounded-xl p-6 space-y-4 shadow-2xl text-center border border-slate-200">
         {/* Header with Official Red KHQR Ribbon */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
@@ -65,17 +65,17 @@ export const KHQRPaymentModal: React.FC<KHQRPaymentModalProps> = ({
           <p className="text-[10px] text-slate-400 font-mono">Terminal Acc: {accountNumber}</p>
         </div>
 
-        {/* Dynamic High-Contrast KHQR Card Container with Red Header */}
-        <div className="bg-gradient-to-b from-slate-50 to-slate-100/80 p-4 rounded-2xl border-2 border-red-500/30 flex flex-col items-center justify-center space-y-3 shadow-inner">
+        {/* Flat High-Contrast KHQR Card Container with Red Header */}
+        <div className="bg-slate-50 p-4 rounded-xl border-2 border-red-500/30 flex flex-col items-center justify-center space-y-3">
           {/* Official Red KHQR Header */}
-          <div className="w-full bg-red-600 text-white py-1.5 px-3 rounded-xl font-black text-xs flex items-center justify-between shadow-xs">
+          <div className="w-full bg-red-600 text-white py-1.5 px-3 rounded-lg font-black text-xs flex items-center justify-between shadow-xs">
             <span className="font-mono tracking-wider">KHQR</span>
             <span className="text-[10px] font-sans opacity-95">Apex Core Banking</span>
           </div>
 
           {/* Authentic QR Matrix representation */}
-          <div className="w-48 h-48 bg-white border-2 border-slate-900 p-2.5 rounded-2xl flex items-center justify-center shadow-md relative">
-            <div className="w-full h-full bg-slate-900 flex flex-col justify-between p-2 rounded-xl">
+          <div className="w-48 h-48 bg-white border-2 border-slate-900 p-2.5 rounded-xl flex items-center justify-center shadow-sm relative">
+            <div className="w-full h-full bg-slate-900 flex flex-col justify-between p-2 rounded-lg">
               <div className="flex justify-between">
                 <div className="w-10 h-10 bg-white border-4 border-slate-900 rounded-md"></div>
                 <div className="w-10 h-10 bg-white border-4 border-slate-900 rounded-md"></div>
@@ -95,7 +95,7 @@ export const KHQRPaymentModal: React.FC<KHQRPaymentModalProps> = ({
           {/* Countdown Timer */}
           <div className="flex items-center gap-1.5 text-xs text-slate-600 font-medium">
             <div className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
-            <span>Valid for <strong className="font-mono text-indigo-700">{timeFormatted}</strong></span>
+            <span>Valid for <strong className="font-mono text-slate-900">{timeFormatted}</strong></span>
           </div>
         </div>
 
@@ -106,7 +106,7 @@ export const KHQRPaymentModal: React.FC<KHQRPaymentModalProps> = ({
             const mockRef = `KHQR-BAKONG-${Date.now().toString().slice(-6)}`;
             onPaymentConfirmed(mockRef);
           }}
-          className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-md shadow-emerald-600/25 transition-all flex items-center justify-center gap-2"
+          className="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold shadow-xs transition-colors flex items-center justify-center gap-2"
         >
           <span>Simulate Customer Payment Received</span>
         </button>

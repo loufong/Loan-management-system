@@ -146,6 +146,63 @@ async function main() {
     }
   });
 
+  // 4 Core Required Apex LMS Evaluation Users
+  const apexManager = await prisma.user.create({
+    data: {
+      username: 'manager_apex',
+      email: 'manager@apex.local',
+      passwordHash: defaultPasswordHash,
+      fullName: 'Marcus Vance (Manager)',
+      phone: '+1-555-0901',
+      position: 'Credit Underwriting Manager',
+      department: 'Credit Committee',
+      role: UserRole.MANAGER,
+      status: UserStatus.ACTIVE
+    }
+  });
+
+  const apexOfficer = await prisma.user.create({
+    data: {
+      username: 'officer_apex',
+      email: 'officer@apex.local',
+      passwordHash: defaultPasswordHash,
+      fullName: 'Sarah Chen (Loan Officer)',
+      phone: '+1-555-0902',
+      position: 'Senior Loan & DTI Officer',
+      department: 'Origination & Risk',
+      role: UserRole.LOAN_OFFICER,
+      status: UserStatus.ACTIVE
+    }
+  });
+
+  const apexCashier = await prisma.user.create({
+    data: {
+      username: 'cashier_apex',
+      email: 'cashier@apex.local',
+      passwordHash: defaultPasswordHash,
+      fullName: 'Emily Ross (Cashier)',
+      phone: '+1-555-0903',
+      position: 'Lead Teller & Cashier',
+      department: 'Disbursement & Treasury',
+      role: UserRole.CASHIER,
+      status: UserStatus.ACTIVE
+    }
+  });
+
+  const apexBorrower = await prisma.user.create({
+    data: {
+      username: 'borrower_apex',
+      email: 'borrower@apex.local',
+      passwordHash: defaultPasswordHash,
+      fullName: 'Johnathan Doe (Borrower)',
+      phone: '+1-555-0904',
+      position: 'Graduate Research Student',
+      department: 'School of Computer Science',
+      role: UserRole.BORROWER,
+      status: UserStatus.ACTIVE
+    }
+  });
+
   // ==========================================
   // 3. SEED LOAN PRODUCTS (5 Core Standard Products)
   // ==========================================
@@ -184,7 +241,7 @@ async function main() {
       productName: 'Personal Loan',
       minAmount: new Prisma.Decimal('1000.00'),
       maxAmount: new Prisma.Decimal('30000.00'),
-      interestRate: new Prisma.Decimal('8.25'), // 8.25% annual
+      interestRate: new Prisma.Decimal('12.00'), // 12.00% annual
       minTerm: 6,
       maxTerm: 60,
       repaymentFrequency: RepaymentFrequency.MONTHLY,
@@ -195,14 +252,28 @@ async function main() {
 
   const businessLoan = await prisma.loanProduct.create({
     data: {
-      productName: 'Business Loan',
+      productName: 'SME Business Loan',
       minAmount: new Prisma.Decimal('5000.00'),
       maxAmount: new Prisma.Decimal('100000.00'),
-      interestRate: new Prisma.Decimal('9.50'), // 9.5% annual
+      interestRate: new Prisma.Decimal('10.00'), // 10.00% annual
       minTerm: 12,
       maxTerm: 84,
       repaymentFrequency: RepaymentFrequency.MONTHLY,
-      description: 'Capital financing for academic spin-offs, faculty commercialization ventures, and research laboratories.',
+      description: 'Capital financing for academic spin-offs, faculty commercialization ventures, and small businesses.',
+      status: UserStatus.ACTIVE
+    }
+  });
+
+  const agricultureLoan = await prisma.loanProduct.create({
+    data: {
+      productName: 'Agriculture Loan',
+      minAmount: new Prisma.Decimal('2000.00'),
+      maxAmount: new Prisma.Decimal('50000.00'),
+      interestRate: new Prisma.Decimal('9.00'), // 9.00% annual
+      minTerm: 6,
+      maxTerm: 60,
+      repaymentFrequency: RepaymentFrequency.MONTHLY,
+      description: 'Specialized financing for campus agronomy projects, research farms, and agricultural equipment.',
       status: UserStatus.ACTIVE
     }
   });
@@ -212,7 +283,7 @@ async function main() {
       productName: 'Vehicle Loan',
       minAmount: new Prisma.Decimal('3000.00'),
       maxAmount: new Prisma.Decimal('40000.00'),
-      interestRate: new Prisma.Decimal('6.25'), // 6.25% annual
+      interestRate: new Prisma.Decimal('8.00'), // 8.00% annual
       minTerm: 12,
       maxTerm: 72,
       repaymentFrequency: RepaymentFrequency.MONTHLY,

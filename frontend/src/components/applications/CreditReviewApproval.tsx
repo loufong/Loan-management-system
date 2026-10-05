@@ -52,7 +52,7 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
   const [approvedRate, setApprovedRate] = useState<number>(
     application.committeeApproval?.approvedRate || 4.5
   );
-  const [rejectionReason, setRejectionReason] = useState('High Debt-to-Income (DTI) ratio exceeding institutional threshold.');
+  const [rejectionReason, setRejectionReason] = useState('High Debt-to-Income (DTI) ratio exceeds approved credit limits.');
 
   // Modals
   const [approveConfirmModalOpen, setApproveConfirmModalOpen] = useState(false);
@@ -113,10 +113,10 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
         <div className="lg:col-span-7 space-y-4">
           
           {/* Accordion 1: Personal & Employment Information */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <button
               onClick={() => setPersonalInfoOpen(!personalInfoOpen)}
-              className="w-full p-4 text-left flex items-center justify-between font-bold text-xs text-slate-900 bg-slate-50 border-b border-slate-200/80"
+              className="w-full p-4 text-left flex items-center justify-between font-bold text-xs text-slate-900 bg-slate-50 border-b border-slate-200"
             >
               <span>1. Borrower Identity &amp; Stipend Verification</span>
               <span>{personalInfoOpen ? '▲' : '▼'}</span>
@@ -136,7 +136,7 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
                   <span className="text-slate-700">Graduate Teaching Fellow</span>
                 </div>
                 <div>
-                  <span className="text-[11px] text-slate-400 block">Institutional Guarantor</span>
+                  <span className="text-[11px] text-slate-400 block">Guarantor</span>
                   <span className="text-slate-700">{application.guarantor?.fullName || 'Not Required'}</span>
                 </div>
               </div>
@@ -144,10 +144,10 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
           </div>
 
           {/* Accordion 2: Loan Request Summary */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <button
               onClick={() => setLoanSummaryOpen(!loanSummaryOpen)}
-              className="w-full p-4 text-left flex items-center justify-between font-bold text-xs text-slate-900 bg-slate-50 border-b border-slate-200/80"
+              className="w-full p-4 text-left flex items-center justify-between font-bold text-xs text-slate-900 bg-slate-50 border-b border-slate-200"
             >
               <span>2. Loan Request Parameters &amp; Stated Purpose</span>
               <span>{loanSummaryOpen ? '▲' : '▼'}</span>
@@ -177,10 +177,10 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
           </div>
 
           {/* Accordion 3: Document Inspector with Zoom/Rotate Controls */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <button
               onClick={() => setDocInspectorOpen(!docInspectorOpen)}
-              className="w-full p-4 text-left flex items-center justify-between font-bold text-xs text-slate-900 bg-slate-50 border-b border-slate-200/80"
+              className="w-full p-4 text-left flex items-center justify-between font-bold text-xs text-slate-900 bg-slate-50 border-b border-slate-200"
             >
               <span>3. Document Inspector (KYC &amp; Verification Evidence)</span>
               <span>{docInspectorOpen ? '▲' : '▼'}</span>
@@ -238,10 +238,10 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
           </div>
 
           {/* Accordion 4: Past Repayment Track Record */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <button
               onClick={() => setTrackRecordOpen(!trackRecordOpen)}
-              className="w-full p-4 text-left flex items-center justify-between font-bold text-xs text-slate-900 bg-slate-50 border-b border-slate-200/80"
+              className="w-full p-4 text-left flex items-center justify-between font-bold text-xs text-slate-900 bg-slate-50 border-b border-slate-200"
             >
               <span>4. Historical Lending Repayment Track Record</span>
               <span>{trackRecordOpen ? '▲' : '▼'}</span>
@@ -263,10 +263,10 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
         <div className="lg:col-span-5 space-y-4">
           
           {/* Automated Credit Scorecard Card with DTI Gauge */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Automated Risk Scorecard</h3>
-              <span className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold ${
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                 application.dtiRatio <= 25
                   ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                   : application.dtiRatio <= 40
@@ -283,10 +283,10 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
                 <span>Debt-to-Income (DTI) Ratio</span>
                 <span className="font-mono font-bold text-slate-900">{application.dtiRatio}%</span>
               </div>
-              <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden flex">
-                <div className="bg-emerald-500 h-3" style={{ width: '30%' }} title="Low Risk (< 30%)"></div>
-                <div className="bg-amber-400 h-3" style={{ width: '20%' }} title="Medium Risk (30-50%)"></div>
-                <div className="bg-rose-500 h-3" style={{ width: '50%' }} title="High Risk (> 50%)"></div>
+              <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden flex">
+                <div className="bg-emerald-500 h-2.5" style={{ width: '30%' }} title="Low Risk (< 30%)"></div>
+                <div className="bg-amber-400 h-2.5" style={{ width: '20%' }} title="Medium Risk (30-50%)"></div>
+                <div className="bg-rose-500 h-2.5" style={{ width: '50%' }} title="High Risk (> 50%)"></div>
               </div>
               <div className="flex justify-between text-[10px] font-mono text-slate-400">
                 <span>0% Safe</span>
@@ -295,15 +295,15 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
               </div>
             </div>
 
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 text-[11px] text-slate-600">
+            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-[11px] text-slate-600">
               {application.dtiRatio <= 25
-                ? 'Underwriting AI Engine: Recommended for immediate fast-track approval.'
-                : 'Underwriting AI Engine: Requires supervisor sign-off and stipend guarantor verification.'}
+                ? 'Policy Evaluation: Recommended for standard fast-track approval.'
+                : 'Policy Evaluation: Requires supervisor sign-off and stipend guarantor verification.'}
             </div>
           </div>
 
           {/* Credit Officer Recommendation Section */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-3 text-xs">
+          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3 text-xs">
             <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Credit Officer Assessment</h3>
             
             <div className="space-y-1.5">
@@ -353,7 +353,7 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
 
           {/* Manager Approval Decision Box (Only visible to MANAGER and ADMIN) */}
           {isManagerOrAdmin && (
-            <div className="bg-white p-5 rounded-2xl border-2 border-indigo-600/30 shadow-md space-y-4 text-xs">
+            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4 text-xs">
               <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                 <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Executive Committee Final Decision</h3>
                 <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700">Manager Clearance</span>
@@ -409,7 +409,7 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
           )}
 
           {/* Audit Trail Timeline */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-2 text-xs">
+          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-2 text-xs">
             <h4 className="font-bold text-slate-700">Approval Audit Trail</h4>
             <div className="border-l-2 border-slate-200 pl-3 space-y-2 text-[11px]">
               <div>
@@ -429,8 +429,8 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
 
       {/* Confirmation Dialog: Approval */}
       {approveConfirmModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-white max-w-md w-full rounded-2xl p-6 space-y-4 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60">
+          <div className="bg-white max-w-md w-full rounded-xl p-6 space-y-4 shadow-2xl">
             <h3 className="font-bold text-slate-900 text-sm">Confirm Formal Loan Approval</h3>
             <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 space-y-1 font-mono">
               <p>Approved Principal: <strong>{formatMoney(approvedAmount)}</strong></p>
@@ -458,8 +458,8 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
 
       {/* Confirmation Dialog: Rejection */}
       {rejectConfirmModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-white max-w-md w-full rounded-2xl p-6 space-y-4 shadow-2xl text-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60">
+          <div className="bg-white max-w-md w-full rounded-xl p-6 space-y-4 shadow-2xl text-xs">
             <h3 className="font-bold text-rose-700 text-sm">Confirm Formal Loan Rejection</h3>
             <div>
               <label className="block text-slate-600 font-semibold mb-1">Mandatory Regulatory Rejection Reason</label>
@@ -468,7 +468,7 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
                 onChange={(e) => setRejectionReason(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 font-semibold"
               >
-                <option>High Debt-to-Income (DTI) ratio exceeding institutional threshold (&gt;40%).</option>
+                <option>High Debt-to-Income (DTI) ratio exceeds approved credit limits (&gt;40%).</option>
                 <option>Insufficient academic enrollment or stipend documentation.</option>
                 <option>Unacceptable or speculative borrowing purpose.</option>
                 <option>Adverse repayment track record on previous microloan accounts.</option>

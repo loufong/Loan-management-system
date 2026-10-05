@@ -24,10 +24,10 @@ export const RepaymentScheduleTable: React.FC<RepaymentScheduleTableProps> = ({
     currentUserRole === 'MANAGER';
 
   return (
-    <div className="card-3d-floating overflow-hidden shadow-sm">
+    <div className="banking-card overflow-hidden shadow-sm">
       <div className="overflow-x-auto">
         <table className="w-full text-left">
-          <thead className="sticky top-0 bg-slate-50/95 backdrop-blur z-10 shadow-xs">
+          <thead className="sticky top-0 bg-slate-100 border-b border-slate-200 z-10">
             <tr className="text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200/80">
               <th className="py-3.5 px-4">Installment #</th>
               <th className="py-3.5 px-4">Due Date</th>

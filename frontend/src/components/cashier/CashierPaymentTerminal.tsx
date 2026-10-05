@@ -277,7 +277,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
                 Payment Collection &amp; Settlement
               </h2>
               <p className="text-xs text-slate-500">
-                Record institutional tender, select payment channel, and issue authentic receipt.
+                Record payment, select payment channel, and issue receipt.
               </p>
             </div>
 

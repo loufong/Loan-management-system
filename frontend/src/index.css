@@ -11,23 +11,66 @@ body {
 }
 
 @layer components {
-  .card-3d-floating {
-    @apply bg-gradient-to-b from-white to-slate-50/60 border border-slate-200/80 rounded-2xl shadow-[0_10px_25px_-5px_rgba(0,0,0,0.05),0_4px_10px_-2px_rgba(0,0,0,0.02)] relative before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/80 before:rounded-t-2xl;
+  /* ========================================================================= */
+  /* MINIMALIST SAAS DESIGN SYSTEM TOKENS (STRICTLY ZERO GRADIENTS)            */
+  /* Inspired by Linear, Vercel & Stripe                                      */
+  /* ========================================================================= */
+
+  /* 1. Surfaces & Data Cards */
+  .data-card, .banking-card {
+    @apply bg-white border border-zinc-200/80 rounded-xl p-5 shadow-xs;
   }
-  .btn-3d-primary {
-    @apply bg-gradient-to-b from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-medium py-2.5 px-4 rounded-xl shadow-[0_4px_14px_rgba(79,70,229,0.35)] hover:shadow-[0_6px_20px_rgba(79,70,229,0.45)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all;
+  
+  .surface-subtle {
+    @apply bg-zinc-50 border border-zinc-200/80 rounded-xl p-4;
   }
-  .btn-3d-secondary {
-    @apply bg-white border border-slate-200/90 text-slate-700 py-2.5 px-4 rounded-xl shadow-[0_2px_4px_rgba(0,0,0,0.04)] hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98] transition-all;
+
+  /* 2. Standardized Buttons */
+  .btn-primary {
+    @apply bg-zinc-900 text-white hover:bg-zinc-800 active:scale-[0.98] transition-all px-4 py-2 rounded-lg text-sm font-medium shadow-xs inline-flex items-center justify-center gap-2;
   }
-  .badge-3d-emerald {
-    @apply bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-[0_2px_8px_rgba(16,185,129,0.15)] rounded-full px-3 py-1 text-xs font-semibold;
+
+  .btn-secondary {
+    @apply bg-white text-zinc-700 border border-zinc-200 hover:bg-zinc-50 active:scale-[0.98] transition-all px-4 py-2 rounded-lg text-sm font-medium inline-flex items-center justify-center gap-2;
   }
-  .badge-3d-rose {
-    @apply bg-rose-50 text-rose-700 border border-rose-200/80 shadow-[0_2px_8px_rgba(244,63,94,0.15)] rounded-full px-3 py-1 text-xs font-semibold;
+
+  .btn-accent {
+    @apply bg-blue-600 hover:bg-blue-700 text-white active:scale-[0.98] transition-all px-4 py-2 rounded-lg text-sm font-medium shadow-xs inline-flex items-center justify-center gap-2;
   }
-  .badge-3d-amber {
-    @apply bg-amber-50 text-amber-700 border border-amber-200/80 shadow-[0_2px_8px_rgba(245,158,11,0.15)] rounded-full px-3 py-1 text-xs font-semibold;
+
+  .btn-dark {
+    @apply bg-zinc-900 hover:bg-zinc-800 text-white active:scale-[0.98] transition-all px-4 py-2 rounded-lg text-sm font-medium shadow-xs inline-flex items-center justify-center gap-2;
+  }
+
+  .btn-danger {
+    @apply bg-rose-600 hover:bg-rose-700 text-white active:scale-[0.98] transition-all px-4 py-2 rounded-lg text-sm font-medium shadow-xs inline-flex items-center justify-center gap-2;
+  }
+
+  /* 3. Form Inputs & Controls */
+  .input-standard {
+    @apply bg-white border border-zinc-200 focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 rounded-lg px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 outline-none transition;
+  }
+
+  /* 4. Solid Badges & Tags */
+  .badge-zinc, .badge-slate {
+    @apply bg-zinc-100 text-zinc-700 border border-zinc-200 rounded-md px-2.5 py-0.5 text-xs font-medium;
+  }
+  .badge-emerald {
+    @apply bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md px-2.5 py-0.5 text-xs font-semibold;
+  }
+  .badge-rose {
+    @apply bg-rose-50 text-rose-700 border border-rose-200 rounded-md px-2.5 py-0.5 text-xs font-semibold;
+  }
+  .badge-amber {
+    @apply bg-amber-50 text-amber-700 border border-amber-200 rounded-md px-2.5 py-0.5 text-xs font-semibold;
+  }
+  .badge-blue {
+    @apply bg-blue-50 text-blue-700 border border-blue-200 rounded-md px-2.5 py-0.5 text-xs font-semibold;
+  }
+
+  /* 5. Navigation & Header Dividers */
+  .nav-header {
+    @apply border-b border-zinc-200 bg-white/95 backdrop-blur-sm;
   }
 }
 
@@ -47,71 +90,6 @@ body {
   background: #94a3b8;
 }
 
-/* 3D Animations & Visual Effects */
-@keyframes floatSlow {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-12px) rotate(1.5deg); }
-}
-
-@keyframes floatReverse {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(12px) rotate(-1.5deg); }
-}
-
-@keyframes pulseGlow {
-  0%, 100% { opacity: 0.5; transform: scale(1); }
-  50% { opacity: 0.85; transform: scale(1.08); }
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-.animate-float-slow {
-  animation: floatSlow 6s ease-in-out infinite;
-}
-
-.animate-float-reverse {
-  animation: floatReverse 7s ease-in-out infinite;
-}
-
-.animate-pulse-glow {
-  animation: pulseGlow 4s ease-in-out infinite;
-}
-
-.perspective-1000 {
-  perspective: 1000px;
-}
-
-.transform-style-3d {
-  transform-style: preserve-3d;
-}
-
-.card-3d-tilt {
-  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
-}
-
-.card-3d-tilt:hover {
-  transform: translateY(-8px) rotateX(4deg) rotateY(-4deg) scale(1.02);
-  box-shadow: 0 25px 40px -5px rgba(79, 70, 229, 0.3), 0 12px 20px -5px rgba(0, 0, 0, 0.2);
-}
-
-.glass-card-3d {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-}
-
-.glass-form-3d {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 25px 60px -15px rgba(79, 70, 229, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.8);
-}
-
 /* Print styling for Thermal Receipts */
 @media print {
   body * {
@@ -124,11 +102,13 @@ body {
     position: fixed !important;
     left: 0 !important;
     top: 0 !important;
-    width: 80mm !important;
-    max-width: 80mm !important;
+    width: 380px !important;
+    max-width: 380px !important;
     box-shadow: none !important;
-    border: none !important;
-    padding: 4mm !important;
+    border: 1px dashed #64748b !important;
+    padding: 16px !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
   }
   .no-print {
     display: none !important;

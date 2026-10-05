@@ -4,6 +4,7 @@ dotenv.config();
 import { createApp } from './app';
 import { prisma } from './config/prisma';
 import { initOverdueCronJob, stopOverdueCronJob } from './modules/overdue/overdue.cron';
+import { initRegistrationCleanupCron, stopRegistrationCleanupCron } from './modules/auth/registration-cleanup.cron';
 
 const PORT = parseInt(process.env.PORT || '5000', 10);
 
@@ -24,12 +25,15 @@ async function bootstrap() {
 
     // Initialize automated daily overdue detection cron job
     initOverdueCronJob();
+    // Initialize hourly cleanup of expired pending registrations & OTPs
+    initRegistrationCleanupCron();
   });
 
   // Graceful Shutdown Handlers
   const handleShutdown = async (signal: string) => {
     console.log(`\n🛑 Received ${signal}. Starting graceful shutdown...`);
     stopOverdueCronJob();
+    stopRegistrationCleanupCron();
     server.close(async () => {
       console.log('🔒 Closed HTTP Server.');
       await prisma.$disconnect();

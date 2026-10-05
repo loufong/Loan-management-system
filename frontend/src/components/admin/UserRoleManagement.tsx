@@ -227,9 +227,9 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-200">
       {/* Top Banner / Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold text-indigo-600 uppercase tracking-wider mb-1">
+          <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">
             <Shield className="w-4 h-4" />
             Security &amp; Governance Center
           </div>
@@ -238,7 +238,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
           </h1>
           <p className="text-sm text-slate-500 mt-1">
             Configure system personas across 3 core roles:{' '}
-            <strong className="text-indigo-700">Admin / Manager</strong>,{' '}
+            <strong className="text-blue-700">Admin / Manager</strong>,{' '}
             <strong className="text-emerald-700">Cashier</strong>, and{' '}
             <strong className="text-amber-700">Borrower</strong>.
           </p>
@@ -247,7 +247,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
         <div className="flex items-center gap-3">
           <button
             onClick={() => setActiveTab('matrix')}
-            className={`px-4 py-2 text-sm font-medium rounded-xl transition-all border ${
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all border ${
               activeTab === 'matrix'
                 ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
                 : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
@@ -259,7 +259,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
 
           <button
             onClick={handleOpenCreateModal}
-            className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs hover:shadow transition-all flex items-center gap-1.5"
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
           >
             <Plus className="w-4 h-4" />
             Add New User
@@ -270,7 +270,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
       {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Users */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
               Total Accounts
@@ -287,21 +287,21 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
         </div>
 
         {/* Admin / Manager */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-indigo-600 uppercase tracking-wider font-semibold">
+            <p className="text-xs font-medium text-blue-600 uppercase tracking-wider font-semibold">
               Admin / Manager
             </p>
             <h3 className="text-2xl font-bold text-slate-900 mt-1">{stats.managers}</h3>
             <span className="text-xs text-slate-500 mt-1 block">Full Authority &amp; Approvals</span>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+          <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
             <ShieldCheck className="w-6 h-6" />
           </div>
         </div>
 
         {/* Cashier */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-xs font-medium text-emerald-600 uppercase tracking-wider font-semibold">
               Cashier &amp; POS
@@ -315,7 +315,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
         </div>
 
         {/* Borrower */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-xs font-medium text-amber-600 uppercase tracking-wider font-semibold">
               Borrower Portal
@@ -370,9 +370,9 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
 
       {/* TAB 1: User Directory */}
       {activeTab === 'users' && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           {/* Controls Bar */}
-          <div className="p-4 border-b border-slate-200/80 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50/50">
+          <div className="p-4 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50">
             {/* Search */}
             <div className="relative flex-1 max-w-md">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -381,7 +381,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search user by name, email, department, or username..."
-                className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-800 placeholder-slate-400"
+                className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition-colors text-slate-900 placeholder-slate-400"
               />
             </div>
 
@@ -559,7 +559,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
             {Object.entries(CORE_ROLE_DEFINITIONS).map(([key, def]) => (
               <div
                 key={key}
-                className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between"
+                className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-3">
@@ -603,7 +603,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
           </div>
 
           {/* Side-by-Side Permissions Table */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-5 border-b border-slate-200">
               <h3 className="text-base font-bold text-slate-900">
                 Granular Role-Based Access Control (RBAC) Matrix
@@ -691,8 +691,8 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
       {/* TAB 3: Overview & Architecture */}
       {activeTab === 'overview' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-            <div className="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600">
+          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+            <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
               <ShieldCheck className="w-6 h-6" />
             </div>
             <h3 className="text-lg font-bold text-slate-900">1. Admin / Manager</h3>
@@ -701,18 +701,18 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
               decisioning, product limit definitions, and user security administration.
             </p>
             <div className="space-y-2 text-xs text-slate-600">
-              <div className="p-3 bg-slate-50 rounded-xl">
+              <div className="p-3 bg-slate-50 rounded-lg">
                 <span className="font-semibold text-slate-900 block">Scope:</span>
                 Institution-wide portfolio, full database read/write, audit logs
               </div>
-              <div className="p-3 bg-slate-50 rounded-xl">
+              <div className="p-3 bg-slate-50 rounded-lg">
                 <span className="font-semibold text-slate-900 block">Typical Users:</span>
                 Branch Managers, Credit Committee Heads, System Admins
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
             <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
               <CreditCard className="w-6 h-6" />
             </div>
@@ -722,18 +722,18 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
               applications, collecting repayments, and printing official receipts.
             </p>
             <div className="space-y-2 text-xs text-slate-600">
-              <div className="p-3 bg-slate-50 rounded-xl">
+              <div className="p-3 bg-slate-50 rounded-lg">
                 <span className="font-semibold text-slate-900 block">Scope:</span>
                 Cash desk register, POS terminal, waterfall repayments, overdue watchlist
               </div>
-              <div className="p-3 bg-slate-50 rounded-xl">
+              <div className="p-3 bg-slate-50 rounded-lg">
                 <span className="font-semibold text-slate-900 block">Typical Users:</span>
                 University Bursar, Counter Tellers, Cashiers
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
             <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
               <User className="w-6 h-6" />
             </div>
@@ -743,13 +743,13 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
               ever view their own loans, installments, and receipts).
             </p>
             <div className="space-y-2 text-xs text-slate-600">
-              <div className="p-3 bg-slate-50 rounded-xl">
+              <div className="p-3 bg-slate-50 rounded-lg">
                 <span className="font-semibold text-slate-900 block">Scope:</span>
-                Own borrower profile, loan application submissions, own repayment history
+                Personal active loans, digital payment QR, statement generation
               </div>
-              <div className="p-3 bg-slate-50 rounded-xl">
+              <div className="p-3 bg-slate-50 rounded-lg">
                 <span className="font-semibold text-slate-900 block">Typical Users:</span>
-                Students, Faculty members, Academic micro-loan clients
+                University Students, Faculty Members, Personal Borrowers
               </div>
             </div>
           </div>
@@ -758,8 +758,8 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
 
       {/* CREATE USER MODAL */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 animate-in fade-in duration-150">
+          <div className="bg-white rounded-xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
             <div className="flex items-center justify-between pb-4 border-b border-slate-200">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600">
@@ -929,8 +929,8 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
 
       {/* EDIT USER & ROLE MODAL */}
       {editingUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 animate-in fade-in duration-150">
+          <div className="bg-white rounded-xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
             <div className="flex items-center justify-between pb-4 border-b border-slate-200">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-xl bg-slate-100 text-slate-700">

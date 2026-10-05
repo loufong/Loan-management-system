@@ -127,4 +127,39 @@ export class DashboardController {
       next(err);
     }
   }
+
+  /**
+   * 5. User-Specific Dashboard Summary: GET /api/dashboard/user-summary
+   * Bound directly to authenticated req.user.id
+   */
+  static async getUserSummary(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({ success: false, message: 'Authentication required' });
+        return;
+      }
+      const data = await DashboardService.getUserDashboardSummary(userId);
+      sendSuccess(res, data, 'User dynamic dashboard summary retrieved successfully');
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * 6. Update User Dashboard Settings: PUT /api/dashboard/settings
+   */
+  static async updateSettings(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({ success: false, message: 'Authentication required' });
+        return;
+      }
+      const updated = await DashboardService.updateUserSettings(userId, req.body);
+      sendSuccess(res, updated, 'User dashboard settings updated successfully');
+    } catch (err) {
+      next(err);
+    }
+  }
 }

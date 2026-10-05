@@ -15,10 +15,12 @@ datasource db {
 // ==========================================
 
 enum UserRole {
-  BORROWER
-  LOAN_OFFICER
-  CASHIER
+  ADMIN
   MANAGER
+  LOAN_OFFICER
+  CREDIT_OFFICER
+  CASHIER
+  BORROWER
 }
 
 enum UserStatus {
@@ -128,12 +130,16 @@ model User {
   phone        String?    @db.VarChar(30)
   position     String?    @db.VarChar(100)
   department   String?    @db.VarChar(100)
-  role         UserRole   @default(BORROWER)
-  status       UserStatus @default(ACTIVE)
-  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  avatarUrl    String?    @map("avatar_url") @db.VarChar(500)
+  lastLogin    DateTime?  @map("last_login") @db.Timestamptz(6)
+  role                   UserRole                   @default(BORROWER)
+  status                 UserStatus                 @default(ACTIVE)
+  emailVerifiedAt        DateTime?                  @map("email_verified_at") @db.Timestamptz(6)
+  createdAt              DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   // Relations
+  userSetting            UserSetting?
   borrowers              Borrower[]
   createdApplications    LoanApplication[]          @relation("ApplicationCreatedBy")
   statusChanges          ApplicationStatusHistory[] @relation("StatusChangedBy")
@@ -145,6 +151,8 @@ model User {
   notifications          Notification[]
   auditLogs              AuditLog[]
   refreshTokens          RefreshToken[]
+  otps                   Otp[]
+  passwordResets         PasswordReset[]
 
   @@index([role])
   @@index([status])
@@ -514,4 +522,114 @@ model RefreshToken {
   @@index([userId])
   @@index([tokenHash])
   @@map("refresh_tokens")
+}
+
+// ==========================================
+// 16. OTP ENTITY (GMAIL AUTH VERIFICATION)
+// ==========================================
+model Otp {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String?   @map("user_id") @db.Uuid
+  email      String    @db.VarChar(255)
+  otpHash    String    @map("otp_hash") @db.VarChar(255)
+  purpose    String    @db.VarChar(50) // register_verification, forgot_password, email_verification
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(6)
+  attempts   Int       @default(0)
+  verifiedAt DateTime? @map("verified_at") @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([userId])
+  @@index([purpose])
+  @@map("otps")
+}
+
+// ==========================================
+// 17. PASSWORD RESET ENTITY
+// ==========================================
+model PasswordReset {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  token     String    @unique @db.VarChar(255)
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(6)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("password_resets")
+}
+
+// ==========================================
+// 18. PENDING REGISTRATION ENTITY
+// ==========================================
+model PendingRegistration {
+  id           String   @id @default(uuid()) @db.Uuid
+  fullName     String   @map("full_name") @db.VarChar(100)
+  username     String   @unique @db.VarChar(50)
+  email        String   @unique @db.VarChar(255)
+  phone        String   @db.VarChar(30)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  expiresAt    DateTime @map("expires_at") @db.Timestamptz(6)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  otpVerifications OtpVerification[]
+
+  @@index([email])
+  @@index([username])
+  @@index([expiresAt])
+  @@map("pending_registrations")
+}
+
+// ==========================================
+// 19. OTP VERIFICATION ENTITY
+// ==========================================
+model OtpVerification {
+  id                    String    @id @default(uuid()) @db.Uuid
+  pendingRegistrationId String?   @map("pending_registration_id") @db.Uuid
+  email                 String    @db.VarChar(255)
+  otpHash               String    @map("otp_hash") @db.VarChar(255)
+  purpose               String    @db.VarChar(50) // register_verification, forgot_password, email_verification
+  attempts              Int       @default(0)
+  expiresAt             DateTime  @map("expires_at") @db.Timestamptz(6)
+  verifiedAt            DateTime? @map("verified_at") @db.Timestamptz(6)
+  invalidatedAt         DateTime? @map("invalidated_at") @db.Timestamptz(6)
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  pendingRegistration PendingRegistration? @relation(fields: [pendingRegistrationId], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([purpose])
+  @@index([pendingRegistrationId])
+  @@index([expiresAt])
+  @@map("otp_verifications")
+}
+
+// ==========================================
+// 20. USER SETTING & DASHBOARD PREFERENCES
+// ==========================================
+model UserSetting {
+  id                   String   @id @default(uuid()) @db.Uuid
+  userId               String   @unique @map("user_id") @db.Uuid
+  theme                String   @default("light") @db.VarChar(20)
+  currency             String   @default("USD") @db.VarChar(10)
+  branch               String   @default("Phnom Penh Main Branch") @db.VarChar(100)
+  notificationsEnabled Boolean  @default(true) @map("notifications_enabled")
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
 }

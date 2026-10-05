@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Currency, UserRole, NotificationItem } from '../../types';
+import { Currency, UserRole, NotificationItem, UserProfile } from '../../types';
 import {
   Search,
   Bell,
@@ -11,7 +11,8 @@ import {
   Sparkles,
   Shield,
   Layers,
-  CheckCheck
+  CheckCheck,
+  LogOut
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -31,6 +32,8 @@ export interface TopBarProps {
   notifications: NotificationItem[];
   onMarkNotificationRead?: (id: string) => void;
   onMobileMenuToggle?: () => void;
+  currentUser?: UserProfile;
+  onLogout?: () => void;
 }
 
 const ROLE_DISPLAY_CONFIG: Record<
@@ -72,7 +75,9 @@ export const TopBar: React.FC<TopBarProps> = ({
   onSearchOpen,
   notifications,
   onMarkNotificationRead,
-  onMobileMenuToggle
+  onMobileMenuToggle,
+  currentUser,
+  onLogout,
 }) => {
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
@@ -117,7 +122,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   });
 
   return (
-    <header className="sticky top-0 z-30 h-16 backdrop-blur-md bg-white/80 border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between gap-3 shadow-[0_1px_3px_rgba(0,0,0,0.02)] select-none">
+    <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between gap-3 shadow-xs select-none">
       
       {/* 1. Left Side: Mobile Menu Button + Breadcrumb Trail */}
       <div className="flex items-center gap-2.5 min-w-0 flex-shrink">
@@ -176,16 +181,16 @@ export const TopBar: React.FC<TopBarProps> = ({
         <button
           onClick={onSearchOpen}
           type="button"
-          className="w-full flex items-center justify-between px-3.5 py-1.5 rounded-xl bg-slate-50/80 hover:bg-slate-100/90 border border-slate-200/90 text-xs text-slate-500 transition-all duration-150 shadow-[0_1px_2px_rgba(0,0,0,0.02)] group focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+          className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs text-slate-500 transition-colors group focus:outline-none"
         >
-          <div className="flex items-center gap-2.5 truncate">
-            <Search className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 transition-colors" />
+          <div className="flex items-center gap-2 truncate">
+            <Search className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-colors" />
             <span className="text-slate-500 text-xs font-normal truncate">
-              Quick search borrowers, loans (Cmd+K)
+              Quick search (Cmd+K)
             </span>
           </div>
 
-          <kbd className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-slate-500 bg-white rounded-md border border-slate-200 shadow-2xs group-hover:border-slate-300">
+          <kbd className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono font-medium text-slate-500 bg-white rounded border border-slate-200">
             <span>⌘</span>K
           </kbd>
         </button>
@@ -194,26 +199,22 @@ export const TopBar: React.FC<TopBarProps> = ({
       {/* 3. Right Controls with Clean Dividers */}
       <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
         
-        {/* Live Market FX Pill */}
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50/90 border border-emerald-200/90 text-[11px] font-mono text-emerald-800 shadow-[0_1px_4px_rgba(16,185,129,0.08)]">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-          </span>
-          <span className="font-semibold tracking-tight">1 USD ≈ 4,100 KHR</span>
+        {/* Live Market FX */}
+        <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200 text-[11px] font-mono text-slate-600">
+          <span>1 USD = 4,100 KHR</span>
         </div>
 
         {/* Clean Divider */}
-        <div className="hidden sm:block h-5 w-px bg-slate-200/80" />
+        <div className="hidden sm:block h-5 w-px bg-slate-200" />
 
         {/* Currency Switcher: Segmented Toggle Pill */}
-        <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200/80 text-xs shadow-inner">
+        <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs">
           <button
             onClick={() => onToggleCurrency('USD')}
             className={cn(
-              'px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all duration-150 font-mono',
+              'px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors font-mono',
               currency === 'USD'
-                ? 'bg-white text-blue-700 shadow-sm'
+                ? 'bg-white text-slate-900 shadow-xs font-semibold'
                 : 'text-slate-500 hover:text-slate-900'
             )}
           >
@@ -222,9 +223,9 @@ export const TopBar: React.FC<TopBarProps> = ({
           <button
             onClick={() => onToggleCurrency('KHR')}
             className={cn(
-              'px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all duration-150 font-khmer',
+              'px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors font-khmer',
               currency === 'KHR'
-                ? 'bg-white text-blue-700 shadow-sm'
+                ? 'bg-white text-slate-900 shadow-xs font-semibold'
                 : 'text-slate-500 hover:text-slate-900'
             )}
           >
@@ -239,9 +240,9 @@ export const TopBar: React.FC<TopBarProps> = ({
         <div className="relative" ref={notifRef}>
           <button
             onClick={() => setNotifDropdownOpen(!notifDropdownOpen)}
-            title="Institutional Alerts & Notifications"
+            title="Notifications"
             aria-label="Notifications"
-            className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100/90 border border-transparent hover:border-slate-200/80 transition relative focus:outline-none"
+            className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 border border-transparent hover:border-slate-200 transition relative focus:outline-none"
           >
             <Bell className="w-4 h-4 text-slate-600" />
             {unreadCount > 0 && (
@@ -260,12 +261,12 @@ export const TopBar: React.FC<TopBarProps> = ({
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 8, scale: 0.98 }}
                 transition={{ duration: 0.15, ease: 'easeOut' }}
-                className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-white border border-slate-200 shadow-2xl z-50 p-4 space-y-3"
+                className="absolute right-0 mt-2 w-80 sm:w-96 rounded-xl bg-white border border-slate-200 shadow-xl z-50 p-4 space-y-3"
               >
                 <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                   <div className="flex items-center gap-2">
-                    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-sans">
-                      Institutional Alerts
+                    <h4 className="text-xs font-semibold text-slate-900 uppercase tracking-wider font-sans">
+                      Notifications
                     </h4>
                     {unreadCount > 0 && (
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-50 text-rose-600 border border-rose-200">
@@ -285,15 +286,15 @@ export const TopBar: React.FC<TopBarProps> = ({
                 </div>
 
                 {/* Filter Tabs */}
-                <div className="flex gap-1 text-[10px] font-semibold bg-slate-100 p-0.5 rounded-xl border border-slate-200/60">
+                <div className="flex gap-1 text-[10px] font-semibold bg-slate-100 p-0.5 rounded-lg border border-slate-200">
                   {(['ALL', 'PAYMENT_DUE', 'OVERDUE', 'APPROVAL'] as const).map((cat) => (
                     <button
                       key={cat}
                       onClick={() => setSelectedNotifFilter(cat)}
                       className={cn(
-                        'flex-1 py-1 rounded-lg transition text-center font-sans',
+                        'flex-1 py-1 rounded-md transition text-center font-sans',
                         selectedNotifFilter === cat
-                          ? 'bg-white text-slate-900 shadow-xs font-bold'
+                          ? 'bg-white text-slate-900 shadow-xs font-semibold'
                           : 'text-slate-500 hover:text-slate-800'
                       )}
                     >
@@ -320,10 +321,10 @@ export const TopBar: React.FC<TopBarProps> = ({
                         key={n.id}
                         onClick={() => onMarkNotificationRead?.(n.id)}
                         className={cn(
-                          'p-3 rounded-xl border text-xs cursor-pointer transition-all duration-150',
+                          'p-3 rounded-lg border text-xs cursor-pointer transition',
                           !n.isRead
-                            ? 'bg-blue-50/40 border-blue-100 text-slate-900 hover:bg-blue-50/70 shadow-2xs'
-                            : 'bg-slate-50/50 border-slate-100 text-slate-600 hover:bg-slate-100/60'
+                            ? 'bg-blue-50/50 border-blue-200 text-slate-900 hover:bg-blue-50'
+                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                         )}
                       >
                         <div className="flex items-center justify-between mb-1">
@@ -343,7 +344,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                             {n.timestamp}
                           </span>
                         </div>
-                        <p className="font-bold text-slate-900 text-xs leading-snug">
+                        <p className="font-semibold text-slate-900 text-xs leading-snug">
                           {n.title}
                         </p>
                         <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
@@ -359,27 +360,35 @@ export const TopBar: React.FC<TopBarProps> = ({
         </div>
 
         {/* Clean Divider */}
-        <div className="h-5 w-px bg-slate-200/80" />
+        <div className="h-5 w-px bg-slate-200" />
 
         {/* Role Switcher / Profile Dropdown */}
         <div className="relative" ref={roleRef}>
           <button
             onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
             type="button"
-            className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/90 text-xs transition shadow-2xs group focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-xs transition shadow-xs group focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           >
-            {/* Avatar Pill with Role Color */}
-            <div
-              className={cn(
-                'w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] shadow-sm',
-                ROLE_DISPLAY_CONFIG[currentRole]?.color || 'bg-blue-600 text-white'
-              )}
-            >
-              {currentRole.charAt(0)}
-            </div>
-            <div className="flex flex-col text-left">
-              <span className="text-slate-800 font-bold text-xs leading-none">
-                {ROLE_DISPLAY_CONFIG[currentRole]?.badge || currentRole}
+            {/* Avatar Pill with Role Color or Image */}
+            {currentUser?.avatarUrl || currentUser?.avatar ? (
+              <img
+                src={currentUser.avatarUrl || currentUser.avatar}
+                alt={currentUser.name || 'User'}
+                className="w-5 h-5 rounded-full object-cover shadow-sm ring-1 ring-slate-200"
+              />
+            ) : (
+              <div
+                className={cn(
+                  'w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] shadow-sm',
+                  ROLE_DISPLAY_CONFIG[currentRole]?.color || 'bg-blue-600 text-white'
+                )}
+              >
+                {currentRole.charAt(0)}
+              </div>
+            )}
+            <div className="flex flex-col text-left max-w-[120px]">
+              <span className="text-slate-800 font-semibold text-xs leading-none truncate">
+                {currentUser?.name || currentUser?.fullName || ROLE_DISPLAY_CONFIG[currentRole]?.badge || currentRole}
               </span>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 transition" />
@@ -393,10 +402,35 @@ export const TopBar: React.FC<TopBarProps> = ({
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 8, scale: 0.98 }}
                 transition={{ duration: 0.15, ease: 'easeOut' }}
-                className="absolute right-0 mt-2 w-64 rounded-2xl bg-white border border-slate-200 shadow-2xl z-50 p-2 space-y-1"
+                className="absolute right-0 mt-2 w-64 rounded-xl bg-white border border-slate-200 shadow-xl z-50 p-2 space-y-2"
               >
-                <div className="px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
-                  Switch Clearance Level (Demo Grading)
+                {/* Profile Header in Dropdown */}
+                {currentUser && (
+                  <div className="p-2 bg-slate-50 rounded-lg border border-slate-100 flex items-center gap-2.5">
+                    {currentUser.avatarUrl || currentUser.avatar ? (
+                      <img
+                        src={currentUser.avatarUrl || currentUser.avatar}
+                        alt={currentUser.name}
+                        className="w-8 h-8 rounded-full object-cover ring-1 ring-slate-200 flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
+                        {currentUser.name ? currentUser.name.charAt(0) : 'U'}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-slate-900 truncate">
+                        {currentUser.name || currentUser.fullName}
+                      </p>
+                      <p className="text-[10px] text-slate-500 truncate">
+                        {currentUser.email}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+                  Switch Active Role
                 </div>
 
                 {(['MANAGER', 'CASHIER', 'BORROWER'] as UserRole[]).map((role) => {
@@ -411,9 +445,9 @@ export const TopBar: React.FC<TopBarProps> = ({
                         setRoleDropdownOpen(false);
                       }}
                       className={cn(
-                        'w-full flex items-center justify-between p-2 rounded-xl text-xs transition text-left',
+                        'w-full flex items-center justify-between p-2 rounded-lg text-xs transition text-left',
                         isSelected
-                          ? 'bg-blue-50/80 text-blue-900 font-bold border border-blue-100'
+                          ? 'bg-blue-50 text-blue-900 font-semibold border border-blue-100'
                           : 'text-slate-700 hover:bg-slate-50'
                       )}
                     >
@@ -442,6 +476,21 @@ export const TopBar: React.FC<TopBarProps> = ({
                     </button>
                   );
                 })}
+
+                {onLogout && (
+                  <div className="pt-1 border-t border-slate-100">
+                    <button
+                      onClick={() => {
+                        setRoleDropdownOpen(false);
+                        onLogout();
+                      }}
+                      className="w-full flex items-center gap-2 p-2 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 transition"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Log Out</span>
+                    </button>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

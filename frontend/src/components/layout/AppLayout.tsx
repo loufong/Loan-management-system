@@ -73,7 +73,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
               onClick={() => setMobileDrawerOpen(false)}
-              className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-xs lg:hidden"
+              className="fixed inset-0 z-40 bg-slate-950/60 lg:hidden"
               aria-hidden="true"
             />
 
@@ -117,7 +117,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
       {/* 3. Main Workspace Area */}
       <div className="flex-1 flex flex-col min-w-0 h-full max-h-screen overflow-hidden">
-        {/* Sticky Glassmorphic TopBar */}
+        {/* Sticky Solid TopBar */}
         <TopBar
           breadcrumbs={breadcrumbs}
           currentRole={currentRole}
@@ -128,10 +128,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           notifications={notifications}
           onMarkNotificationRead={onMarkNotificationRead}
           onMobileMenuToggle={() => setMobileDrawerOpen(true)}
+          currentUser={currentUser}
+          onLogout={onLogout}
         />
 
         {/* Scrollable Main Content Area with Route Transitions */}
-        <main className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 lg:p-8 bg-slate-50/70">
+        <main className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 lg:p-8 bg-slate-50">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeNavId}

@@ -61,7 +61,7 @@ export const ApprovalsQueue: React.FC<ApprovalsQueueProps> = ({
   const openRejectModal = (app: LoanApplication) => {
     setSelectedAppForRejection(app);
     setRejectionReason('HIGH_DTI');
-    setRejectionNote('Applicant debt-to-income exceeds institutional credit limits.');
+    setRejectionNote('Applicant debt-to-income ratio exceeds approved credit limits.');
   };
 
   const handleConfirmApproval = (e: React.FormEvent) => {
@@ -248,8 +248,8 @@ export const ApprovalsQueue: React.FC<ApprovalsQueueProps> = ({
 
       {/* APPROVAL MODAL */}
       {selectedAppForApproval && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg p-6 space-y-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 animate-in fade-in duration-150">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-2xl w-full max-w-lg p-6 space-y-5">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -357,8 +357,8 @@ export const ApprovalsQueue: React.FC<ApprovalsQueueProps> = ({
 
       {/* REJECTION MODAL */}
       {selectedAppForRejection && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg p-6 space-y-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 animate-in fade-in duration-150">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-2xl w-full max-w-lg p-6 space-y-5">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">

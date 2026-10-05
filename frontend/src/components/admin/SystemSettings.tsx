@@ -70,13 +70,13 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
     setTimeout(() => {
       setIsSaving(false);
       setSaveSuccess(true);
-      onShowToast?.('System settings and institutional policies successfully updated!', 'success');
+      onShowToast?.('System settings updated successfully.', 'success');
       setTimeout(() => setSaveSuccess(false), 3000);
     }, 600);
   };
 
   const handleResetDefaults = () => {
-    if (window.confirm('Reset all institutional configurations to system factory defaults?')) {
+    if (window.confirm('Reset all settings to factory defaults?')) {
       setMaxDtiRatio(50);
       setDailyLateFeeRate(0.10);
       setGracePeriodDays(3);
@@ -96,11 +96,11 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-200">
       {/* Top Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold text-indigo-600 uppercase tracking-wider mb-1">
+          <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">
             <Settings className="w-4 h-4" />
-            Institutional Administration
+            System Administration
           </div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
             System Settings &amp; Lending Policies
@@ -124,7 +124,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="px-5 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] rounded-xl shadow-xs hover:shadow transition-all flex items-center gap-2 cursor-pointer"
+            className="px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors flex items-center gap-2 cursor-pointer"
           >
             {isSaving ? (
               <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -204,10 +204,10 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
       {/* Tab 1: General & Currency */}
       {activeTab === 'general' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4">
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <Building2 className="w-5 h-5 text-indigo-600" />
-              Institutional Identity
+              Organization Identity
             </h3>
             <p className="text-xs text-slate-500">
               Primary entity metadata displayed on payment receipts, loan agreements, and audit reports.
@@ -269,7 +269,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4">
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <DollarSign className="w-5 h-5 text-emerald-600" />
               Currency &amp; Exchange Rates
@@ -339,13 +339,13 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
       {/* Tab 2: Lending & Risk Policies */}
       {activeTab === 'lending' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4">
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <Percent className="w-5 h-5 text-indigo-600" />
               Underwriting Risk Ceilings
             </h3>
             <p className="text-xs text-slate-500">
-              Institutional risk bounds applied automatically during loan application evaluations.
+              Risk limits applied automatically during loan application evaluations.
             </p>
 
             <div className="space-y-4 pt-2">
@@ -414,7 +414,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4">
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <Clock className="w-5 h-5 text-amber-600" />
               Automated Delinquency &amp; Controls
@@ -482,7 +482,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
       {/* Tab 3: Security & Sessions */}
       {activeTab === 'security' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4">
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <Lock className="w-5 h-5 text-indigo-600" />
               Session &amp; Token Parameters
@@ -542,7 +542,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4">
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <KeyRound className="w-5 h-5 text-emerald-600" />
               Authentication &amp; Compliance
@@ -594,7 +594,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
 
       {/* Tab 4: Alerts & Dispatches */}
       {activeTab === 'notifications' && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-5 max-w-3xl">
+        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-5 max-w-3xl">
           <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
             <Bell className="w-5 h-5 text-indigo-600" />
             Automated Customer &amp; Staff Alerts
@@ -680,7 +680,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
       {/* Tab 5: Engine & Maintenance */}
       {activeTab === 'maintenance' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4">
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <Server className="w-5 h-5 text-indigo-600" />
               Runtime Infrastructure
@@ -709,7 +709,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4">
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <Database className="w-5 h-5 text-emerald-600" />
               System Utilities

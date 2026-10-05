@@ -61,10 +61,10 @@ interface UploadedDocument {
 }
 
 const STEP_DEFINITIONS = [
-  { id: 1, title: 'Borrower & Product', sub: 'Client dossier & loan facility' },
+  { id: 1, title: 'Borrower & Product', sub: 'Borrower profile & loan product' },
   { id: 2, title: 'Loan Terms & Calculator', sub: 'Amount, tenure & live DTI' },
   { id: 3, title: 'Supporting Documents', sub: 'KYC & collateral verification' },
-  { id: 4, title: 'Summary Confirmation', sub: 'Review & routing clearance' },
+  { id: 4, title: 'Summary Confirmation', sub: 'Review & submit application' },
 ];
 
 export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
@@ -351,8 +351,8 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
         </div>
       </div>
 
-      {/* Modern Stepper Progress Bar */}
-      <div className="bg-white border border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.04)] rounded-2xl p-4 sm:p-5">
+      {/* Stepper Progress Bar */}
+      <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-4 sm:p-5">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 relative">
           {STEP_DEFINITIONS.map((step) => {
             const isCompleted = currentStep > step.id;
@@ -369,11 +369,11 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-mono font-bold transition-all ${
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-mono font-bold transition-all ${
                       isCompleted
                         ? 'bg-emerald-600 text-white shadow-xs'
                         : isCurrent
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/25 ring-4 ring-indigo-50'
+                        ? 'bg-blue-600 text-white shadow-sm ring-4 ring-blue-50'
                         : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200'
                     }`}
                   >
@@ -409,7 +409,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                       isCompleted
                         ? 'bg-emerald-600'
                         : isCurrent
-                        ? 'bg-indigo-600'
+                        ? 'bg-blue-600'
                         : 'bg-transparent'
                     }`}
                     initial={{ width: 0 }}
@@ -426,7 +426,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
       {/* -------------------------------------------------------------------- */}
       {/* 2. Step View Content Surfaces                                        */}
       {/* -------------------------------------------------------------------- */}
-      <div className="bg-white border border-slate-200/80 shadow-[0_2px_8px_rgba(0,0,0,0.03)] rounded-2xl p-6 sm:p-8">
+      <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-6 sm:p-8">
         <AnimatePresence mode="wait">
           {/* ================================================================ */}
           {/* STEP 1: BORROWER & PRODUCT SELECTION                             */}
@@ -445,7 +445,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                   Step 1: Borrower &amp; Loan Product Selection
                 </h2>
                 <p className="text-xs text-slate-500 mt-1">
-                  Select the registered institutional borrower and assign the optimal loan facility.
+                  Select the borrower and assign the appropriate loan product.
                 </p>
               </div>
 
@@ -453,8 +453,8 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                    <User className="w-4 h-4 text-indigo-600" />
-                    <span>Target Institutional Borrower</span>
+                    <User className="w-4 h-4 text-blue-600" />
+                    <span>Select Borrower</span>
                   </label>
                   <span className="text-[11px] text-slate-400 font-mono">
                     {filteredBorrowers.length} verified records
@@ -541,7 +541,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
 
                 {/* Instant Borrower Profile Preview Card */}
                 {selectedBorrower && (
-                  <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-indigo-50/30 border border-slate-200/80 shadow-xs relative overflow-hidden">
+                  <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-sm relative overflow-hidden">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/60">
                       <div className="flex items-center gap-3.5">
                         <div className="w-12 h-12 rounded-xl bg-indigo-600 text-white font-black text-base flex items-center justify-center shadow-md shadow-indigo-600/20 shrink-0">
@@ -628,10 +628,10 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                       <div
                         key={prod.id}
                         onClick={() => handleSelectProduct(prod)}
-                        className={`p-4 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between relative group ${
+                        className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between relative group ${
                           isSelected
-                            ? 'border-indigo-600 bg-indigo-50/40 shadow-md shadow-indigo-600/10 ring-2 ring-indigo-600/30'
-                            : 'border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50/50'
+                            ? 'border-blue-600 bg-blue-50/40 shadow-sm ring-1 ring-blue-600'
+                            : 'border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50'
                         }`}
                       >
                         <div>
@@ -754,7 +754,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                   </div>
 
                   {/* 1. Principal Amount Slider + Number Input */}
-                  <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs space-y-4">
+                  <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-sm space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
                         <DollarSign className="w-4 h-4 text-indigo-600" />
@@ -817,7 +817,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                   </div>
 
                   {/* 2. Tenure Slider + Months Input */}
-                  <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs space-y-4">
+                  <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-sm space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
                         <Calendar className="w-4 h-4 text-indigo-600" />
@@ -875,7 +875,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                   </div>
 
                   {/* 3. Repayment Frequency Selector */}
-                  <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs space-y-3">
+                  <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-sm space-y-3">
                     <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
                       <Clock className="w-4 h-4 text-indigo-600" />
                       <span>Repayment Schedule Frequency</span>
@@ -924,9 +924,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
 
                 {/* Right Column: Real-Time Underwriting & Live DTI Gauge Card (5 Cols) */}
                 <div className="lg:col-span-5 space-y-4">
-                  <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 shadow-xl border border-white/10 relative overflow-hidden">
-                    {/* Background glowing effects */}
-                    <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+                  <div className="bg-slate-900 text-white rounded-xl p-6 shadow-sm border border-slate-800 relative overflow-hidden">
                     
                     <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
                       <div>
@@ -981,7 +979,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                       </div>
 
                       {/* Prominent Periodic Installment Block */}
-                      <div className="mt-4 p-4 rounded-2xl bg-white/[0.08] border border-white/15 backdrop-blur-md">
+                      <div className="mt-4 p-4 rounded-xl bg-slate-800 border border-slate-700">
                         <div className="flex justify-between items-baseline">
                           <span className="text-xs font-semibold text-indigo-200">
                             {frequency === 'MONTHLY' ? 'Monthly' : frequency === 'BIWEEKLY' ? 'Biweekly' : 'Weekly'} Installment:
@@ -1022,8 +1020,8 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                           <motion.div
                             className={`h-full rounded-full transition-colors ${
                               calc.dtiRatio > 40
-                                ? 'bg-gradient-to-r from-amber-500 to-rose-500'
-                                : 'bg-gradient-to-r from-emerald-500 to-teal-400'
+                                ? 'bg-rose-500'
+                                : 'bg-emerald-500'
                             }`}
                             initial={{ width: 0 }}
                             animate={{ width: `${Math.min(calc.dtiRatio, 100)}%` }}
@@ -1045,8 +1043,8 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                             <span>Affordability Warning: DTI Exceeds 40.0%</span>
                           </div>
                           <p className="text-[11px] text-amber-200/90 leading-relaxed">
-                            Monthly installment exceeds borrower monthly income ($
-                            {selectedBorrower?.monthlyIncomeUSD?.toLocaleString()}). Institutional Credit Committee sign-off will be mandated.
+                            Monthly installment is high relative to borrower income ($
+                            {selectedBorrower?.monthlyIncomeUSD?.toLocaleString()}). Credit committee review will be required.
                           </p>
                         </div>
                       ) : (
@@ -1074,8 +1072,8 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
 
               {/* Repayment Schedule Modal */}
               {showScheduleModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-                  <div className="bg-white rounded-3xl max-w-3xl w-full p-6 shadow-2xl border border-slate-200 max-h-[85vh] flex flex-col">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60">
+                  <div className="bg-white rounded-xl max-w-3xl w-full p-6 shadow-2xl border border-slate-200 max-h-[85vh] flex flex-col">
                     <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                       <div>
                         <h3 className="text-base font-bold text-slate-900">
@@ -1166,7 +1164,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                   Step 3: Supporting KYC &amp; Collateral Documents
                 </h2>
                 <p className="text-xs text-slate-500 mt-1">
-                  Upload digital evidence required for institutional compliance and underwriting approval.
+                  Upload supporting documents required for verification and underwriting approval.
                 </p>
               </div>
 
@@ -1185,24 +1183,24 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                     handleAddDocument('NATIONAL_ID');
                   }}
                   onClick={() => handleAddDocument('NATIONAL_ID')}
-                  className={`p-6 rounded-2xl border-2 border-dashed text-center space-y-3 cursor-pointer transition-all ${
+                  className={`p-6 rounded-xl border-2 border-dashed text-center space-y-3 cursor-pointer transition-all ${
                     dragOverZone === 'NATIONAL_ID'
-                      ? 'border-indigo-600 bg-indigo-50/60 scale-[1.02]'
-                      : 'border-slate-200 hover:border-indigo-400 bg-slate-50/40 hover:bg-slate-50'
+                      ? 'border-blue-600 bg-blue-50/60 scale-[1.01]'
+                      : 'border-slate-300 hover:border-blue-500 bg-white hover:bg-slate-50'
                   }`}
                 >
-                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto shadow-xs">
+                  <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto shadow-xs">
                     <User className="w-6 h-6" />
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-slate-900">
                       National ID / Passport
                     </h4>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
+                    <p className="text-[11px] text-slate-500 mt-0.5">
                       Front &amp; Back valid government identity scan
                     </p>
                   </div>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-[10px] font-semibold text-indigo-600 shadow-xs">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-[10px] font-semibold text-blue-600 shadow-xs">
                     <Upload className="w-3 h-3" />
                     <span>Drop PDF or Browse</span>
                   </div>
@@ -1221,20 +1219,20 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                     handleAddDocument('INCOME_PROOF');
                   }}
                   onClick={() => handleAddDocument('INCOME_PROOF')}
-                  className={`p-6 rounded-2xl border-2 border-dashed text-center space-y-3 cursor-pointer transition-all ${
+                  className={`p-6 rounded-xl border-2 border-dashed text-center space-y-3 cursor-pointer transition-all ${
                     dragOverZone === 'INCOME_PROOF'
-                      ? 'border-indigo-600 bg-indigo-50/60 scale-[1.02]'
-                      : 'border-slate-200 hover:border-indigo-400 bg-slate-50/40 hover:bg-slate-50'
+                      ? 'border-blue-600 bg-blue-50/60 scale-[1.01]'
+                      : 'border-slate-300 hover:border-blue-500 bg-white hover:bg-slate-50'
                   }`}
                 >
-                  <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto shadow-xs">
+                  <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto shadow-xs">
                     <FileCheck className="w-6 h-6" />
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-slate-900">
                       Proof of Income / Payroll
                     </h4>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
+                    <p className="text-[11px] text-slate-500 mt-0.5">
                       Last 3 months certified bank statements or slips
                     </p>
                   </div>
@@ -1257,20 +1255,20 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                     handleAddDocument('COLLATERAL');
                   }}
                   onClick={() => handleAddDocument('COLLATERAL')}
-                  className={`p-6 rounded-2xl border-2 border-dashed text-center space-y-3 cursor-pointer transition-all ${
+                  className={`p-6 rounded-xl border-2 border-dashed text-center space-y-3 cursor-pointer transition-all ${
                     dragOverZone === 'COLLATERAL'
-                      ? 'border-indigo-600 bg-indigo-50/60 scale-[1.02]'
-                      : 'border-slate-200 hover:border-indigo-400 bg-slate-50/40 hover:bg-slate-50'
+                      ? 'border-blue-600 bg-blue-50/60 scale-[1.01]'
+                      : 'border-slate-300 hover:border-blue-500 bg-white hover:bg-slate-50'
                   }`}
                 >
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto shadow-xs">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto shadow-xs">
                     <ShieldCheck className="w-6 h-6" />
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-slate-900">
                       Collateral / Guarantor Info
                     </h4>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
+                    <p className="text-[11px] text-slate-500 mt-0.5">
                       Land deed, vehicle registration or signed guarantor
                     </p>
                   </div>
@@ -1285,7 +1283,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
               <div className="space-y-3 pt-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                    Attached Supporting Dossier ({uploadedDocs.length})
+                    Attached Supporting Documents ({uploadedDocs.length})
                   </span>
                   <span className="text-[11px] text-slate-400 font-mono">
                     Max 15MB • PDF, JPG, PNG
@@ -1293,11 +1291,11 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                 </div>
 
                 {uploadedDocs.length === 0 ? (
-                  <div className="p-8 text-center border border-dashed border-slate-200 rounded-2xl bg-slate-50/50 text-xs text-slate-400">
+                  <div className="p-8 text-center border border-dashed border-slate-200 rounded-xl bg-slate-50 text-xs text-slate-400">
                     No documents attached yet. Click or drag files into the upload zones above.
                   </div>
                 ) : (
-                  <div className="divide-y divide-slate-100 border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+                  <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden shadow-sm">
                     {uploadedDocs.map((doc) => (
                       <div
                         key={doc.id}
@@ -1348,8 +1346,8 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
 
               {/* Document Preview Modal */}
               {previewDoc && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-                  <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60">
+                  <div className="bg-white rounded-xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
                     <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                       <div className="flex items-center gap-2.5">
                         <FileText className="w-5 h-5 text-indigo-600" />
@@ -1366,11 +1364,11 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                       </button>
                     </div>
 
-                    <div className="h-64 rounded-2xl bg-slate-100 border border-slate-200 flex flex-col items-center justify-center text-slate-400 text-xs p-6 text-center space-y-2">
-                      <FileCheck className="w-12 h-12 text-indigo-500" />
+                    <div className="h-64 rounded-xl bg-slate-100 border border-slate-200 flex flex-col items-center justify-center text-slate-400 text-xs p-6 text-center space-y-2">
+                      <FileCheck className="w-12 h-12 text-blue-500" />
                       <p className="font-semibold text-slate-700">Digital Document Verified</p>
                       <p className="text-[11px] text-slate-400 max-w-xs">
-                        256-bit TLS encrypted document stored in compliant Cambodia National Bank vault.
+                        Encrypted document stored securely in system storage.
                       </p>
                     </div>
 
@@ -1411,12 +1409,12 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
 
               {/* 4-Section Review Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
-                {/* 1. Borrower Dossier Summary */}
-                <div className="p-5 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
-                    <span className="font-bold uppercase tracking-wider text-slate-500 text-[11px] flex items-center gap-1.5">
-                      <User className="w-3.5 h-3.5 text-indigo-600" />
-                      <span>Borrower Dossier</span>
+                {/* 1. Borrower Summary */}
+                <div className="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                    <span className="font-bold uppercase tracking-wider text-slate-600 text-[11px] flex items-center gap-1.5">
+                      <User className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Borrower Profile</span>
                     </span>
                     <Badge variant="verified" size="xs">KYC Cleared</Badge>
                   </div>
@@ -1426,26 +1424,26 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                   </div>
                   <div className="space-y-1.5 font-mono text-slate-600 text-[11px]">
                     <div className="flex justify-between">
-                      <span className="text-slate-400">National ID:</span>
-                      <span className="font-semibold">{selectedBorrower?.nationalId}</span>
+                      <span className="text-slate-500">National ID:</span>
+                      <span className="font-semibold text-slate-900">{selectedBorrower?.nationalId}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Monthly Income:</span>
-                      <MoneyText amount={selectedBorrower?.monthlyIncomeUSD || 0} currency={calcCurrency} className="font-bold text-slate-800" />
+                      <span className="text-slate-500">Monthly Income:</span>
+                      <MoneyText amount={selectedBorrower?.monthlyIncomeUSD || 0} currency={calcCurrency} className="font-bold text-slate-900" />
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Contact Phone:</span>
-                      <span className="font-semibold">{selectedBorrower?.phone}</span>
+                      <span className="text-slate-500">Contact Phone:</span>
+                      <span className="font-semibold text-slate-900">{selectedBorrower?.phone}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* 2. Facility & Terms Summary */}
-                <div className="p-5 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
-                    <span className="font-bold uppercase tracking-wider text-slate-500 text-[11px] flex items-center gap-1.5">
-                      <Briefcase className="w-3.5 h-3.5 text-indigo-600" />
-                      <span>Facility &amp; Pricing</span>
+                <div className="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                    <span className="font-bold uppercase tracking-wider text-slate-600 text-[11px] flex items-center gap-1.5">
+                      <Briefcase className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Facility &amp; Terms</span>
                     </span>
                     <Badge variant="active" size="xs">{selectedProduct?.category}</Badge>
                   </div>
@@ -1455,57 +1453,57 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                   </div>
                   <div className="space-y-1.5 font-mono text-slate-600 text-[11px]">
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Annual APR:</span>
-                      <span className="font-bold text-indigo-600">{calc.rate}% p.a. Fixed</span>
+                      <span className="text-slate-500">Annual APR:</span>
+                      <span className="font-bold text-blue-600">{calc.rate}% p.a. Fixed</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Duration:</span>
-                      <span className="font-semibold">{calc.termMonths} Months</span>
+                      <span className="text-slate-500">Duration:</span>
+                      <span className="font-semibold text-slate-900">{calc.termMonths} Months</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Frequency:</span>
-                      <span className="font-semibold capitalize">{frequency.toLowerCase()}</span>
+                      <span className="text-slate-500">Frequency:</span>
+                      <span className="font-semibold text-slate-900 capitalize">{frequency.toLowerCase()}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* 3. Financial Calculation Totals */}
-                <div className="p-5 rounded-2xl bg-indigo-50/40 border border-indigo-100 space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-indigo-200/60">
-                    <span className="font-bold uppercase tracking-wider text-indigo-900 text-[11px] flex items-center gap-1.5">
-                      <DollarSign className="w-3.5 h-3.5 text-indigo-600" />
-                      <span>Calculation Totals</span>
+                <div className="p-5 rounded-xl bg-blue-50/40 border border-blue-100 space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-blue-200">
+                    <span className="font-bold uppercase tracking-wider text-blue-900 text-[11px] flex items-center gap-1.5">
+                      <DollarSign className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Calculation Summary</span>
                     </span>
-                    <span className="font-mono text-[11px] font-bold text-indigo-600">
+                    <span className="font-mono text-[11px] font-bold text-blue-600">
                       Currency: {calcCurrency}
                     </span>
                   </div>
                   <div className="space-y-2 text-[11px]">
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Requested Principal:</span>
+                      <span className="text-slate-600">Requested Principal:</span>
                       <MoneyText amount={calc.principal} currency={calcCurrency} className="font-bold text-slate-900" />
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Total Interest Accrued:</span>
+                      <span className="text-slate-600">Total Interest:</span>
                       <MoneyText amount={calc.totalInterest} currency={calcCurrency} className="font-bold text-emerald-600" />
                     </div>
-                    <div className="flex justify-between pt-1 border-t border-indigo-100">
+                    <div className="flex justify-between pt-1 border-t border-blue-100">
                       <span className="text-slate-700 font-semibold">Total Repayment:</span>
                       <MoneyText amount={calc.totalRepayment} currency={calcCurrency} className="font-bold text-slate-900" />
                     </div>
                     <div className="flex justify-between items-baseline pt-1">
-                      <span className="text-indigo-950 font-bold">Estimated Installment:</span>
-                      <MoneyText amount={calc.periodicInstallment} currency={calcCurrency} className="text-base font-black text-indigo-600" />
+                      <span className="text-slate-900 font-bold">Estimated Installment:</span>
+                      <MoneyText amount={calc.periodicInstallment} currency={calcCurrency} className="text-base font-black text-blue-600" />
                     </div>
                   </div>
                 </div>
 
                 {/* 4. Risk Appraisal & Governance */}
-                <div className="p-5 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
-                    <span className="font-bold uppercase tracking-wider text-slate-500 text-[11px] flex items-center gap-1.5">
-                      <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
-                      <span>Risk Appraisal</span>
+                <div className="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                    <span className="font-bold uppercase tracking-wider text-slate-600 text-[11px] flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Risk Assessment</span>
                     </span>
                     <Badge variant={calc.riskTier.toLowerCase()} size="xs">
                       {calc.riskTier}
@@ -1513,7 +1511,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                   </div>
                   <div className="space-y-2 text-[11px]">
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Calculated DTI Ratio:</span>
+                      <span className="text-slate-600">Calculated DTI Ratio:</span>
                       <span
                         className={`font-mono font-bold ${
                           calc.isDtiWarning ? 'text-amber-600' : 'text-emerald-600'
@@ -1523,12 +1521,12 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Attached Documents:</span>
-                      <span className="font-semibold text-slate-800">{uploadedDocs.length} Verified Files</span>
+                      <span className="text-slate-600">Attached Documents:</span>
+                      <span className="font-semibold text-slate-900">{uploadedDocs.length} Verified Files</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Committee Routing:</span>
-                      <span className="font-semibold text-slate-800">Branch Credit Committee</span>
+                      <span className="text-slate-600">Review Queue:</span>
+                      <span className="font-semibold text-slate-900">Branch Credit Committee</span>
                     </div>
                   </div>
                 </div>
@@ -1541,15 +1539,15 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
               </div>
 
               {/* Governance & Compliance Routing Notice */}
-              <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-100 flex items-start gap-3.5 text-xs text-slate-700">
-                <ShieldCheck className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
+              <div className="p-4 rounded-xl bg-blue-50/60 border border-blue-200 flex items-start gap-3.5 text-xs text-slate-700">
+                <ShieldCheck className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
                 <div>
-                  <span className="font-bold text-indigo-950 block">
-                    Institutional Governance &amp; Credit SLA
+                  <span className="font-bold text-slate-900 block">
+                    Underwriting &amp; Compliance Review Notice
                   </span>
                   <p className="mt-0.5 text-slate-600 leading-relaxed">
-                    Upon clicking "Submit Application", the loan application is assigned a unique tracking number,
-                    logged into the immutable audit trail, and queued for Tier-1 credit underwriting review within the standard 4-hour SLA.
+                    Upon clicking "Submit Application", the loan application is assigned a unique reference ID,
+                    recorded into the audit ledger, and routed to credit underwriting for review.
                   </p>
                 </div>
               </div>
@@ -1619,15 +1617,15 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
       {/* 3. Official Submission Confirmation Modal                            */}
       {/* -------------------------------------------------------------------- */}
       {showConfirmationModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60">
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
-            className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-6"
+            className="bg-white rounded-xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-6"
           >
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+              <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
                 <ShieldCheck className="w-6 h-6" />
               </div>
               <div className="min-w-0">
@@ -1635,13 +1633,13 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                   Confirm Application Submission
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Institutional loan dossier will be locked and forwarded to Credit Underwriting.
+                  The loan application will be submitted for credit underwriting review.
                 </p>
               </div>
             </div>
 
             {/* Quick Summary Pill Box */}
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5 text-xs">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5 text-xs">
               <div className="flex justify-between">
                 <span className="text-slate-500">Applicant Borrower:</span>
                 <span className="font-bold text-slate-900">{selectedBorrower?.fullName}</span>

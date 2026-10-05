@@ -13,14 +13,105 @@ export interface UserProfile {
   id: string;
   username: string;
   name: string;
+  fullName?: string;
   email: string;
   role: UserRole;
   title: string;
   department: string;
   avatar: string;
+  avatarUrl?: string;
   branch: string;
   borrowerId?: string;
   nationalId?: string;
+  createdAt?: string;
+  lastLogin?: string;
+}
+
+export interface UserSettings {
+  id?: string;
+  userId?: string;
+  theme?: string;
+  currency?: Currency;
+  branch?: string;
+  notificationsEnabled?: boolean;
+}
+
+export interface UserDashboardSummary {
+  user: {
+    id: string;
+    username: string;
+    fullName: string;
+    email: string;
+    phone?: string;
+    role: UserRole;
+    avatarUrl: string;
+    department?: string;
+    position?: string;
+    createdAt: string;
+    lastLogin: string;
+  };
+  settings: UserSettings;
+  isNewUser: boolean;
+  metrics: {
+    activeLoansCount: number;
+    overdueLoansCount?: number;
+    totalApplications?: number;
+    totalBorrowedUSD?: number;
+    totalOutstandingUSD: number;
+    totalCollectedUSD?: number;
+    totalRepaidUSD?: number;
+    totalOverdueUSD: number;
+    approvalRate?: number;
+    repaymentRate?: number;
+    staffCreatedApps?: number;
+    staffApprovedApps?: number;
+    nextPaymentDue?: {
+      installmentNo: number;
+      dueDate: string;
+      amountUSD: number;
+      remainingAmountUSD: number;
+      loanNumber: string;
+    } | null;
+    overdueCount?: number;
+    accountStanding?: 'GOOD_STANDING' | 'DELINQUENT' | 'NEW_ACCOUNT';
+  };
+  cashflowTrend: {
+    month: string;
+    fullMonth: string;
+    disbursedUSD: number;
+    collectedUSD: number;
+  }[];
+  productDistribution: {
+    name: string;
+    percentage: number;
+    color: string;
+    valUSD: number;
+  }[];
+  overdueWatchlist: {
+    id: string;
+    loanId: string;
+    loanNumber: string;
+    borrowerName: string;
+    initials: string;
+    avatarColor: string;
+    borrowerPhone: string;
+    installmentNo: number;
+    daysOverdue: number;
+    urgency: string;
+    urgencyVariant: string;
+    overdueAmountUSD: number;
+  }[];
+  recentActivities: {
+    id: string;
+    time: string;
+    timestamp: string;
+    actor: string;
+    text: string;
+    type: string;
+    badge: string;
+    badgeStyle: string;
+    iconStyle: string;
+  }[];
 }
 
 export type Currency = 'USD' | 'KHR';

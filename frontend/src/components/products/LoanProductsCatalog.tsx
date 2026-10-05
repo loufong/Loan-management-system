@@ -71,7 +71,7 @@ export const LoanProductsCatalog: React.FC<LoanProductsCatalogProps> = ({
       minTerm: newMinTerm,
       maxTerm: newMaxTerm,
       frequency: 'MONTHLY',
-      description: newDesc || 'Institutional lending product configured by credit administration.',
+      description: newDesc || 'Standard lending product managed by credit administration.',
       activeCount: 0,
     };
     onAddProduct?.(created);
@@ -95,7 +95,7 @@ export const LoanProductsCatalog: React.FC<LoanProductsCatalogProps> = ({
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Institutional interest rate structures, amortization constraints, and credit simulators.
+            Loan interest rate structures, amortization schedules, and credit simulators.
           </p>
         </div>
 
@@ -195,11 +195,11 @@ export const LoanProductsCatalog: React.FC<LoanProductsCatalogProps> = ({
 
       {/* 3. Pre-filled Simulator Modal */}
       {activeSimulatorProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg p-6 space-y-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 animate-in fade-in duration-150">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-2xl w-full max-w-lg p-6 space-y-5">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
                   <Calculator className="w-4 h-4" />
                 </div>
                 <div>
@@ -287,11 +287,11 @@ export const LoanProductsCatalog: React.FC<LoanProductsCatalogProps> = ({
 
       {/* 4. Add New Product Modal */}
       {showAddProductModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg p-6 space-y-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 animate-in fade-in duration-150">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-2xl w-full max-w-lg p-6 space-y-5">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
                   <Plus className="w-4 h-4" />
                 </div>
                 <div>

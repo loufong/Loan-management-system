@@ -16,12 +16,12 @@ export const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60">
       <div className="flex flex-col items-center max-h-[95vh] overflow-y-auto">
         {/* Pixel-perfect 380px Thermal POS Banking Slip */}
         <div
           id="printable-slip"
-          className="w-[380px] bg-white text-slate-900 p-6 rounded-2xl shadow-2xl border border-slate-200 font-mono text-xs space-y-3 print:border-none print:shadow-none print:p-0 print:w-full select-text"
+          className="w-[380px] bg-white text-slate-900 p-6 rounded-xl shadow-2xl border border-slate-200 font-mono text-xs space-y-3 print:border-none print:shadow-none print:p-0 print:w-full select-text"
         >
           {/* Header */}
           <div className="text-center pb-3 border-b border-dashed border-slate-300 space-y-1">

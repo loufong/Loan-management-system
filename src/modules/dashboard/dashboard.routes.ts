@@ -35,3 +35,11 @@ dashboardRouter.get(
   authorize(UserRole.MANAGER, UserRole.LOAN_OFFICER, UserRole.CASHIER),
   DashboardController.getMetrics
 );
+
+// 5. User-Specific Dynamic Dashboard (GET /api/dashboard & GET /api/v1/dashboard)
+dashboardRouter.get('/', DashboardController.getUserSummary);
+dashboardRouter.get('/user-summary', DashboardController.getUserSummary);
+dashboardRouter.get('/summary', DashboardController.getUserSummary);
+
+// 6. User Dashboard Settings & Preferences
+dashboardRouter.put('/settings', DashboardController.updateSettings);

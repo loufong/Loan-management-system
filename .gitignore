@@ -8,4 +8,9 @@ prisma/*.db
 prisma/*.db-journal
 frontend/node_modules/
 frontend/dist/
+frontend/.vite/
+.vite/
+.env.local
+.env.*.local
 .DS_Store
+

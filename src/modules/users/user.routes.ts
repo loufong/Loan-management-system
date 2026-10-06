@@ -12,9 +12,11 @@ userRouter.get('/roles/matrix', UserController.getRoleMatrix);
 // Administrative user management routes require authentication and Admin/Manager role
 userRouter.use(authenticate);
 
-// Administrative operations - strictly MANAGER / ADMIN
-userRouter.get('/', checkRole([UserRole.MANAGER]), UserController.list);
-userRouter.get('/:id', checkRole([UserRole.MANAGER]), UserController.getById);
-userRouter.post('/', checkRole([UserRole.MANAGER]), UserController.create);
-userRouter.put('/:id', checkRole([UserRole.MANAGER]), UserController.update);
-userRouter.patch('/:id/toggle-status', checkRole([UserRole.MANAGER]), UserController.toggleStatus);
+// Administrative operations - strictly ADMIN / MANAGER
+userRouter.get('/', checkRole(['ADMIN', 'MANAGER']), UserController.list);
+userRouter.get('/:id', checkRole(['ADMIN', 'MANAGER']), UserController.getById);
+userRouter.post('/', checkRole(['ADMIN', 'MANAGER']), UserController.create);
+userRouter.put('/:id', checkRole(['ADMIN', 'MANAGER']), UserController.update);
+userRouter.patch('/:id/toggle-status', checkRole(['ADMIN', 'MANAGER']), UserController.toggleStatus);
+userRouter.patch('/:id/status', checkRole(['ADMIN', 'MANAGER']), UserController.setStatus);
+userRouter.post('/:id/reset-password', checkRole(['ADMIN', 'MANAGER']), UserController.resetPassword);

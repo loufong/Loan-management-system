@@ -87,6 +87,16 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     Permission.PAYMENT_READ_OWN,
     Permission.DOCUMENT_UPLOAD,
     Permission.DOCUMENT_READ
+  ],
+
+  [UserRole.USER]: [
+    Permission.BORROWER_READ,
+    Permission.APPLICATION_READ_OWN,
+    Permission.APPLICATION_CREATE_OWN,
+    Permission.LOAN_READ_OWN,
+    Permission.PAYMENT_READ_OWN,
+    Permission.DOCUMENT_UPLOAD,
+    Permission.DOCUMENT_READ
   ]
 };
 

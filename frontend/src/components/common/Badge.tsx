@@ -31,8 +31,8 @@ export const Badge: React.FC<BadgeProps> = ({
 }) => {
   const norm = (variant || '').toLowerCase();
 
-  let colorClasses = 'bg-slate-100 text-slate-600 border-slate-200';
-  let dotColor = 'bg-slate-400';
+  let colorClasses = 'bg-slate-100 text-[#64748B] border-[#CBD5E1]';
+  let dotColor = 'bg-[#64748B]';
 
   if (
     norm.includes('paid') ||
@@ -40,20 +40,27 @@ export const Badge: React.FC<BadgeProps> = ({
     norm.includes('approved') ||
     norm.includes('verified') ||
     norm.includes('completed') ||
-    norm.includes('low risk')
+    norm.includes('low risk') ||
+    norm.includes('safe')
   ) {
-    colorClasses = 'bg-emerald-50 text-emerald-700 border-emerald-200/80 shadow-[0_2px_8px_rgba(16,185,129,0.15)]';
-    dotColor = 'bg-emerald-500';
+    if (norm.includes('active')) {
+      colorClasses = 'bg-blue-50 text-[#2563EB] border-blue-200';
+      dotColor = 'bg-[#2563EB]';
+    } else {
+      colorClasses = 'bg-emerald-50 text-[#16A34A] border-emerald-200';
+      dotColor = 'bg-[#16A34A]';
+    }
   } else if (
     norm.includes('pending') ||
     norm.includes('review') ||
     norm.includes('upcoming') ||
     norm.includes('partial') ||
     norm.includes('submitted') ||
+    norm.includes('moderate') ||
     norm.includes('medium risk')
   ) {
-    colorClasses = 'bg-amber-50 text-amber-700 border-amber-200/80 shadow-[0_2px_8px_rgba(245,158,11,0.15)]';
-    dotColor = 'bg-amber-500';
+    colorClasses = 'bg-amber-50 text-[#D97706] border-amber-200';
+    dotColor = 'bg-[#D97706]';
   } else if (
     norm.includes('overdue') ||
     norm.includes('rejected') ||
@@ -62,26 +69,26 @@ export const Badge: React.FC<BadgeProps> = ({
     norm.includes('high risk') ||
     norm.includes('written_off')
   ) {
-    colorClasses = 'bg-rose-50 text-rose-700 border-rose-200/80 shadow-[0_2px_8px_rgba(244,63,94,0.15)]';
-    dotColor = 'bg-rose-500';
+    colorClasses = 'bg-red-50 text-[#DC2626] border-red-200';
+    dotColor = 'bg-[#DC2626]';
   } else if (
     norm.includes('draft') ||
     norm.includes('inactive') ||
     norm.includes('closed') ||
     norm.includes('cancelled')
   ) {
-    colorClasses = 'bg-slate-100 text-slate-600 border-slate-200/80 shadow-[0_2px_6px_rgba(0,0,0,0.03)]';
+    colorClasses = 'bg-slate-50 text-[#64748B] border-[#CBD5E1]';
     dotColor = 'bg-slate-400';
   }
 
   const sizeClasses =
     size === 'xs'
-      ? 'px-2.5 py-0.5 text-[11px] font-semibold'
-      : 'px-3 py-1 text-xs font-semibold';
+      ? 'px-2 py-0.5 text-[11px] font-semibold'
+      : 'px-2.5 py-1 text-xs font-semibold';
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border ${sizeClasses} ${colorClasses} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-[4px] border ${sizeClasses} ${colorClasses} ${className}`}
     >
       {dot && <span className={`w-1.5 h-1.5 rounded-full ${dotColor} shrink-0`} />}
       <span className="truncate">{children}</span>

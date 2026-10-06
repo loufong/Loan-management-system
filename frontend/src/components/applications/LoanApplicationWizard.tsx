@@ -1,5 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useMemo } from 'react';
 import {
   Borrower,
   LoanProduct,
@@ -20,7 +19,6 @@ import {
   DollarSign,
   ShieldCheck,
   X,
-  Sliders,
   Search,
   User,
   Building,
@@ -29,17 +27,13 @@ import {
   Sprout,
   Car,
   Zap,
-  Info,
   Layers,
   FileCheck,
   Trash2,
   Eye,
   Percent,
   CheckCircle2,
-  Clock,
-  Sparkles,
-  Download,
-  AlertCircle
+  Clock
 } from 'lucide-react';
 
 export interface LoanApplicationWizardProps {
@@ -57,12 +51,11 @@ interface UploadedDocument {
   type: 'NATIONAL_ID' | 'INCOME_PROOF' | 'COLLATERAL';
   categoryLabel: string;
   uploadedAt: string;
-  previewUrl?: string;
 }
 
 const STEP_DEFINITIONS = [
-  { id: 1, title: 'Borrower & Product', sub: 'Borrower profile & loan product' },
-  { id: 2, title: 'Loan Terms & Calculator', sub: 'Amount, tenure & live DTI' },
+  { id: 1, title: 'Borrower & Product', sub: 'Profile & product selection' },
+  { id: 2, title: 'Loan Terms & Calculator', sub: 'Principal, tenure & DTI analysis' },
   { id: 3, title: 'Supporting Documents', sub: 'KYC & collateral verification' },
   { id: 4, title: 'Summary Confirmation', sub: 'Review & submit application' },
 ];
@@ -176,15 +169,12 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
     const R = selectedProduct?.interestRate || 10.0;
     const M = requestedTerm;
 
-    // Simple flat-interest banking model
     const annualRate = R / 100;
     const totalInterest = Math.round(((P * annualRate * (M / 12)) + Number.EPSILON) * 100) / 100;
     const totalRepayment = Math.round((P + totalInterest + Number.EPSILON) * 100) / 100;
     
-    // Monthly baseline installment
     const monthlyInstallment = Math.round(((totalRepayment / M) + Number.EPSILON) * 100) / 100;
 
-    // Adjusted installment based on repayment frequency
     let periodicInstallment = monthlyInstallment;
     let paymentCount = M;
     if (frequency === 'WEEKLY') {
@@ -195,12 +185,10 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
       periodicInstallment = Math.round(((totalRepayment / paymentCount) + Number.EPSILON) * 100) / 100;
     }
 
-    // Borrower Income and DTI comparison
     const borrowerIncome = selectedBorrower?.monthlyIncomeUSD || 1500;
     const dtiRatio = Math.round(((monthlyInstallment / borrowerIncome) * 100 + Number.EPSILON) * 10) / 10;
     const isDtiWarning = dtiRatio > 40.0;
 
-    // Risk tier evaluation
     let riskTier: 'LOW RISK' | 'MEDIUM RISK' | 'HIGH RISK' = 'LOW RISK';
     if (dtiRatio > 40 || requestedAmount > 20000) {
       riskTier = 'HIGH RISK';
@@ -303,57 +291,53 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
       setIsSubmitting(false);
       setShowConfirmationModal(false);
       onSubmitApplication(app, isDraft);
-    }, 600);
+    }, 400);
   };
 
   // Category Icon Resolver
   const getProductCategoryIcon = (category: string) => {
     switch (category?.toLowerCase()) {
       case 'personal':
-        return <Home className="w-5 h-5 text-indigo-600" />;
+        return <Home className="w-4 h-4 text-[#0F172A]" />;
       case 'business':
-        return <Briefcase className="w-5 h-5 text-blue-600" />;
+        return <Briefcase className="w-4 h-4 text-[#2563EB]" />;
       case 'agriculture':
-        return <Sprout className="w-5 h-5 text-emerald-600" />;
+        return <Sprout className="w-4 h-4 text-[#16A34A]" />;
       case 'vehicle':
-        return <Car className="w-5 h-5 text-amber-600" />;
+        return <Car className="w-4 h-4 text-[#D97706]" />;
       case 'emergency':
-        return <Zap className="w-5 h-5 text-rose-600" />;
+        return <Zap className="w-4 h-4 text-[#DC2626]" />;
       default:
-        return <Building className="w-5 h-5 text-indigo-600" />;
+        return <Building className="w-4 h-4 text-[#0F172A]" />;
     }
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 pb-12">
-      {/* -------------------------------------------------------------------- */}
-      {/* 1. Header Toolbar & Progress Stepper Header                          */}
-      {/* -------------------------------------------------------------------- */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="space-y-6">
+      {/* 1. Header Toolbar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-[8px] border border-[#CBD5E1]">
         <button
           onClick={onCancel}
-          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors group"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors"
         >
-          <div className="w-7 h-7 rounded-lg bg-slate-100 group-hover:bg-slate-200 flex items-center justify-center transition-colors">
-            <ArrowLeft className="w-3.5 h-3.5" />
-          </div>
-          <span>Cancel &amp; Return to Applications</span>
+          <ArrowLeft className="w-4 h-4" />
+          <span>Cancel & Return to Applications</span>
         </button>
 
         <div className="flex items-center gap-3">
-          <span className="text-xs font-mono text-slate-400">
+          <span className="text-xs font-mono text-[#64748B]">
             Origination Workflow • Step {currentStep} of 4
           </span>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/60 font-mono">
-            <ShieldCheck className="w-3 h-3 text-indigo-600" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[4px] text-xs font-semibold bg-slate-100 text-[#0F172A] border border-[#CBD5E1] font-mono">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#2563EB]" />
             Active Underwriting
           </span>
         </div>
       </div>
 
       {/* Stepper Progress Bar */}
-      <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-4 sm:p-5">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 relative">
+      <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {STEP_DEFINITIONS.map((step) => {
             const isCompleted = currentStep > step.id;
             const isCurrent = currentStep === step.id;
@@ -363,22 +347,22 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
               <div
                 key={step.id}
                 onClick={() => isClickable && setCurrentStep(step.id as any)}
-                className={`relative flex flex-col space-y-2 select-none ${
-                  isClickable ? 'cursor-pointer group' : ''
+                className={`flex flex-col space-y-1.5 select-none ${
+                  isClickable ? 'cursor-pointer' : ''
                 }`}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5">
                   <div
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-mono font-bold transition-all ${
+                    className={`w-7 h-7 rounded-[4px] flex items-center justify-center text-xs font-mono font-bold transition-colors ${
                       isCompleted
-                        ? 'bg-emerald-600 text-white shadow-xs'
+                        ? 'bg-[#16A34A] text-white'
                         : isCurrent
-                        ? 'bg-blue-600 text-white shadow-sm ring-4 ring-blue-50'
-                        : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200'
+                        ? 'bg-[#0F172A] text-white'
+                        : 'bg-slate-100 text-[#64748B] border border-[#CBD5E1]'
                     }`}
                   >
                     {isCompleted ? (
-                      <Check className="w-4 h-4 stroke-[2.5]" />
+                      <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                     ) : (
                       <span>{step.id}</span>
                     )}
@@ -386,35 +370,32 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
 
                   <div className="min-w-0">
                     <p
-                      className={`text-xs font-bold truncate transition-colors ${
+                      className={`text-xs font-bold truncate ${
                         isCurrent
-                          ? 'text-slate-900'
+                          ? 'text-[#0F172A]'
                           : isCompleted
-                          ? 'text-emerald-700'
-                          : 'text-slate-400'
+                          ? 'text-[#16A34A]'
+                          : 'text-[#64748B]'
                       }`}
                     >
                       {step.title}
                     </p>
-                    <p className="text-[11px] text-slate-400 truncate hidden sm:block">
+                    <p className="text-[11px] text-[#64748B] truncate hidden sm:block">
                       {step.sub}
                     </p>
                   </div>
                 </div>
 
                 {/* Progress bar track */}
-                <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mt-1">
-                  <motion.div
+                <div className="w-full h-1 bg-slate-100 rounded-[2px] overflow-hidden">
+                  <div
                     className={`h-full ${
                       isCompleted
-                        ? 'bg-emerald-600'
+                        ? 'bg-[#16A34A] w-full'
                         : isCurrent
-                        ? 'bg-blue-600'
-                        : 'bg-transparent'
+                        ? 'bg-[#0F172A] w-full'
+                        : 'bg-transparent w-0'
                     }`}
-                    initial={{ width: 0 }}
-                    animate={{ width: isCompleted || isCurrent ? '100%' : '0%' }}
-                    transition={{ duration: 0.35, ease: 'easeInOut' }}
                   />
                 </div>
               </div>
@@ -423,1267 +404,1206 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
         </div>
       </div>
 
-      {/* -------------------------------------------------------------------- */}
-      {/* 2. Step View Content Surfaces                                        */}
-      {/* -------------------------------------------------------------------- */}
-      <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-6 sm:p-8">
-        <AnimatePresence mode="wait">
-          {/* ================================================================ */}
-          {/* STEP 1: BORROWER & PRODUCT SELECTION                             */}
-          {/* ================================================================ */}
-          {currentStep === 1 && (
-            <motion.div
-              key="step-1"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.2 }}
-              className="space-y-8"
-            >
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">
-                  Step 1: Borrower &amp; Loan Product Selection
-                </h2>
-                <p className="text-xs text-slate-500 mt-1">
-                  Select the borrower and assign the appropriate loan product.
-                </p>
+      {/* 2. Step View Content Surfaces */}
+      <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-5 sm:p-6">
+        {/* ================================================================ */}
+        {/* STEP 1: BORROWER & PRODUCT SELECTION                             */}
+        {/* ================================================================ */}
+        {currentStep === 1 && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-base font-bold text-[#0F172A]">
+                Step 1: Borrower & Loan Product Selection
+              </h2>
+              <p className="text-xs text-[#64748B] mt-0.5">
+                Select the verified borrower and assign the appropriate financial product.
+              </p>
+            </div>
+
+            {/* 1A. Searchable Borrower Selector */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold uppercase tracking-wider text-[#0F172A] flex items-center gap-1.5">
+                  <User className="w-4 h-4 text-[#2563EB]" />
+                  <span>Select Borrower</span>
+                </label>
+                <span className="text-[11px] text-[#64748B] font-mono">
+                  {filteredBorrowers.length} records found
+                </span>
               </div>
 
-              {/* 1A. Searchable Borrower Selector & Instant Preview Card */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                    <User className="w-4 h-4 text-blue-600" />
-                    <span>Select Borrower</span>
-                  </label>
-                  <span className="text-[11px] text-slate-400 font-mono">
-                    {filteredBorrowers.length} verified records
-                  </span>
-                </div>
-
-                {/* Search Bar + Dropdown Trigger */}
+              {/* Search Bar + Dropdown Trigger */}
+              <div className="relative">
                 <div className="relative">
-                  <div className="relative">
-                    <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="text"
-                      value={borrowerSearch}
-                      onChange={(e) => {
-                        setBorrowerSearch(e.target.value);
-                        setIsBorrowerDropdownOpen(true);
-                      }}
-                      onFocus={() => setIsBorrowerDropdownOpen(true)}
-                      placeholder="Search borrower by name, ID (e.g. BOR-2026-0001), phone, or national ID..."
-                      className="w-full pl-10 pr-10 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-xs"
-                    />
-                    {borrowerSearch && (
-                      <button
-                        onClick={() => {
-                          setBorrowerSearch('');
-                        }}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Dropdown Options */}
-                  {isBorrowerDropdownOpen && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-20"
-                        onClick={() => setIsBorrowerDropdownOpen(false)}
-                      />
-                      <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 shadow-xl rounded-xl max-h-64 overflow-y-auto z-30 divide-y divide-slate-100">
-                        {filteredBorrowers.length === 0 ? (
-                          <div className="p-4 text-center text-xs text-slate-400">
-                            No borrowers found matching "{borrowerSearch}".
-                          </div>
-                        ) : (
-                          filteredBorrowers.map((b) => {
-                            const isSelected = b.id === selectedBorrowerId;
-                            return (
-                              <div
-                                key={b.id}
-                                onClick={() => {
-                                  setSelectedBorrowerId(b.id);
-                                  setIsBorrowerDropdownOpen(false);
-                                }}
-                                className={`p-3 text-xs flex items-center justify-between cursor-pointer transition-colors ${
-                                  isSelected
-                                    ? 'bg-indigo-50/60 font-semibold text-indigo-900'
-                                    : 'hover:bg-slate-50 text-slate-800'
-                                }`}
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-xs shrink-0">
-                                    {b.fullName.slice(0, 2).toUpperCase()}
-                                  </div>
-                                  <div>
-                                    <p className="font-semibold text-slate-900">{b.fullName}</p>
-                                    <p className="text-[11px] text-slate-400 font-mono">
-                                      {b.borrowerId} • Nat ID: {b.nationalId} • ${b.monthlyIncomeUSD.toLocaleString()}/mo
-                                    </p>
-                                  </div>
-                                </div>
-                                {isSelected && (
-                                  <Check className="w-4 h-4 text-indigo-600" />
-                                )}
-                              </div>
-                            );
-                          })
-                        )}
-                      </div>
-                    </>
+                  <Search className="w-4 h-4 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={borrowerSearch}
+                    onChange={(e) => {
+                      setBorrowerSearch(e.target.value);
+                      setIsBorrowerDropdownOpen(true);
+                    }}
+                    onFocus={() => setIsBorrowerDropdownOpen(true)}
+                    placeholder="Search borrower by name, ID (e.g. BOR-2026-0001), phone, or national ID..."
+                    className="w-full pl-9 pr-8 h-10 text-xs bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] placeholder-[#64748B] focus:outline-none focus:border-[#2563EB]"
+                  />
+                  {borrowerSearch && (
+                    <button
+                      onClick={() => setBorrowerSearch('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#0F172A]"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
                   )}
                 </div>
 
-                {/* Instant Borrower Profile Preview Card */}
-                {selectedBorrower && (
-                  <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-sm relative overflow-hidden">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/60">
-                      <div className="flex items-center gap-3.5">
-                        <div className="w-12 h-12 rounded-xl bg-indigo-600 text-white font-black text-base flex items-center justify-center shadow-md shadow-indigo-600/20 shrink-0">
-                          {selectedBorrower.fullName.slice(0, 2).toUpperCase()}
+                {/* Dropdown Options */}
+                {isBorrowerDropdownOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-20"
+                      onClick={() => setIsBorrowerDropdownOpen(false)}
+                    />
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-[#CBD5E1] rounded-[6px] max-h-56 overflow-y-auto z-30 divide-y divide-[#CBD5E1] shadow-md">
+                      {filteredBorrowers.length === 0 ? (
+                        <div className="p-3 text-center text-xs text-[#64748B]">
+                          No borrowers found matching "{borrowerSearch}".
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="text-base font-bold text-slate-900">
-                              {selectedBorrower.fullName}
-                            </h3>
-                            <Badge variant="verified" size="xs">
-                              <CheckCircle2 className="w-3 h-3 mr-1 inline" />
-                              KYC Verified
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-slate-500 font-mono mt-0.5">
-                            ID: {selectedBorrower.borrowerId} • Nat ID: {selectedBorrower.nationalId}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="text-right sm:self-center">
-                        <span className="text-[11px] uppercase font-bold tracking-wider text-slate-400 block">
-                          Verified Monthly Income
-                        </span>
-                        <div className="text-lg font-black font-mono text-indigo-600">
-                          <MoneyText amount={selectedBorrower.monthlyIncomeUSD} currency={calcCurrency} />
-                        </div>
-                      </div>
+                      ) : (
+                        filteredBorrowers.map((b) => {
+                          const isSelected = b.id === selectedBorrowerId;
+                          return (
+                            <div
+                              key={b.id}
+                              onClick={() => {
+                                setSelectedBorrowerId(b.id);
+                                setIsBorrowerDropdownOpen(false);
+                              }}
+                              className={`p-2.5 text-xs flex items-center justify-between cursor-pointer transition-colors ${
+                                isSelected
+                                  ? 'bg-slate-100 font-semibold text-[#0F172A]'
+                                  : 'hover:bg-slate-50 text-[#0F172A]'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-7 h-7 rounded-[4px] bg-slate-100 text-[#0F172A] border border-[#CBD5E1] font-bold flex items-center justify-center text-xs shrink-0">
+                                  {b.fullName.slice(0, 2).toUpperCase()}
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-[#0F172A]">{b.fullName}</p>
+                                  <p className="text-[11px] text-[#64748B] font-mono">
+                                    {b.borrowerId} • Nat ID: {b.nationalId} • ${b.monthlyIncomeUSD.toLocaleString()}/mo
+                                  </p>
+                                </div>
+                              </div>
+                              {isSelected && (
+                                <Check className="w-4 h-4 text-[#2563EB]" />
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
-
-                    {/* Snapshot Metadata Strip */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 text-xs">
-                      <div className="p-2.5 rounded-xl bg-white border border-slate-200/60">
-                        <span className="text-[11px] text-slate-400 block">Occupation / Sector</span>
-                        <span className="font-semibold text-slate-800 truncate block mt-0.5">
-                          {selectedBorrower.occupation || 'Private Sector Enterprise'}
-                        </span>
-                      </div>
-                      <div className="p-2.5 rounded-xl bg-white border border-slate-200/60">
-                        <span className="text-[11px] text-slate-400 block">Active Loans</span>
-                        <span className="font-semibold text-slate-800 font-mono block mt-0.5">
-                          {selectedBorrower.activeLoansCount} Active Facility
-                        </span>
-                      </div>
-                      <div className="p-2.5 rounded-xl bg-white border border-slate-200/60">
-                        <span className="text-[11px] text-slate-400 block">Total Outstanding</span>
-                        <span className="font-semibold text-slate-800 font-mono block mt-0.5">
-                          <MoneyText amount={selectedBorrower.totalOutstandingUSD} currency={calcCurrency} />
-                        </span>
-                      </div>
-                      <div className="p-2.5 rounded-xl bg-white border border-slate-200/60">
-                        <span className="text-[11px] text-slate-400 block">Current DTI Baseline</span>
-                        <span className="font-semibold text-emerald-600 font-mono block mt-0.5">
-                          {selectedBorrower.dtiRatio}% (Safe)
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                  </>
                 )}
               </div>
 
-              {/* 1B. Visual Radio Cards for Loan Products */}
-              <div className="space-y-4 pt-6 border-t border-slate-100">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                      <Layers className="w-4 h-4 text-indigo-600" />
-                      <span>Select Loan Product Facility</span>
-                    </label>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      Rates, duration windows, and capital thresholds conform to NBC regulations.
-                    </p>
-                  </div>
-                  <span className="text-xs font-mono font-semibold text-indigo-600">
-                    {products.length} Products Available
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                  {products.map((prod) => {
-                    const isSelected = prod.id === selectedProductId;
-                    return (
-                      <div
-                        key={prod.id}
-                        onClick={() => handleSelectProduct(prod)}
-                        className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between relative group ${
-                          isSelected
-                            ? 'border-blue-600 bg-blue-50/40 shadow-sm ring-1 ring-blue-600'
-                            : 'border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50'
-                        }`}
-                      >
-                        <div>
-                          <div className="flex items-center justify-between mb-2.5">
-                            <div className="w-9 h-9 rounded-xl bg-white border border-slate-200/80 shadow-xs flex items-center justify-center">
-                              {getProductCategoryIcon(prod.category)}
-                            </div>
-                            <span className="font-mono font-bold text-xs px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-700">
-                              {prod.interestRate}% p.a.
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-600">
-                              {prod.category}
-                            </span>
-                            <span className="text-[11px] text-slate-400 font-mono">
-                              {prod.id}
-                            </span>
-                          </div>
-
-                          <h4 className="text-sm font-bold text-slate-900 leading-snug">
-                            {prod.name}
-                          </h4>
-                          <p className="text-xs text-slate-500 line-clamp-2 mt-1.5 leading-relaxed">
-                            {prod.description}
-                          </p>
-                        </div>
-
-                        <div className="mt-4 pt-3 border-t border-slate-100/80 space-y-1 text-[11px] font-mono">
-                          <div className="flex justify-between text-slate-500">
-                            <span>Principal Limit:</span>
-                            <span className="font-bold text-slate-800">
-                              <MoneyText amount={prod.minAmount} currency={calcCurrency} /> - <MoneyText amount={prod.maxAmount} currency={calcCurrency} />
-                            </span>
-                          </div>
-                          <div className="flex justify-between text-slate-500">
-                            <span>Duration Window:</span>
-                            <span className="font-bold text-slate-800">
-                              {prod.minTerm} to {prod.maxTerm} Months
-                            </span>
-                          </div>
-                        </div>
-
-                        {isSelected && (
-                          <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-xs">
-                            <Check className="w-3.5 h-3.5 stroke-[3]" />
-                          </div>
-                        )}
+              {/* Selected Borrower Snapshot Card */}
+              {selectedBorrower && (
+                <div className="p-4 rounded-[8px] bg-slate-50 border border-[#CBD5E1]">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#CBD5E1]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-[6px] bg-[#0F172A] text-white font-bold text-sm flex items-center justify-center shrink-0">
+                        {selectedBorrower.fullName.slice(0, 2).toUpperCase()}
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </motion.div>
-          )}
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-bold text-[#0F172A]">
+                            {selectedBorrower.fullName}
+                          </h3>
+                          <Badge variant="verified" size="xs">
+                            <CheckCircle2 className="w-3 h-3 mr-1 inline" />
+                            KYC Verified
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-[#64748B] font-mono mt-0.5">
+                          ID: {selectedBorrower.borrowerId} • Nat ID: {selectedBorrower.nationalId}
+                        </p>
+                      </div>
+                    </div>
 
-          {/* ================================================================ */}
-          {/* STEP 2: LOAN TERMS & LIVE CALCULATOR                             */}
-          {/* ================================================================ */}
-          {currentStep === 2 && (
-            <motion.div
-              key="step-2"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.2 }}
-              className="space-y-8"
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                    <div className="text-right sm:self-center">
+                      <span className="text-[11px] uppercase font-semibold text-[#64748B] block">
+                        Verified Monthly Income
+                      </span>
+                      <div className="text-base font-bold font-mono text-[#0F172A]">
+                        <MoneyText amount={selectedBorrower.monthlyIncomeUSD} currency={calcCurrency} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Metadata Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-3 text-xs">
+                    <div className="p-2 rounded-[6px] bg-white border border-[#CBD5E1]">
+                      <span className="text-[10px] text-[#64748B] block uppercase">Sector</span>
+                      <span className="font-semibold text-[#0F172A] truncate block mt-0.5">
+                        {selectedBorrower.occupation || 'Private Sector Enterprise'}
+                      </span>
+                    </div>
+                    <div className="p-2 rounded-[6px] bg-white border border-[#CBD5E1]">
+                      <span className="text-[10px] text-[#64748B] block uppercase">Active Loans</span>
+                      <span className="font-semibold text-[#0F172A] font-mono block mt-0.5">
+                        {selectedBorrower.activeLoansCount} Facility
+                      </span>
+                    </div>
+                    <div className="p-2 rounded-[6px] bg-white border border-[#CBD5E1]">
+                      <span className="text-[10px] text-[#64748B] block uppercase">Outstanding</span>
+                      <span className="font-semibold text-[#0F172A] font-mono block mt-0.5">
+                        <MoneyText amount={selectedBorrower.totalOutstandingUSD} currency={calcCurrency} />
+                      </span>
+                    </div>
+                    <div className="p-2 rounded-[6px] bg-white border border-[#CBD5E1]">
+                      <span className="text-[10px] text-[#64748B] block uppercase">DTI Baseline</span>
+                      <span className="font-semibold text-[#16A34A] font-mono block mt-0.5">
+                        {selectedBorrower.dtiRatio}% (Safe)
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 1B. Visual Radio Cards for Loan Products */}
+            <div className="space-y-3 pt-4 border-t border-[#CBD5E1]">
+              <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900">
-                    Step 2: Loan Terms &amp; Live Underwriting Calculator
-                  </h2>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Configure principal amount, loan tenure, and examine real-time DTI solvency gauges.
+                  <label className="text-xs font-semibold uppercase tracking-wider text-[#0F172A] flex items-center gap-1.5">
+                    <Layers className="w-4 h-4 text-[#2563EB]" />
+                    <span>Select Loan Product Facility</span>
+                  </label>
+                  <p className="text-[11px] text-[#64748B] mt-0.5">
+                    Rates, duration windows, and capital thresholds conform to NBC regulations.
                   </p>
                 </div>
-
-                {/* Dual Currency Selector */}
-                <div className="inline-flex items-center p-1 bg-slate-100 border border-slate-200/80 rounded-xl self-start sm:self-center shadow-inner">
-                  <button
-                    type="button"
-                    onClick={() => setCalcCurrency('USD')}
-                    className={`px-3.5 py-1.5 text-xs font-mono font-bold rounded-lg transition-all ${
-                      calcCurrency === 'USD'
-                        ? 'bg-white text-indigo-700 shadow-xs'
-                        : 'text-slate-500 hover:text-slate-900'
-                    }`}
-                  >
-                    USD ($)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCalcCurrency('KHR')}
-                    className={`px-3.5 py-1.5 text-xs font-mono font-bold rounded-lg transition-all ${
-                      calcCurrency === 'KHR'
-                        ? 'bg-white text-indigo-700 shadow-xs'
-                        : 'text-slate-500 hover:text-slate-900'
-                    }`}
-                  >
-                    KHR (៛)
-                  </button>
-                </div>
+                <span className="text-xs font-mono font-semibold text-[#2563EB]">
+                  {products.length} Products Available
+                </span>
               </div>
 
-              {/* Two Column Layout: Sliders (Left) vs Real-Time Underwriting Card (Right) */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                {/* Left Form Controls (7 Cols) */}
-                <div className="lg:col-span-7 space-y-6">
-                  {/* Selected Facility Header Chip */}
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-slate-700">Active Facility:</span>
-                      <span className="font-bold text-indigo-600">{selectedProduct?.name}</span>
-                    </div>
-                    <Badge variant="active" size="xs">
-                      {selectedProduct?.interestRate}% p.a. Fixed
-                    </Badge>
-                  </div>
-
-                  {/* 1. Principal Amount Slider + Number Input */}
-                  <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-sm space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                        <DollarSign className="w-4 h-4 text-indigo-600" />
-                        <span>Requested Principal Capital</span>
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <div className="relative">
-                          <input
-                            type="number"
-                            min={selectedProduct?.minAmount || 500}
-                            max={selectedProduct?.maxAmount || 50000}
-                            step={100}
-                            value={requestedAmount}
-                            onChange={(e) => {
-                              const val = Number(e.target.value);
-                              setRequestedAmount(val);
-                            }}
-                            className="w-32 px-3 py-1.5 text-sm font-bold font-mono text-right bg-slate-50 border border-slate-200 rounded-lg text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                          />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {products.map((prod) => {
+                  const isSelected = prod.id === selectedProductId;
+                  return (
+                    <div
+                      key={prod.id}
+                      onClick={() => handleSelectProduct(prod)}
+                      className={`p-3.5 rounded-[8px] border cursor-pointer transition-colors flex flex-col justify-between relative ${
+                        isSelected
+                          ? 'border-[#0F172A] bg-slate-50'
+                          : 'border-[#CBD5E1] bg-white hover:bg-slate-50'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="w-8 h-8 rounded-[4px] bg-slate-100 border border-[#CBD5E1] flex items-center justify-center">
+                            {getProductCategoryIcon(prod.category)}
+                          </div>
+                          <span className="font-mono font-bold text-xs px-2 py-0.5 rounded-[4px] bg-slate-100 text-[#0F172A] border border-[#CBD5E1]">
+                            {prod.interestRate}% p.a.
+                          </span>
                         </div>
-                        <span className="text-xs font-mono font-bold text-slate-400">
-                          {calcCurrency}
-                        </span>
-                      </div>
-                    </div>
 
-                    {/* Interactive Range Slider */}
-                    <input
-                      type="range"
-                      min={selectedProduct?.minAmount || 500}
-                      max={selectedProduct?.maxAmount || 50000}
-                      step={100}
-                      value={requestedAmount}
-                      onChange={(e) => setRequestedAmount(Number(e.target.value))}
-                      className="w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 shadow-inner"
-                    />
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.2 rounded-[4px] bg-slate-100 text-[#64748B] border border-[#CBD5E1]">
+                            {prod.category}
+                          </span>
+                          <span className="text-[11px] text-[#64748B] font-mono">
+                            {prod.id}
+                          </span>
+                        </div>
 
-                    {/* Slider Scale Indicators & Preset Chips */}
-                    <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
-                      <span>Min: <MoneyText amount={selectedProduct?.minAmount || 500} currency={calcCurrency} /></span>
-                      <div className="flex gap-1.5">
-                        {[0.25, 0.5, 0.75, 1.0].map((ratio) => {
-                          const min = selectedProduct?.minAmount || 500;
-                          const max = selectedProduct?.maxAmount || 50000;
-                          const targetVal = Math.round((min + (max - min) * ratio) / 100) * 100;
-                          return (
-                            <button
-                              key={ratio}
-                              type="button"
-                              onClick={() => setRequestedAmount(targetVal)}
-                              className="px-2 py-0.5 rounded bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-[10px] font-semibold transition-colors"
-                            >
-                              {ratio * 100}%
-                            </button>
-                          );
-                        })}
+                        <h4 className="text-xs font-bold text-[#0F172A] leading-snug">
+                          {prod.name}
+                        </h4>
+                        <p className="text-[11px] text-[#64748B] line-clamp-2 mt-1 leading-relaxed">
+                          {prod.description}
+                        </p>
                       </div>
-                      <span>Max: <MoneyText amount={selectedProduct?.maxAmount || 50000} currency={calcCurrency} /></span>
+
+                      <div className="mt-3 pt-2.5 border-t border-[#CBD5E1] space-y-1 text-[11px] font-mono">
+                        <div className="flex justify-between text-[#64748B]">
+                          <span>Principal Limit:</span>
+                          <span className="font-bold text-[#0F172A]">
+                            <MoneyText amount={prod.minAmount} currency={calcCurrency} /> - <MoneyText amount={prod.maxAmount} currency={calcCurrency} />
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-[#64748B]">
+                          <span>Duration Window:</span>
+                          <span className="font-bold text-[#0F172A]">
+                            {prod.minTerm} to {prod.maxTerm} Months
+                          </span>
+                        </div>
+                      </div>
+
+                      {isSelected && (
+                        <div className="absolute top-3 right-3 w-4 h-4 rounded-[4px] bg-[#0F172A] text-white flex items-center justify-center">
+                          <Check className="w-3 h-3 stroke-[3]" />
+                        </div>
+                      )}
                     </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ================================================================ */}
+        {/* STEP 2: LOAN TERMS & LIVE CALCULATOR                             */}
+        {/* ================================================================ */}
+        {currentStep === 2 && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#CBD5E1]">
+              <div>
+                <h2 className="text-base font-bold text-[#0F172A]">
+                  Step 2: Loan Terms & Live Underwriting Calculator
+                </h2>
+                <p className="text-xs text-[#64748B] mt-0.5">
+                  Configure principal amount, loan tenure, and examine real-time DTI solvency gauges.
+                </p>
+              </div>
+
+              {/* Dual Currency Selector */}
+              <div className="inline-flex items-center p-0.5 bg-slate-100 border border-[#CBD5E1] rounded-[6px]">
+                <button
+                  type="button"
+                  onClick={() => setCalcCurrency('USD')}
+                  className={`px-3 py-1 text-xs font-mono font-bold rounded-[4px] transition-colors ${
+                    calcCurrency === 'USD'
+                      ? 'bg-white text-[#0F172A] border border-[#CBD5E1]'
+                      : 'text-[#64748B] hover:text-[#0F172A]'
+                  }`}
+                >
+                  USD ($)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCalcCurrency('KHR')}
+                  className={`px-3 py-1 text-xs font-mono font-bold rounded-[4px] transition-colors ${
+                    calcCurrency === 'KHR'
+                      ? 'bg-white text-[#0F172A] border border-[#CBD5E1]'
+                      : 'text-[#64748B] hover:text-[#0F172A]'
+                  }`}
+                >
+                  KHR (៛)
+                </button>
+              </div>
+            </div>
+
+            {/* Two Column Layout: Sliders (Left) vs Underwriting Panel (Right) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              {/* Left Form Controls (7 Cols) */}
+              <div className="lg:col-span-7 space-y-4">
+                {/* Active Facility Header */}
+                <div className="p-3 rounded-[6px] bg-slate-50 border border-[#CBD5E1] flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-[#64748B]">Active Facility:</span>
+                    <span className="font-bold text-[#0F172A]">{selectedProduct?.name}</span>
                   </div>
+                  <Badge variant="active" size="xs">
+                    {selectedProduct?.interestRate}% p.a. Fixed
+                  </Badge>
+                </div>
 
-                  {/* 2. Tenure Slider + Months Input */}
-                  <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-sm space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                        <Calendar className="w-4 h-4 text-indigo-600" />
-                        <span>Repayment Tenure (Duration)</span>
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="number"
-                          min={selectedProduct?.minTerm || 3}
-                          max={selectedProduct?.maxTerm || 60}
-                          step={1}
-                          value={requestedTerm}
-                          onChange={(e) => {
-                            const val = Number(e.target.value);
-                            setRequestedTerm(val);
-                          }}
-                          className="w-20 px-3 py-1.5 text-sm font-bold font-mono text-right bg-slate-50 border border-slate-200 rounded-lg text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                        />
-                        <span className="text-xs font-semibold text-slate-600">Months</span>
-                      </div>
-                    </div>
-
-                    <input
-                      type="range"
-                      min={selectedProduct?.minTerm || 3}
-                      max={selectedProduct?.maxTerm || 60}
-                      step={1}
-                      value={requestedTerm}
-                      onChange={(e) => setRequestedTerm(Number(e.target.value))}
-                      className="w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 shadow-inner"
-                    />
-
-                    <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
-                      <span>Min: {selectedProduct?.minTerm || 3} mo</span>
-                      <div className="flex gap-1.5">
-                        {[6, 12, 24, 36].filter(
-                          (m) => m >= (selectedProduct?.minTerm || 3) && m <= (selectedProduct?.maxTerm || 60)
-                        ).map((m) => (
-                          <button
-                            key={m}
-                            type="button"
-                            onClick={() => setRequestedTerm(m)}
-                            className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-colors ${
-                              requestedTerm === m
-                                ? 'bg-indigo-600 text-white'
-                                : 'bg-slate-100 hover:bg-indigo-50 text-slate-700'
-                            }`}
-                          >
-                            {m}m
-                          </button>
-                        ))}
-                      </div>
-                      <span>Max: {selectedProduct?.maxTerm || 60} mo</span>
-                    </div>
-                  </div>
-
-                  {/* 3. Repayment Frequency Selector */}
-                  <div className="p-5 rounded-xl bg-white border border-slate-200 shadow-sm space-y-3">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                      <Clock className="w-4 h-4 text-indigo-600" />
-                      <span>Repayment Schedule Frequency</span>
+                {/* 1. Principal Amount */}
+                <div className="p-4 rounded-[8px] bg-white border border-[#CBD5E1] space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-[#0F172A] flex items-center gap-1.5">
+                      <DollarSign className="w-4 h-4 text-[#2563EB]" />
+                      <span>Requested Principal Capital</span>
                     </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min={selectedProduct?.minAmount || 500}
+                        max={selectedProduct?.maxAmount || 50000}
+                        step={100}
+                        value={requestedAmount}
+                        onChange={(e) => setRequestedAmount(Number(e.target.value))}
+                        className="w-28 px-2.5 h-8 text-xs font-bold font-mono text-right bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                      />
+                      <span className="text-xs font-mono font-bold text-[#64748B]">
+                        {calcCurrency}
+                      </span>
+                    </div>
+                  </div>
 
-                    <div className="grid grid-cols-3 gap-2.5">
-                      {(['WEEKLY', 'BIWEEKLY', 'MONTHLY'] as RepaymentFrequency[]).map((freq) => {
-                        const isSelected = frequency === freq;
+                  {/* Range Slider */}
+                  <input
+                    type="range"
+                    min={selectedProduct?.minAmount || 500}
+                    max={selectedProduct?.maxAmount || 50000}
+                    step={100}
+                    value={requestedAmount}
+                    onChange={(e) => setRequestedAmount(Number(e.target.value))}
+                    className="w-full h-2 bg-slate-200 rounded-[4px] appearance-none cursor-pointer accent-[#0F172A]"
+                  />
+
+                  {/* Scale Indicators */}
+                  <div className="flex items-center justify-between text-[11px] font-mono text-[#64748B]">
+                    <span>Min: <MoneyText amount={selectedProduct?.minAmount || 500} currency={calcCurrency} /></span>
+                    <div className="flex gap-1">
+                      {[0.25, 0.5, 0.75, 1.0].map((ratio) => {
+                        const min = selectedProduct?.minAmount || 500;
+                        const max = selectedProduct?.maxAmount || 50000;
+                        const targetVal = Math.round((min + (max - min) * ratio) / 100) * 100;
                         return (
                           <button
-                            key={freq}
+                            key={ratio}
                             type="button"
-                            onClick={() => setFrequency(freq)}
-                            className={`p-3 rounded-xl border text-center transition-all ${
-                              isSelected
-                                ? 'border-indigo-600 bg-indigo-50/60 font-bold text-indigo-900 shadow-xs ring-1 ring-indigo-600'
-                                : 'border-slate-200 hover:border-slate-300 bg-white text-slate-700'
-                            }`}
+                            onClick={() => setRequestedAmount(targetVal)}
+                            className="px-2 py-0.5 rounded-[4px] bg-slate-100 hover:bg-slate-200 text-[#0F172A] text-[10px] font-semibold border border-[#CBD5E1]"
                           >
-                            <span className="text-xs block capitalize font-semibold">
-                              {freq.toLowerCase()}
-                            </span>
-                            <span className="text-[10px] text-slate-400 font-mono mt-0.5 block">
-                              {freq === 'MONTHLY' ? 'Every 30 days' : freq === 'BIWEEKLY' ? 'Every 14 days' : 'Every 7 days'}
-                            </span>
+                            {ratio * 100}%
                           </button>
                         );
                       })}
                     </div>
-                  </div>
-
-                  {/* 4. Stated Purpose */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                      Stated Purpose of Credit Facility
-                    </label>
-                    <input
-                      type="text"
-                      value={purpose}
-                      onChange={(e) => setPurpose(e.target.value)}
-                      placeholder="e.g. Commercial Inventory & Working Capital Expansion"
-                      className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-xs"
-                    />
+                    <span>Max: <MoneyText amount={selectedProduct?.maxAmount || 50000} currency={calcCurrency} /></span>
                   </div>
                 </div>
 
-                {/* Right Column: Real-Time Underwriting & Live DTI Gauge Card (5 Cols) */}
-                <div className="lg:col-span-5 space-y-4">
-                  <div className="bg-slate-900 text-white rounded-xl p-6 shadow-sm border border-slate-800 relative overflow-hidden">
-                    
-                    <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
-                      <div>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-300 block">
-                          Real-Time Engine
-                        </span>
-                        <h3 className="text-base font-bold text-white">Underwriting Readout</h3>
-                      </div>
-                      <Badge variant="paid" size="xs">
-                        <Sparkles className="w-3 h-3 mr-1 inline" />
-                        Live Calc
-                      </Badge>
+                {/* 2. Tenure */}
+                <div className="p-4 rounded-[8px] bg-white border border-[#CBD5E1] space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <label className="text-xs font-semibold uppercase tracking-wider text-[#0F172A] flex items-center gap-1.5">
+                      <Calendar className="w-4 h-4 text-[#2563EB]" />
+                      <span>Repayment Tenure (Duration)</span>
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min={selectedProduct?.minTerm || 3}
+                        max={selectedProduct?.maxTerm || 60}
+                        step={1}
+                        value={requestedTerm}
+                        onChange={(e) => setRequestedTerm(Number(e.target.value))}
+                        className="w-20 px-2.5 h-8 text-xs font-bold font-mono text-right bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                      />
+                      <span className="text-xs font-semibold text-[#64748B]">Months</span>
                     </div>
+                  </div>
 
-                    {/* Financial Figures Breakdown */}
-                    <div className="space-y-3 text-xs">
-                      <div className="flex justify-between items-center text-slate-300">
-                        <span>Requested Principal:</span>
-                        <MoneyText
-                          amount={calc.principal}
-                          currency={calcCurrency}
-                          className="font-bold text-white text-sm"
-                        />
-                      </div>
-                      <div className="flex justify-between items-center text-slate-300">
-                        <span>Fixed Interest Rate:</span>
-                        <span className="font-mono font-bold text-white">
-                          {calc.rate}% p.a.
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center text-slate-300">
-                        <span>Loan Duration:</span>
-                        <span className="font-mono font-bold text-white">
-                          {calc.termMonths} Months
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center text-slate-300">
-                        <span>Total Interest Accrued:</span>
-                        <MoneyText
-                          amount={calc.totalInterest}
-                          currency={calcCurrency}
-                          className="font-bold text-emerald-400"
-                        />
-                      </div>
-                      <div className="flex justify-between items-center text-slate-300 pt-2 border-t border-white/10">
-                        <span className="font-semibold text-slate-200">Total Repayable Capital:</span>
-                        <MoneyText
-                          amount={calc.totalRepayment}
-                          currency={calcCurrency}
-                          className="font-bold text-white text-base"
-                        />
-                      </div>
+                  <input
+                    type="range"
+                    min={selectedProduct?.minTerm || 3}
+                    max={selectedProduct?.maxTerm || 60}
+                    step={1}
+                    value={requestedTerm}
+                    onChange={(e) => setRequestedTerm(Number(e.target.value))}
+                    className="w-full h-2 bg-slate-200 rounded-[4px] appearance-none cursor-pointer accent-[#0F172A]"
+                  />
 
-                      {/* Prominent Periodic Installment Block */}
-                      <div className="mt-4 p-4 rounded-xl bg-slate-800 border border-slate-700">
-                        <div className="flex justify-between items-baseline">
-                          <span className="text-xs font-semibold text-indigo-200">
-                            {frequency === 'MONTHLY' ? 'Monthly' : frequency === 'BIWEEKLY' ? 'Biweekly' : 'Weekly'} Installment:
-                          </span>
-                          <MoneyText
-                            amount={calc.periodicInstallment}
-                            currency={calcCurrency}
-                            className="text-2xl font-black text-white"
-                          />
-                        </div>
-                        <p className="text-[10px] text-indigo-300/70 font-mono mt-1">
-                          {calc.paymentCount} payments across {calc.termMonths} months duration
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* LIVE DTI GAUGE & AFFORDABILITY ANALYZER */}
-                    <div className="mt-6 pt-5 border-t border-white/10 space-y-3">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-300 font-semibold flex items-center gap-1.5">
-                          <Percent className="w-3.5 h-3.5 text-indigo-400" />
-                          <span>Debt-to-Income (DTI) Ratio</span>
-                        </span>
-                        <span
-                          className={`font-mono font-bold px-2 py-0.5 rounded text-xs ${
-                            calc.isDtiWarning
-                              ? 'bg-amber-400/20 text-amber-300 border border-amber-400/30'
-                              : 'bg-emerald-400/20 text-emerald-300 border border-emerald-400/30'
+                  <div className="flex items-center justify-between text-[11px] font-mono text-[#64748B]">
+                    <span>Min: {selectedProduct?.minTerm || 3} mo</span>
+                    <div className="flex gap-1">
+                      {[6, 12, 24, 36].filter(
+                        (m) => m >= (selectedProduct?.minTerm || 3) && m <= (selectedProduct?.maxTerm || 60)
+                      ).map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => setRequestedTerm(m)}
+                          className={`px-2 py-0.5 rounded-[4px] text-[10px] font-semibold border ${
+                            requestedTerm === m
+                              ? 'bg-[#0F172A] text-white border-[#0F172A]'
+                              : 'bg-slate-100 text-[#0F172A] border-[#CBD5E1] hover:bg-slate-200'
                           }`}
                         >
-                          {calc.dtiRatio}%
-                        </span>
-                      </div>
+                          {m}m
+                        </button>
+                      ))}
+                    </div>
+                    <span>Max: {selectedProduct?.maxTerm || 60} mo</span>
+                  </div>
+                </div>
 
-                      {/* Animated DTI Meter Bar */}
-                      <div className="space-y-1">
-                        <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden p-0.5">
-                          <motion.div
-                            className={`h-full rounded-full transition-colors ${
-                              calc.dtiRatio > 40
-                                ? 'bg-rose-500'
-                                : 'bg-emerald-500'
-                            }`}
-                            initial={{ width: 0 }}
-                            animate={{ width: `${Math.min(calc.dtiRatio, 100)}%` }}
-                            transition={{ duration: 0.4 }}
-                          />
-                        </div>
-                        <div className="flex justify-between text-[10px] font-mono text-slate-400">
-                          <span>0%</span>
-                          <span className="text-amber-300">40% Regulatory Limit</span>
-                          <span>100%</span>
-                        </div>
-                      </div>
+                {/* 3. Repayment Frequency */}
+                <div className="p-4 rounded-[8px] bg-white border border-[#CBD5E1] space-y-2.5">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-[#0F172A] flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-[#2563EB]" />
+                    <span>Repayment Schedule Frequency</span>
+                  </label>
 
-                      {/* DTI Amber Warning Banner or Safe Badge */}
-                      {calc.isDtiWarning ? (
-                        <div className="p-3.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-200 text-xs space-y-1">
-                          <div className="flex items-center gap-1.5 font-bold text-amber-300">
-                            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-                            <span>Affordability Warning: DTI Exceeds 40.0%</span>
-                          </div>
-                          <p className="text-[11px] text-amber-200/90 leading-relaxed">
-                            Monthly installment is high relative to borrower income ($
-                            {selectedBorrower?.monthlyIncomeUSD?.toLocaleString()}). Credit committee review will be required.
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-200 text-xs flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                          <span className="text-[11px]">
-                            Healthy Solvency Profile: DTI of <strong>{calc.dtiRatio}%</strong> is well within standard risk tolerances.
+                  <div className="grid grid-cols-3 gap-2">
+                    {(['WEEKLY', 'BIWEEKLY', 'MONTHLY'] as RepaymentFrequency[]).map((freq) => {
+                      const isSelected = frequency === freq;
+                      return (
+                        <button
+                          key={freq}
+                          type="button"
+                          onClick={() => setFrequency(freq)}
+                          className={`p-2.5 rounded-[6px] border text-center transition-colors ${
+                            isSelected
+                              ? 'border-[#0F172A] bg-slate-100 text-[#0F172A]'
+                              : 'border-[#CBD5E1] hover:border-slate-400 bg-white text-[#64748B]'
+                          }`}
+                        >
+                          <span className="text-xs block capitalize font-semibold">
+                            {freq.toLowerCase()}
                           </span>
-                        </div>
-                      )}
+                          <span className="text-[10px] text-[#64748B] font-mono mt-0.5 block">
+                            {freq === 'MONTHLY' ? 'Every 30 days' : freq === 'BIWEEKLY' ? 'Every 14 days' : 'Every 7 days'}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 4. Purpose */}
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-[#0F172A]">
+                    Stated Purpose of Credit Facility
+                  </label>
+                  <input
+                    type="text"
+                    value={purpose}
+                    onChange={(e) => setPurpose(e.target.value)}
+                    placeholder="e.g. Commercial Inventory & Working Capital Expansion"
+                    className="w-full px-3 h-10 text-xs bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                  />
+                </div>
+              </div>
+
+              {/* Right Column: Underwriting Panel (5 Cols) */}
+              <div className="lg:col-span-5 space-y-3">
+                <div className="bg-[#0F172A] text-white rounded-[8px] p-5 border border-[#0F172A]">
+                  <div className="flex items-center justify-between border-b border-white/20 pb-3 mb-3">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                        Real-Time Engine
+                      </span>
+                      <h3 className="text-sm font-bold text-white">Underwriting Readout</h3>
+                    </div>
+                    <Badge variant="paid" size="xs">
+                      Live
+                    </Badge>
+                  </div>
+
+                  {/* Financial Figures */}
+                  <div className="space-y-2.5 text-xs">
+                    <div className="flex justify-between items-center text-slate-300">
+                      <span>Requested Principal:</span>
+                      <MoneyText
+                        amount={calc.principal}
+                        currency={calcCurrency}
+                        className="font-bold text-white text-sm"
+                      />
+                    </div>
+                    <div className="flex justify-between items-center text-slate-300">
+                      <span>Fixed Interest Rate:</span>
+                      <span className="font-mono font-bold text-white">
+                        {calc.rate}% p.a.
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-slate-300">
+                      <span>Loan Duration:</span>
+                      <span className="font-mono font-bold text-white">
+                        {calc.termMonths} Months
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-slate-300">
+                      <span>Total Interest Accrued:</span>
+                      <MoneyText
+                        amount={calc.totalInterest}
+                        currency={calcCurrency}
+                        className="font-bold text-[#16A34A]"
+                      />
+                    </div>
+                    <div className="flex justify-between items-center text-slate-300 pt-2 border-t border-white/20">
+                      <span className="font-semibold text-slate-200">Total Repayable Capital:</span>
+                      <MoneyText
+                        amount={calc.totalRepayment}
+                        currency={calcCurrency}
+                        className="font-bold text-white text-sm"
+                      />
                     </div>
 
-                    {/* Preview Repayment Schedule Modal Button */}
+                    {/* Periodic Installment Box */}
+                    <div className="mt-3 p-3.5 rounded-[6px] bg-slate-800 border border-slate-700">
+                      <div className="flex justify-between items-baseline">
+                        <span className="text-xs font-semibold text-slate-300">
+                          {frequency === 'MONTHLY' ? 'Monthly' : frequency === 'BIWEEKLY' ? 'Biweekly' : 'Weekly'} Installment:
+                        </span>
+                        <MoneyText
+                          amount={calc.periodicInstallment}
+                          currency={calcCurrency}
+                          className="text-xl font-bold text-white"
+                        />
+                      </div>
+                      <p className="text-[10px] text-slate-400 font-mono mt-1">
+                        {calc.paymentCount} payments across {calc.termMonths} months duration
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* DTI Gauge */}
+                  <div className="mt-4 pt-4 border-t border-white/20 space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-300 font-semibold flex items-center gap-1.5">
+                        <Percent className="w-3.5 h-3.5 text-[#2563EB]" />
+                        <span>Debt-to-Income (DTI) Ratio</span>
+                      </span>
+                      <span
+                        className={`font-mono font-bold px-2 py-0.5 rounded-[4px] text-xs border ${
+                          calc.isDtiWarning
+                            ? 'bg-amber-400/20 text-amber-300 border-amber-400/40'
+                            : 'bg-emerald-400/20 text-emerald-300 border-emerald-400/40'
+                        }`}
+                      >
+                        {calc.dtiRatio}%
+                      </span>
+                    </div>
+
+                    {/* DTI Meter Bar */}
+                    <div className="space-y-1">
+                      <div className="w-full h-2 bg-white/20 rounded-[4px] overflow-hidden">
+                        <div
+                          className={`h-full ${
+                            calc.dtiRatio > 40 ? 'bg-[#DC2626]' : 'bg-[#16A34A]'
+                          }`}
+                          style={{ width: `${Math.min(calc.dtiRatio, 100)}%` }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-[10px] font-mono text-slate-400">
+                        <span>0%</span>
+                        <span className="text-amber-300">40% Limit</span>
+                        <span>100%</span>
+                      </div>
+                    </div>
+
+                    {calc.isDtiWarning ? (
+                      <div className="p-2.5 rounded-[6px] bg-amber-500/20 border border-amber-500/40 text-amber-200 text-xs">
+                        <div className="flex items-center gap-1 font-bold text-amber-300">
+                          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                          <span>DTI Exceeds 40.0% Regulatory Limit</span>
+                        </div>
+                        <p className="text-[11px] text-amber-200 mt-0.5">
+                          Requires credit committee approval exception.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="p-2.5 rounded-[6px] bg-emerald-500/20 border border-emerald-500/40 text-emerald-200 text-xs flex items-center gap-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-300" />
+                        <span className="text-[11px]">DTI within standard tolerance.</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Preview Schedule Button */}
+                  <button
+                    type="button"
+                    onClick={() => setShowScheduleModal(true)}
+                    className="mt-4 w-full py-2 px-3 rounded-[6px] bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-semibold text-xs transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <Calendar className="w-3.5 h-3.5" />
+                    <span>Preview Repayment Schedule</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Repayment Schedule Modal */}
+            {showScheduleModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50">
+                <div className="bg-white rounded-[8px] max-w-3xl w-full p-5 border border-[#CBD5E1] shadow-md max-h-[85vh] flex flex-col">
+                  <div className="flex items-center justify-between pb-3 border-b border-[#CBD5E1]">
+                    <div>
+                      <h3 className="text-sm font-bold text-[#0F172A]">
+                        Amortization Schedule Preview
+                      </h3>
+                      <p className="text-xs text-[#64748B] font-mono">
+                        {selectedProduct?.name} • {calc.termMonths} Installments • {calc.rate}% p.a.
+                      </p>
+                    </div>
                     <button
-                      type="button"
-                      onClick={() => setShowScheduleModal(true)}
-                      className="mt-6 w-full py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold text-xs transition-colors flex items-center justify-center gap-2 group"
+                      onClick={() => setShowScheduleModal(false)}
+                      className="p-1 rounded-[4px] text-[#64748B] hover:text-[#0F172A] hover:bg-slate-100"
                     >
-                      <Calendar className="w-3.5 h-3.5 text-indigo-300 group-hover:text-white" />
-                      <span>Preview Repayment Schedule</span>
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="overflow-y-auto flex-1 my-3 border border-[#CBD5E1] rounded-[6px]">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-wider text-[#64748B] sticky top-0 border-b border-[#CBD5E1]">
+                        <tr>
+                          <th className="py-2 px-3">#</th>
+                          <th className="py-2 px-3">Due Date</th>
+                          <th className="py-2 px-3 text-right">Principal</th>
+                          <th className="py-2 px-3 text-right">Interest</th>
+                          <th className="py-2 px-3 text-right">Total Installment</th>
+                          <th className="py-2 px-3 text-right">Remaining Balance</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#CBD5E1]">
+                        {amortizationSchedule.map((row) => (
+                          <tr key={row.installmentNo} className="hover:bg-slate-50">
+                            <td className="py-2 px-3 font-mono font-bold text-[#0F172A]">
+                              #{row.installmentNo}
+                            </td>
+                            <td className="py-2 px-3 font-mono text-[#64748B]">
+                              {row.dueDate}
+                            </td>
+                            <td className="py-2 px-3 text-right font-mono">
+                              <MoneyText amount={row.principalUSD} currency={calcCurrency} />
+                            </td>
+                            <td className="py-2 px-3 text-right font-mono text-[#64748B]">
+                              <MoneyText amount={row.interestUSD} currency={calcCurrency} />
+                            </td>
+                            <td className="py-2 px-3 text-right font-mono font-bold text-[#0F172A]">
+                              <MoneyText amount={row.totalUSD} currency={calcCurrency} />
+                            </td>
+                            <td className="py-2 px-3 text-right font-mono text-[#64748B]">
+                              <MoneyText amount={row.balanceUSD} currency={calcCurrency} />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2.5 border-t border-[#CBD5E1] text-xs">
+                    <div className="font-mono text-[#64748B]">
+                      Total Repayment: <MoneyText amount={calc.totalRepayment} currency={calcCurrency} className="font-bold text-[#0F172A]" />
+                    </div>
+                    <button
+                      onClick={() => setShowScheduleModal(false)}
+                      className="px-3.5 py-1.5 bg-[#0F172A] hover:bg-[#1E293B] text-white font-semibold rounded-[6px] text-xs transition-colors"
+                    >
+                      Done & Close Preview
                     </button>
                   </div>
                 </div>
               </div>
+            )}
+          </div>
+        )}
 
-              {/* Repayment Schedule Modal */}
-              {showScheduleModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60">
-                  <div className="bg-white rounded-xl max-w-3xl w-full p-6 shadow-2xl border border-slate-200 max-h-[85vh] flex flex-col">
-                    <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-                      <div>
-                        <h3 className="text-base font-bold text-slate-900">
-                          Amortization Schedule Preview
-                        </h3>
-                        <p className="text-xs text-slate-500 font-mono">
-                          {selectedProduct?.name} • {calc.termMonths} Installments • {calc.rate}% p.a.
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => setShowScheduleModal(false)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
+        {/* ================================================================ */}
+        {/* STEP 3: SUPPORTING DOCUMENTS (DRAG-AND-DROP)                     */}
+        {/* ================================================================ */}
+        {currentStep === 3 && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-base font-bold text-[#0F172A]">
+                Step 3: Supporting KYC & Collateral Documents
+              </h2>
+              <p className="text-xs text-[#64748B] mt-0.5">
+                Upload supporting documents required for verification and underwriting approval.
+              </p>
+            </div>
 
-                    <div className="overflow-y-auto flex-1 my-4 border border-slate-200 rounded-xl">
-                      <table className="w-full text-left text-xs">
-                        <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sticky top-0 border-b border-slate-200">
-                          <tr>
-                            <th className="py-2.5 px-3">#</th>
-                            <th className="py-2.5 px-3">Due Date</th>
-                            <th className="py-2.5 px-3 text-right">Principal</th>
-                            <th className="py-2.5 px-3 text-right">Interest</th>
-                            <th className="py-2.5 px-3 text-right">Total Installment</th>
-                            <th className="py-2.5 px-3 text-right">Remaining Balance</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {amortizationSchedule.map((row) => (
-                            <tr key={row.installmentNo} className="hover:bg-slate-50/70">
-                              <td className="py-2.5 px-3 font-mono font-bold text-slate-800">
-                                #{row.installmentNo}
-                              </td>
-                              <td className="py-2.5 px-3 font-mono text-slate-600">
-                                {row.dueDate}
-                              </td>
-                              <td className="py-2.5 px-3 text-right font-mono">
-                                <MoneyText amount={row.principalUSD} currency={calcCurrency} />
-                              </td>
-                              <td className="py-2.5 px-3 text-right font-mono text-slate-600">
-                                <MoneyText amount={row.interestUSD} currency={calcCurrency} />
-                              </td>
-                              <td className="py-2.5 px-3 text-right font-mono font-bold text-indigo-600">
-                                <MoneyText amount={row.totalUSD} currency={calcCurrency} />
-                              </td>
-                              <td className="py-2.5 px-3 text-right font-mono text-slate-500">
-                                <MoneyText amount={row.balanceUSD} currency={calcCurrency} />
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-xs">
-                      <div className="font-mono text-slate-500">
-                        Total Repayment: <MoneyText amount={calc.totalRepayment} currency={calcCurrency} className="font-bold text-slate-900" />
-                      </div>
-                      <button
-                        onClick={() => setShowScheduleModal(false)}
-                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-xs transition-colors"
-                      >
-                        Done &amp; Close Preview
-                      </button>
-                    </div>
-                  </div>
+            {/* 3 Upload Zones */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {/* Zone 1: National ID / Passport */}
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragOverZone('NATIONAL_ID');
+                }}
+                onDragLeave={() => setDragOverZone(null)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragOverZone(null);
+                  handleAddDocument('NATIONAL_ID');
+                }}
+                onClick={() => handleAddDocument('NATIONAL_ID')}
+                className={`p-5 rounded-[8px] border-2 border-dashed text-center space-y-2 cursor-pointer transition-colors ${
+                  dragOverZone === 'NATIONAL_ID'
+                    ? 'border-[#2563EB] bg-blue-50/50'
+                    : 'border-[#CBD5E1] bg-slate-50 hover:bg-slate-100'
+                }`}
+              >
+                <div className="w-10 h-10 rounded-[6px] bg-slate-100 border border-[#CBD5E1] text-[#0F172A] flex items-center justify-center mx-auto">
+                  <User className="w-5 h-5" />
                 </div>
-              )}
-            </motion.div>
-          )}
-
-          {/* ================================================================ */}
-          {/* STEP 3: SUPPORTING DOCUMENTS (DRAG-AND-DROP)                     */}
-          {/* ================================================================ */}
-          {currentStep === 3 && (
-            <motion.div
-              key="step-3"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.2 }}
-              className="space-y-8"
-            >
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">
-                  Step 3: Supporting KYC &amp; Collateral Documents
-                </h2>
-                <p className="text-xs text-slate-500 mt-1">
-                  Upload supporting documents required for verification and underwriting approval.
-                </p>
-              </div>
-
-              {/* 3 Dedicated Drag-and-Drop Zones */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Zone 1: National ID / Passport */}
-                <div
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setDragOverZone('NATIONAL_ID');
-                  }}
-                  onDragLeave={() => setDragOverZone(null)}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setDragOverZone(null);
-                    handleAddDocument('NATIONAL_ID');
-                  }}
-                  onClick={() => handleAddDocument('NATIONAL_ID')}
-                  className={`p-6 rounded-xl border-2 border-dashed text-center space-y-3 cursor-pointer transition-all ${
-                    dragOverZone === 'NATIONAL_ID'
-                      ? 'border-blue-600 bg-blue-50/60 scale-[1.01]'
-                      : 'border-slate-300 hover:border-blue-500 bg-white hover:bg-slate-50'
-                  }`}
-                >
-                  <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto shadow-xs">
-                    <User className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-900">
-                      National ID / Passport
-                    </h4>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      Front &amp; Back valid government identity scan
-                    </p>
-                  </div>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-[10px] font-semibold text-blue-600 shadow-xs">
-                    <Upload className="w-3 h-3" />
-                    <span>Drop PDF or Browse</span>
-                  </div>
-                </div>
-
-                {/* Zone 2: Proof of Income / Salary Slip */}
-                <div
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setDragOverZone('INCOME_PROOF');
-                  }}
-                  onDragLeave={() => setDragOverZone(null)}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setDragOverZone(null);
-                    handleAddDocument('INCOME_PROOF');
-                  }}
-                  onClick={() => handleAddDocument('INCOME_PROOF')}
-                  className={`p-6 rounded-xl border-2 border-dashed text-center space-y-3 cursor-pointer transition-all ${
-                    dragOverZone === 'INCOME_PROOF'
-                      ? 'border-blue-600 bg-blue-50/60 scale-[1.01]'
-                      : 'border-slate-300 hover:border-blue-500 bg-white hover:bg-slate-50'
-                  }`}
-                >
-                  <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto shadow-xs">
-                    <FileCheck className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-900">
-                      Proof of Income / Payroll
-                    </h4>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      Last 3 months certified bank statements or slips
-                    </p>
-                  </div>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-[10px] font-semibold text-blue-600 shadow-xs">
-                    <Upload className="w-3 h-3" />
-                    <span>Drop PDF or Browse</span>
-                  </div>
-                </div>
-
-                {/* Zone 3: Collateral / Guarantor */}
-                <div
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setDragOverZone('COLLATERAL');
-                  }}
-                  onDragLeave={() => setDragOverZone(null)}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setDragOverZone(null);
-                    handleAddDocument('COLLATERAL');
-                  }}
-                  onClick={() => handleAddDocument('COLLATERAL')}
-                  className={`p-6 rounded-xl border-2 border-dashed text-center space-y-3 cursor-pointer transition-all ${
-                    dragOverZone === 'COLLATERAL'
-                      ? 'border-blue-600 bg-blue-50/60 scale-[1.01]'
-                      : 'border-slate-300 hover:border-blue-500 bg-white hover:bg-slate-50'
-                  }`}
-                >
-                  <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto shadow-xs">
-                    <ShieldCheck className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-900">
-                      Collateral / Guarantor Info
-                    </h4>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      Land deed, vehicle registration or signed guarantor
-                    </p>
-                  </div>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-[10px] font-semibold text-emerald-600 shadow-xs">
-                    <Upload className="w-3 h-3" />
-                    <span>Drop PDF or Browse</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Attached Supporting Documents List */}
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                    Attached Supporting Documents ({uploadedDocs.length})
-                  </span>
-                  <span className="text-[11px] text-slate-400 font-mono">
-                    Max 15MB • PDF, JPG, PNG
-                  </span>
-                </div>
-
-                {uploadedDocs.length === 0 ? (
-                  <div className="p-8 text-center border border-dashed border-slate-200 rounded-xl bg-slate-50 text-xs text-slate-400">
-                    No documents attached yet. Click or drag files into the upload zones above.
-                  </div>
-                ) : (
-                  <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                    {uploadedDocs.map((doc) => (
-                      <div
-                        key={doc.id}
-                        className="flex items-center justify-between p-4 bg-white hover:bg-slate-50 text-xs transition-colors"
-                      >
-                        <div className="flex items-center gap-3.5 min-w-0">
-                          <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-                            <FileText className="w-4 h-4" />
-                          </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-slate-900 truncate">
-                                {doc.name}
-                              </span>
-                              <Badge variant="paid" size="xs">
-                                Verified
-                              </Badge>
-                            </div>
-                            <span className="text-[11px] text-slate-400 font-mono mt-0.5 block">
-                              {doc.categoryLabel} • {doc.size} • Uploaded {doc.uploadedAt}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-1.5 shrink-0 ml-4">
-                          <button
-                            type="button"
-                            onClick={() => setPreviewDoc(doc)}
-                            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                            title="Preview Document"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveDocument(doc.id)}
-                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                            title="Remove Document"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Document Preview Modal */}
-              {previewDoc && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60">
-                  <div className="bg-white rounded-xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
-                    <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                      <div className="flex items-center gap-2.5">
-                        <FileText className="w-5 h-5 text-indigo-600" />
-                        <div>
-                          <h4 className="text-sm font-bold text-slate-900">{previewDoc.name}</h4>
-                          <span className="text-[11px] text-slate-400 font-mono">{previewDoc.categoryLabel}</span>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => setPreviewDoc(null)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    <div className="h-64 rounded-xl bg-slate-100 border border-slate-200 flex flex-col items-center justify-center text-slate-400 text-xs p-6 text-center space-y-2">
-                      <FileCheck className="w-12 h-12 text-blue-500" />
-                      <p className="font-semibold text-slate-700">Digital Document Verified</p>
-                      <p className="text-[11px] text-slate-400 max-w-xs">
-                        Encrypted document stored securely in system storage.
-                      </p>
-                    </div>
-
-                    <div className="flex justify-end pt-2">
-                      <button
-                        onClick={() => setPreviewDoc(null)}
-                        className="px-4 py-2 bg-slate-100 hover:bg-slate-200 font-semibold text-xs text-slate-700 rounded-xl transition-colors"
-                      >
-                        Close Preview
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          )}
-
-          {/* ================================================================ */}
-          {/* STEP 4: SUMMARY CONFIRMATION & REVIEW                            */}
-          {/* ================================================================ */}
-          {currentStep === 4 && (
-            <motion.div
-              key="step-4"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.2 }}
-              className="space-y-8"
-            >
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">
-                  Step 4: Application Summary &amp; Routing Confirmation
-                </h2>
-                <p className="text-xs text-slate-500 mt-1">
-                  Examine all terms, underwriting ratios, and documentation before final submission.
-                </p>
-              </div>
-
-              {/* 4-Section Review Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
-                {/* 1. Borrower Summary */}
-                <div className="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-                    <span className="font-bold uppercase tracking-wider text-slate-600 text-[11px] flex items-center gap-1.5">
-                      <User className="w-3.5 h-3.5 text-blue-600" />
-                      <span>Borrower Profile</span>
-                    </span>
-                    <Badge variant="verified" size="xs">KYC Cleared</Badge>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-900">{selectedBorrower?.fullName}</h4>
-                    <p className="text-slate-500 font-mono text-[11px]">ID: {selectedBorrower?.borrowerId}</p>
-                  </div>
-                  <div className="space-y-1.5 font-mono text-slate-600 text-[11px]">
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">National ID:</span>
-                      <span className="font-semibold text-slate-900">{selectedBorrower?.nationalId}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Monthly Income:</span>
-                      <MoneyText amount={selectedBorrower?.monthlyIncomeUSD || 0} currency={calcCurrency} className="font-bold text-slate-900" />
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Contact Phone:</span>
-                      <span className="font-semibold text-slate-900">{selectedBorrower?.phone}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2. Facility & Terms Summary */}
-                <div className="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-                    <span className="font-bold uppercase tracking-wider text-slate-600 text-[11px] flex items-center gap-1.5">
-                      <Briefcase className="w-3.5 h-3.5 text-blue-600" />
-                      <span>Facility &amp; Terms</span>
-                    </span>
-                    <Badge variant="active" size="xs">{selectedProduct?.category}</Badge>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-900">{selectedProduct?.name}</h4>
-                    <p className="text-slate-500 font-mono text-[11px]">{selectedProduct?.id}</p>
-                  </div>
-                  <div className="space-y-1.5 font-mono text-slate-600 text-[11px]">
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Annual APR:</span>
-                      <span className="font-bold text-blue-600">{calc.rate}% p.a. Fixed</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Duration:</span>
-                      <span className="font-semibold text-slate-900">{calc.termMonths} Months</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Frequency:</span>
-                      <span className="font-semibold text-slate-900 capitalize">{frequency.toLowerCase()}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 3. Financial Calculation Totals */}
-                <div className="p-5 rounded-xl bg-blue-50/40 border border-blue-100 space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-blue-200">
-                    <span className="font-bold uppercase tracking-wider text-blue-900 text-[11px] flex items-center gap-1.5">
-                      <DollarSign className="w-3.5 h-3.5 text-blue-600" />
-                      <span>Calculation Summary</span>
-                    </span>
-                    <span className="font-mono text-[11px] font-bold text-blue-600">
-                      Currency: {calcCurrency}
-                    </span>
-                  </div>
-                  <div className="space-y-2 text-[11px]">
-                    <div className="flex justify-between">
-                      <span className="text-slate-600">Requested Principal:</span>
-                      <MoneyText amount={calc.principal} currency={calcCurrency} className="font-bold text-slate-900" />
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-600">Total Interest:</span>
-                      <MoneyText amount={calc.totalInterest} currency={calcCurrency} className="font-bold text-emerald-600" />
-                    </div>
-                    <div className="flex justify-between pt-1 border-t border-blue-100">
-                      <span className="text-slate-700 font-semibold">Total Repayment:</span>
-                      <MoneyText amount={calc.totalRepayment} currency={calcCurrency} className="font-bold text-slate-900" />
-                    </div>
-                    <div className="flex justify-between items-baseline pt-1">
-                      <span className="text-slate-900 font-bold">Estimated Installment:</span>
-                      <MoneyText amount={calc.periodicInstallment} currency={calcCurrency} className="text-base font-black text-blue-600" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* 4. Risk Appraisal & Governance */}
-                <div className="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-                    <span className="font-bold uppercase tracking-wider text-slate-600 text-[11px] flex items-center gap-1.5">
-                      <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-                      <span>Risk Assessment</span>
-                    </span>
-                    <Badge variant={calc.riskTier.toLowerCase()} size="xs">
-                      {calc.riskTier}
-                    </Badge>
-                  </div>
-                  <div className="space-y-2 text-[11px]">
-                    <div className="flex justify-between">
-                      <span className="text-slate-600">Calculated DTI Ratio:</span>
-                      <span
-                        className={`font-mono font-bold ${
-                          calc.isDtiWarning ? 'text-amber-600' : 'text-emerald-600'
-                        }`}
-                      >
-                        {calc.dtiRatio}% {calc.isDtiWarning ? '(Elevated)' : '(Healthy)'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-600">Attached Documents:</span>
-                      <span className="font-semibold text-slate-900">{uploadedDocs.length} Verified Files</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-600">Review Queue:</span>
-                      <span className="font-semibold text-slate-900">Branch Credit Committee</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Purpose Notes */}
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                <span className="font-bold text-slate-700 block mb-1">Stated Loan Purpose:</span>
-                <p className="text-slate-600 italic">"{purpose}"</p>
-              </div>
-
-              {/* Governance & Compliance Routing Notice */}
-              <div className="p-4 rounded-xl bg-blue-50/60 border border-blue-200 flex items-start gap-3.5 text-xs text-slate-700">
-                <ShieldCheck className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
                 <div>
-                  <span className="font-bold text-slate-900 block">
-                    Underwriting &amp; Compliance Review Notice
-                  </span>
-                  <p className="mt-0.5 text-slate-600 leading-relaxed">
-                    Upon clicking "Submit Application", the loan application is assigned a unique reference ID,
-                    recorded into the audit ledger, and routed to credit underwriting for review.
+                  <h4 className="text-xs font-bold text-[#0F172A]">
+                    National ID / Passport
+                  </h4>
+                  <p className="text-[11px] text-[#64748B] mt-0.5">
+                    Valid government identity document
                   </p>
                 </div>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] bg-white border border-[#CBD5E1] text-[10px] font-semibold text-[#0F172A]">
+                  <Upload className="w-3 h-3 text-[#2563EB]" />
+                  <span>Drop PDF or Browse</span>
+                </div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
-        {/* ------------------------------------------------------------------ */}
-        {/* Wizard Footer Navigation Controls                                  */}
-        {/* ------------------------------------------------------------------ */}
-        <div className="flex items-center justify-between pt-6 mt-8 border-t border-slate-100">
+              {/* Zone 2: Proof of Income */}
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragOverZone('INCOME_PROOF');
+                }}
+                onDragLeave={() => setDragOverZone(null)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragOverZone(null);
+                  handleAddDocument('INCOME_PROOF');
+                }}
+                onClick={() => handleAddDocument('INCOME_PROOF')}
+                className={`p-5 rounded-[8px] border-2 border-dashed text-center space-y-2 cursor-pointer transition-colors ${
+                  dragOverZone === 'INCOME_PROOF'
+                    ? 'border-[#2563EB] bg-blue-50/50'
+                    : 'border-[#CBD5E1] bg-slate-50 hover:bg-slate-100'
+                }`}
+              >
+                <div className="w-10 h-10 rounded-[6px] bg-slate-100 border border-[#CBD5E1] text-[#0F172A] flex items-center justify-center mx-auto">
+                  <FileCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-[#0F172A]">
+                    Proof of Income / Payroll
+                  </h4>
+                  <p className="text-[11px] text-[#64748B] mt-0.5">
+                    Bank statements or salary slips
+                  </p>
+                </div>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] bg-white border border-[#CBD5E1] text-[10px] font-semibold text-[#0F172A]">
+                  <Upload className="w-3 h-3 text-[#2563EB]" />
+                  <span>Drop PDF or Browse</span>
+                </div>
+              </div>
+
+              {/* Zone 3: Collateral / Guarantor */}
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragOverZone('COLLATERAL');
+                }}
+                onDragLeave={() => setDragOverZone(null)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragOverZone(null);
+                  handleAddDocument('COLLATERAL');
+                }}
+                onClick={() => handleAddDocument('COLLATERAL')}
+                className={`p-5 rounded-[8px] border-2 border-dashed text-center space-y-2 cursor-pointer transition-colors ${
+                  dragOverZone === 'COLLATERAL'
+                    ? 'border-[#2563EB] bg-blue-50/50'
+                    : 'border-[#CBD5E1] bg-slate-50 hover:bg-slate-100'
+                }`}
+              >
+                <div className="w-10 h-10 rounded-[6px] bg-slate-100 border border-[#CBD5E1] text-[#0F172A] flex items-center justify-center mx-auto">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-[#0F172A]">
+                    Collateral / Guarantor Info
+                  </h4>
+                  <p className="text-[11px] text-[#64748B] mt-0.5">
+                    Title deed or signed guarantor doc
+                  </p>
+                </div>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] bg-white border border-[#CBD5E1] text-[10px] font-semibold text-[#0F172A]">
+                  <Upload className="w-3 h-3 text-[#2563EB]" />
+                  <span>Drop PDF or Browse</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Attached Documents List */}
+            <div className="space-y-2 pt-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#0F172A]">
+                  Attached Supporting Documents ({uploadedDocs.length})
+                </span>
+                <span className="text-[11px] text-[#64748B] font-mono">
+                  Max 15MB • PDF, JPG, PNG
+                </span>
+              </div>
+
+              {uploadedDocs.length === 0 ? (
+                <div className="p-6 text-center border border-dashed border-[#CBD5E1] rounded-[8px] bg-slate-50 text-xs text-[#64748B]">
+                  No documents attached yet. Click or drag files into the upload zones above.
+                </div>
+              ) : (
+                <div className="divide-y divide-[#CBD5E1] border border-[#CBD5E1] rounded-[8px] overflow-hidden">
+                  {uploadedDocs.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="flex items-center justify-between p-3 bg-white hover:bg-slate-50 text-xs transition-colors"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-[4px] bg-slate-100 text-[#0F172A] border border-[#CBD5E1] flex items-center justify-center shrink-0">
+                          <FileText className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-[#0F172A] truncate">
+                              {doc.name}
+                            </span>
+                            <Badge variant="paid" size="xs">
+                              Verified
+                            </Badge>
+                          </div>
+                          <span className="text-[11px] text-[#64748B] font-mono mt-0.5 block">
+                            {doc.categoryLabel} • {doc.size} • Uploaded {doc.uploadedAt}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1 shrink-0 ml-3">
+                        <button
+                          type="button"
+                          onClick={() => setPreviewDoc(doc)}
+                          className="p-1 text-[#64748B] hover:text-[#0F172A] hover:bg-slate-100 rounded-[4px] transition-colors"
+                          title="Preview Document"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveDocument(doc.id)}
+                          className="p-1 text-[#64748B] hover:text-[#DC2626] hover:bg-red-50 rounded-[4px] transition-colors"
+                          title="Remove Document"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Document Preview Modal */}
+            {previewDoc && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50">
+                <div className="bg-white rounded-[8px] max-w-lg w-full p-5 border border-[#CBD5E1] shadow-md space-y-3">
+                  <div className="flex items-center justify-between pb-2.5 border-b border-[#CBD5E1]">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-[#2563EB]" />
+                      <div>
+                        <h4 className="text-xs font-bold text-[#0F172A]">{previewDoc.name}</h4>
+                        <span className="text-[11px] text-[#64748B] font-mono">{previewDoc.categoryLabel}</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setPreviewDoc(null)}
+                      className="p-1 rounded-[4px] text-[#64748B] hover:text-[#0F172A] hover:bg-slate-100"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="h-52 rounded-[6px] bg-slate-50 border border-[#CBD5E1] flex flex-col items-center justify-center text-[#64748B] text-xs p-5 text-center space-y-2">
+                    <FileCheck className="w-10 h-10 text-[#2563EB]" />
+                    <p className="font-semibold text-[#0F172A]">Digital Document Verified</p>
+                    <p className="text-[11px] text-[#64748B] max-w-xs">
+                      Encrypted document stored securely in system storage.
+                    </p>
+                  </div>
+
+                  <div className="flex justify-end pt-2">
+                    <button
+                      onClick={() => setPreviewDoc(null)}
+                      className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 font-semibold text-xs text-[#0F172A] rounded-[6px] border border-[#CBD5E1] transition-colors"
+                    >
+                      Close Preview
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ================================================================ */}
+        {/* STEP 4: SUMMARY CONFIRMATION & REVIEW                            */}
+        {/* ================================================================ */}
+        {currentStep === 4 && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-base font-bold text-[#0F172A]">
+                Step 4: Application Summary & Routing Confirmation
+              </h2>
+              <p className="text-xs text-[#64748B] mt-0.5">
+                Examine all terms, underwriting ratios, and documentation before final submission.
+              </p>
+            </div>
+
+            {/* 4-Section Review Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              {/* 1. Borrower Summary */}
+              <div className="p-4 rounded-[8px] bg-slate-50 border border-[#CBD5E1] space-y-2.5">
+                <div className="flex items-center justify-between pb-2 border-b border-[#CBD5E1]">
+                  <span className="font-semibold uppercase tracking-wider text-[#0F172A] text-[11px] flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5 text-[#2563EB]" />
+                    <span>Borrower Profile</span>
+                  </span>
+                  <Badge variant="verified" size="xs">KYC Cleared</Badge>
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-[#0F172A]">{selectedBorrower?.fullName}</h4>
+                  <p className="text-[#64748B] font-mono text-[11px]">ID: {selectedBorrower?.borrowerId}</p>
+                </div>
+                <div className="space-y-1 font-mono text-[#64748B] text-[11px]">
+                  <div className="flex justify-between">
+                    <span>National ID:</span>
+                    <span className="font-semibold text-[#0F172A]">{selectedBorrower?.nationalId}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Monthly Income:</span>
+                    <MoneyText amount={selectedBorrower?.monthlyIncomeUSD || 0} currency={calcCurrency} className="font-bold text-[#0F172A]" />
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Contact Phone:</span>
+                    <span className="font-semibold text-[#0F172A]">{selectedBorrower?.phone}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Facility & Terms Summary */}
+              <div className="p-4 rounded-[8px] bg-slate-50 border border-[#CBD5E1] space-y-2.5">
+                <div className="flex items-center justify-between pb-2 border-b border-[#CBD5E1]">
+                  <span className="font-semibold uppercase tracking-wider text-[#0F172A] text-[11px] flex items-center gap-1.5">
+                    <Briefcase className="w-3.5 h-3.5 text-[#2563EB]" />
+                    <span>Facility & Terms</span>
+                  </span>
+                  <Badge variant="active" size="xs">{selectedProduct?.category}</Badge>
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-[#0F172A]">{selectedProduct?.name}</h4>
+                  <p className="text-[#64748B] font-mono text-[11px]">{selectedProduct?.id}</p>
+                </div>
+                <div className="space-y-1 font-mono text-[#64748B] text-[11px]">
+                  <div className="flex justify-between">
+                    <span>Annual APR:</span>
+                    <span className="font-bold text-[#0F172A]">{calc.rate}% p.a. Fixed</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Duration:</span>
+                    <span className="font-semibold text-[#0F172A]">{calc.termMonths} Months</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Frequency:</span>
+                    <span className="font-semibold text-[#0F172A] capitalize">{frequency.toLowerCase()}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Financial Calculation Totals */}
+              <div className="p-4 rounded-[8px] bg-slate-50 border border-[#CBD5E1] space-y-2.5">
+                <div className="flex items-center justify-between pb-2 border-b border-[#CBD5E1]">
+                  <span className="font-semibold uppercase tracking-wider text-[#0F172A] text-[11px] flex items-center gap-1.5">
+                    <DollarSign className="w-3.5 h-3.5 text-[#2563EB]" />
+                    <span>Calculation Summary</span>
+                  </span>
+                  <span className="font-mono text-[11px] font-bold text-[#64748B]">
+                    Currency: {calcCurrency}
+                  </span>
+                </div>
+                <div className="space-y-1.5 text-[11px]">
+                  <div className="flex justify-between">
+                    <span className="text-[#64748B]">Requested Principal:</span>
+                    <MoneyText amount={calc.principal} currency={calcCurrency} className="font-bold text-[#0F172A]" />
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#64748B]">Total Interest:</span>
+                    <MoneyText amount={calc.totalInterest} currency={calcCurrency} className="font-bold text-[#16A34A]" />
+                  </div>
+                  <div className="flex justify-between pt-1 border-t border-[#CBD5E1]">
+                    <span className="text-[#0F172A] font-semibold">Total Repayment:</span>
+                    <MoneyText amount={calc.totalRepayment} currency={calcCurrency} className="font-bold text-[#0F172A]" />
+                  </div>
+                  <div className="flex justify-between items-baseline pt-1">
+                    <span className="text-[#0F172A] font-bold">Estimated Installment:</span>
+                    <MoneyText amount={calc.periodicInstallment} currency={calcCurrency} className="text-sm font-bold text-[#0F172A]" />
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. Risk Appraisal */}
+              <div className="p-4 rounded-[8px] bg-slate-50 border border-[#CBD5E1] space-y-2.5">
+                <div className="flex items-center justify-between pb-2 border-b border-[#CBD5E1]">
+                  <span className="font-semibold uppercase tracking-wider text-[#0F172A] text-[11px] flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#2563EB]" />
+                    <span>Risk Assessment</span>
+                  </span>
+                  <Badge variant={calc.riskTier.toLowerCase()} size="xs">
+                    {calc.riskTier}
+                  </Badge>
+                </div>
+                <div className="space-y-1.5 text-[11px]">
+                  <div className="flex justify-between">
+                    <span className="text-[#64748B]">Calculated DTI Ratio:</span>
+                    <span
+                      className={`font-mono font-bold ${
+                        calc.isDtiWarning ? 'text-[#D97706]' : 'text-[#16A34A]'
+                      }`}
+                    >
+                      {calc.dtiRatio}% {calc.isDtiWarning ? '(Elevated)' : '(Healthy)'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#64748B]">Attached Documents:</span>
+                    <span className="font-semibold text-[#0F172A]">{uploadedDocs.length} Verified Files</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#64748B]">Review Queue:</span>
+                    <span className="font-semibold text-[#0F172A]">Branch Credit Committee</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Purpose Notes */}
+            <div className="p-3 rounded-[6px] bg-slate-50 border border-[#CBD5E1] text-xs">
+              <span className="font-semibold text-[#0F172A] block mb-0.5">Stated Loan Purpose:</span>
+              <p className="text-[#64748B] italic">"{purpose}"</p>
+            </div>
+
+            {/* Compliance Notice */}
+            <div className="p-3 rounded-[6px] bg-slate-50 border border-[#CBD5E1] flex items-start gap-2.5 text-xs">
+              <ShieldCheck className="w-4 h-4 text-[#2563EB] shrink-0 mt-0.5" />
+              <div>
+                <span className="font-semibold text-[#0F172A] block">
+                  Underwriting & Compliance Routing Notice
+                </span>
+                <p className="mt-0.5 text-[#64748B] leading-relaxed">
+                  Upon submission, the application is assigned a unique reference ID,
+                  recorded into the audit ledger, and routed to credit underwriting for formal review.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Wizard Footer Navigation Controls */}
+        <div className="flex items-center justify-between pt-5 mt-6 border-t border-[#CBD5E1]">
           <div>
             {currentStep > 1 ? (
               <button
                 type="button"
                 onClick={() => setCurrentStep((prev) => (prev - 1) as any)}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-xl transition-colors"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-[#0F172A] bg-white hover:bg-slate-50 border border-[#CBD5E1] rounded-[6px] transition-colors"
               >
-                <ArrowLeft className="w-4 h-4" />
+                <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Previous Step</span>
               </button>
             ) : (
               <button
                 type="button"
                 onClick={onCancel}
-                className="px-4 py-2.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors"
+                className="px-3.5 py-2 text-xs font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors"
               >
                 Cancel
               </button>
             )}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {currentStep === 4 ? (
               <>
                 <button
                   type="button"
                   onClick={() => handleFinalSubmit(true)}
-                  className="px-4 py-2.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
+                  className="px-3.5 py-2 text-xs font-semibold text-[#0F172A] bg-white hover:bg-slate-50 border border-[#CBD5E1] rounded-[6px] transition-colors"
                 >
                   Save as Draft
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowConfirmationModal(true)}
-                  className="px-5 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-md shadow-indigo-600/25 transition-all inline-flex items-center gap-2"
+                  className="px-4 py-2 text-xs font-semibold text-white bg-[#0F172A] hover:bg-[#1E293B] rounded-[6px] transition-colors inline-flex items-center gap-1.5"
                 >
                   <span>Submit Application</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </>
             ) : (
               <button
                 type="button"
                 onClick={() => setCurrentStep((prev) => (prev + 1) as any)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-md shadow-indigo-600/25 transition-all"
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-[#0F172A] hover:bg-[#1E293B] rounded-[6px] transition-colors"
               >
                 <span>Continue to Step {currentStep + 1}</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
         </div>
       </div>
 
-      {/* -------------------------------------------------------------------- */}
-      {/* 3. Official Submission Confirmation Modal                            */}
-      {/* -------------------------------------------------------------------- */}
+      {/* 3. Official Submission Confirmation Modal */}
       {showConfirmationModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60">
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            className="bg-white rounded-xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-6"
-          >
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                <ShieldCheck className="w-6 h-6" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50">
+          <div className="bg-white rounded-[8px] max-w-lg w-full p-5 border border-[#CBD5E1] shadow-md space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-[6px] bg-slate-100 border border-[#CBD5E1] text-[#0F172A] flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-5 h-5 text-[#2563EB]" />
               </div>
               <div className="min-w-0">
-                <h3 className="text-lg font-bold text-slate-900">
+                <h3 className="text-sm font-bold text-[#0F172A]">
                   Confirm Application Submission
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-[#64748B] mt-0.5">
                   The loan application will be submitted for credit underwriting review.
                 </p>
               </div>
             </div>
 
-            {/* Quick Summary Pill Box */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5 text-xs">
+            {/* Quick Summary Box */}
+            <div className="p-3 rounded-[6px] bg-slate-50 border border-[#CBD5E1] space-y-2 text-xs">
               <div className="flex justify-between">
-                <span className="text-slate-500">Applicant Borrower:</span>
-                <span className="font-bold text-slate-900">{selectedBorrower?.fullName}</span>
+                <span className="text-[#64748B]">Applicant Borrower:</span>
+                <span className="font-semibold text-[#0F172A]">{selectedBorrower?.fullName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Loan Facility:</span>
-                <span className="font-bold text-slate-900">{selectedProduct?.name}</span>
+                <span className="text-[#64748B]">Loan Facility:</span>
+                <span className="font-semibold text-[#0F172A]">{selectedProduct?.name}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Principal Requested:</span>
-                <MoneyText amount={calc.principal} currency={calcCurrency} className="font-bold text-indigo-600" />
+                <span className="text-[#64748B]">Principal Requested:</span>
+                <MoneyText amount={calc.principal} currency={calcCurrency} className="font-bold text-[#0F172A]" />
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Projected Installment:</span>
-                <MoneyText amount={calc.periodicInstallment} currency={calcCurrency} className="font-bold text-slate-900" />
+                <span className="text-[#64748B]">Projected Installment:</span>
+                <MoneyText amount={calc.periodicInstallment} currency={calcCurrency} className="font-bold text-[#0F172A]" />
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Underwriting DTI:</span>
-                <span className={`font-mono font-bold ${calc.isDtiWarning ? 'text-amber-600' : 'text-emerald-600'}`}>
+                <span className="text-[#64748B]">Underwriting DTI:</span>
+                <span className={`font-mono font-bold ${calc.isDtiWarning ? 'text-[#D97706]' : 'text-[#16A34A]'}`}>
                   {calc.dtiRatio}%
                 </span>
               </div>
             </div>
 
-            {/* Mandatory Compliance Checkbox */}
-            <label className="flex items-start gap-3 cursor-pointer select-none">
+            {/* Compliance Checkbox */}
+            <label className="flex items-start gap-2.5 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={confirmAgreed}
                 onChange={(e) => setConfirmAgreed(e.target.checked)}
-                className="mt-0.5 w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500"
+                className="mt-0.5 w-4 h-4 rounded-[4px] border-[#CBD5E1] text-[#0F172A] focus:ring-0"
               />
-              <span className="text-xs text-slate-600 leading-relaxed">
+              <span className="text-[11px] text-[#64748B] leading-relaxed">
                 I certify that all applicant details, supporting KYC credentials, and stated income proofs have been preliminarily validated in accordance with National Bank of Cambodia compliance guidelines.
               </span>
             </label>
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-end gap-3 pt-2">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#CBD5E1]">
               <button
                 type="button"
                 onClick={() => setShowConfirmationModal(false)}
                 disabled={isSubmitting}
-                className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors"
+                className="px-3.5 py-2 text-xs font-semibold text-[#0F172A] hover:bg-slate-100 rounded-[6px] border border-[#CBD5E1] transition-colors"
               >
                 Back to Review
               </button>
@@ -1691,7 +1611,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                 type="button"
                 onClick={() => handleFinalSubmit(false)}
                 disabled={!confirmAgreed || isSubmitting}
-                className="px-5 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl shadow-md shadow-indigo-600/25 transition-all inline-flex items-center gap-2"
+                className="px-4 py-2 text-xs font-semibold text-white bg-[#0F172A] hover:bg-[#1E293B] disabled:opacity-50 disabled:cursor-not-allowed rounded-[6px] transition-colors inline-flex items-center gap-1.5"
               >
                 {isSubmitting ? (
                   <>
@@ -1700,13 +1620,13 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                   </>
                 ) : (
                   <>
-                    <span>Confirm &amp; Route to Committee</span>
-                    <Check className="w-4 h-4" />
+                    <span>Confirm & Route to Committee</span>
+                    <Check className="w-3.5 h-3.5" />
                   </>
                 )}
               </button>
             </div>
-          </motion.div>
+          </div>
         </div>
       )}
     </div>

@@ -27,7 +27,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   activeNavId,
   onNavigate,
   onLogout,
-  branchName = 'Phnom Penh Main Branch',
+  branchName = 'Main Branch',
   breadcrumbs,
   currentRole,
   onRoleSwitch,
@@ -47,9 +47,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-50/70 text-slate-900 font-sans antialiased selection:bg-blue-600 selection:text-white">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#F8FAFC] text-[#0F172A] font-sans antialiased selection:bg-[#2563EB] selection:text-white">
       
-      {/* 1. Desktop Floating/Sticky Sidebar (Hidden on Mobile/Tablet < lg) */}
+      {/* 1. Desktop Sidebar */}
       <div className="hidden lg:block shrink-0 h-full">
         <Sidebar
           currentUser={currentUser}
@@ -62,11 +62,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         />
       </div>
 
-      {/* 2. Mobile/Tablet Slide-over Drawer with Backdrop */}
+      {/* 2. Mobile/Tablet Slide-over Drawer */}
       <AnimatePresence>
         {mobileDrawerOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -77,26 +76,23 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               aria-hidden="true"
             />
 
-            {/* Slide-over Drawer */}
             <motion.div
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] flex flex-col lg:hidden shadow-2xl"
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] flex flex-col lg:hidden shadow-lg border-r border-slate-800"
             >
-              {/* Drawer Close Button Header Overlay */}
               <div className="absolute top-3.5 right-3 z-50">
                 <button
                   onClick={() => setMobileDrawerOpen(false)}
                   aria-label="Close Navigation Drawer"
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition focus:outline-none"
+                  className="p-1.5 rounded-[6px] text-slate-400 hover:text-white hover:bg-slate-800 transition focus:outline-none"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              {/* Sidebar rendered full-width within the mobile drawer */}
               <div className="h-full w-full">
                 <Sidebar
                   currentUser={currentUser}
@@ -117,7 +113,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
       {/* 3. Main Workspace Area */}
       <div className="flex-1 flex flex-col min-w-0 h-full max-h-screen overflow-hidden">
-        {/* Sticky Solid TopBar */}
         <TopBar
           breadcrumbs={breadcrumbs}
           currentRole={currentRole}
@@ -132,20 +127,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           onLogout={onLogout}
         />
 
-        {/* Scrollable Main Content Area with Route Transitions */}
-        <main className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 lg:p-8 bg-slate-50">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeNavId}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="h-full"
-            >
-              {children}
-            </motion.div>
-          </AnimatePresence>
+        <main className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 bg-[#F8FAFC]">
+          <div className="h-full max-w-7xl mx-auto">
+            {children}
+          </div>
         </main>
       </div>
 

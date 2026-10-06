@@ -79,8 +79,115 @@ interface InMemoryUser {
 }
 
 export class AuthService {
+  // Failed login attempts tracker for rate limiting (5 attempts -> 5 minutes block)
+  private static failedLoginAttempts = new Map<string, { count: number; blockedUntil?: Date }>();
+
+  private static checkRateLimit(key: string): void {
+    const record = this.failedLoginAttempts.get(key);
+    if (!record) return;
+
+    if (record.blockedUntil) {
+      if (new Date() < record.blockedUntil) {
+        const remainingMs = record.blockedUntil.getTime() - Date.now();
+        const minutes = Math.ceil(remainingMs / 60000);
+        throw {
+          statusCode: 429,
+          message: `Too many failed login attempts. Please try again after ${minutes} minute${minutes > 1 ? 's' : ''}.`,
+          code: 'RATE_LIMITED',
+        };
+      } else {
+        this.failedLoginAttempts.delete(key);
+      }
+    }
+  }
+
+  private static recordFailedAttempt(key: string): void {
+    const record = this.failedLoginAttempts.get(key) || { count: 0 };
+    record.count += 1;
+    if (record.count >= 5) {
+      record.blockedUntil = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes block
+    }
+    this.failedLoginAttempts.set(key, record);
+  }
+
+  private static clearFailedAttempts(key: string): void {
+    this.failedLoginAttempts.delete(key);
+  }
+
   // Pre-seeded core banking accounts for offline evaluation
   private static seedUsers: Map<string, InMemoryUser> = new Map([
+    [
+      'admin@example.com',
+      {
+        id: 'user-admin-0001',
+        username: 'admin',
+        email: 'admin@example.com',
+        passwordHash: bcrypt.hashSync('Password123!', 10),
+        fullName: 'Admin',
+        phone: '+855 12 345 678',
+        role: UserRole.ADMIN,
+        status: UserStatus.ACTIVE,
+        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+        lastLogin: new Date(Date.now() - 1000 * 60 * 15),
+        emailVerifiedAt: new Date(),
+        createdAt: new Date('2025-01-01T08:00:00Z'),
+        updatedAt: new Date(),
+      },
+    ],
+    [
+      'user@example.com',
+      {
+        id: 'user-user-0002',
+        username: 'user',
+        email: 'user@example.com',
+        passwordHash: bcrypt.hashSync('Password123!', 10),
+        fullName: 'Standard User',
+        phone: '+855 12 999 888',
+        role: UserRole.USER,
+        status: UserStatus.ACTIVE,
+        avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+        lastLogin: new Date(Date.now() - 1000 * 60 * 60),
+        emailVerifiedAt: new Date(),
+        createdAt: new Date('2025-01-10T08:00:00Z'),
+        updatedAt: new Date(),
+      },
+    ],
+    [
+      'inactive@example.com',
+      {
+        id: 'user-inactive-0003',
+        username: 'inactive',
+        email: 'inactive@example.com',
+        passwordHash: bcrypt.hashSync('Password123!', 10),
+        fullName: 'Inactive User',
+        phone: '+855 12 111 222',
+        role: UserRole.USER,
+        status: UserStatus.INACTIVE,
+        avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+        lastLogin: null,
+        emailVerifiedAt: new Date(),
+        createdAt: new Date('2025-01-10T08:00:00Z'),
+        updatedAt: new Date(),
+      },
+    ],
+    [
+      'suspended@example.com',
+      {
+        id: 'user-suspended-0004',
+        username: 'suspended',
+        email: 'suspended@example.com',
+        passwordHash: bcrypt.hashSync('Password123!', 10),
+        fullName: 'Suspended User',
+        phone: '+855 12 333 444',
+        role: UserRole.USER,
+        status: UserStatus.SUSPENDED,
+        avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+        lastLogin: null,
+        emailVerifiedAt: new Date(),
+        createdAt: new Date('2025-01-10T08:00:00Z'),
+        updatedAt: new Date(),
+      },
+    ],
     [
       'manager@apex.local',
       {
@@ -552,13 +659,24 @@ export class AuthService {
   }
 
   /**
-   * 6. User Login with Remember Me Support
-   * Rejects unverified accounts that only exist in pending_registrations.
+   * 6. User Login with Exact 9-Step Verification & Rate Limiting
    */
   static async login(dto: LoginDto) {
+    // Step 1: Validate input
+    if (!dto.usernameOrEmail?.trim() || !dto.password) {
+      throw {
+        statusCode: 400,
+        message: 'Invalid email/username or password.',
+        code: 'INVALID_CREDENTIALS',
+      };
+    }
+
     const cleanIdentifier = dto.usernameOrEmail.toLowerCase().trim();
 
-    // 1. Check if user is still only a pending registration
+    // Check 5-attempt / 5-minute rate limit
+    this.checkRateLimit(cleanIdentifier);
+
+    // Check if user is still an unverified pending registration
     const isPending = await PendingRegistrationService.findValidByEmail(cleanIdentifier);
     if (isPending) {
       throw {
@@ -568,29 +686,50 @@ export class AuthService {
       };
     }
 
-    // 2. Find permanent active user
+    // Step 2 & 3: Find user by email or username
     const user = await this.findActiveUserByEmailOrUsername(dto.usernameOrEmail);
-
     if (!user) {
-      throw { statusCode: 401, message: 'Invalid email or password.', code: 'INVALID_CREDENTIALS' };
+      this.recordFailedAttempt(cleanIdentifier);
+      throw {
+        statusCode: 401,
+        message: 'Invalid email/username or password.',
+        code: 'INVALID_CREDENTIALS',
+      };
     }
 
-    if (user.status !== UserStatus.ACTIVE) {
+    // Step 4 & 5: Verify submitted password against hashed password
+    const isMatch = await bcrypt.compare(dto.password, user.passwordHash);
+    if (!isMatch) {
+      this.recordFailedAttempt(cleanIdentifier);
+      throw {
+        statusCode: 401,
+        message: 'Invalid email/username or password.',
+        code: 'INVALID_CREDENTIALS',
+      };
+    }
+
+    // Clear failed attempts on valid credentials
+    this.clearFailedAttempts(cleanIdentifier);
+
+    // Step 6: Check user account status
+    if (user.status === UserStatus.INACTIVE) {
       throw {
         statusCode: 403,
-        message: 'Account is inactive. Please contact system administrator.',
+        message: 'Your account is inactive. Please contact the administrator.',
         code: 'ACCOUNT_INACTIVE',
       };
     }
 
-    const isMatch = await bcrypt.compare(dto.password, user.passwordHash);
-    if (!isMatch) {
-      throw { statusCode: 401, message: 'Invalid email or password.', code: 'INVALID_CREDENTIALS' };
+    if (user.status === UserStatus.SUSPENDED) {
+      throw {
+        statusCode: 403,
+        message: 'Your account has been suspended. Please contact the administrator.',
+        code: 'ACCOUNT_SUSPENDED',
+      };
     }
 
+    // Step 8: Update last_login
     const now = new Date();
-
-    // Persist lastLogin to database & in-memory session
     try {
       await prisma.user.update({
         where: { id: user.id },
@@ -601,6 +740,7 @@ export class AuthService {
     }
     user.lastLogin = now;
 
+    // Step 7: Create secure login session/token
     const expiryTime = dto.rememberMe ? '30d' : ACCESS_TOKEN_EXPIRY;
     const accessToken = this.generateAccessToken(user, expiryTime);
 
@@ -640,19 +780,24 @@ export class AuthService {
     }
 
     const defaultAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.username)}`;
+    const normalizedRole = (user.role === UserRole.ADMIN || user.role === UserRole.MANAGER) ? 'admin' : 'user';
 
+    // Step 9 & Response Format (Point 13)
     return {
+      success: true,
+      message: 'Login successful',
       token: accessToken,
       accessToken,
       refreshToken: rawToken,
       expiresIn: expiryTime,
       user: {
         id: user.id,
+        name: user.fullName || user.username,
         username: user.username,
         email: user.email,
-        fullName: user.fullName,
-        phone: user.phone,
-        role: user.role,
+        role: normalizedRole,
+        originalRole: user.role,
+        status: user.status.toLowerCase(),
         avatarUrl: user.avatarUrl || defaultAvatar,
         lastLogin: user.lastLogin || now,
         createdAt: user.createdAt,

@@ -1,6 +1,5 @@
 import React from 'react';
 import { RepaymentInstallment, Currency, UserRole } from '../../types';
-import { Badge } from '../common/Badge';
 import { MoneyText } from '../common/MoneyText';
 import { Check, Download, AlertCircle } from 'lucide-react';
 
@@ -21,138 +20,139 @@ export const RepaymentScheduleTable: React.FC<RepaymentScheduleTableProps> = ({
 }) => {
   const isCashierOrAdmin =
     currentUserRole === 'CASHIER' ||
-    currentUserRole === 'MANAGER';
+    currentUserRole === 'MANAGER' ||
+    currentUserRole === 'admin' ||
+    currentUserRole === 'ADMIN';
 
   return (
-    <div className="banking-card overflow-hidden shadow-sm">
+    <div className="bg-white border border-[#CBD5E1] rounded-[6px] overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full text-left">
-          <thead className="sticky top-0 bg-slate-100 border-b border-slate-200 z-10">
-            <tr className="text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200/80">
-              <th className="py-3.5 px-4">Installment #</th>
-              <th className="py-3.5 px-4">Due Date</th>
-              <th className="py-3.5 px-4 text-right">Principal Amount ($)</th>
-              <th className="py-3.5 px-4 text-right">Interest Amount ($)</th>
-              <th className="py-3.5 px-4 text-right">Total Due ($)</th>
-              <th className="py-3.5 px-4 text-right">Amount Paid ($)</th>
-              <th className="py-3.5 px-4 text-right">Remaining Balance ($)</th>
-              <th className="py-3.5 px-4 text-center">Status</th>
-              <th className="py-3.5 px-4 text-right">Action</th>
+        <table className="w-full text-left text-[13px]">
+          <thead className="bg-[#F8FAFC] border-b border-[#CBD5E1]">
+            <tr className="text-[12px] font-semibold uppercase tracking-wider text-[#64748B]">
+              <th className="py-3 px-4">Installment #</th>
+              <th className="py-3 px-4">Due Date</th>
+              <th className="py-3 px-4 text-right">Principal</th>
+              <th className="py-3 px-4 text-right">Interest</th>
+              <th className="py-3 px-4 text-right">Installment</th>
+              <th className="py-3 px-4 text-right">Paid</th>
+              <th className="py-3 px-4 text-right">Remaining</th>
+              <th className="py-3 px-4 text-center">Status</th>
+              <th className="py-3 px-4 text-right">Action</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100/80">
+          <tbody className="divide-y divide-[#CBD5E1]">
             {schedules.map((s, idx) => {
               const isOverdue = s.status === 'OVERDUE';
               const isPaid = s.status === 'PAID';
               const isPartial = s.status === 'PARTIAL';
               const isUnpaid = s.status === 'UNPAID';
-              const isUpcoming = s.status === 'UPCOMING';
 
               return (
                 <tr
                   key={s.installmentNo}
-                  className={`border-b border-slate-100 transition-all duration-150 text-sm text-slate-700 hover:bg-slate-100/60 ${
+                  className={`transition-colors hover:bg-slate-50 ${
                     isOverdue
-                      ? 'bg-rose-50/30'
+                      ? 'bg-rose-50/20'
                       : idx % 2 === 1
-                      ? 'bg-slate-50/40'
+                      ? 'bg-[#F8FAFC]/50'
                       : 'bg-white'
                   }`}
                 >
                   {/* Installment # */}
-                  <td className="py-3.5 px-4 font-mono tabular-nums font-bold text-slate-900">
+                  <td className="py-3 px-4 font-mono font-medium text-[#0F172A]">
                     #{s.installmentNo}
                   </td>
 
                   {/* Due Date */}
-                  <td className="py-3.5 px-4 font-mono tabular-nums text-xs text-slate-700">
+                  <td className="py-3 px-4 text-[#0F172A]">
                     <div className="flex items-center gap-1.5">
-                      {isOverdue && <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />}
+                      {isOverdue && <AlertCircle className="w-3.5 h-3.5 text-[#DC2626] shrink-0" />}
                       <span>{s.dueDate}</span>
                     </div>
                   </td>
 
-                  {/* Principal Component */}
-                  <td className="py-3.5 px-4 text-right">
+                  {/* Principal */}
+                  <td className="py-3 px-4 text-right text-[#0F172A]">
                     <MoneyText
                       amount={s.principalUSD}
                       currency={currency}
-                      className="text-slate-700"
+                      className="text-[#0F172A]"
                     />
                   </td>
 
-                  {/* Interest Component */}
-                  <td className="py-3.5 px-4 text-right">
+                  {/* Interest */}
+                  <td className="py-3 px-4 text-right text-[#64748B]">
                     <MoneyText
                       amount={s.interestUSD}
                       currency={currency}
-                      className="text-slate-700"
+                      className="text-[#64748B]"
                     />
                   </td>
 
-                  {/* Total Due */}
-                  <td className="py-3.5 px-4 text-right">
+                  {/* Installment Total Due */}
+                  <td className="py-3 px-4 text-right font-semibold text-[#0F172A]">
                     <MoneyText
                       amount={s.totalDueUSD}
                       currency={currency}
-                      className="font-bold text-slate-900"
+                      className="font-semibold text-[#0F172A]"
                     />
                   </td>
 
                   {/* Amount Paid */}
-                  <td className="py-3.5 px-4 text-right">
+                  <td className="py-3 px-4 text-right font-medium text-[#16A34A]">
                     <MoneyText
                       amount={s.amountPaidUSD}
                       currency={currency}
-                      className="font-semibold text-emerald-600"
+                      className="font-medium text-[#16A34A]"
                     />
                   </td>
 
                   {/* Remaining Balance */}
-                  <td className="py-3.5 px-4 text-right">
+                  <td className="py-3 px-4 text-right font-semibold text-[#2563EB]">
                     <MoneyText
                       amount={s.remainingAmountUSD}
                       currency={currency}
-                      className="font-bold text-indigo-600"
+                      className="font-semibold text-[#2563EB]"
                     />
                   </td>
 
-                  {/* Status Chip */}
-                  <td className="py-3.5 px-4 text-center">
+                  {/* Status */}
+                  <td className="py-3 px-4 text-center">
                     {isPaid ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold font-mono bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        <Check className="w-3 h-3 stroke-[3]" />
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-[11px] font-medium bg-emerald-50 text-[#16A34A] border border-emerald-200">
+                        <Check className="w-3 h-3 stroke-[2.5]" />
                         <span>PAID</span>
                       </span>
                     ) : isOverdue ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold font-mono bg-rose-50 text-rose-700 border border-rose-200">
-                        <AlertCircle className="w-3 h-3 text-rose-600" />
-                        <span>OVERDUE (18d)</span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-[11px] font-medium bg-rose-50 text-[#DC2626] border border-rose-200">
+                        <AlertCircle className="w-3 h-3 text-[#DC2626]" />
+                        <span>OVERDUE</span>
                       </span>
                     ) : isPartial ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold font-mono bg-amber-50 text-amber-700 border border-amber-200">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-medium bg-amber-50 text-[#D97706] border border-amber-200">
                         PARTIAL
                       </span>
                     ) : isUnpaid ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold font-mono bg-blue-50 text-blue-700 border border-blue-200">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-medium bg-blue-50 text-[#2563EB] border border-blue-200">
                         UNPAID
                       </span>
                     ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold font-mono bg-slate-100 text-slate-600 border border-slate-200">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-medium bg-slate-50 text-[#64748B] border border-[#CBD5E1]">
                         UPCOMING
                       </span>
                     )}
                   </td>
 
                   {/* Actions */}
-                  <td className="py-3.5 px-4 text-right">
+                  <td className="py-3 px-4 text-right">
                     <div className="inline-flex items-center gap-1.5 justify-end">
                       {!isPaid && isCashierOrAdmin && (
                         <button
                           onClick={() =>
                             onCollectInstallment?.(s.installmentNo, s.remainingAmountUSD)
                           }
-                          className="px-3 py-1 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white shadow-xs transition-colors"
+                          className="px-2.5 py-1 text-[12px] font-medium rounded-[6px] bg-[#16A34A] hover:bg-emerald-700 text-white transition-colors"
                         >
                           Collect
                         </button>
@@ -160,10 +160,10 @@ export const RepaymentScheduleTable: React.FC<RepaymentScheduleTableProps> = ({
                       {s.amountPaidUSD > 0 && (
                         <button
                           onClick={() => onViewReceipt?.(s.installmentNo)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium rounded-[6px] bg-white border border-[#CBD5E1] hover:bg-slate-50 text-[#0F172A] transition-colors"
                         >
                           <Download className="w-3 h-3" />
-                          <span>View Receipt</span>
+                          <span>Receipt</span>
                         </button>
                       )}
                     </div>
@@ -177,3 +177,5 @@ export const RepaymentScheduleTable: React.FC<RepaymentScheduleTableProps> = ({
     </div>
   );
 };
+
+export default RepaymentScheduleTable;

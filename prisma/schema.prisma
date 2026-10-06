@@ -16,6 +16,7 @@ datasource db {
 
 enum UserRole {
   ADMIN
+  USER
   MANAGER
   LOAN_OFFICER
   CREDIT_OFFICER
@@ -26,6 +27,7 @@ enum UserRole {
 enum UserStatus {
   ACTIVE
   INACTIVE
+  SUSPENDED
 }
 
 enum RepaymentFrequency {

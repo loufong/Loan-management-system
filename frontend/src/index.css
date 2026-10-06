@@ -2,75 +2,110 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  background-color: #f8fafc;
-  color: #0f172a;
-  font-family: 'Plus Jakarta Sans', 'Kantumruy Pro', sans-serif;
-  -webkit-font-smoothing: antialiased;
+@layer base {
+  body {
+    margin: 0;
+    background-color: #F8FAFC;
+    color: #0F172A;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: #0F172A;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+  }
+
+  /* Hide native browser (Edge/IE) password reveal and clear buttons */
+  input::-ms-reveal,
+  input::-ms-clear {
+    display: none;
+  }
 }
 
 @layer components {
   /* ========================================================================= */
-  /* MINIMALIST SAAS DESIGN SYSTEM TOKENS (STRICTLY ZERO GRADIENTS)            */
-  /* Inspired by Linear, Vercel & Stripe                                      */
+  /* APEX LMS ENTERPRISE DESIGN SYSTEM (ZERO GRADIENTS, STRICT BANKING PALETTE) */
+  /* Primary Navy: #0F172A | Secondary Blue: #2563EB | Border: #CBD5E1         */
+  /* Background: #F8FAFC | Surface: #FFFFFF | Text: #0F172A / #64748B          */
+  /* Radius: 6px buttons/inputs/tables, 8px cards/modals                       */
   /* ========================================================================= */
 
-  /* 1. Surfaces & Data Cards */
-  .data-card, .banking-card {
-    @apply bg-white border border-zinc-200/80 rounded-xl p-5 shadow-xs;
+  /* 1. Surfaces & Data Cards (8px Radius, 1px solid #CBD5E1 Border, Flat White) */
+  .card, .data-card, .banking-card {
+    @apply bg-white border border-[#CBD5E1] rounded-[8px] p-5 shadow-none;
   }
   
   .surface-subtle {
-    @apply bg-zinc-50 border border-zinc-200/80 rounded-xl p-4;
+    @apply bg-[#F8FAFC] border border-[#CBD5E1] rounded-[8px] p-4;
   }
 
-  /* 2. Standardized Buttons */
+  /* 2. Standardized Buttons (6px Radius, 14px font, crisp borders, no gradients) */
   .btn-primary {
-    @apply bg-zinc-900 text-white hover:bg-zinc-800 active:scale-[0.98] transition-all px-4 py-2 rounded-lg text-sm font-medium shadow-xs inline-flex items-center justify-center gap-2;
+    @apply bg-[#0F172A] text-white hover:bg-[#1E293B] active:bg-[#020617] transition-colors px-4 py-2.5 rounded-[6px] text-[14px] font-medium inline-flex items-center justify-center gap-2 border border-transparent disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-blue {
+    @apply bg-[#2563EB] text-white hover:bg-[#1D4ED8] active:bg-[#1E40AF] transition-colors px-4 py-2.5 rounded-[6px] text-[14px] font-medium inline-flex items-center justify-center gap-2 border border-transparent disabled:opacity-50 disabled:pointer-events-none;
   }
 
   .btn-secondary {
-    @apply bg-white text-zinc-700 border border-zinc-200 hover:bg-zinc-50 active:scale-[0.98] transition-all px-4 py-2 rounded-lg text-sm font-medium inline-flex items-center justify-center gap-2;
-  }
-
-  .btn-accent {
-    @apply bg-blue-600 hover:bg-blue-700 text-white active:scale-[0.98] transition-all px-4 py-2 rounded-lg text-sm font-medium shadow-xs inline-flex items-center justify-center gap-2;
-  }
-
-  .btn-dark {
-    @apply bg-zinc-900 hover:bg-zinc-800 text-white active:scale-[0.98] transition-all px-4 py-2 rounded-lg text-sm font-medium shadow-xs inline-flex items-center justify-center gap-2;
+    @apply bg-white text-[#0F172A] border border-[#CBD5E1] hover:bg-[#F8FAFC] active:bg-slate-100 transition-colors px-4 py-2.5 rounded-[6px] text-[14px] font-medium inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none;
   }
 
   .btn-danger {
-    @apply bg-rose-600 hover:bg-rose-700 text-white active:scale-[0.98] transition-all px-4 py-2 rounded-lg text-sm font-medium shadow-xs inline-flex items-center justify-center gap-2;
+    @apply bg-[#DC2626] text-white hover:bg-[#B91C1C] active:bg-[#991B1B] transition-colors px-4 py-2.5 rounded-[6px] text-[14px] font-medium inline-flex items-center justify-center gap-2 border border-transparent disabled:opacity-50 disabled:pointer-events-none;
   }
 
-  /* 3. Form Inputs & Controls */
-  .input-standard {
-    @apply bg-white border border-zinc-200 focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 rounded-lg px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 outline-none transition;
+  /* 3. Form Inputs & Controls (6px Radius, 44px Height, 1px solid #CBD5E1 Border) */
+  .form-control, .input-standard {
+    @apply bg-white border border-[#CBD5E1] focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] rounded-[6px] px-3.5 py-2 text-[14px] text-[#0F172A] placeholder:text-[#64748B] outline-none transition-colors h-[44px];
   }
 
-  /* 4. Solid Badges & Tags */
-  .badge-zinc, .badge-slate {
-    @apply bg-zinc-100 text-zinc-700 border border-zinc-200 rounded-md px-2.5 py-0.5 text-xs font-medium;
-  }
-  .badge-emerald {
-    @apply bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md px-2.5 py-0.5 text-xs font-semibold;
-  }
-  .badge-rose {
-    @apply bg-rose-50 text-rose-700 border border-rose-200 rounded-md px-2.5 py-0.5 text-xs font-semibold;
-  }
-  .badge-amber {
-    @apply bg-amber-50 text-amber-700 border border-amber-200 rounded-md px-2.5 py-0.5 text-xs font-semibold;
-  }
-  .badge-blue {
-    @apply bg-blue-50 text-blue-700 border border-blue-200 rounded-md px-2.5 py-0.5 text-xs font-semibold;
+  .form-label {
+    @apply block text-[13px] font-medium text-[#0F172A] mb-1.5;
   }
 
-  /* 5. Navigation & Header Dividers */
-  .nav-header {
-    @apply border-b border-zinc-200 bg-white/95 backdrop-blur-sm;
+  .form-error {
+    @apply text-[12px] text-[#DC2626] mt-1 font-medium;
+  }
+
+  /* 4. Professional Restrained Status Badges */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-[4px] text-[12px] font-medium border;
+  }
+  .badge-success {
+    @apply bg-emerald-50 text-[#16A34A] border-emerald-200;
+  }
+  .badge-warning {
+    @apply bg-amber-50 text-[#D97706] border-amber-200;
+  }
+  .badge-danger {
+    @apply bg-rose-50 text-[#DC2626] border-rose-200;
+  }
+  .badge-info, .badge-active {
+    @apply bg-blue-50 text-[#2563EB] border-blue-200;
+  }
+  .badge-neutral {
+    @apply bg-slate-50 text-[#64748B] border-[#CBD5E1];
+  }
+
+  /* 5. Enterprise Tables (6px Radius, Crisp #CBD5E1 Borders, Compact Rows) */
+  .table-enterprise {
+    @apply w-full text-left text-[13px] text-[#0F172A] border border-[#CBD5E1] rounded-[6px] overflow-hidden bg-white;
+  }
+  .table-enterprise th {
+    @apply bg-[#F8FAFC] border-b border-[#CBD5E1] px-4 py-3 text-[12px] font-semibold text-[#64748B] uppercase tracking-wider;
+  }
+  .table-enterprise td {
+    @apply border-b border-[#CBD5E1] px-4 py-3 text-[#0F172A];
+  }
+  .table-enterprise tr:last-child td {
+    @apply border-b-0;
   }
 }
 
@@ -80,17 +115,17 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #F8FAFC;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #CBD5E1;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #94A3B8;
 }
 
-/* Print styling for Thermal Receipts */
+/* Print styling for Receipts */
 @media print {
   body * {
     visibility: hidden !important;
@@ -105,10 +140,10 @@ body {
     width: 380px !important;
     max-width: 380px !important;
     box-shadow: none !important;
-    border: 1px dashed #64748b !important;
+    border: 1px dashed #64748B !important;
     padding: 16px !important;
-    background: #ffffff !important;
-    color: #0f172a !important;
+    background: #FFFFFF !important;
+    color: #0F172A !important;
   }
   .no-print {
     display: none !important;

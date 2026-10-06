@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { LoanApplication, Currency, UserRole } from '../../types';
-import { Badge } from '../common/Badge';
 import { MoneyText } from '../common/MoneyText';
-import { Clock, ArrowRight, ShieldCheck, Search, Filter } from 'lucide-react';
+import { Clock, ArrowRight, ShieldCheck, Search } from 'lucide-react';
 
 export interface CreditReviewQueueProps {
   applications: LoanApplication[];
@@ -40,61 +39,61 @@ export const CreditReviewQueue: React.FC<CreditReviewQueueProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-sans">
       {/* 1. Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-[#CBD5E1]">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Credit Review Queue
+            <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
+              Credit Review &amp; Underwriting Queue
             </h1>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-amber-50 text-amber-700 border border-amber-200/60">
-              {queueItems.length} pending underwriting
+            <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-xs font-mono font-semibold bg-amber-50 text-[#D97706] border border-amber-200">
+              {queueItems.length} Pending Files
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Prioritized assessment inbox enforcing regulatory 4-hour SLA underwriting benchmark.
+          <p className="text-xs text-[#64748B] mt-0.5">
+            Prioritized underwriter assessment queue enforcing regulatory risk benchmarks and DTI evaluation.
           </p>
         </div>
       </div>
 
       {/* 2. Search Toolbar */}
-      <div className="bg-white border border-slate-200/80 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.03)] p-3">
+      <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-3.5">
         <div className="relative w-full max-w-md">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Filter queue by Application ID, Borrower, or Product..."
-            className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50/60 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+            className="w-full h-10 pl-9 pr-3.5 text-xs bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB]"
           />
         </div>
       </div>
 
       {/* 3. Review Queue Table */}
-      <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-xs">
+      <div className="overflow-hidden rounded-[8px] border border-[#CBD5E1] bg-white">
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="table-enterprise">
             <thead>
-              <tr className="bg-slate-50/75 text-[11px] font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-200">
-                <th className="py-3.5 px-4">Priority / SLA</th>
-                <th className="py-3.5 px-4">Application ID</th>
-                <th className="py-3.5 px-4">Applicant Borrower</th>
-                <th className="py-3.5 px-4">Product</th>
-                <th className="py-3.5 px-4 text-right">Requested Capital</th>
-                <th className="py-3.5 px-4 text-right">Borrower Income</th>
-                <th className="py-3.5 px-4 text-center">DTI Risk Badge</th>
-                <th className="py-3.5 px-4 text-right">Action</th>
+              <tr>
+                <th>Priority / SLA</th>
+                <th>Application ID</th>
+                <th>Applicant Borrower</th>
+                <th>Product</th>
+                <th className="text-right">Requested Capital</th>
+                <th className="text-right">Borrower Income</th>
+                <th className="text-center">DTI Ratio</th>
+                <th className="text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody>
               {queueItems.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-16 text-center text-xs text-slate-400">
+                  <td colSpan={8} className="py-16 text-center text-xs text-[#64748B]">
                     <div className="max-w-xs mx-auto space-y-2">
-                      <ShieldCheck className="w-8 h-8 text-emerald-500 mx-auto" />
-                      <p className="font-semibold text-slate-800 text-sm">Review queue is empty</p>
+                      <ShieldCheck className="w-8 h-8 text-[#16A34A] mx-auto" />
+                      <p className="font-semibold text-[#0F172A] text-sm">Review queue is empty</p>
                       <p>All active applications have completed underwriting analysis.</p>
                     </div>
                   </td>
@@ -105,15 +104,15 @@ export const CreditReviewQueue: React.FC<CreditReviewQueueProps> = ({
                   return (
                     <tr
                       key={app.id}
-                      className="border-b border-slate-100 hover:bg-slate-50/60 transition-colors text-sm text-slate-700"
+                      className="hover:bg-slate-50/70 transition-colors"
                     >
                       {/* SLA Timer */}
-                      <td className="py-3.5 px-4">
+                      <td>
                         <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-mono font-medium ${
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-xs font-mono font-medium border ${
                             sla.isUrgent
-                              ? 'bg-rose-50 text-rose-700 border border-rose-200/60 font-semibold'
-                              : 'bg-amber-50 text-amber-700 border border-amber-200/60'
+                              ? 'bg-red-50 text-[#DC2626] border-red-200 font-semibold'
+                              : 'bg-amber-50 text-[#D97706] border-amber-200'
                           }`}
                         >
                           <Clock className="w-3 h-3" />
@@ -122,53 +121,53 @@ export const CreditReviewQueue: React.FC<CreditReviewQueueProps> = ({
                       </td>
 
                       {/* Application ID */}
-                      <td className="py-3.5 px-4 font-mono tabular-nums font-semibold text-indigo-600">
+                      <td className="font-mono tabular-nums font-bold text-[#2563EB]">
                         {app.applicationNo || app.id}
                       </td>
 
                       {/* Borrower */}
-                      <td className="py-3.5 px-4">
+                      <td>
                         <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xs">
+                          <div className="w-7 h-7 rounded-[4px] bg-[#0F172A] text-white flex items-center justify-center font-bold text-xs">
                             {app.borrowerName.slice(0, 2).toUpperCase()}
                           </div>
-                          <span className="font-semibold text-slate-900">{app.borrowerName}</span>
+                          <span className="font-bold text-[#0F172A]">{app.borrowerName}</span>
                         </div>
                       </td>
 
                       {/* Product */}
-                      <td className="py-3.5 px-4 text-xs font-medium text-slate-600">
+                      <td className="text-xs text-[#0F172A] font-medium">
                         {app.productName}
                       </td>
 
                       {/* Requested Capital */}
-                      <td className="py-3.5 px-4 text-right">
+                      <td className="text-right">
                         <MoneyText
                           amount={app.requestedAmountUSD}
                           currency={currency}
-                          className="font-bold text-slate-900"
+                          className="font-bold text-[#0F172A]"
                         />
                       </td>
 
                       {/* Borrower Income */}
-                      <td className="py-3.5 px-4 text-right">
+                      <td className="text-right">
                         <MoneyText
                           amount={app.borrowerIncomeUSD || 1500}
                           currency={currency}
-                          className="font-semibold text-slate-700"
+                          className="font-bold text-[#0F172A]"
                         />
-                        <span className="block text-[11px] text-slate-400">monthly</span>
+                        <span className="block text-[11px] text-[#64748B]">monthly</span>
                       </td>
 
                       {/* DTI Risk Badge */}
-                      <td className="py-3.5 px-4 text-center">
+                      <td className="text-center">
                         <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-mono tabular-nums text-xs font-semibold ${
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] font-mono tabular-nums text-xs font-semibold border ${
                             app.dtiRatio <= 30
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
+                              ? 'bg-emerald-50 text-[#16A34A] border-emerald-200'
                               : app.dtiRatio <= 45
-                              ? 'bg-amber-50 text-amber-700 border border-amber-200/60'
-                              : 'bg-rose-50 text-rose-700 border border-rose-200/60'
+                              ? 'bg-amber-50 text-[#D97706] border-amber-200'
+                              : 'bg-red-50 text-[#DC2626] border-red-200'
                           }`}
                         >
                           {app.dtiRatio}% ({app.dtiRatio <= 30 ? 'Low' : app.dtiRatio <= 45 ? 'Moderate' : 'High'})
@@ -176,12 +175,12 @@ export const CreditReviewQueue: React.FC<CreditReviewQueueProps> = ({
                       </td>
 
                       {/* Action */}
-                      <td className="py-3.5 px-4 text-right">
+                      <td className="text-right">
                         <button
                           onClick={() => onAssessApplication(app.id)}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-semibold shadow-xs transition-colors"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold transition-colors cursor-pointer"
                         >
-                          <span>Assess Application</span>
+                          <span>Assess</span>
                           <ArrowRight className="w-3.5 h-3.5" />
                         </button>
                       </td>
@@ -196,3 +195,5 @@ export const CreditReviewQueue: React.FC<CreditReviewQueueProps> = ({
     </div>
   );
 };
+
+export default CreditReviewQueue;

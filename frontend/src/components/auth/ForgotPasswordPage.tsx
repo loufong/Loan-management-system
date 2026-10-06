@@ -3,9 +3,9 @@ import {
   Mail,
   AlertCircle,
   Loader2,
-  Building2,
   ArrowLeft,
-  KeyRound
+  KeyRound,
+  ShieldCheck
 } from 'lucide-react';
 import { api } from '../../services/api';
 
@@ -50,46 +50,38 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      {/* Top Branding Header */}
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-6">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-slate-900 text-white shadow-sm mb-3">
-          <KeyRound className="w-6 h-6 text-blue-500" />
-        </div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight font-sans">
-          Apex Core Banking
-        </h1>
-        <p className="mt-1 text-sm text-slate-500 font-sans">
-          Password Recovery
-        </p>
-      </div>
-
-      {/* Main Card */}
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-6 sm:px-10 border border-slate-200 rounded-xl shadow-sm">
+        <div className="bg-white p-8 border border-[#CBD5E1] rounded-[8px] space-y-6">
           
-          <div className="mb-6">
-            <h2 className="text-lg font-bold text-slate-900 font-sans">
-              Forgot your password?
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-[6px] bg-[#0F172A] text-white flex items-center justify-center font-bold text-xs">
+                APX
+              </div>
+              <h1 className="text-lg font-bold text-[#0F172A]">
+                Apex LMS
+              </h1>
+            </div>
+            <h2 className="text-xl font-bold text-[#0F172A] pt-2">
+              Password Recovery
             </h2>
-            <p className="text-xs text-slate-500 mt-1">
-              Enter your registered email address and we'll send a 6-digit verification code to reset your password.
+            <p className="text-xs text-[#64748B]">
+              Enter your registered email address to receive a 6-digit verification code.
             </p>
           </div>
 
-          {/* Error Alert */}
           {error && (
-            <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-2.5 text-xs text-rose-700">
+            <div className="p-3 bg-rose-50 border border-rose-200 rounded-[6px] flex items-center gap-2 text-xs text-rose-700">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
               <span>{error}</span>
             </div>
           )}
 
-          {/* Request Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5 font-sans">
-                Registered Email Address <span className="text-rose-500">*</span>
+              <label className="block text-[13px] font-medium text-[#0F172A] mb-1.5">
+                Registered Email Address
               </label>
               <div className="relative">
                 <input
@@ -97,17 +89,17 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@gmail.com"
-                  className="w-full h-10 px-3 pl-9 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-1 focus:ring-blue-600 focus:border-blue-600 font-sans"
+                  placeholder="name@example.com"
+                  className="w-full h-[44px] px-3.5 pl-10 bg-white border border-[#CBD5E1] rounded-[6px] text-[14px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
                 />
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <Mail className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full h-10 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-medium text-sm rounded-lg transition-colors flex items-center justify-center gap-2 mt-4 shadow-xs"
+              className="w-full h-[44px] bg-[#0F172A] hover:bg-[#1E293B] disabled:opacity-50 text-white font-medium text-[14px] rounded-[6px] transition-colors flex items-center justify-center gap-2"
             >
               {isLoading ? (
                 <>
@@ -120,12 +112,11 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
             </button>
           </form>
 
-          {/* Back to Sign In */}
-          <div className="mt-6 pt-5 border-t border-slate-100 text-center">
+          <div className="pt-4 border-t border-[#CBD5E1] text-center">
             <button
               type="button"
               onClick={onNavigateToLogin}
-              className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 font-medium"
+              className="inline-flex items-center gap-1.5 text-xs text-[#2563EB] hover:text-[#1D4ED8] font-medium transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to sign in</span>
@@ -134,9 +125,8 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
 
         </div>
 
-        {/* Footer */}
-        <div className="mt-8 text-center text-xs text-slate-400">
-          <p>© 2026 Apex Core LMS. All rights reserved.</p>
+        <div className="mt-6 text-center text-xs text-[#64748B]">
+          Apex Core Banking Platform • Secure Access Gateway
         </div>
       </div>
     </div>

@@ -72,6 +72,34 @@ export class UserController {
   }
 
   /**
+   * Set specific status (ACTIVE, INACTIVE, SUSPENDED)
+   */
+  static async setStatus(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { status } = req.body;
+      const ipAddress = (req.headers['x-forwarded-for'] as string) || req.ip;
+      const user = await UserService.setStatus(req.params.id, status, req.user!.id, ipAddress);
+      sendSuccess(res, user, `User status changed to ${user.status}`);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Admin Reset Password
+   */
+  static async resetPassword(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { newPassword } = req.body;
+      const ipAddress = (req.headers['x-forwarded-for'] as string) || req.ip;
+      const result = await UserService.resetPassword(req.params.id, newPassword, req.user!.id, ipAddress);
+      sendSuccess(res, result, result.message);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
    * Get Role Permissions Matrix for Admin/Manager, Cashier, and Borrower
    */
   static async getRoleMatrix(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {

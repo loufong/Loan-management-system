@@ -318,6 +318,83 @@ export class UserService {
   }
 
   /**
+   * Set user status directly (ACTIVE, INACTIVE, SUSPENDED)
+   */
+  static async setStatus(id: string, status: UserStatus, actorId: string, ipAddress?: string) {
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      const err: any = new Error('User not found');
+      err.statusCode = 404;
+      err.code = 'USER_NOT_FOUND';
+      throw err;
+    }
+
+    if (user.id === actorId && status !== UserStatus.ACTIVE) {
+      const err: any = new Error('Administrators cannot deactivate or suspend their own account');
+      err.statusCode = 400;
+      err.code = 'SELF_STATUS_CHANGE_FORBIDDEN';
+      throw err;
+    }
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data: { status },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        fullName: true,
+        role: true,
+        status: true,
+        updatedAt: true
+      }
+    });
+
+    await recordAuditLog({
+      userId: actorId,
+      action: `USER_STATUS_${status}`,
+      entityName: 'User',
+      entityId: updated.id,
+      details: { newStatus: status, previousStatus: user.status },
+      ipAddress
+    }).catch(() => {});
+
+    return updated;
+  }
+
+  /**
+   * Admin Reset User Password
+   */
+  static async resetPassword(id: string, newPassword = 'Password123!', actorId: string, ipAddress?: string) {
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      const err: any = new Error('User not found');
+      err.statusCode = 404;
+      err.code = 'USER_NOT_FOUND';
+      throw err;
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(newPassword, salt);
+
+    await prisma.user.update({
+      where: { id },
+      data: { passwordHash }
+    });
+
+    await recordAuditLog({
+      userId: actorId,
+      action: 'ADMIN_RESET_PASSWORD',
+      entityName: 'User',
+      entityId: user.id,
+      details: { username: user.username },
+      ipAddress
+    }).catch(() => {});
+
+    return { success: true, message: `Password reset successfully for user ${user.username}` };
+  }
+
+  /**
    * Return the Role-Based Access Control matrix for the 3 core personas:
    * 1. Admin / Manager (MANAGER)
    * 2. Cashier (CASHIER)

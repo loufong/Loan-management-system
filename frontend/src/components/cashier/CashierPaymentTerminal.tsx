@@ -3,10 +3,8 @@ import { LoanAccount, PaymentReceipt, Currency, PaymentMethod } from '../../type
 import { Badge } from '../common/Badge';
 import { MoneyText } from '../common/MoneyText';
 import { PaymentReceiptModal } from './PaymentReceiptModal';
-import { QRCodePaymentModal } from './QRCodePaymentModal';
 import {
   Search,
-  DollarSign,
   Printer,
   QrCode,
   CreditCard,
@@ -14,8 +12,10 @@ import {
   Banknote,
   CheckCircle2,
   AlertTriangle,
-  Receipt,
-  User
+  Download,
+  Calendar,
+  X,
+  FileSpreadsheet
 } from 'lucide-react';
 
 export interface CashierPaymentTerminalProps {
@@ -49,9 +49,13 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
   const [transactionRef, setTransactionRef] = useState(`TRX-${Date.now().toString().slice(-6)}`);
   const [notes, setNotes] = useState('');
 
+  // Transactions Ledger State (Point 19)
+  const [ledgerSearch, setLedgerSearch] = useState('');
+  const [ledgerMethodFilter, setLedgerMethodFilter] = useState('ALL');
+  const [ledgerDateFilter, setLedgerDateFilter] = useState('');
+
   // Modals
   const [showReceiptModal, setShowReceiptModal] = useState<PaymentReceipt | null>(null);
-  const [showQrModal, setShowQrModal] = useState(false);
 
   // Search Autocomplete filtering
   const matchingLoans = useMemo(() => {
@@ -91,7 +95,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
     }
 
     const currentYear = new Date().getFullYear();
-    const receiptNo = `REC-${currentYear}-0982`;
+    const receiptNo = `REC-${currentYear}-${Math.floor(1000 + Math.random() * 9000)}`;
     const interestPart = Math.round(Math.min(paymentAmount * 0.12, 45.0) * 100) / 100;
     const principalPart = Math.round((paymentAmount - interestPart) * 100) / 100;
     const remainingAfter = Math.max(0, Math.round((selectedLoan.outstandingBalanceUSD - paymentAmount) * 100) / 100);
@@ -119,21 +123,42 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
     setShowReceiptModal(newReceipt);
   };
 
+  // Filtered Ledger (Point 19)
+  const filteredReceipts = useMemo(() => {
+    return receipts.filter((r) => {
+      const q = ledgerSearch.toLowerCase();
+      const matchSearch =
+        !ledgerSearch ||
+        r.receiptNo.toLowerCase().includes(q) ||
+        r.loanNumber.toLowerCase().includes(q) ||
+        r.borrowerName.toLowerCase().includes(q) ||
+        r.transactionRef.toLowerCase().includes(q);
+
+      const matchMethod =
+        ledgerMethodFilter === 'ALL' || r.paymentMethod === ledgerMethodFilter;
+
+      const matchDate =
+        !ledgerDateFilter || r.paidAt.startsWith(ledgerDateFilter);
+
+      return matchSearch && matchMethod && matchDate;
+    });
+  }, [receipts, ledgerSearch, ledgerMethodFilter, ledgerDateFilter]);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-sans">
       {/* 1. Top Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-[#CBD5E1]">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Cashier Desk &amp; Payment Collection Terminal
+            <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
+              Cashier Desk &amp; Payment Terminal
             </h1>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/60">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-xs font-mono font-semibold bg-emerald-50 text-[#16A34A] border border-emerald-200">
               Terminal Active
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Cashier window session: <strong className="text-slate-800">{cashierName}</strong> • Real-time settlement &amp; Thermal POS slip printing.
+          <p className="text-xs text-[#64748B] mt-0.5">
+            Teller window session: <strong className="text-[#0F172A]">{cashierName}</strong> • Real-time settlement &amp; official thermal banking receipts.
           </p>
         </div>
       </div>
@@ -141,26 +166,26 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
       {/* 2. Main Terminal Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column (5 Cols): Autocomplete Search & Snapshot Card */}
-        <div className="lg:col-span-5 space-y-5">
+        <div className="lg:col-span-5 space-y-4">
           {/* Quick Autocomplete Search */}
-          <div className="bg-white border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.03)] rounded-xl p-4 space-y-3">
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+          <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-4 space-y-3">
+            <label className="block text-xs font-bold text-[#0F172A] uppercase tracking-wider">
               Quick Account Lookup
             </label>
             <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by Loan #, Borrower Name, or Phone..."
-                className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                className="w-full h-10 pl-9 pr-3 text-xs bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB]"
               />
             </div>
 
             {/* Autocomplete Dropdown List */}
             {matchingLoans.length > 0 && (
-              <div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100 max-h-48 overflow-y-auto bg-white shadow-md">
+              <div className="border border-[#CBD5E1] rounded-[6px] overflow-hidden divide-y divide-[#CBD5E1] max-h-48 overflow-y-auto bg-white shadow-md">
                 {matchingLoans.map((l) => (
                   <button
                     key={l.id}
@@ -169,13 +194,13 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
                       setPaymentAmount(l.nextPaymentDueAmountUSD);
                       setSearchQuery('');
                     }}
-                    className="w-full text-left p-2.5 hover:bg-indigo-50/60 transition-colors flex items-center justify-between text-xs"
+                    className="w-full text-left p-2.5 hover:bg-slate-50 transition-colors flex items-center justify-between text-xs"
                   >
                     <div>
-                      <span className="font-bold text-slate-900 block">{l.borrowerName}</span>
-                      <span className="font-mono text-slate-500 text-[11px]">{l.loanNumber} • {l.borrowerPhone}</span>
+                      <span className="font-bold text-[#0F172A] block">{l.borrowerName}</span>
+                      <span className="font-mono text-[#64748B] text-[11px]">{l.loanNumber} • {l.borrowerPhone}</span>
                     </div>
-                    <MoneyText amount={l.outstandingBalanceUSD} currency={currency} className="font-semibold text-indigo-600" />
+                    <MoneyText amount={l.outstandingBalanceUSD} currency={currency} className="font-semibold text-[#2563EB]" />
                   </button>
                 ))}
               </div>
@@ -184,9 +209,9 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
 
           {/* Account Snapshot Card */}
           {selectedLoan ? (
-            <div className="bg-white border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.03)] rounded-xl p-5 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-5 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[#CBD5E1]">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
                   Target Loan Snapshot
                 </span>
                 <Badge
@@ -204,63 +229,63 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-base shrink-0">
+                <div className="w-10 h-10 rounded-[6px] bg-[#0F172A] text-white flex items-center justify-center font-bold text-sm shrink-0">
                   {selectedLoan.borrowerName.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-base font-bold text-slate-900 truncate">
+                  <h3 className="text-sm font-bold text-[#0F172A] truncate">
                     {selectedLoan.borrowerName}
                   </h3>
-                  <p className="text-xs font-mono text-slate-500">
-                    {selectedLoan.loanNumber} • Phone: {selectedLoan.borrowerPhone}
+                  <p className="text-xs font-mono text-[#64748B]">
+                    {selectedLoan.loanNumber} • {selectedLoan.borrowerPhone}
                   </p>
                 </div>
               </div>
 
               {/* Financial Balances */}
               <div className="grid grid-cols-2 gap-3 pt-2">
-                <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl space-y-0.5">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block">
-                    Current Loan Balance
+                <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
+                  <span className="text-[11px] font-semibold uppercase text-[#64748B] block">
+                    Outstanding Balance
                   </span>
                   <MoneyText
                     amount={selectedLoan.outstandingBalanceUSD}
                     currency={currency}
-                    className="text-base font-bold text-slate-900 block"
+                    className="text-base font-bold text-[#0F172A] block mt-0.5"
                   />
-                  <span className="text-[10px] text-slate-400">Total remaining</span>
+                  <span className="text-[11px] text-[#64748B]">Active book total</span>
                 </div>
 
-                <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl space-y-0.5">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block">
+                <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
+                  <span className="text-[11px] font-semibold uppercase text-[#64748B] block">
                     Overdue Amount
                   </span>
                   <MoneyText
                     amount={overdueAmount}
                     currency={currency}
-                    className={`text-base font-bold block ${
-                      overdueAmount > 0 ? 'text-rose-600' : 'text-slate-900'
+                    className={`text-base font-bold block mt-0.5 ${
+                      overdueAmount > 0 ? 'text-[#DC2626]' : 'text-[#0F172A]'
                     }`}
                   />
-                  <span className="text-[10px] text-slate-400">
+                  <span className="text-[11px] text-[#64748B]">
                     {overdueAmount > 0 ? `${selectedLoan.daysOverdue} days past due` : 'Zero overdue'}
                   </span>
                 </div>
               </div>
 
-              <div className="text-xs text-slate-500 space-y-1 pt-2 border-t border-slate-100 font-mono">
+              <div className="text-xs text-[#64748B] space-y-1 pt-2 border-t border-[#CBD5E1] font-mono">
                 <div className="flex justify-between">
                   <span>Regular Installment:</span>
-                  <MoneyText amount={selectedLoan.nextPaymentDueAmountUSD} currency={currency} className="font-semibold text-slate-800" />
+                  <MoneyText amount={selectedLoan.nextPaymentDueAmountUSD} currency={currency} className="font-semibold text-[#0F172A]" />
                 </div>
                 <div className="flex justify-between">
                   <span>Next Due Date:</span>
-                  <span className="text-slate-800 font-semibold">{selectedLoan.nextPaymentDueDate}</span>
+                  <span className="text-[#0F172A] font-semibold">{selectedLoan.nextPaymentDueDate}</span>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="bg-white border border-slate-200/80 rounded-xl p-8 text-center text-xs text-slate-400">
+            <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-8 text-center text-xs text-[#64748B]">
               No loan selected. Use lookup above.
             </div>
           )}
@@ -270,27 +295,27 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
         <div className="lg:col-span-7">
           <form
             onSubmit={handleConfirmAndPrint}
-            className="bg-white border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.03)] rounded-xl p-6 space-y-6"
+            className="bg-white border border-[#CBD5E1] rounded-[8px] p-6 space-y-5"
           >
-            <div>
-              <h2 className="text-base font-bold text-slate-900">
+            <div className="pb-3 border-b border-[#CBD5E1]">
+              <h2 className="text-base font-bold text-[#0F172A]">
                 Payment Collection &amp; Settlement
               </h2>
-              <p className="text-xs text-slate-500">
-                Record payment, select payment channel, and issue receipt.
+              <p className="text-xs text-[#64748B] mt-0.5">
+                Record customer installment, select payment channel, and generate verifiable receipt.
               </p>
             </div>
 
             {/* Payment Amount Input & 1-Click Presets */}
             <div className="space-y-3">
               <div className="flex justify-between items-baseline">
-                <label className="text-xs font-semibold text-slate-700">
+                <label className="text-xs font-semibold text-[#0F172A]">
                   Payment Collection Amount (USD)
                 </label>
                 <MoneyText
                   amount={paymentAmount}
                   currency={currency}
-                  className="font-mono text-lg font-black text-indigo-600"
+                  className="font-mono text-lg font-bold text-[#2563EB]"
                 />
               </div>
 
@@ -300,7 +325,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
                 required
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(Number(e.target.value))}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono text-base font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                className="w-full h-11 px-3.5 bg-white border border-[#CBD5E1] rounded-[6px] font-mono text-base font-bold text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
               />
 
               {/* 1-Click Presets */}
@@ -308,10 +333,10 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
                 <button
                   type="button"
                   onClick={() => handlePreset('EXACT')}
-                  className="p-2 text-xs rounded-lg border border-slate-200 hover:border-indigo-400 bg-slate-50 hover:bg-indigo-50/40 text-slate-700 transition-colors text-center"
+                  className="p-2 text-xs rounded-[6px] border border-[#CBD5E1] hover:border-[#2563EB] bg-slate-50 hover:bg-blue-50/50 text-[#0F172A] transition-colors text-center cursor-pointer"
                 >
-                  <span className="block text-[10px] text-slate-400">Exact Installment</span>
-                  <span className="font-mono font-bold text-slate-900">
+                  <span className="block text-[11px] text-[#64748B]">Exact Installment</span>
+                  <span className="font-mono font-bold text-[#0F172A]">
                     ${selectedLoan ? selectedLoan.nextPaymentDueAmountUSD.toFixed(2) : '466.67'}
                   </span>
                 </button>
@@ -319,10 +344,10 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
                 <button
                   type="button"
                   onClick={() => handlePreset('TWO_INSTALLMENTS')}
-                  className="p-2 text-xs rounded-lg border border-slate-200 hover:border-indigo-400 bg-slate-50 hover:bg-indigo-50/40 text-slate-700 transition-colors text-center"
+                  className="p-2 text-xs rounded-[6px] border border-[#CBD5E1] hover:border-[#2563EB] bg-slate-50 hover:bg-blue-50/50 text-[#0F172A] transition-colors text-center cursor-pointer"
                 >
-                  <span className="block text-[10px] text-slate-400">Pay 2 Installments</span>
-                  <span className="font-mono font-bold text-slate-900">
+                  <span className="block text-[11px] text-[#64748B]">Pay 2 Installments</span>
+                  <span className="font-mono font-bold text-[#0F172A]">
                     ${selectedLoan ? (selectedLoan.nextPaymentDueAmountUSD * 2).toFixed(2) : '933.34'}
                   </span>
                 </button>
@@ -330,19 +355,19 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
                 <button
                   type="button"
                   onClick={() => handlePreset('PAYOFF')}
-                  className="p-2 text-xs rounded-lg border border-slate-200 hover:border-indigo-400 bg-slate-50 hover:bg-indigo-50/40 text-slate-700 transition-colors text-center"
+                  className="p-2 text-xs rounded-[6px] border border-[#CBD5E1] hover:border-[#2563EB] bg-slate-50 hover:bg-blue-50/50 text-[#0F172A] transition-colors text-center cursor-pointer"
                 >
-                  <span className="block text-[10px] text-slate-400">Full Payoff</span>
-                  <span className="font-mono font-bold text-indigo-700">
+                  <span className="block text-[11px] text-[#64748B]">Full Payoff</span>
+                  <span className="font-mono font-bold text-[#2563EB]">
                     ${selectedLoan ? selectedLoan.outstandingBalanceUSD.toFixed(2) : '5,133.33'}
                   </span>
                 </button>
               </div>
             </div>
 
-            {/* Payment Method Selector: Segmented Radio Cards */}
+            {/* Payment Method Selector */}
             <div className="space-y-2">
-              <label className="block text-xs font-semibold text-slate-700">
+              <label className="block text-xs font-semibold text-[#0F172A]">
                 Payment Method Selector
               </label>
 
@@ -351,7 +376,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
                   { id: 'Cash', label: 'Cash', icon: Banknote, desc: 'Branch Teller' },
                   { id: 'Bank Transfer', label: 'Bank Transfer', icon: Building, desc: 'ACH / Wire' },
                   { id: 'Card', label: 'Card', icon: CreditCard, desc: 'Debit / Credit' },
-                  { id: 'Dynamic QR Code', label: 'KHQR / Dynamic QR', icon: QrCode, desc: 'Bakong Scan' },
+                  { id: 'Dynamic QR Code', label: 'KHQR / QR', icon: QrCode, desc: 'Bakong Scan' },
                 ].map((m) => {
                   const isSelected = paymentMethod === m.id;
                   const Icon = m.icon;
@@ -359,19 +384,19 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
                     <div
                       key={m.id}
                       onClick={() => setPaymentMethod(m.id as any)}
-                      className={`p-3 rounded-xl border cursor-pointer transition-all flex flex-col justify-between space-y-2 ${
+                      className={`p-3 rounded-[6px] border cursor-pointer transition-all flex flex-col justify-between space-y-2 ${
                         isSelected
-                          ? 'border-indigo-600 bg-indigo-50/40 shadow-xs ring-1 ring-indigo-600 text-indigo-900'
-                          : 'border-slate-200 hover:border-slate-300 bg-white text-slate-700'
+                          ? 'border-[#2563EB] bg-blue-50/60 text-[#0F172A]'
+                          : 'border-[#CBD5E1] hover:border-slate-400 bg-white text-[#0F172A]'
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <Icon className={`w-4 h-4 ${isSelected ? 'text-indigo-600' : 'text-slate-400'}`} />
-                        {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" />}
+                        <Icon className={`w-4 h-4 ${isSelected ? 'text-[#2563EB]' : 'text-[#64748B]'}`} />
+                        {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-[#2563EB]" />}
                       </div>
                       <div>
                         <span className="text-xs font-bold block">{m.label}</span>
-                        <span className="text-[10px] text-slate-400 block">{m.desc}</span>
+                        <span className="text-[11px] text-[#64748B] block">{m.desc}</span>
                       </div>
                     </div>
                   );
@@ -379,10 +404,10 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
               </div>
             </div>
 
-            {/* Transaction Reference Number Input */}
+            {/* Transaction Reference & Audit Notes */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-[#0F172A] mb-1">
                   Transaction Reference Number
                 </label>
                 <input
@@ -391,39 +416,157 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
                   value={transactionRef}
                   onChange={(e) => setTransactionRef(e.target.value)}
                   placeholder="e.g. KHQR-20260922-8812"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg font-mono text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  className="w-full h-10 px-3 bg-white border border-[#CBD5E1] rounded-[6px] font-mono text-xs text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-[#0F172A] mb-1">
                   Cashier Audit Notes (Optional)
                 </label>
                 <input
                   type="text"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="e.g. Regular monthly installment paid at window"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  placeholder="e.g. Regular monthly installment"
+                  className="w-full h-10 px-3 bg-white border border-[#CBD5E1] rounded-[6px] text-xs text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
             </div>
 
-            {/* Confirm & Print Receipt primary action button */}
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-xs text-slate-500 font-mono">
-                Operator: <strong className="text-slate-800">{cashierName}</strong>
+            {/* Confirm & Print Receipt action */}
+            <div className="pt-3 border-t border-[#CBD5E1] flex items-center justify-between">
+              <span className="text-xs text-[#64748B] font-mono">
+                Operator: <strong className="text-[#0F172A]">{cashierName}</strong>
               </span>
 
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-bold shadow-sm transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[6px] bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold transition-colors cursor-pointer"
               >
                 <Printer className="w-4 h-4" />
                 <span>Confirm &amp; Print Receipt</span>
               </button>
             </div>
           </form>
+        </div>
+      </div>
+
+      {/* Point 19: PAYMENT MANAGEMENT (Transactions Ledger) */}
+      <div className="bg-white border border-[#CBD5E1] rounded-[8px] overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-[#CBD5E1] flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div>
+            <h3 className="text-base font-bold text-[#0F172A]">
+              Payment History &amp; Collections Ledger
+            </h3>
+            <p className="text-xs text-[#64748B] mt-0.5">
+              Verified transactional log of all installments, payment methods, and reference receipts
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Search */}
+            <div className="relative w-48 sm:w-60">
+              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#64748B]" />
+              <input
+                type="text"
+                value={ledgerSearch}
+                onChange={(e) => setLedgerSearch(e.target.value)}
+                placeholder="Search Receipt, Loan, Borrower..."
+                className="w-full h-8 pl-8 pr-2.5 text-xs bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB]"
+              />
+            </div>
+
+            {/* Method Filter */}
+            <select
+              value={ledgerMethodFilter}
+              onChange={(e) => setLedgerMethodFilter(e.target.value)}
+              className="h-8 px-2 text-xs bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+            >
+              <option value="ALL">All Methods</option>
+              <option value="Cash">Cash</option>
+              <option value="Bank Transfer">Bank Transfer</option>
+              <option value="Card">Card</option>
+              <option value="Dynamic QR Code">KHQR / Dynamic QR</option>
+            </select>
+
+            {/* Date filter */}
+            <input
+              type="date"
+              value={ledgerDateFilter}
+              onChange={(e) => setLedgerDateFilter(e.target.value)}
+              className="h-8 px-2 text-xs bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+            />
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="table-enterprise">
+            <thead>
+              <tr>
+                <th>Payment ID</th>
+                <th>Loan ID</th>
+                <th>Borrower</th>
+                <th className="text-right">Amount</th>
+                <th>Payment Date</th>
+                <th>Payment Method</th>
+                <th>Reference</th>
+                <th>Status</th>
+                <th className="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredReceipts.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="py-12 text-center text-xs text-[#64748B]">
+                    No payment records found matching the active filters.
+                  </td>
+                </tr>
+              ) : (
+                filteredReceipts.map((rec) => (
+                  <tr key={rec.receiptNo || rec.transactionRef} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="font-mono font-bold text-[#2563EB]">
+                      {rec.receiptNo}
+                    </td>
+                    <td className="font-mono text-[#0F172A]">
+                      {rec.loanNumber}
+                    </td>
+                    <td className="font-medium text-[#0F172A]">
+                      {rec.borrowerName}
+                    </td>
+                    <td className="text-right font-mono font-bold text-[#16A34A] tabular-nums">
+                      <MoneyText amount={rec.amountPaidUSD} currency={currency} />
+                    </td>
+                    <td className="font-mono text-xs text-[#64748B]">
+                      {rec.paidAt}
+                    </td>
+                    <td>
+                      <span className="badge badge-neutral">
+                        {rec.paymentMethod}
+                      </span>
+                    </td>
+                    <td className="font-mono text-xs text-[#64748B]">
+                      {rec.transactionRef}
+                    </td>
+                    <td>
+                      <span className="badge badge-success">
+                        Completed
+                      </span>
+                    </td>
+                    <td className="text-right">
+                      <button
+                        onClick={() => setShowReceiptModal(rec)}
+                        className="px-2.5 py-1 text-xs font-semibold text-[#0F172A] bg-white hover:bg-slate-50 border border-[#CBD5E1] rounded-[6px] transition-colors inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <Printer className="w-3 h-3" />
+                        <span>Slip</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -437,3 +580,5 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
     </div>
   );
 };
+
+export default CashierPaymentTerminal;

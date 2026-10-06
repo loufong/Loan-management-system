@@ -9,7 +9,6 @@ import {
   CreditCard,
   History,
   AlertTriangle,
-  CheckCircle2,
   DollarSign,
   Download,
   Zap,
@@ -73,22 +72,22 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
     currentUserRole === 'MANAGER';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-sans">
       {/* Back Button & Action Toolbar */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+      <div className="flex items-center justify-between gap-4 flex-wrap pb-2 border-b border-[#CBD5E1]">
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] border border-[#CBD5E1] bg-white text-xs font-semibold text-[#0F172A] hover:bg-slate-50 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Core Banking Loans</span>
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back to Active Loans</span>
         </button>
 
         {!isCompleted && (
           <button
             onClick={handleSimulateOverdue}
             disabled={isSimulating}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-white text-xs font-semibold shadow-sm transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold transition-colors"
             title="Simulate past-due installment to test overdue interest and penalties"
           >
             {isSimulating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
@@ -99,9 +98,9 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
 
       {/* Notice Banner */}
       {demoNotice && (
-        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs flex items-center justify-between gap-3 shadow-sm">
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-[6px] text-amber-900 text-xs flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-[11px] px-2 py-0.5 bg-amber-100 text-amber-900 rounded">Notice</span>
+            <span className="font-semibold text-[11px] px-2 py-0.5 bg-amber-100 text-amber-900 rounded-[4px]">Notice</span>
             <span className="font-medium">{demoNotice}</span>
           </div>
           <button
@@ -113,14 +112,14 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
         </div>
       )}
 
-      {/* 1. Top Summary Banner Card */}
-      <div className="bg-white border border-slate-200 shadow-sm rounded-xl p-6 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+      {/* Point 15: Institutional LOAN INFORMATION Panel */}
+      <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-5 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#CBD5E1]">
           <div>
-            <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-xl font-bold font-mono tracking-tight text-slate-900">
-                {loan.loanNumber}
-              </h1>
+            <div className="flex items-center gap-2.5">
+              <span className="text-xs font-bold text-[#64748B] uppercase tracking-wider">
+                LOAN INFORMATION
+              </span>
               <Badge
                 variant={
                   isCompleted ? 'paid' : isOverdue ? 'overdue' : 'active'
@@ -129,99 +128,145 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
               >
                 {loan.status}
               </Badge>
-              <span className="text-sm font-semibold text-slate-700">
-                {loan.productName}
-              </span>
             </div>
-            <p className="text-xs text-slate-500 mt-1">
-              Borrower: <strong className="text-slate-800">{loan.borrowerName}</strong> • Disbursed Date:{' '}
-              <span className="font-mono tabular-nums text-slate-700">{loan.disbursedDate}</span> • Maturity Date:{' '}
-              <span className="font-mono tabular-nums text-slate-700">{loan.maturityDate}</span>
-            </p>
+            <h1 className="text-xl font-bold font-mono text-[#0F172A] mt-1">
+              {loan.loanNumber}
+            </h1>
           </div>
 
-          <div className="text-right">
-            <span className="text-[11px] font-semibold text-slate-400 block uppercase tracking-wider">
-              Disbursed Principal
+          <div className="text-left sm:text-right">
+            <span className="text-[11px] font-semibold text-[#64748B] uppercase block">
+              Outstanding Balance
             </span>
             <MoneyText
-              amount={loan.principalUSD}
+              amount={loan.outstandingBalanceUSD}
               currency={currency}
-              className="text-2xl font-bold text-slate-900 font-mono"
+              className="text-2xl font-bold text-[#2563EB] font-mono"
             />
           </div>
         </div>
 
-        {/* Large Visual Repayment Progress Bar */}
-        <div className="space-y-2">
+        {/* 11 Institutional Fields Grid (Point 15 verbatim) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 text-xs">
+          <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
+            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">Loan ID</span>
+            <span className="font-mono font-bold text-[#0F172A] mt-1 block">{loan.loanNumber}</span>
+          </div>
+
+          <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
+            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">Borrower</span>
+            <span className="font-bold text-[#0F172A] mt-1 block truncate">{loan.borrowerName}</span>
+          </div>
+
+          <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
+            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">Loan Product</span>
+            <span className="font-semibold text-[#0F172A] mt-1 block truncate">{loan.productName}</span>
+          </div>
+
+          <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
+            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">Principal</span>
+            <MoneyText amount={loan.principalUSD} currency={currency} className="font-bold text-[#0F172A] mt-1 block" />
+          </div>
+
+          <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
+            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">Interest Rate</span>
+            <span className="font-mono font-bold text-[#0F172A] mt-1 block">{loan.interestRate}% p.a.</span>
+          </div>
+
+          <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
+            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">Term</span>
+            <span className="font-bold text-[#0F172A] mt-1 block">{loan.schedules.length || 12} months</span>
+          </div>
+
+          <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
+            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">Monthly Installment</span>
+            <MoneyText amount={loan.nextPaymentDueAmountUSD} currency={currency} className="font-bold text-[#0F172A] mt-1 block" />
+          </div>
+
+          <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
+            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">Disbursement Date</span>
+            <span className="font-mono text-[#0F172A] mt-1 block">{loan.disbursedDate}</span>
+          </div>
+
+          <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
+            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">Next Payment</span>
+            <span className="font-mono text-[#0F172A] mt-1 block">{loan.nextPaymentDueDate}</span>
+          </div>
+
+          <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
+            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">Outstanding</span>
+            <MoneyText amount={loan.outstandingBalanceUSD} currency={currency} className="font-bold text-[#2563EB] mt-1 block" />
+          </div>
+
+          <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
+            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">Loan Status</span>
+            <span className="font-bold text-[#0F172A] mt-1 block">{loan.status}</span>
+          </div>
+
+          <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
+            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">Maturity Date</span>
+            <span className="font-mono text-[#0F172A] mt-1 block">{loan.maturityDate}</span>
+          </div>
+        </div>
+
+        {/* Amortization Progress Bar */}
+        <div className="pt-2 border-t border-[#CBD5E1] space-y-1.5">
           <div className="flex justify-between items-baseline text-xs">
-            <span className="text-slate-600 font-medium">
-              Repayment Progress:{' '}
-              <strong className="text-slate-900 font-mono tabular-nums text-sm">
-                <MoneyText amount={loan.totalPaidUSD} currency={currency} /> /{' '}
-                <MoneyText amount={loan.totalRepaymentUSD} currency={currency} /> ({progressPercent}%)
-              </strong>
+            <span className="text-[#64748B]">
+              Principal Settled: <strong className="text-[#0F172A] font-mono tabular-nums"><MoneyText amount={loan.totalPaidUSD} currency={currency} /> / <MoneyText amount={loan.totalRepaymentUSD} currency={currency} /></strong> ({progressPercent}%)
             </span>
-            <span className="text-xs text-slate-500 font-mono">
-              Outstanding Balance:{' '}
-              <strong className="text-blue-600 font-bold">
-                <MoneyText amount={loan.outstandingBalanceUSD} currency={currency} />
-              </strong>
+            <span className="text-[#64748B] font-mono">
+              Total Accrued Interest: <strong className="text-[#0F172A]"><MoneyText amount={loan.totalInterestUSD} currency={currency} /></strong>
             </span>
           </div>
 
-          <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+          <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-300 ${
                 isCompleted
-                  ? 'bg-blue-600'
+                  ? 'bg-[#16A34A]'
                   : isOverdue
-                  ? 'bg-rose-600'
-                  : 'bg-emerald-600'
+                  ? 'bg-[#DC2626]'
+                  : 'bg-[#2563EB]'
               }`}
               style={{ width: `${progressPercent}%` }}
             />
           </div>
-
-          <div className="flex justify-between text-[11px] font-mono text-slate-400 pt-0.5">
-            <span>Interest Rate: {loan.interestRate}% p.a.</span>
-            <span>Total Accrued Interest: <MoneyText amount={loan.totalInterestUSD} currency={currency} /></span>
-          </div>
         </div>
       </div>
 
-      {/* 2. Next Due Highlighted Card */}
+      {/* Next Payment / Overdue Alert Banner */}
       {!isCompleted && (
         <div
-          className={`p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm ${
+          className={`p-4 rounded-[8px] border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
             isOverdue
-              ? 'bg-rose-50 border-rose-200 text-rose-900'
+              ? 'bg-red-50 border-red-200 text-red-950'
               : 'bg-blue-50 border-blue-200 text-blue-950'
           }`}
         >
           <div className="flex items-center gap-3">
             <div
-              className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 ${
+              className={`w-9 h-9 rounded-[6px] flex items-center justify-center font-bold text-sm shrink-0 ${
                 isOverdue
-                  ? 'bg-rose-600 text-white'
-                  : 'bg-blue-600 text-white'
+                  ? 'bg-[#DC2626] text-white'
+                  : 'bg-[#2563EB] text-white'
               }`}
             >
-              {isOverdue ? <AlertTriangle className="w-5 h-5" /> : <Calendar className="w-5 h-5" />}
+              {isOverdue ? <AlertTriangle className="w-4 h-4" /> : <Calendar className="w-4 h-4" />}
             </div>
             <div>
               <p className="text-xs font-bold">
                 {isOverdue
-                  ? `Overdue: ${loan.daysOverdue || 38} Days Past Due`
+                  ? `Overdue Account: ${loan.daysOverdue || 38} Days Past Due`
                   : `Next Payment Due: ${loan.nextPaymentDueDate}`}
               </p>
-              <p className="text-xs text-slate-600 mt-0.5">
-                Installment Amount:{' '}
-                <strong className="font-mono tabular-nums text-slate-900 font-bold">
+              <p className="text-xs text-[#64748B] mt-0.5">
+                Installment Amount Due:{' '}
+                <strong className="font-mono tabular-nums text-[#0F172A] font-bold">
                   <MoneyText amount={loan.nextPaymentDueAmountUSD} currency={currency} />
                 </strong>
                 {loan.lateFeeAccruedUSD ? (
-                  <span className="text-rose-600 font-mono ml-1.5 font-semibold">
+                  <span className="text-[#DC2626] font-mono ml-1.5 font-semibold">
                     (+ <MoneyText amount={loan.lateFeeAccruedUSD} currency={currency} /> Late Fee)
                   </span>
                 ) : null}
@@ -234,23 +279,23 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
               onClick={() =>
                 onCollectPayment?.(loan.id, loan.nextPaymentDueAmountUSD)
               }
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-semibold shadow-sm transition-colors whitespace-nowrap"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[6px] bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
             >
-              <DollarSign className="w-4 h-4" />
+              <DollarSign className="w-3.5 h-3.5" />
               <span>Collect Payment</span>
             </button>
           )}
         </div>
       )}
 
-      {/* 3. Tabbed Navigation */}
-      <div className="flex items-center gap-2 border-b border-slate-200">
+      {/* Tabbed Navigation */}
+      <div className="flex items-center gap-2 border-b border-[#CBD5E1]">
         <button
           onClick={() => setActiveTab('schedules')}
-          className={`flex items-center gap-1.5 px-4 py-3 text-xs font-semibold border-b-2 transition-colors ${
+          className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
             activeTab === 'schedules'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-slate-500 hover:text-slate-900'
+              ? 'border-[#2563EB] text-[#2563EB]'
+              : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
           }`}
         >
           <CreditCard className="w-4 h-4" />
@@ -259,10 +304,10 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
 
         <button
           onClick={() => setActiveTab('ledger')}
-          className={`flex items-center gap-1.5 px-4 py-3 text-xs font-semibold border-b-2 transition-colors ${
+          className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
             activeTab === 'ledger'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-slate-500 hover:text-slate-900'
+              ? 'border-[#2563EB] text-[#2563EB]'
+              : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
           }`}
         >
           <History className="w-4 h-4" />
@@ -270,7 +315,7 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
         </button>
       </div>
 
-      {/* 4. Tab Content */}
+      {/* Tab Content */}
       {activeTab === 'schedules' && (
         <RepaymentScheduleTable
           schedules={loan.schedules}
@@ -286,24 +331,24 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
       )}
 
       {activeTab === 'ledger' && (
-        <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-xs">
+        <div className="overflow-hidden rounded-[8px] border border-[#CBD5E1] bg-white">
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="table-enterprise">
               <thead>
-                <tr className="bg-slate-50/75 text-[11px] font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-200">
-                  <th className="py-3.5 px-4">Receipt No</th>
-                  <th className="py-3.5 px-4">Timestamp</th>
-                  <th className="py-3.5 px-4">Payment Channel</th>
-                  <th className="py-3.5 px-4">Reference Code</th>
-                  <th className="py-3.5 px-4">Received By</th>
-                  <th className="py-3.5 px-4 text-right">Amount Settled</th>
-                  <th className="py-3.5 px-4 text-right">Action</th>
+                <tr>
+                  <th>Receipt No</th>
+                  <th>Timestamp</th>
+                  <th>Payment Channel</th>
+                  <th>Reference Code</th>
+                  <th>Received By</th>
+                  <th className="text-right">Amount Settled</th>
+                  <th className="text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody>
                 {receipts.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center text-xs text-slate-400">
+                    <td colSpan={7} className="py-12 text-center text-xs text-[#64748B]">
                       No payment receipts generated for this loan account yet.
                     </td>
                   </tr>
@@ -311,30 +356,30 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
                   receipts.map((rec) => (
                     <tr
                       key={rec.receiptNo}
-                      className="border-b border-slate-100 hover:bg-slate-50/60 transition-colors text-sm text-slate-700"
+                      className="hover:bg-slate-50/70 transition-colors"
                     >
-                      <td className="py-3.5 px-4 font-mono tabular-nums font-semibold text-indigo-600">
+                      <td className="font-mono tabular-nums font-bold text-[#2563EB]">
                         {rec.receiptNo}
                       </td>
-                      <td className="py-3.5 px-4 font-mono tabular-nums text-xs text-slate-600">
+                      <td className="font-mono tabular-nums text-xs text-[#0F172A]">
                         {rec.paidAt}
                       </td>
-                      <td className="py-3.5 px-4 text-xs">
-                        <span className="inline-flex px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-medium">
+                      <td className="text-xs">
+                        <span className="badge badge-neutral">
                           {rec.paymentMethod}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 font-mono tabular-nums text-xs text-slate-500">
+                      <td className="font-mono tabular-nums text-xs text-[#64748B]">
                         {rec.transactionRef}
                       </td>
-                      <td className="py-3.5 px-4 text-xs text-slate-700">{rec.cashierName}</td>
-                      <td className="py-3.5 px-4 text-right font-semibold text-emerald-600">
+                      <td className="text-xs text-[#0F172A]">{rec.cashierName}</td>
+                      <td className="text-right font-bold text-[#16A34A]">
                         <MoneyText amount={rec.amountPaidUSD} currency={currency} />
                       </td>
-                      <td className="py-3.5 px-4 text-right">
+                      <td className="text-right">
                         <button
                           onClick={() => onViewReceipt?.(rec)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-[#0F172A] bg-white hover:bg-slate-50 border border-[#CBD5E1] rounded-[6px] transition-colors"
                         >
                           <Download className="w-3 h-3" />
                           <span>Receipt</span>
@@ -351,3 +396,5 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
     </div>
   );
 };
+
+export default LoanDetail;

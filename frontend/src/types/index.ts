@@ -4,10 +4,16 @@
 // ============================================================================
 
 export type UserRole =
+  | 'admin'
+  | 'user'
+  | 'ADMIN'
+  | 'USER'
   | 'BORROWER'
   | 'LOAN_OFFICER'
   | 'CASHIER'
   | 'MANAGER';
+
+export type UserStatus = 'active' | 'inactive' | 'suspended' | 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
 
 export interface UserProfile {
   id: string;
@@ -16,6 +22,7 @@ export interface UserProfile {
   fullName?: string;
   email: string;
   role: UserRole;
+  status?: UserStatus;
   title: string;
   department: string;
   avatar: string;
@@ -198,6 +205,9 @@ export interface Borrower {
   totalOutstandingUSD: number;
   dtiRatio: number; // Debt to Income %
   createdAt: string;
+  dob?: string;
+  gender?: string;
+  employerName?: string;
   emergencyContact?: {
     name: string;
     phone: string;
@@ -345,7 +355,7 @@ export interface ManagedUser {
   role: UserRole;
   title: string;
   department: string;
-  status: 'ACTIVE' | 'INACTIVE';
+  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
   phone?: string;
   lastLogin?: string;
   avatar?: string;

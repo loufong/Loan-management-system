@@ -146,7 +146,21 @@ export class AuthController {
       const validated = loginSchema.parse(req.body);
       const ipAddress = (req.headers['x-forwarded-for'] as string) || req.ip;
       const result = await AuthService.login({ ...validated, ipAddress });
-      sendSuccess(res, result, 'Authentication successful');
+      res.status(200).json({
+        success: true,
+        message: 'Login successful',
+        user: {
+          id: result.user.id,
+          name: result.user.name,
+          email: result.user.email,
+          role: result.user.role,
+        },
+        token: result.token,
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+        data: result,
+      });
+      return;
     } catch (err) {
       next(err);
     }

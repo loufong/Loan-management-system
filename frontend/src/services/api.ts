@@ -54,83 +54,145 @@ class ApiService {
 
     if (!response.ok) {
       const errorBody = await response.json().catch(() => ({}));
-      throw new Error(errorBody.message || `Request failed with status ${response.status}`);
+      const msg = errorBody.message || errorBody.error?.message || `Request failed with status ${response.status}`;
+      throw new Error(msg);
     }
 
     const json = await response.json();
     return json.data !== undefined ? json.data : json;
   }
 
+  // Rate-limiting tracker for demo/offline fallback: 5 failed attempts -> 5 minutes block
+  private failedAttempts: Record<string, { count: number; blockedUntil?: number }> = {};
+
   // --- AUTHENTICATION & PROFILE ---
   public async login(
     usernameOrEmail: string,
-    roleOrPassword?: UserRole | string,
+    password = 'Password123!',
     rememberMe = false,
     roleOverride?: UserRole
   ): Promise<{ token: string; user: UserProfile }> {
-    let password = 'Password123!';
-    let roleHint = roleOverride;
+    const cleanId = usernameOrEmail.trim().toLowerCase();
 
-    if (typeof roleOrPassword === 'string') {
-      if (['MANAGER', 'LOAN_OFFICER', 'CASHIER', 'BORROWER'].includes(roleOrPassword)) {
-        roleHint = roleOrPassword as UserRole;
-      } else if (roleOrPassword) {
-        password = roleOrPassword;
-      }
+    // Step 1: Validate input
+    if (!usernameOrEmail.trim() || !password) {
+      throw new Error('Invalid email/username or password.');
     }
 
     try {
-      const res = await this.request<{ accessToken: string; user: any }>('/auth/login', {
+      const res = await this.request<{ accessToken?: string; token?: string; user: any }>('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ usernameOrEmail, password, rememberMe }),
       });
-      this.setToken(res.accessToken);
+      const activeToken = res.accessToken || res.token || 'jwt-token-active';
+      this.setToken(activeToken);
       const u = res.user;
-      const userRole = (u?.role || roleHint || 'MANAGER') as UserRole;
+      const normalizedRole = (u?.role === 'admin' || u?.role === 'ADMIN' || u?.role === 'MANAGER') ? 'admin' : 'user';
       const matchedProfile: UserProfile = {
         id: u?.id || 'usr-default',
         username: u?.username || usernameOrEmail,
-        name: u?.fullName || usernameOrEmail,
-        fullName: u?.fullName || usernameOrEmail,
+        name: u?.name || u?.fullName || usernameOrEmail,
+        fullName: u?.fullName || u?.name || usernameOrEmail,
         email: u?.email || usernameOrEmail,
-        role: userRole,
-        title: u?.position || (userRole === 'MANAGER' ? 'Executive Branch Manager' : userRole === 'CASHIER' ? 'Desk Cashier' : userRole === 'LOAN_OFFICER' ? 'Senior Underwriter' : 'Retail Client'),
-        department: u?.department || 'Banking Operations',
+        role: normalizedRole as UserRole,
+        status: (u?.status || 'active').toLowerCase() as any,
+        title: normalizedRole === 'admin' ? 'System Administrator' : 'Client Borrower',
+        department: u?.department || (normalizedRole === 'admin' ? 'Administration' : 'Retail Banking'),
         avatar: u?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u?.username || usernameOrEmail)}`,
         avatarUrl: u?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u?.username || usernameOrEmail)}`,
         branch: 'Phnom Penh Main Branch',
         createdAt: u?.createdAt,
-        lastLogin: u?.lastLogin,
+        lastLogin: new Date().toISOString(),
       };
       return {
-        token: res.accessToken,
+        token: activeToken,
         user: matchedProfile,
       };
     } catch (err: any) {
-      // In static / offline environments (like GitHub Pages where /api/v1 returns 404 or fails to fetch),
-      // provide seamless fallback demo authentication instead of blocking login.
-      const isStaticOrOffline =
-        typeof window !== 'undefined' &&
-        (!window.location.hostname.includes('localhost') ||
-          (err?.message && (err.message.includes('404') || err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))));
-
-      if (isStaticOrOffline) {
-        const userRole = roleHint || (usernameOrEmail.includes('officer') ? 'LOAN_OFFICER' : usernameOrEmail.includes('cashier') ? 'CASHIER' : usernameOrEmail.includes('borrower') ? 'BORROWER' : 'MANAGER');
-        const base = USER_PROFILES[userRole] || USER_PROFILES.MANAGER;
-        const user: UserProfile = {
-          ...base,
-          name: base.fullName || usernameOrEmail,
-          fullName: base.fullName || usernameOrEmail,
-          email: usernameOrEmail.includes('@') ? usernameOrEmail : `${usernameOrEmail}@apex.local`,
-          avatarUrl: base.avatar,
-          lastLogin: new Date().toISOString(),
-          createdAt: '2026-01-01',
-        };
-        const token = 'mock-jwt-token-2026';
-        this.setToken(token);
-        return { token, user };
+      // If error came directly from backend API (e.g. 401, 403 status message), re-throw it!
+      if (
+        err?.message &&
+        !err.message.includes('Failed to fetch') &&
+        !err.message.includes('NetworkError') &&
+        !err.message.includes('404')
+      ) {
+        throw err;
       }
-      throw err;
+
+      // Offline / Static fallback authentication (ensures complete functionality anywhere)
+      const record = this.failedAttempts[cleanId] || { count: 0 };
+      if (record.blockedUntil && Date.now() < record.blockedUntil) {
+        const remainingMinutes = Math.ceil((record.blockedUntil - Date.now()) / 60000);
+        throw new Error(`Too many failed login attempts. Please try again after ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''}.`);
+      }
+
+      // Predefined accounts matching exact requirements
+      const mockAccounts: Record<string, { role: 'admin' | 'user'; status: 'active' | 'inactive' | 'suspended'; name: string; email: string; username: string }> = {
+        'admin@example.com': { role: 'admin', status: 'active', name: 'Admin', email: 'admin@example.com', username: 'admin' },
+        'admin': { role: 'admin', status: 'active', name: 'Admin', email: 'admin@example.com', username: 'admin' },
+        'user@example.com': { role: 'user', status: 'active', name: 'Standard User', email: 'user@example.com', username: 'user' },
+        'user': { role: 'user', status: 'active', name: 'Standard User', email: 'user@example.com', username: 'user' },
+        'inactive@example.com': { role: 'user', status: 'inactive', name: 'Inactive User', email: 'inactive@example.com', username: 'inactive' },
+        'inactive': { role: 'user', status: 'inactive', name: 'Inactive User', email: 'inactive@example.com', username: 'inactive' },
+        'suspended@example.com': { role: 'user', status: 'suspended', name: 'Suspended User', email: 'suspended@example.com', username: 'suspended' },
+        'suspended': { role: 'user', status: 'suspended', name: 'Suspended User', email: 'suspended@example.com', username: 'suspended' },
+        'manager@apex.local': { role: 'admin', status: 'active', name: 'Executive Branch Manager', email: 'manager@apex.local', username: 'manager' },
+        'manager': { role: 'admin', status: 'active', name: 'Executive Branch Manager', email: 'manager@apex.local', username: 'manager' },
+        'borrower@apex.local': { role: 'user', status: 'active', name: 'Sokha Chan', email: 'borrower@apex.local', username: 'borrower' },
+        'borrower': { role: 'user', status: 'active', name: 'Sokha Chan', email: 'borrower@apex.local', username: 'borrower' },
+      };
+
+      const account = mockAccounts[cleanId];
+      // Step 2 & 3: User existence check (generic message)
+      if (!account) {
+        record.count += 1;
+        if (record.count >= 5) record.blockedUntil = Date.now() + 5 * 60 * 1000;
+        this.failedAttempts[cleanId] = record;
+        throw new Error('Invalid email/username or password.');
+      }
+
+      // Step 4 & 5: Password verification (generic message)
+      if (password !== 'Password123!') {
+        record.count += 1;
+        if (record.count >= 5) record.blockedUntil = Date.now() + 5 * 60 * 1000;
+        this.failedAttempts[cleanId] = record;
+        throw new Error('Invalid email/username or password.');
+      }
+
+      // Clear failed attempts on valid credentials
+      delete this.failedAttempts[cleanId];
+
+      // Step 6: Status check with required messages
+      if (account.status === 'inactive') {
+        throw new Error('Your account is inactive. Please contact the administrator.');
+      }
+      if (account.status === 'suspended') {
+        throw new Error('Your account has been suspended. Please contact the administrator.');
+      }
+
+      // Step 7, 8 & 9: Create session/token, update last_login, role redirect
+      const token = `jwt-token-${cleanId}-${Date.now()}`;
+      this.setToken(token);
+
+      const user: UserProfile = {
+        id: `usr-${cleanId}`,
+        username: account.username,
+        name: account.name,
+        fullName: account.name,
+        email: account.email,
+        role: account.role as UserRole,
+        status: account.status,
+        title: account.role === 'admin' ? 'Administrator' : 'Client Borrower',
+        department: account.role === 'admin' ? 'Executive Administration' : 'Client Services',
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(account.username)}`,
+        avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(account.username)}`,
+        branch: 'Phnom Penh Main Branch',
+        borrowerId: account.role === 'user' ? 'BOR-2026-0001' : undefined,
+        createdAt: '2026-01-01',
+        lastLogin: new Date().toISOString(),
+      };
+
+      return { token, user };
     }
   }
 
@@ -160,6 +222,15 @@ class ApiService {
       if (stored) return JSON.parse(stored);
       return USER_PROFILES.MANAGER;
     }
+  }
+
+  public async verifyRegistrationOtp(data: { email: string; otp: string }): Promise<any> {
+    return this.verifyOtp({ email: data.email, code: data.otp, purpose: 'register_verification' });
+  }
+
+  public async verifyResetOtp(data: { email: string; otp: string }): Promise<{ resetToken: string }> {
+    const res = await this.verifyOtp({ email: data.email, code: data.otp, purpose: 'forgot_password' });
+    return { resetToken: res.resetToken || `simulated-reset-token-${Date.now()}` };
   }
 
   public async getUserDashboardSummary(): Promise<UserDashboardSummary> {
@@ -348,9 +419,9 @@ class ApiService {
     fullName: string;
     username: string;
     email: string;
-    phone: string;
+    phone?: string;
     password: string;
-    confirmPassword: string;
+    confirmPassword?: string;
     role?: UserRole;
   }): Promise<{ success: boolean; message: string; email: string; devOtp?: string }> {
     try {

@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users,
   ShieldCheck,
@@ -7,29 +6,18 @@ import {
   User,
   Plus,
   Search,
-  Filter,
   CheckCircle2,
-  XCircle,
   Edit2,
   Key,
   Shield,
   ArrowRightLeft,
-  Lock,
-  Building,
-  Mail,
-  Phone,
-  Calendar,
-  Sparkles,
-  AlertCircle,
-  HelpCircle,
   Check,
-  X
+  X,
+  ShieldAlert
 } from 'lucide-react';
 import {
   ManagedUser,
-  UserRole,
-  RoleDefinition,
-  PermissionMatrixRow
+  UserRole
 } from '../../types';
 import {
   MOCK_MANAGED_USERS,
@@ -44,7 +32,7 @@ interface UserRoleManagementProps {
 }
 
 export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
-  currentUserRole,
+  currentUserRole: _currentUserRole,
   onSwitchUserPersona,
   onShowToast
 }) => {
@@ -66,6 +54,29 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
   const [formDepartment, setFormDepartment] = useState('');
   const [formPhone, setFormPhone] = useState('');
   const [formPassword, setFormPassword] = useState('Password123!');
+  const [formStatus, setFormStatus] = useState<'ACTIVE' | 'INACTIVE' | 'SUSPENDED'>('ACTIVE');
+
+  // Actions
+  const handleSuspendUser = (user: ManagedUser) => {
+    setUsers((prev) =>
+      prev.map((u) => (u.id === user.id ? { ...u, status: 'SUSPENDED' as any } : u))
+    );
+    onShowToast?.(`Account for ${user.name} has been suspended.`, 'info');
+  };
+
+  const handleActivateUser = (user: ManagedUser) => {
+    setUsers((prev) =>
+      prev.map((u) => (u.id === user.id ? { ...u, status: 'ACTIVE' as any } : u))
+    );
+    onShowToast?.(`Account for ${user.name} has been activated.`, 'success');
+  };
+
+  const handleResetPassword = (user: ManagedUser) => {
+    const confirmed = window.confirm(`Reset password for user "${user.name}" (${user.username}) to "Password123!"?`);
+    if (confirmed) {
+      onShowToast?.(`Password for ${user.name} reset to "Password123!" successfully.`, 'success');
+    }
+  };
 
   // Filtered Users
   const filteredUsers = useMemo(() => {
@@ -129,6 +140,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
     setFormRole(user.role);
     setFormDepartment(user.department);
     setFormPhone(user.phone || '');
+    setFormStatus((user.status as any) || 'ACTIVE');
   };
 
   const handleSaveCreate = (e: React.FormEvent) => {
@@ -181,7 +193,8 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
             email: formEmail.trim(),
             role: formRole,
             department: formDepartment.trim(),
-            phone: formPhone.trim()
+            phone: formPhone.trim(),
+            status: formStatus
           };
         }
         return u;
@@ -196,28 +209,28 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
     switch (role) {
       case 'MANAGER':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-            <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
-            Admin / Manager
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[4px] text-xs font-semibold bg-slate-100 text-[#0F172A] border border-[#CBD5E1]">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#2563EB]" />
+            Administrator
           </span>
         );
       case 'CASHIER':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <CreditCard className="w-3.5 h-3.5 text-emerald-600" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[4px] text-xs font-semibold bg-blue-50 text-[#2563EB] border border-blue-200">
+            <CreditCard className="w-3.5 h-3.5 text-[#2563EB]" />
             Cashier
           </span>
         );
       case 'BORROWER':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-            <User className="w-3.5 h-3.5 text-amber-600" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[4px] text-xs font-semibold bg-amber-50 text-[#D97706] border border-amber-200">
+            <User className="w-3.5 h-3.5 text-[#D97706]" />
             Borrower
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-700">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-xs bg-slate-100 text-[#64748B] border border-[#CBD5E1]">
             {role}
           </span>
         );
@@ -225,43 +238,43 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-200">
+    <div className="space-y-6">
       {/* Top Banner / Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-[8px] border border-[#CBD5E1]">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-[#2563EB] uppercase tracking-wider mb-1">
             <Shield className="w-4 h-4" />
-            Security &amp; Governance Center
+            Security & Governance Center
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            User Roles &amp; Access Control
+          <h1 className="text-xl font-bold text-[#0F172A] tracking-tight">
+            User Roles & Access Control
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Configure system personas across 3 core roles:{' '}
-            <strong className="text-blue-700">Admin / Manager</strong>,{' '}
-            <strong className="text-emerald-700">Cashier</strong>, and{' '}
-            <strong className="text-amber-700">Borrower</strong>.
+          <p className="text-xs text-[#64748B] mt-0.5">
+            Configure institutional personas across 3 core roles:{' '}
+            <strong className="text-[#0F172A]">Administrator</strong>,{' '}
+            <strong className="text-[#2563EB]">Cashier</strong>, and{' '}
+            <strong className="text-[#D97706]">Borrower</strong>.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <button
             onClick={() => setActiveTab('matrix')}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-all border ${
+            className={`px-3.5 py-2 text-xs font-semibold rounded-[6px] border transition-colors ${
               activeTab === 'matrix'
-                ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
-                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                ? 'bg-[#0F172A] text-white border-[#0F172A]'
+                : 'bg-white text-[#0F172A] border-[#CBD5E1] hover:bg-slate-50'
             }`}
           >
-            <ShieldCheck className="w-4 h-4 inline mr-1.5" />
+            <ShieldCheck className="w-3.5 h-3.5 inline mr-1.5" />
             RBAC Matrix
           </button>
 
           <button
             onClick={handleOpenCreateModal}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
+            className="px-3.5 py-2 text-xs font-semibold text-white bg-[#0F172A] hover:bg-[#1E293B] rounded-[6px] transition-colors flex items-center gap-1.5 border border-[#0F172A]"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
             Add New User
           </button>
         </div>
@@ -270,73 +283,73 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
       {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Users */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div className="bg-white p-4 rounded-[8px] border border-[#CBD5E1] flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+            <p className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider">
               Total Accounts
             </p>
-            <h3 className="text-2xl font-bold text-slate-900 mt-1">{stats.total}</h3>
-            <span className="text-xs text-emerald-600 font-medium inline-flex items-center gap-1 mt-1">
+            <h3 className="text-xl font-bold text-[#0F172A] mt-1">{stats.total}</h3>
+            <span className="text-xs text-[#16A34A] font-semibold inline-flex items-center gap-1 mt-1">
               <CheckCircle2 className="w-3.5 h-3.5" />
               {stats.active} Active accounts
             </span>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600">
-            <Users className="w-6 h-6" />
+          <div className="w-10 h-10 rounded-[6px] bg-slate-100 border border-[#CBD5E1] flex items-center justify-center text-[#0F172A]">
+            <Users className="w-5 h-5" />
           </div>
         </div>
 
         {/* Admin / Manager */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div className="bg-white p-4 rounded-[8px] border border-[#CBD5E1] flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-blue-600 uppercase tracking-wider font-semibold">
+            <p className="text-[11px] font-semibold text-[#0F172A] uppercase tracking-wider">
               Admin / Manager
             </p>
-            <h3 className="text-2xl font-bold text-slate-900 mt-1">{stats.managers}</h3>
-            <span className="text-xs text-slate-500 mt-1 block">Full Authority &amp; Approvals</span>
+            <h3 className="text-xl font-bold text-[#0F172A] mt-1">{stats.managers}</h3>
+            <span className="text-xs text-[#64748B] mt-1 block">Full Authority & Approvals</span>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
-            <ShieldCheck className="w-6 h-6" />
+          <div className="w-10 h-10 rounded-[6px] bg-blue-50 border border-blue-200 flex items-center justify-center text-[#2563EB]">
+            <ShieldCheck className="w-5 h-5" />
           </div>
         </div>
 
         {/* Cashier */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div className="bg-white p-4 rounded-[8px] border border-[#CBD5E1] flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-emerald-600 uppercase tracking-wider font-semibold">
-              Cashier &amp; POS
+            <p className="text-[11px] font-semibold text-[#2563EB] uppercase tracking-wider">
+              Cashier & POS
             </p>
-            <h3 className="text-2xl font-bold text-slate-900 mt-1">{stats.cashiers}</h3>
-            <span className="text-xs text-slate-500 mt-1 block">Disbursement &amp; Receipts</span>
+            <h3 className="text-xl font-bold text-[#0F172A] mt-1">{stats.cashiers}</h3>
+            <span className="text-xs text-[#64748B] mt-1 block">Disbursement & Receipts</span>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
-            <CreditCard className="w-6 h-6" />
+          <div className="w-10 h-10 rounded-[6px] bg-blue-50 border border-blue-200 flex items-center justify-center text-[#2563EB]">
+            <CreditCard className="w-5 h-5" />
           </div>
         </div>
 
         {/* Borrower */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div className="bg-white p-4 rounded-[8px] border border-[#CBD5E1] flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-amber-600 uppercase tracking-wider font-semibold">
+            <p className="text-[11px] font-semibold text-[#D97706] uppercase tracking-wider">
               Borrower Portal
             </p>
-            <h3 className="text-2xl font-bold text-slate-900 mt-1">{stats.borrowers}</h3>
-            <span className="text-xs text-slate-500 mt-1 block">Self-Service Students &amp; Clients</span>
+            <h3 className="text-xl font-bold text-[#0F172A] mt-1">{stats.borrowers}</h3>
+            <span className="text-xs text-[#64748B] mt-1 block">Self-Service Students & Clients</span>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
-            <User className="w-6 h-6" />
+          <div className="w-10 h-10 rounded-[6px] bg-amber-50 border border-amber-200 flex items-center justify-center text-[#D97706]">
+            <User className="w-5 h-5" />
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200">
+      <div className="flex items-center gap-1 border-b border-[#CBD5E1]">
         <button
           onClick={() => setActiveTab('users')}
-          className={`pb-3 px-4 text-sm font-semibold transition-colors border-b-2 flex items-center gap-2 ${
+          className={`pb-2.5 px-4 text-xs font-semibold transition-colors border-b-2 flex items-center gap-1.5 ${
             activeTab === 'users'
-              ? 'border-indigo-600 text-indigo-600'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
+              ? 'border-[#0F172A] text-[#0F172A]'
+              : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
           }`}
         >
           <Users className="w-4 h-4" />
@@ -345,10 +358,10 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
 
         <button
           onClick={() => setActiveTab('matrix')}
-          className={`pb-3 px-4 text-sm font-semibold transition-colors border-b-2 flex items-center gap-2 ${
+          className={`pb-2.5 px-4 text-xs font-semibold transition-colors border-b-2 flex items-center gap-1.5 ${
             activeTab === 'matrix'
-              ? 'border-indigo-600 text-indigo-600'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
+              ? 'border-[#0F172A] text-[#0F172A]'
+              : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
           }`}
         >
           <ShieldCheck className="w-4 h-4" />
@@ -357,52 +370,52 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
 
         <button
           onClick={() => setActiveTab('overview')}
-          className={`pb-3 px-4 text-sm font-semibold transition-colors border-b-2 flex items-center gap-2 ${
+          className={`pb-2.5 px-4 text-xs font-semibold transition-colors border-b-2 flex items-center gap-1.5 ${
             activeTab === 'overview'
-              ? 'border-indigo-600 text-indigo-600'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
+              ? 'border-[#0F172A] text-[#0F172A]'
+              : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
           }`}
         >
-          <Sparkles className="w-4 h-4" />
+          <Shield className="w-4 h-4" />
           Role Architecture Overview
         </button>
       </div>
 
       {/* TAB 1: User Directory */}
       {activeTab === 'users' && (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-[8px] border border-[#CBD5E1] overflow-hidden">
           {/* Controls Bar */}
-          <div className="p-4 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50">
+          <div className="p-3 border-b border-[#CBD5E1] flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-50">
             {/* Search */}
             <div className="relative flex-1 max-w-md">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search user by name, email, department, or username..."
-                className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition-colors text-slate-900 placeholder-slate-400"
+                className="w-full pl-9 pr-3 h-9 text-xs bg-white border border-[#CBD5E1] rounded-[6px] focus:outline-none focus:border-[#2563EB] text-[#0F172A] placeholder-[#64748B]"
               />
             </div>
 
             {/* Filters */}
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 text-xs">
-                <span className="px-2 text-slate-400 font-medium">Role:</span>
+              <div className="flex items-center gap-1 bg-white p-0.5 rounded-[6px] border border-[#CBD5E1] text-xs">
+                <span className="px-2 text-[#64748B] font-semibold text-[11px]">Role:</span>
                 {(['ALL', 'MANAGER', 'CASHIER', 'BORROWER'] as const).map((r) => (
                   <button
                     key={r}
                     onClick={() => setSelectedRoleFilter(r)}
-                    className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
+                    className={`px-2.5 py-1 rounded-[4px] text-xs font-semibold transition-colors ${
                       selectedRoleFilter === r
-                        ? 'bg-indigo-600 text-white shadow-xs'
-                        : 'text-slate-600 hover:bg-slate-100'
+                        ? 'bg-[#0F172A] text-white'
+                        : 'text-[#64748B] hover:bg-slate-100 hover:text-[#0F172A]'
                     }`}
                   >
                     {r === 'ALL'
                       ? 'All'
                       : r === 'MANAGER'
-                      ? 'Admin/Manager'
+                      ? 'Admin'
                       : r === 'CASHIER'
                       ? 'Cashier'
                       : 'Borrower'}
@@ -413,7 +426,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
               <select
                 value={selectedStatusFilter}
                 onChange={(e) => setSelectedStatusFilter(e.target.value)}
-                className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                className="bg-white border border-[#CBD5E1] rounded-[6px] px-2.5 h-9 text-xs font-medium text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
               >
                 <option value="ALL">Status: All</option>
                 <option value="ACTIVE">Active</option>
@@ -426,20 +439,20 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs font-semibold uppercase tracking-wider">
-                  <th className="py-3 px-4">User &amp; Profile</th>
-                  <th className="py-3 px-4">Role &amp; Privileges</th>
-                  <th className="py-3 px-4">Department &amp; Contact</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Last Activity</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                <tr className="bg-slate-50 border-b border-[#CBD5E1] text-[#64748B] text-[11px] font-semibold uppercase tracking-wider">
+                  <th className="py-2.5 px-3">User & Profile</th>
+                  <th className="py-2.5 px-3">Role & Privileges</th>
+                  <th className="py-2.5 px-3">Department & Contact</th>
+                  <th className="py-2.5 px-3">Status</th>
+                  <th className="py-2.5 px-3">Last Activity</th>
+                  <th className="py-2.5 px-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-sm">
+              <tbody className="divide-y divide-[#CBD5E1] text-xs">
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-12 text-center text-slate-400">
-                      <Users className="w-10 h-10 mx-auto mb-2 text-slate-300" />
+                    <td colSpan={6} className="py-10 text-center text-[#64748B]">
+                      <Users className="w-8 h-8 mx-auto mb-2 text-slate-300" />
                       No users found matching your filters.
                     </td>
                   </tr>
@@ -447,32 +460,32 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                   filteredUsers.map((user) => (
                     <tr
                       key={user.id}
-                      className="hover:bg-slate-50/70 transition-colors group"
+                      className="hover:bg-slate-50/70 transition-colors"
                     >
                       {/* Name & Avatar */}
-                      <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-3">
+                      <td className="py-2.5 px-3">
+                        <div className="flex items-center gap-2.5">
                           <div
-                            className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs shadow-xs ${
+                            className={`w-8 h-8 rounded-[4px] flex items-center justify-center font-bold text-xs border ${
                               user.role === 'MANAGER'
-                                ? 'bg-indigo-100 text-indigo-700 border border-indigo-200'
+                                ? 'bg-slate-100 text-[#0F172A] border-[#CBD5E1]'
                                 : user.role === 'CASHIER'
-                                ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                                : 'bg-amber-100 text-amber-700 border border-amber-200'
+                                ? 'bg-blue-50 text-[#2563EB] border-blue-200'
+                                : 'bg-amber-50 text-[#D97706] border-amber-200'
                             }`}
                           >
                             {user.avatar || user.name.slice(0, 2).toUpperCase()}
                           </div>
                           <div>
-                            <div className="font-semibold text-slate-900 flex items-center gap-1.5">
+                            <div className="font-semibold text-[#0F172A] flex items-center gap-1.5">
                               {user.name}
                               {user.borrowerId && (
-                                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-[4px] bg-amber-50 text-[#D97706] border border-amber-200">
                                   {user.borrowerId}
                                 </span>
                               )}
                             </div>
-                            <div className="text-xs text-slate-400 font-mono">
+                            <div className="text-[11px] text-[#64748B] font-mono">
                               @{user.username} • {user.title}
                             </div>
                           </div>
@@ -480,33 +493,33 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                       </td>
 
                       {/* Role */}
-                      <td className="py-3.5 px-4">{getRoleBadge(user.role)}</td>
+                      <td className="py-2.5 px-3">{getRoleBadge(user.role)}</td>
 
                       {/* Contact & Department */}
-                      <td className="py-3.5 px-4">
-                        <div className="text-slate-800 text-xs font-medium">
+                      <td className="py-2.5 px-3">
+                        <div className="text-[#0F172A] text-xs font-medium">
                           {user.department}
                         </div>
-                        <div className="text-slate-400 text-xs flex items-center gap-2 mt-0.5">
+                        <div className="text-[#64748B] text-[11px] flex items-center gap-2 mt-0.5">
                           <span>{user.email}</span>
                           {user.phone && <span>• {user.phone}</span>}
                         </div>
                       </td>
 
                       {/* Status */}
-                      <td className="py-3.5 px-4">
+                      <td className="py-2.5 px-3">
                         <button
                           onClick={() => handleToggleStatus(user.id)}
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium transition-all ${
+                          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] text-xs font-semibold transition-colors ${
                             user.status === 'ACTIVE'
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
-                              : 'bg-slate-100 text-slate-500 border border-slate-200 hover:bg-slate-200'
+                              ? 'bg-emerald-50 text-[#16A34A] border border-emerald-200 hover:bg-emerald-100'
+                              : 'bg-slate-100 text-[#64748B] border border-[#CBD5E1] hover:bg-slate-200'
                           }`}
                           title="Click to toggle status"
                         >
                           <span
                             className={`w-1.5 h-1.5 rounded-full ${
-                              user.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-slate-400'
+                              user.status === 'ACTIVE' ? 'bg-[#16A34A]' : 'bg-[#64748B]'
                             }`}
                           />
                           {user.status === 'ACTIVE' ? 'Active' : 'Inactive'}
@@ -514,18 +527,46 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                       </td>
 
                       {/* Last Activity */}
-                      <td className="py-3.5 px-4 text-xs text-slate-500">
+                      <td className="py-2.5 px-3 text-xs text-[#64748B] font-mono">
                         {user.lastLogin || '2026-10-03 09:00'}
                       </td>
 
                       {/* Actions */}
-                      <td className="py-3.5 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
+                      <td className="py-2.5 px-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          {/* Suspend or Activate toggle */}
+                          {user.status === 'SUSPENDED' ? (
+                            <button
+                              onClick={() => handleActivateUser(user)}
+                              className="p-1 text-[#16A34A] hover:bg-emerald-50 rounded-[4px] transition-colors"
+                              title="Activate Suspended User"
+                            >
+                              <CheckCircle2 className="w-4 h-4" />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleSuspendUser(user)}
+                              className="p-1 text-[#64748B] hover:text-[#DC2626] hover:bg-red-50 rounded-[4px] transition-colors"
+                              title="Suspend User Account"
+                            >
+                              <ShieldAlert className="w-4 h-4" />
+                            </button>
+                          )}
+
+                          {/* Reset Password */}
+                          <button
+                            onClick={() => handleResetPassword(user)}
+                            className="p-1 text-[#64748B] hover:text-[#D97706] hover:bg-amber-50 rounded-[4px] transition-colors"
+                            title="Reset Password to Default"
+                          >
+                            <Key className="w-4 h-4" />
+                          </button>
+
                           {/* Switch Persona */}
                           {onSwitchUserPersona && (
                             <button
                               onClick={() => onSwitchUserPersona(user.role, user)}
-                              className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                              className="p-1 text-[#64748B] hover:text-[#2563EB] hover:bg-blue-50 rounded-[4px] transition-colors"
                               title={`Switch Persona to ${user.name} (${user.role})`}
                             >
                               <ArrowRightLeft className="w-4 h-4" />
@@ -535,7 +576,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                           {/* Edit User */}
                           <button
                             onClick={() => handleOpenEditModal(user)}
-                            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                            className="p-1 text-[#64748B] hover:text-[#0F172A] hover:bg-slate-100 rounded-[4px] transition-colors"
                             title="Edit User Details & Role"
                           >
                             <Edit2 className="w-4 h-4" />
@@ -555,36 +596,36 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
       {activeTab === 'matrix' && (
         <div className="space-y-6">
           {/* Role Cards Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {Object.entries(CORE_ROLE_DEFINITIONS).map(([key, def]) => (
               <div
                 key={key}
-                className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between"
+                className="bg-white rounded-[8px] border border-[#CBD5E1] p-4 flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-between mb-2">
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${def.color}`}
+                      className="px-2.5 py-0.5 rounded-[4px] text-xs font-semibold bg-slate-100 text-[#0F172A] border border-[#CBD5E1]"
                     >
                       {def.badge}
                     </span>
-                    <span className="text-xs font-mono text-slate-400">
+                    <span className="text-xs font-mono text-[#64748B]">
                       {def.khmerLabel}
                     </span>
                   </div>
-                  <h3 className="text-lg font-bold text-slate-900">{def.label}</h3>
-                  <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                  <h3 className="text-base font-bold text-[#0F172A]">{def.label}</h3>
+                  <p className="text-xs text-[#64748B] mt-1 leading-relaxed">
                     {def.description}
                   </p>
 
-                  <div className="mt-4 pt-4 border-t border-slate-100">
-                    <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                  <div className="mt-3 pt-3 border-t border-[#CBD5E1]">
+                    <h4 className="text-[11px] font-semibold text-[#0F172A] uppercase tracking-wider mb-2">
                       Key Responsibilities:
                     </h4>
-                    <ul className="space-y-1.5 text-xs text-slate-600">
+                    <ul className="space-y-1 text-xs text-[#64748B]">
                       {def.responsibilities.slice(0, 4).map((r, i) => (
                         <li key={i} className="flex items-start gap-1.5">
-                          <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                          <Check className="w-3.5 h-3.5 text-[#16A34A] shrink-0 mt-0.5" />
                           <span>{r}</span>
                         </li>
                       ))}
@@ -592,9 +633,9 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                   </div>
                 </div>
 
-                <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                <div className="mt-4 pt-2.5 border-t border-[#CBD5E1] flex items-center justify-between text-xs text-[#64748B]">
                   <span>Assigned Users:</span>
-                  <span className="font-semibold text-slate-800">
+                  <span className="font-semibold text-[#0F172A]">
                     {users.filter((u) => u.role === key).length} accounts
                   </span>
                 </div>
@@ -603,12 +644,12 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
           </div>
 
           {/* Side-by-Side Permissions Table */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-5 border-b border-slate-200">
-              <h3 className="text-base font-bold text-slate-900">
-                Granular Role-Based Access Control (RBAC) Matrix
+          <div className="bg-white rounded-[8px] border border-[#CBD5E1] overflow-hidden">
+            <div className="p-4 border-b border-[#CBD5E1]">
+              <h3 className="text-sm font-bold text-[#0F172A]">
+                Role-Based Access Control (RBAC) Matrix
               </h3>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-[#64748B] mt-0.5">
                 Comparative capability mapping across the 3 core LMS roles.
               </p>
             </div>
@@ -616,66 +657,66 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-600">
-                    <th className="py-3 px-4 w-1/4">System Module &amp; Action</th>
-                    <th className="py-3 px-4 w-1/3">Permission Description</th>
-                    <th className="py-3 px-4 text-center text-indigo-700 bg-indigo-50/50">
+                  <tr className="bg-slate-50 border-b border-[#CBD5E1] text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+                    <th className="py-2.5 px-3 w-1/4">System Module & Action</th>
+                    <th className="py-2.5 px-3 w-1/3">Permission Description</th>
+                    <th className="py-2.5 px-3 text-center text-[#0F172A] bg-slate-100/60">
                       Admin / Manager
                     </th>
-                    <th className="py-3 px-4 text-center text-emerald-700 bg-emerald-50/50">
+                    <th className="py-2.5 px-3 text-center text-[#2563EB] bg-blue-50/50">
                       Cashier
                     </th>
-                    <th className="py-3 px-4 text-center text-amber-700 bg-amber-50/50">
+                    <th className="py-2.5 px-3 text-center text-[#D97706] bg-amber-50/50">
                       Borrower
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-xs">
+                <tbody className="divide-y divide-[#CBD5E1] text-xs">
                   {PERMISSION_MATRIX_DATA.map((row, idx) => (
                     <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="py-3 px-4 font-semibold text-slate-800">
-                        <span className="inline-block px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-normal mr-2">
+                      <td className="py-2.5 px-3 font-semibold text-[#0F172A]">
+                        <span className="inline-block px-1.5 py-0.5 rounded-[4px] bg-slate-100 text-[#64748B] font-normal mr-2 border border-[#CBD5E1]">
                           {row.module}
                         </span>
                         {row.permission}
                       </td>
-                      <td className="py-3 px-4 text-slate-500">{row.description}</td>
+                      <td className="py-2.5 px-3 text-[#64748B]">{row.description}</td>
 
                       {/* Manager */}
-                      <td className="py-3 px-4 text-center bg-indigo-50/20">
+                      <td className="py-2.5 px-3 text-center bg-slate-50/50">
                         {row.manager ? (
-                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 mx-auto">
-                            <Check className="w-4 h-4 stroke-[2.5]" />
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-[4px] bg-emerald-100 text-[#16A34A] mx-auto border border-emerald-200">
+                            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                           </span>
                         ) : (
-                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-400 mx-auto">
-                            <X className="w-3.5 h-3.5" />
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-[4px] bg-slate-100 text-slate-400 mx-auto border border-[#CBD5E1]">
+                            <X className="w-3 h-3" />
                           </span>
                         )}
                       </td>
 
                       {/* Cashier */}
-                      <td className="py-3 px-4 text-center bg-emerald-50/20">
+                      <td className="py-2.5 px-3 text-center bg-blue-50/20">
                         {row.cashier ? (
-                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 mx-auto">
-                            <Check className="w-4 h-4 stroke-[2.5]" />
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-[4px] bg-emerald-100 text-[#16A34A] mx-auto border border-emerald-200">
+                            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                           </span>
                         ) : (
-                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-400 mx-auto">
-                            <X className="w-3.5 h-3.5" />
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-[4px] bg-slate-100 text-slate-400 mx-auto border border-[#CBD5E1]">
+                            <X className="w-3 h-3" />
                           </span>
                         )}
                       </td>
 
                       {/* Borrower */}
-                      <td className="py-3 px-4 text-center bg-amber-50/20">
+                      <td className="py-2.5 px-3 text-center bg-amber-50/20">
                         {row.borrower ? (
-                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 mx-auto">
-                            <Check className="w-4 h-4 stroke-[2.5]" />
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-[4px] bg-emerald-100 text-[#16A34A] mx-auto border border-emerald-200">
+                            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                           </span>
                         ) : (
-                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-400 mx-auto">
-                            <X className="w-3.5 h-3.5" />
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-[4px] bg-slate-100 text-slate-400 mx-auto border border-[#CBD5E1]">
+                            <X className="w-3 h-3" />
                           </span>
                         )}
                       </td>
@@ -690,65 +731,65 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
 
       {/* TAB 3: Overview & Architecture */}
       {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
-              <ShieldCheck className="w-6 h-6" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white p-5 rounded-[8px] border border-[#CBD5E1] space-y-3">
+            <div className="w-10 h-10 rounded-[6px] bg-slate-100 border border-[#CBD5E1] flex items-center justify-center text-[#0F172A]">
+              <ShieldCheck className="w-5 h-5" />
             </div>
-            <h3 className="text-lg font-bold text-slate-900">1. Admin / Manager</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <h3 className="text-base font-bold text-[#0F172A]">1. Admin / Manager</h3>
+            <p className="text-xs text-[#64748B] leading-relaxed">
               Consolidates all executive duties including credit underwriting, committee
               decisioning, product limit definitions, and user security administration.
             </p>
-            <div className="space-y-2 text-xs text-slate-600">
-              <div className="p-3 bg-slate-50 rounded-lg">
-                <span className="font-semibold text-slate-900 block">Scope:</span>
+            <div className="space-y-2 text-xs text-[#64748B]">
+              <div className="p-2.5 bg-slate-50 rounded-[6px] border border-[#CBD5E1]">
+                <span className="font-semibold text-[#0F172A] block mb-0.5">Scope:</span>
                 Institution-wide portfolio, full database read/write, audit logs
               </div>
-              <div className="p-3 bg-slate-50 rounded-lg">
-                <span className="font-semibold text-slate-900 block">Typical Users:</span>
+              <div className="p-2.5 bg-slate-50 rounded-[6px] border border-[#CBD5E1]">
+                <span className="font-semibold text-[#0F172A] block mb-0.5">Typical Users:</span>
                 Branch Managers, Credit Committee Heads, System Admins
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-            <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
-              <CreditCard className="w-6 h-6" />
+          <div className="bg-white p-5 rounded-[8px] border border-[#CBD5E1] space-y-3">
+            <div className="w-10 h-10 rounded-[6px] bg-blue-50 border border-blue-200 flex items-center justify-center text-[#2563EB]">
+              <CreditCard className="w-5 h-5" />
             </div>
-            <h3 className="text-lg font-bold text-slate-900">2. Desk Cashier</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <h3 className="text-base font-bold text-[#0F172A]">2. Desk Cashier</h3>
+            <p className="text-xs text-[#64748B] leading-relaxed">
               Focuses specifically on treasury movement, disbursing funds for approved
               applications, collecting repayments, and printing official receipts.
             </p>
-            <div className="space-y-2 text-xs text-slate-600">
-              <div className="p-3 bg-slate-50 rounded-lg">
-                <span className="font-semibold text-slate-900 block">Scope:</span>
+            <div className="space-y-2 text-xs text-[#64748B]">
+              <div className="p-2.5 bg-slate-50 rounded-[6px] border border-[#CBD5E1]">
+                <span className="font-semibold text-[#0F172A] block mb-0.5">Scope:</span>
                 Cash desk register, POS terminal, waterfall repayments, overdue watchlist
               </div>
-              <div className="p-3 bg-slate-50 rounded-lg">
-                <span className="font-semibold text-slate-900 block">Typical Users:</span>
+              <div className="p-2.5 bg-slate-50 rounded-[6px] border border-[#CBD5E1]">
+                <span className="font-semibold text-[#0F172A] block mb-0.5">Typical Users:</span>
                 University Bursar, Counter Tellers, Cashiers
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-            <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
-              <User className="w-6 h-6" />
+          <div className="bg-white p-5 rounded-[8px] border border-[#CBD5E1] space-y-3">
+            <div className="w-10 h-10 rounded-[6px] bg-amber-50 border border-amber-200 flex items-center justify-center text-[#D97706]">
+              <User className="w-5 h-5" />
             </div>
-            <h3 className="text-lg font-bold text-slate-900">3. Academic Borrower</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <h3 className="text-base font-bold text-[#0F172A]">3. Academic Borrower</h3>
+            <p className="text-xs text-[#64748B] leading-relaxed">
               Self-service customer experience with object-level isolation (users can only
               ever view their own loans, installments, and receipts).
             </p>
-            <div className="space-y-2 text-xs text-slate-600">
-              <div className="p-3 bg-slate-50 rounded-lg">
-                <span className="font-semibold text-slate-900 block">Scope:</span>
+            <div className="space-y-2 text-xs text-[#64748B]">
+              <div className="p-2.5 bg-slate-50 rounded-[6px] border border-[#CBD5E1]">
+                <span className="font-semibold text-[#0F172A] block mb-0.5">Scope:</span>
                 Personal active loans, digital payment QR, statement generation
               </div>
-              <div className="p-3 bg-slate-50 rounded-lg">
-                <span className="font-semibold text-slate-900 block">Typical Users:</span>
+              <div className="p-2.5 bg-slate-50 rounded-[6px] border border-[#CBD5E1]">
+                <span className="font-semibold text-[#0F172A] block mb-0.5">Typical Users:</span>
                 University Students, Faculty Members, Personal Borrowers
               </div>
             </div>
@@ -758,32 +799,32 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
 
       {/* CREATE USER MODAL */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 animate-in fade-in duration-150">
-          <div className="bg-white rounded-xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50">
+          <div className="bg-white rounded-[8px] max-w-lg w-full p-5 border border-[#CBD5E1] shadow-md">
+            <div className="flex items-center justify-between pb-3 border-b border-[#CBD5E1]">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600">
-                  <Plus className="w-5 h-5" />
+                <div className="p-1.5 rounded-[6px] bg-slate-100 text-[#0F172A] border border-[#CBD5E1]">
+                  <Plus className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900">Create New Account</h3>
-                  <p className="text-xs text-slate-500">
-                    Assign role: Admin/Manager, Cashier, or Borrower
+                  <h3 className="text-sm font-bold text-[#0F172A]">Create New Account</h3>
+                  <p className="text-[11px] text-[#64748B]">
+                    Assign role: Administrator, Cashier, or Borrower
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setIsCreateModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                className="p-1 rounded-[4px] text-[#64748B] hover:text-[#0F172A] hover:bg-slate-100"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveCreate} className="mt-4 space-y-4">
+            <form onSubmit={handleSaveCreate} className="mt-4 space-y-3">
               {/* Role Selection */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                <label className="block text-[11px] font-semibold text-[#0F172A] uppercase tracking-wider mb-1">
                   Select User Role *
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -792,20 +833,20 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                       key={r}
                       type="button"
                       onClick={() => setFormRole(r)}
-                      className={`p-3 rounded-xl border text-left transition-all ${
+                      className={`p-2.5 rounded-[6px] border text-left transition-colors ${
                         formRole === r
-                          ? 'border-indigo-600 bg-indigo-50/50 text-indigo-900 ring-2 ring-indigo-500/20'
-                          : 'border-slate-200 hover:border-slate-300 text-slate-700'
+                          ? 'border-[#0F172A] bg-slate-100 text-[#0F172A]'
+                          : 'border-[#CBD5E1] hover:border-slate-400 text-[#64748B]'
                       }`}
                     >
                       <div className="font-bold text-xs">
                         {r === 'MANAGER'
-                          ? 'Admin / Manager'
+                          ? 'Administrator'
                           : r === 'CASHIER'
                           ? 'Cashier'
                           : 'Borrower'}
                       </div>
-                      <div className="text-[10px] text-slate-500 mt-0.5">
+                      <div className="text-[10px] text-[#64748B] mt-0.5">
                         {r === 'MANAGER'
                           ? 'Full Control'
                           : r === 'CASHIER'
@@ -820,7 +861,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
               {/* Name & Username */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-[#0F172A] mb-1">
                     Full Name *
                   </label>
                   <input
@@ -829,12 +870,12 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
                     placeholder="e.g. Dr. Chan Sophat"
-                    className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    className="w-full px-3 h-10 text-xs bg-white border border-[#CBD5E1] rounded-[6px] focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-[#0F172A] mb-1">
                     Username *
                   </label>
                   <input
@@ -843,7 +884,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                     value={formUsername}
                     onChange={(e) => setFormUsername(e.target.value)}
                     placeholder="e.g. c.sophat"
-                    className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono"
+                    className="w-full px-3 h-10 text-xs bg-white border border-[#CBD5E1] rounded-[6px] focus:outline-none focus:border-[#2563EB] font-mono"
                   />
                 </div>
               </div>
@@ -851,7 +892,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
               {/* Email & Phone */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-[#0F172A] mb-1">
                     Email Address *
                   </label>
                   <input
@@ -860,12 +901,12 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                     value={formEmail}
                     onChange={(e) => setFormEmail(e.target.value)}
                     placeholder="user@loansystem.edu"
-                    className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    className="w-full px-3 h-10 text-xs bg-white border border-[#CBD5E1] rounded-[6px] focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-[#0F172A] mb-1">
                     Phone Number
                   </label>
                   <input
@@ -873,7 +914,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                     value={formPhone}
                     onChange={(e) => setFormPhone(e.target.value)}
                     placeholder="+855 12 345 678"
-                    className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    className="w-full px-3 h-10 text-xs bg-white border border-[#CBD5E1] rounded-[6px] focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
               </div>
@@ -881,7 +922,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
               {/* Department & Default Password */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-[#0F172A] mb-1">
                     Department / Faculty
                   </label>
                   <input
@@ -889,37 +930,37 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                     value={formDepartment}
                     onChange={(e) => setFormDepartment(e.target.value)}
                     placeholder="e.g. Finance & Treasury"
-                    className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    className="w-full px-3 h-10 text-xs bg-white border border-[#CBD5E1] rounded-[6px] focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-[#0F172A] mb-1">
                     Temporary Password
                   </label>
                   <input
                     type="text"
                     value={formPassword}
                     onChange={(e) => setFormPassword(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none font-mono"
+                    className="w-full px-3 h-10 text-xs bg-white border border-[#CBD5E1] rounded-[6px] focus:outline-none focus:border-[#2563EB] font-mono"
                   />
                 </div>
               </div>
 
               {/* Submit Buttons */}
-              <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-2">
+              <div className="pt-3 border-t border-[#CBD5E1] flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+                  className="px-3.5 py-2 text-xs font-semibold text-[#0F172A] hover:bg-slate-100 rounded-[6px] border border-[#CBD5E1] transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition-all"
+                  className="px-4 py-2 text-xs font-semibold text-white bg-[#0F172A] hover:bg-[#1E293B] rounded-[6px] transition-colors"
                 >
-                  Save &amp; Create Account
+                  Save & Create Account
                 </button>
               </div>
             </form>
@@ -929,34 +970,34 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
 
       {/* EDIT USER & ROLE MODAL */}
       {editingUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 animate-in fade-in duration-150">
-          <div className="bg-white rounded-xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50">
+          <div className="bg-white rounded-[8px] max-w-lg w-full p-5 border border-[#CBD5E1] shadow-md">
+            <div className="flex items-center justify-between pb-3 border-b border-[#CBD5E1]">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-slate-100 text-slate-700">
-                  <Edit2 className="w-5 h-5" />
+                <div className="p-1.5 rounded-[6px] bg-slate-100 text-[#0F172A] border border-[#CBD5E1]">
+                  <Edit2 className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900">
-                    Edit Account &amp; Role
+                  <h3 className="text-sm font-bold text-[#0F172A]">
+                    Edit Account & Role
                   </h3>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-[11px] text-[#64748B]">
                     Modifying @{editingUser.username}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setEditingUser(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                className="p-1 rounded-[4px] text-[#64748B] hover:text-[#0F172A] hover:bg-slate-100"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveEdit} className="mt-4 space-y-4">
+            <form onSubmit={handleSaveEdit} className="mt-4 space-y-3">
               {/* Role Reassignment */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                <label className="block text-[11px] font-semibold text-[#0F172A] uppercase tracking-wider mb-1">
                   Assigned User Role *
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -965,20 +1006,20 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                       key={r}
                       type="button"
                       onClick={() => setFormRole(r)}
-                      className={`p-3 rounded-xl border text-left transition-all ${
+                      className={`p-2.5 rounded-[6px] border text-left transition-colors ${
                         formRole === r
-                          ? 'border-indigo-600 bg-indigo-50/50 text-indigo-900 ring-2 ring-indigo-500/20'
-                          : 'border-slate-200 hover:border-slate-300 text-slate-700'
+                          ? 'border-[#0F172A] bg-slate-100 text-[#0F172A]'
+                          : 'border-[#CBD5E1] hover:border-slate-400 text-[#64748B]'
                       }`}
                     >
                       <div className="font-bold text-xs">
                         {r === 'MANAGER'
-                          ? 'Admin / Manager'
+                          ? 'Administrator'
                           : r === 'CASHIER'
                           ? 'Cashier'
                           : 'Borrower'}
                       </div>
-                      <div className="text-[10px] text-slate-500 mt-0.5">
+                      <div className="text-[10px] text-[#64748B] mt-0.5">
                         {r === 'MANAGER'
                           ? 'Full Control'
                           : r === 'CASHIER'
@@ -992,7 +1033,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
 
               {/* Full Name */}
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-[#0F172A] mb-1">
                   Full Name *
                 </label>
                 <input
@@ -1000,14 +1041,14 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                   required
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  className="w-full px-3 h-10 text-xs bg-white border border-[#CBD5E1] rounded-[6px] focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
               {/* Email & Phone */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-[#0F172A] mb-1">
                     Email Address *
                   </label>
                   <input
@@ -1015,48 +1056,64 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                     required
                     value={formEmail}
                     onChange={(e) => setFormEmail(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    className="w-full px-3 h-10 text-xs bg-white border border-[#CBD5E1] rounded-[6px] focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-[#0F172A] mb-1">
                     Phone Number
                   </label>
                   <input
                     type="tel"
                     value={formPhone}
                     onChange={(e) => setFormPhone(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    className="w-full px-3 h-10 text-xs bg-white border border-[#CBD5E1] rounded-[6px] focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
               </div>
 
               {/* Department */}
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-[#0F172A] mb-1">
                   Department
                 </label>
                 <input
                   type="text"
                   value={formDepartment}
                   onChange={(e) => setFormDepartment(e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  className="w-full px-3 h-10 text-xs bg-white border border-[#CBD5E1] rounded-[6px] focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
+              {/* Account Status */}
+              <div>
+                <label className="block text-xs font-semibold text-[#0F172A] mb-1">
+                  Account Status
+                </label>
+                <select
+                  value={formStatus}
+                  onChange={(e) => setFormStatus(e.target.value as any)}
+                  className="w-full px-3 h-10 text-xs bg-white border border-[#CBD5E1] rounded-[6px] focus:outline-none focus:border-[#2563EB]"
+                >
+                  <option value="ACTIVE">Active</option>
+                  <option value="INACTIVE">Inactive</option>
+                  <option value="SUSPENDED">Suspended</option>
+                </select>
+              </div>
+
               {/* Submit Buttons */}
-              <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-2">
+              <div className="pt-3 border-t border-[#CBD5E1] flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setEditingUser(null)}
-                  className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+                  className="px-3.5 py-2 text-xs font-semibold text-[#0F172A] hover:bg-slate-100 rounded-[6px] border border-[#CBD5E1] transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition-all"
+                  className="px-4 py-2 text-xs font-semibold text-white bg-[#0F172A] hover:bg-[#1E293B] rounded-[6px] transition-colors"
                 >
                   Save Changes
                 </button>

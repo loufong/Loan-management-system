@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Currency } from '../../types';
+import { X, Clock, CheckCircle2 } from 'lucide-react';
 
 export interface QRCodePaymentModalProps {
   amountUSD: number;
@@ -14,7 +15,7 @@ export const QRCodePaymentModal: React.FC<QRCodePaymentModalProps> = ({
   amountUSD,
   merchantName = 'Apex Microfinance Institution (Cambodia) PLC',
   accountNumber = '001-8849-2019-USD',
-  currency,
+  currency: _currency,
   onClose,
   onPaymentConfirmed
 }) => {
@@ -34,73 +35,86 @@ export const QRCodePaymentModal: React.FC<QRCodePaymentModalProps> = ({
   const amountKHR = Math.round(amountUSD * 4100);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60">
-      <div className="bg-white max-w-sm w-full rounded-xl p-6 space-y-4 shadow-2xl text-center border border-slate-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50">
+      <div className="bg-white max-w-sm w-full rounded-[8px] p-5 space-y-3.5 shadow-md text-center border border-[#CBD5E1]">
         
         {/* Header with KHQR & EMVCo Badge */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="flex items-center justify-between pb-2.5 border-b border-[#CBD5E1]">
           <div className="flex items-center gap-2">
-            <span className="w-7 h-7 rounded-lg bg-red-600 text-white font-extrabold text-xs flex items-center justify-center tracking-tighter">
+            <span className="w-6 h-6 rounded-[4px] bg-[#DC2626] text-white font-extrabold text-[10px] flex items-center justify-center tracking-tighter">
               KHQR
             </span>
-            <span className="text-xs font-extrabold text-slate-800 tracking-tight">EMVCo Universal QR</span>
+            <span className="text-xs font-bold text-[#0F172A] tracking-tight">EMVCo Universal QR</span>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 text-lg font-bold">&times;</button>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-[4px] text-[#64748B] hover:text-[#0F172A] hover:bg-slate-100 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
         {/* Merchant & Amount Banner */}
-        <div className="space-y-1">
-          <p className="text-xs text-slate-500 font-medium truncate">{merchantName}</p>
-          <div className="flex items-center justify-center gap-2 font-mono font-black">
-            <span className="text-2xl text-slate-900">${amountUSD.toFixed(2)}</span>
-            <span className="text-sm text-slate-400">/ {new Intl.NumberFormat('km-KH').format(amountKHR)} ៛</span>
+        <div className="space-y-0.5">
+          <p className="text-[11px] text-[#64748B] font-medium truncate">{merchantName}</p>
+          <div className="flex items-center justify-center gap-2 font-mono font-bold">
+            <span className="text-xl text-[#0F172A]">${amountUSD.toFixed(2)}</span>
+            <span className="text-xs text-[#64748B]">/ {new Intl.NumberFormat('km-KH').format(amountKHR)} ៛</span>
           </div>
-          <p className="text-[10px] text-slate-400 font-mono">Bakong Interbank Account: {accountNumber}</p>
+          <p className="text-[10px] text-[#64748B] font-mono">Bakong Interbank: {accountNumber}</p>
         </div>
 
-        {/* Dynamic High-Contrast KHQR Code Card with Red Ribbon */}
-        <div className="banking-card p-4 flex flex-col items-center justify-center space-y-3 border-rose-200">
-          {/* Authentic Cambodian KHQR Red Header Ribbon */}
-          <div className="w-full bg-red-600 text-white py-1.5 px-3 rounded-lg font-bold text-xs flex items-center justify-between shadow-xs">
-            <span className="font-mono tracking-wider">KHQR</span>
-            <span className="text-[10px] font-sans opacity-90">National Bank of Cambodia</span>
+        {/* Dynamic High-Contrast KHQR Code Card */}
+        <div className="p-3.5 flex flex-col items-center justify-center space-y-2.5 border border-[#CBD5E1] rounded-[6px] bg-slate-50">
+          {/* Header Ribbon */}
+          <div className="w-full bg-[#DC2626] text-white py-1 px-2.5 rounded-[4px] font-bold text-xs flex items-center justify-between">
+            <span className="font-mono tracking-wider text-[11px]">KHQR</span>
+            <span className="text-[10px] opacity-90">National Bank of Cambodia</span>
           </div>
 
-          <div className="w-48 h-48 bg-white border-2 border-slate-900 p-2 rounded-xl flex items-center justify-center shadow-inner relative">
+          <div className="w-44 h-44 bg-white border border-[#0F172A] p-2 rounded-[4px] flex items-center justify-center relative">
             {/* Styled Matrix Pattern */}
-            <div className="w-full h-full bg-slate-900 flex flex-col justify-between p-2 rounded-lg">
+            <div className="w-full h-full bg-[#0F172A] flex flex-col justify-between p-2 rounded-[2px]">
               <div className="flex justify-between">
-                <div className="w-10 h-10 bg-white border-4 border-slate-900 rounded"></div>
-                <div className="w-10 h-10 bg-white border-4 border-slate-900 rounded"></div>
+                <div className="w-9 h-9 bg-white border-4 border-[#0F172A] rounded-[2px]" />
+                <div className="w-9 h-9 bg-white border-4 border-[#0F172A] rounded-[2px]" />
               </div>
-              <div className="text-center text-[9px] font-mono text-white font-bold tracking-widest bg-red-600 py-1 rounded shadow-xs">
+              <div className="text-center text-[8px] font-mono text-white font-bold tracking-widest bg-[#DC2626] py-0.5 rounded-[2px]">
                 BAKONG KHQR
               </div>
               <div className="flex justify-between">
-                <div className="w-10 h-10 bg-white border-4 border-slate-900 rounded"></div>
-                <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center text-[9px] font-bold text-slate-900">$</div>
+                <div className="w-9 h-9 bg-white border-4 border-[#0F172A] rounded-[2px]" />
+                <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center text-[9px] font-bold text-[#0F172A]">$</div>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-            <svg className="w-3.5 h-3.5 text-amber-500 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>Scan with any Banking App &bull; Valid for <strong className="font-mono text-slate-900">{timeFormatted}</strong></span>
+          <div className="flex items-center gap-1.5 text-[11px] text-[#64748B] font-medium">
+            <Clock className="w-3.5 h-3.5 text-[#D97706]" />
+            <span>Valid for <strong className="font-mono text-[#0F172A]">{timeFormatted}</strong></span>
           </div>
         </div>
 
-        {/* Demo Fast Simulator Button */}
-        <button
-          onClick={() => {
-            const mockRef = `KHQR-BAKONG-${Date.now().toString().slice(-6)}`;
-            onPaymentConfirmed(mockRef);
-          }}
-          className="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-bold shadow-xs transition-colors flex items-center justify-center"
-        >
-          Simulate Customer Scan &amp; Payment
-        </button>
+        {/* Actions */}
+        <div className="space-y-2 pt-1">
+          <button
+            onClick={() => {
+              const mockRef = `KHQR-BAKONG-${Date.now().toString().slice(-6)}`;
+              onPaymentConfirmed(mockRef);
+            }}
+            className="w-full py-2 rounded-[6px] bg-[#16A34A] hover:bg-emerald-700 text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>Simulate Customer Scan & Payment</span>
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full py-1.5 text-xs font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors"
+          >
+            Cancel Transaction
+          </button>
+        </div>
 
       </div>
     </div>

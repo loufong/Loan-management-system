@@ -51,7 +51,7 @@ export class LoanService {
       }
     }
 
-    if (viewer.role === UserRole.BORROWER) {
+    if (viewer.role === UserRole.BORROWER || viewer.role === UserRole.USER) {
       const borrower = await prisma.borrower.findFirst({
         where: { userId: viewer.id }
       });
@@ -125,7 +125,7 @@ export class LoanService {
       throw { statusCode: 404, message: 'Loan account not found', code: 'LOAN_NOT_FOUND' };
     }
 
-    if (viewer.role === UserRole.BORROWER && loan.borrower.userId !== viewer.id) {
+    if ((viewer.role === UserRole.BORROWER || viewer.role === UserRole.USER) && loan.borrower.userId !== viewer.id) {
       throw {
         statusCode: 403,
         message: 'Access denied: you can only view your own loan account',

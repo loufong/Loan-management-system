@@ -13,28 +13,14 @@ import {
   Mail,
   Copy,
   Check,
-  FileText,
-  ShieldCheck,
-  TrendingUp,
   CreditCard,
-  History,
-  FolderLock,
-  Clock,
-  ExternalLink,
-  Download,
-  X,
-  Plus,
-  Calendar,
-  Building,
-  Briefcase,
-  MapPin,
-  UserCheck,
-  AlertCircle,
-  FileCheck,
   Maximize2,
   CheckCircle2,
-  DollarSign,
-  Printer
+  Printer,
+  Plus,
+  Briefcase,
+  X,
+  Download
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -60,12 +46,11 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
   onViewReceipt
 }) => {
   const [activeTab, setActiveTab] = useState<
-    'loans' | 'repayments' | 'documents' | 'contact' | 'audit'
-  >('loans');
+    'profile' | 'loans' | 'repayments' | 'documents' | 'audit'
+  >('profile');
   const [selectedDocZoom, setSelectedDocZoom] = useState<BorrowerKYCDocument | null>(null);
   const [copiedId, setCopiedId] = useState(false);
 
-  // Currency multiplier helper (1 USD = 4,100 KHR)
   const rate = 4100;
   const formatMoney = (usdVal: number) => {
     if (currency === 'KHR') {
@@ -89,7 +74,7 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
     setTimeout(() => setCopiedId(false), 2000);
   };
 
-  // Mock Uploaded KYC Documents (National ID, Salary Slip, Family Book)
+  // Mock Uploaded KYC Documents
   const kycDocuments: BorrowerKYCDocument[] = [
     {
       id: 'doc-1',
@@ -154,33 +139,31 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
     },
   ];
 
-  // DTI calculation & safety categorization
   const dti = borrower.dtiRatio || 24;
   const dtiLabel = dti < 35 ? 'Safe' : dti < 45 ? 'Moderate' : 'High Risk';
   const dtiColor =
     dti < 35
-      ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+      ? 'text-[#16A34A] bg-emerald-50 border-emerald-200'
       : dti < 45
-      ? 'text-amber-700 bg-amber-50 border-amber-200'
-      : 'text-rose-700 bg-rose-50 border-rose-200';
+      ? 'text-[#D97706] bg-amber-50 border-amber-200'
+      : 'text-[#DC2626] bg-red-50 border-red-200';
 
   const tabList = [
-    { id: 'loans', label: `Active & Closed Loans (${loans.length})` },
-    { id: 'repayments', label: `Repayment History (${receipts.length})` },
-    { id: 'documents', label: `Uploaded Documents (${kycDocuments.length})` },
-    { id: 'contact', label: 'Contact & Personal Info' },
+    { id: 'profile', label: 'Borrower Profile & Dossier' },
+    { id: 'loans', label: `Loan History (${loans.length})` },
+    { id: 'repayments', label: `Payment History (${receipts.length})` },
+    { id: 'documents', label: `Documents (${kycDocuments.length})` },
     { id: 'audit', label: 'Audit Trail' },
   ] as const;
 
   return (
-    <div className="space-y-6 select-none font-sans">
-      
+    <div className="space-y-6 font-sans">
       {/* 1. Navigation Breadcrumb Bar */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pb-2 border-b border-[#CBD5E1]">
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200/90 px-3.5 py-2 rounded-xl transition shadow-2xs cursor-pointer"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-[#0F172A] hover:text-[#2563EB] bg-white hover:bg-slate-50 border border-[#CBD5E1] px-3.5 py-2 rounded-[6px] transition cursor-pointer"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Back to Borrowers Directory</span>
@@ -191,45 +174,40 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
             <button
               type="button"
               onClick={() => onOpenCreateApplication(borrower.borrowerId || borrower.id)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0052FF] hover:bg-[#0040C1] text-white text-xs font-bold shadow-md shadow-blue-500/25 transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[6px] bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold transition cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5 stroke-[3]" />
-              <span>+ Create Application</span>
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>Create Application</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* 2. Top Hero Card with Avatar, Verification Badge, and 4-Metric Summary Row */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
-        
+      {/* 2. Top Hero Card */}
+      <div className="bg-white rounded-[8px] border border-[#CBD5E1] p-6 space-y-6">
         {/* Header Profile Info */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
           <div className="flex items-center gap-4 min-w-0">
-            {/* Avatar with Status Ring */}
-            <div className="relative w-16 h-16 rounded-xl bg-slate-900 text-white font-bold text-2xl flex items-center justify-center border border-slate-700 shadow-sm flex-shrink-0">
+            <div className="relative w-14 h-14 rounded-[6px] bg-[#0F172A] text-white font-bold text-xl flex items-center justify-center shrink-0">
               {borrower.fullName.charAt(0)}
-              <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 ring-2 ring-white flex items-center justify-center">
-                <Check className="w-2.5 h-2.5 text-white stroke-[3]" />
+              <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-[#16A34A] ring-2 ring-white flex items-center justify-center">
+                <Check className="w-2 h-2 text-white stroke-[3]" />
               </span>
             </div>
 
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2.5">
-                <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight font-sans">
+                <h2 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight">
                   {borrower.fullName}
                 </h2>
-
-                {/* KYC Verification Badge */}
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold font-mono bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Verified</span>
+                <span className="badge badge-success">
+                  <CheckCircle2 className="w-3 h-3" />
+                  <span>Verified Dossier</span>
                 </span>
               </div>
 
-              {/* Borrower ID + 1-Click Copy */}
-              <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-slate-500">
-                <div className="flex items-center gap-1.5 font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+              <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-[#64748B]">
+                <div className="flex items-center gap-1.5 font-mono font-bold text-[#2563EB] bg-blue-50 px-2 py-0.5 rounded-[4px] border border-blue-200">
                   <span>{borrower.borrowerId}</span>
                   <button
                     type="button"
@@ -238,7 +216,7 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
                     className="hover:text-blue-900 transition p-0.5"
                   >
                     {copiedId ? (
-                      <Check className="w-3 h-3 text-emerald-600" />
+                      <Check className="w-3 h-3 text-[#16A34A]" />
                     ) : (
                       <Copy className="w-3 h-3" />
                     )}
@@ -247,13 +225,13 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
 
                 <span>•</span>
                 <span className="flex items-center gap-1">
-                  <Briefcase className="w-3.5 h-3.5 text-slate-400" />
-                  <span>{borrower.occupation || 'Self-Employed'}</span>
+                  <Briefcase className="w-3.5 h-3.5 text-[#64748B]" />
+                  <span>{borrower.occupation || 'Standard Account'}</span>
                 </span>
 
                 <span>•</span>
                 <span className="flex items-center gap-1 font-mono">
-                  <Phone className="w-3.5 h-3.5 text-slate-400" />
+                  <Phone className="w-3.5 h-3.5 text-[#64748B]" />
                   <span>{borrower.phone}</span>
                 </span>
               </div>
@@ -261,81 +239,71 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-mono text-slate-400 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
-              Member since: {borrower.createdAt ? borrower.createdAt.split('T')[0] : '2026-08-15'}
+            <span className="text-[11px] font-mono text-[#64748B] bg-slate-50 px-3 py-1.5 rounded-[4px] border border-[#CBD5E1]">
+              Member Since: {borrower.createdAt ? borrower.createdAt.split('T')[0] : '2026-08-15'}
             </span>
           </div>
         </div>
 
         {/* 4-Metric Summary Row */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-slate-100">
-          {/* Metric 1: Monthly Income */}
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-1">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-[#CBD5E1]">
+          <div className="p-3.5 rounded-[6px] bg-slate-50 border border-[#CBD5E1]">
+            <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">
               Monthly Income
             </span>
-            <span className="text-xl font-bold font-mono text-slate-900 tabular-nums">
+            <span className="text-xl font-bold font-mono text-[#0F172A] tabular-nums">
               {formatMoney(borrower.monthlyIncomeUSD)}
             </span>
-            <span className="text-[11px] text-slate-500 block mt-0.5">
-              Verified Salary &amp; Revenue
+            <span className="text-[11px] text-[#64748B] block mt-0.5">
+              Verified Revenue
             </span>
           </div>
 
-          {/* Metric 2: Current DTI Ratio */}
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-1">
+          <div className="p-3.5 rounded-[6px] bg-slate-50 border border-[#CBD5E1]">
+            <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">
               Current DTI Ratio
             </span>
             <div className="flex items-center gap-2">
-              <span className="text-xl font-bold font-mono text-slate-900 tabular-nums">
+              <span className="text-xl font-bold font-mono text-[#0F172A] tabular-nums">
                 {dti}%
               </span>
-              <span
-                className={cn(
-                  'px-2 py-0.5 rounded-md text-[10px] font-bold font-mono border',
-                  dtiColor
-                )}
-              >
+              <span className={cn('px-2 py-0.5 rounded-[4px] text-[10px] font-bold font-mono border', dtiColor)}>
                 {dtiLabel}
               </span>
             </div>
-            <span className="text-[11px] text-slate-500 block mt-0.5">
-              Threshold Cap &lt; 45%
+            <span className="text-[11px] text-[#64748B] block mt-0.5">
+              Regulatory Cap &lt; 45%
             </span>
           </div>
 
-          {/* Metric 3: Total Borrowed */}
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-1">
+          <div className="p-3.5 rounded-[6px] bg-slate-50 border border-[#CBD5E1]">
+            <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">
               Total Borrowed
             </span>
-            <span className="text-xl font-bold font-mono text-slate-900 tabular-nums">
+            <span className="text-xl font-bold font-mono text-[#0F172A] tabular-nums">
               {formatMoney(borrower.totalBorrowedUSD || 14000.0)}
             </span>
-            <span className="text-[11px] text-slate-500 block mt-0.5">
-              Lifetime Borrowed
+            <span className="text-[11px] text-[#64748B] block mt-0.5">
+              Cumulative Facilities
             </span>
           </div>
 
-          {/* Metric 4: Current Balance */}
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-1">
+          <div className="p-3.5 rounded-[6px] bg-slate-50 border border-[#CBD5E1]">
+            <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">
               Current Balance
             </span>
-            <span className="text-xl font-bold font-mono text-blue-700 tabular-nums">
+            <span className="text-xl font-bold font-mono text-[#2563EB] tabular-nums">
               {formatMoney(borrower.totalOutstandingUSD || 6000.0)}
             </span>
-            <span className="text-[11px] text-slate-500 block mt-0.5">
-              Principal Outstanding
+            <span className="text-[11px] text-[#64748B] block mt-0.5">
+              Active Principal
             </span>
           </div>
         </div>
-
       </div>
 
-      {/* 3. 5-Tab Navigation (with animated active underline) */}
-      <div className="border-b border-slate-200/80 flex items-center gap-1 sm:gap-4 overflow-x-auto scrollbar-none">
+      {/* 3. Tab Navigation */}
+      <div className="border-b border-[#CBD5E1] flex items-center gap-1 sm:gap-4 overflow-x-auto">
         {tabList.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
@@ -344,17 +312,13 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
               type="button"
               onClick={() => setActiveTab(tab.id as any)}
               className={cn(
-                'relative py-3 px-3 sm:px-4 text-xs font-bold transition-colors whitespace-nowrap cursor-pointer',
-                isActive ? 'text-blue-700' : 'text-slate-500 hover:text-slate-900'
+                'relative py-3 px-3 sm:px-4 text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer',
+                isActive ? 'text-[#2563EB] font-bold' : 'text-[#64748B] hover:text-[#0F172A]'
               )}
             >
               <span>{tab.label}</span>
               {isActive && (
-                <motion.div
-                  layoutId="borrowerTabUnderline"
-                  className="absolute bottom-0 inset-x-0 h-0.5 bg-[#0052FF]"
-                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                />
+                <div className="absolute bottom-0 inset-x-0 h-0.5 bg-[#2563EB]" />
               )}
             </button>
           );
@@ -362,28 +326,97 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
       </div>
 
       {/* ===================================================================== */}
-      {/* TAB CONTENT VIEWS                                                     */}
+      {/* TAB 1: Profile & Dossier (Point 16: Personal, Contact, Identification, Employment/Student) */}
       {/* ===================================================================== */}
+      {activeTab === 'profile' && (
+        <div className="space-y-6">
+          {/* Section 1: Personal & Identification Information */}
+          <div className="bg-white rounded-[8px] border border-[#CBD5E1] p-5">
+            <h3 className="text-sm font-bold text-[#0F172A] uppercase tracking-wider pb-3 border-b border-[#CBD5E1]">
+              Personal Information &amp; Identification
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 text-xs">
+              <div>
+                <span className="text-[11px] font-semibold text-[#64748B] uppercase block">Full Legal Name</span>
+                <span className="text-sm font-bold text-[#0F172A] mt-0.5 block">{borrower.fullName}</span>
+              </div>
+              <div>
+                <span className="text-[11px] font-semibold text-[#64748B] uppercase block">National ID / Smartcard</span>
+                <span className="text-sm font-mono font-bold text-[#0F172A] mt-0.5 block">{borrower.nationalId || '010892441'}</span>
+              </div>
+              <div>
+                <span className="text-[11px] font-semibold text-[#64748B] uppercase block">Date of Birth</span>
+                <span className="text-sm font-mono text-[#0F172A] mt-0.5 block">{borrower.dob || '1992-06-14'}</span>
+              </div>
+              <div>
+                <span className="text-[11px] font-semibold text-[#64748B] uppercase block">Gender</span>
+                <span className="text-sm font-medium text-[#0F172A] mt-0.5 block">{borrower.gender || 'Male'}</span>
+              </div>
+            </div>
+          </div>
 
-      {/* TAB 1: Active & Closed Loans */}
+          {/* Section 2: Contact Information */}
+          <div className="bg-white rounded-[8px] border border-[#CBD5E1] p-5">
+            <h3 className="text-sm font-bold text-[#0F172A] uppercase tracking-wider pb-3 border-b border-[#CBD5E1]">
+              Contact Information
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 text-xs">
+              <div>
+                <span className="text-[11px] font-semibold text-[#64748B] uppercase block">Primary Phone</span>
+                <span className="text-sm font-mono font-bold text-[#0F172A] mt-0.5 block">{borrower.phone}</span>
+              </div>
+              <div>
+                <span className="text-[11px] font-semibold text-[#64748B] uppercase block">Email Address</span>
+                <span className="text-sm text-[#0F172A] mt-0.5 block">{borrower.email}</span>
+              </div>
+              <div className="sm:col-span-2">
+                <span className="text-[11px] font-semibold text-[#64748B] uppercase block">Residential Address</span>
+                <span className="text-sm text-[#0F172A] mt-0.5 block">{borrower.address || 'Street 271, Sangkat Boeng Tumpun, Khan Meanchey, Phnom Penh'}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Employment / Student Information */}
+          <div className="bg-white rounded-[8px] border border-[#CBD5E1] p-5">
+            <h3 className="text-sm font-bold text-[#0F172A] uppercase tracking-wider pb-3 border-b border-[#CBD5E1]">
+              Employment / Student Information
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 text-xs">
+              <div>
+                <span className="text-[11px] font-semibold text-[#64748B] uppercase block">Occupation / Sector</span>
+                <span className="text-sm font-bold text-[#0F172A] mt-0.5 block">{borrower.occupation || 'Senior Lecturer / Education Sector'}</span>
+              </div>
+              <div>
+                <span className="text-[11px] font-semibold text-[#64748B] uppercase block">Employer / Institution</span>
+                <span className="text-sm font-medium text-[#0F172A] mt-0.5 block">{borrower.employerName || 'Royal University of Phnom Penh'}</span>
+              </div>
+              <div>
+                <span className="text-[11px] font-semibold text-[#64748B] uppercase block">Monthly Income</span>
+                <span className="text-sm font-mono font-bold text-[#0F172A] mt-0.5 block">{formatMoney(borrower.monthlyIncomeUSD)}</span>
+              </div>
+              <div>
+                <span className="text-[11px] font-semibold text-[#64748B] uppercase block">Emergency Guarantor</span>
+                <span className="text-sm font-medium text-[#0F172A] mt-0.5 block">
+                  {borrower.emergencyContact?.name || 'Vanna Rath'} ({borrower.emergencyContact?.relationship || 'Spouse'})
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===================================================================== */}
+      {/* TAB 2: Loan History (Point 16) */}
+      {/* ===================================================================== */}
       {activeTab === 'loans' && (
         <div className="space-y-4">
           {loans.length === 0 ? (
-            <div className="bg-white rounded-xl p-12 text-center border border-slate-200 shadow-sm">
-              <CreditCard className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <h3 className="text-sm font-bold text-slate-800">No Loan Accounts Found</h3>
-              <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+            <div className="bg-white rounded-[8px] p-12 text-center border border-[#CBD5E1]">
+              <CreditCard className="w-10 h-10 text-[#64748B] mx-auto mb-2" />
+              <h3 className="text-sm font-bold text-[#0F172A]">No Loan Facilities Found</h3>
+              <p className="text-xs text-[#64748B] mt-1">
                 This borrower does not currently have any active or past commercial loan facilities.
               </p>
-              {onOpenCreateApplication && (
-                <button
-                  type="button"
-                  onClick={() => onOpenCreateApplication(borrower.borrowerId || borrower.id)}
-                  className="mt-4 px-4 py-2 bg-[#0052FF] text-white text-xs font-bold rounded-xl shadow-md"
-                >
-                  Create First Loan Application
-                </button>
-              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -395,68 +428,57 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
                 return (
                   <div
                     key={loan.id}
-                    className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4"
+                    className="bg-white rounded-[8px] border border-[#CBD5E1] p-5 space-y-4"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between pb-3 border-b border-[#CBD5E1]">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-blue-700 text-sm">
+                        <span className="font-mono font-bold text-[#2563EB] text-sm">
                           {loan.loanNumber}
                         </span>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-100 text-slate-700">
+                        <span className="px-2 py-0.5 rounded-[4px] text-[11px] font-mono font-semibold bg-slate-100 text-[#0F172A] border border-[#CBD5E1]">
                           {loan.productName || 'Personal Loan'}
                         </span>
                       </div>
-                      <span
-                        className={cn(
-                          'px-2 py-0.5 rounded-full text-[10px] font-bold font-mono',
-                          loan.status === 'ACTIVE'
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : 'bg-slate-100 text-slate-600'
-                        )}
-                      >
+                      <span className={cn('badge', loan.status === 'ACTIVE' ? 'badge-info' : 'badge-neutral')}>
                         {loan.status}
                       </span>
                     </div>
 
-                    {/* Progress Bar */}
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                       <div className="flex justify-between text-xs font-mono">
-                        <span className="text-slate-500">Repayment Progress</span>
-                        <span className="font-semibold text-slate-800">{progressPct}% Paid</span>
+                        <span className="text-[#64748B]">Amortization Progress</span>
+                        <span className="font-semibold text-[#0F172A]">{progressPct}% Settled</span>
                       </div>
                       <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
                         <div
-                          className="h-full bg-blue-600 rounded-full"
+                          className="h-full bg-[#2563EB] rounded-full"
                           style={{ width: `${progressPct}%` }}
                         />
                       </div>
                     </div>
 
-                    {/* Balance & Installment Details */}
-                    <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100 text-xs font-mono">
+                    <div className="grid grid-cols-2 gap-3 pt-2 border-t border-[#CBD5E1] text-xs font-mono">
                       <div>
-                        <span className="text-slate-400 block text-[10px]">Outstanding Balance</span>
-                        <span className="font-bold text-slate-900 text-sm">
+                        <span className="text-[#64748B] block text-[11px]">Outstanding Balance</span>
+                        <span className="font-bold text-[#0F172A] text-sm">
                           {formatMoney(loan.outstandingBalanceUSD || 0)}
                         </span>
                       </div>
                       <div>
-                        <span className="text-slate-400 block text-[10px]">Monthly Installment</span>
-                        <span className="font-bold text-slate-900 text-sm">
+                        <span className="text-[#64748B] block text-[11px]">Monthly Installment</span>
+                        <span className="font-bold text-[#0F172A] text-sm">
                           {formatMoney(loan.nextPaymentDueAmountUSD || 0)}
                         </span>
                       </div>
                     </div>
 
-                    {/* Detail Link */}
                     <div className="pt-2 flex justify-end">
                       <button
                         type="button"
                         onClick={() => onSelectLoan(loan.id)}
-                        className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 hover:underline cursor-pointer"
+                        className="text-xs font-semibold text-[#2563EB] hover:text-[#1D4ED8] flex items-center gap-1 cursor-pointer"
                       >
-                        <span>View Amortization Schedule</span>
-                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>View Amortization Schedule &rarr;</span>
                       </button>
                     </div>
                   </div>
@@ -467,66 +489,68 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
         </div>
       )}
 
-      {/* TAB 2: Repayment History */}
+      {/* ===================================================================== */}
+      {/* TAB 3: Payment History (Point 16) */}
+      {/* ===================================================================== */}
       {activeTab === 'repayments' && (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-900">
-              Repayment History
+        <div className="bg-white rounded-[8px] border border-[#CBD5E1] overflow-hidden">
+          <div className="p-4 border-b border-[#CBD5E1] flex items-center justify-between">
+            <h3 className="text-sm font-bold text-[#0F172A]">
+              Payment History
             </h3>
-            <span className="text-xs text-slate-400 font-mono">
+            <span className="text-xs text-[#64748B] font-mono">
               Total Receipts: {receipts.length}
             </span>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 uppercase text-[11px] font-mono tracking-wider">
+            <table className="table-enterprise">
+              <thead>
                 <tr>
-                  <th className="py-3 px-4">Receipt #</th>
-                  <th className="py-3 px-4">Date &amp; Time</th>
-                  <th className="py-3 px-4">Loan #</th>
-                  <th className="py-3 px-4">Payment Method</th>
-                  <th className="py-3 px-4">Total Amount</th>
-                  <th className="py-3 px-4">Cashier</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                  <th>Receipt #</th>
+                  <th>Date &amp; Time</th>
+                  <th>Loan #</th>
+                  <th>Payment Method</th>
+                  <th className="text-right">Total Amount</th>
+                  <th>Cashier</th>
+                  <th className="text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody>
                 {receipts.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-10 text-center text-slate-400">
+                    <td colSpan={7} className="py-10 text-center text-[#64748B] text-xs">
                       No repayments recorded for this borrower yet.
                     </td>
                   </tr>
                 ) : (
                   receipts.map((rec) => (
                     <tr key={rec.receiptNo || rec.transactionRef} className="hover:bg-slate-50/70 transition">
-                      <td className="py-3 px-4 font-mono font-semibold text-blue-700">
+                      <td className="font-mono font-bold text-[#2563EB]">
                         {rec.receiptNo}
                       </td>
-                      <td className="py-3 px-4 font-mono text-slate-600">
+                      <td className="font-mono text-[#0F172A]">
                         {rec.paidAt}
                       </td>
-                      <td className="py-3 px-4 font-mono font-semibold text-slate-800">
+                      <td className="font-mono font-medium text-[#0F172A]">
                         {rec.loanNumber}
                       </td>
-                      <td className="py-3 px-4 font-mono">
-                        <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-700">
+                      <td>
+                        <span className="badge badge-neutral">
                           {rec.paymentMethod}
                         </span>
                       </td>
-                      <td className="py-3 px-4 font-mono font-bold text-emerald-600 tabular-nums">
+                      <td className="text-right font-mono font-bold text-[#16A34A] tabular-nums">
                         {formatMoney(rec.amountPaidUSD)}
                       </td>
-                      <td className="py-3 px-4 text-slate-600">
+                      <td className="text-[#0F172A]">
                         {rec.cashierName}
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="text-right">
                         <button
                           type="button"
                           onClick={() => onViewReceipt?.(rec)}
-                          className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-semibold transition flex items-center gap-1 ml-auto cursor-pointer"
+                          className="px-2.5 py-1 rounded-[6px] bg-slate-50 hover:bg-slate-100 border border-[#CBD5E1] text-[#0F172A] text-xs font-semibold transition inline-flex items-center gap-1 cursor-pointer"
                         >
                           <Printer className="w-3 h-3" />
                           <span>Receipt</span>
@@ -541,153 +565,84 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
         </div>
       )}
 
-      {/* TAB 3: Uploaded Documents */}
+      {/* ===================================================================== */}
+      {/* TAB 4: Documents (Point 16) */}
+      {/* ===================================================================== */}
       {activeTab === 'documents' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {kycDocuments.map((doc) => (
             <div
               key={doc.id}
-              className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3 flex flex-col justify-between"
+              className="bg-white rounded-[8px] border border-[#CBD5E1] p-4 flex flex-col justify-between space-y-3"
             >
               <div>
-                <div className="relative h-40 w-full rounded-lg overflow-hidden bg-slate-100 border border-slate-200 mb-3 group cursor-pointer">
+                <div className="relative h-40 w-full rounded-[6px] overflow-hidden bg-slate-100 border border-[#CBD5E1] mb-3 group cursor-pointer">
                   <img
                     src={doc.previewUrl}
                     alt={doc.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-cover"
                   />
                   <div
                     onClick={() => setSelectedDocZoom(doc)}
-                    className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
+                    className="absolute inset-0 bg-[#0F172A]/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
                   >
-                    <span className="flex items-center gap-1.5 text-xs font-semibold bg-slate-900/90 text-white px-3 py-1.5 rounded-lg border border-slate-700">
+                    <span className="flex items-center gap-1.5 text-xs font-semibold bg-[#0F172A] text-white px-3 py-1.5 rounded-[6px]">
                       <Maximize2 className="w-3.5 h-3.5" />
-                      <span>Enlarge Document</span>
+                      <span>Inspect Document</span>
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between mb-1">
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="badge badge-success">
                     {doc.status}
                   </span>
-                  <span className="text-[11px] font-mono text-slate-400">{doc.fileSize}</span>
+                  <span className="text-[11px] font-mono text-[#64748B]">{doc.fileSize}</span>
                 </div>
-                <h4 className="font-semibold text-slate-900 text-xs leading-snug">{doc.title}</h4>
-                <p className="text-[10px] font-mono text-slate-400 mt-1">Uploaded: {doc.uploadedAt}</p>
+                <h4 className="font-semibold text-[#0F172A] text-xs leading-snug mt-1">{doc.title}</h4>
+                <p className="text-[10px] font-mono text-[#64748B] mt-0.5">Uploaded: {doc.uploadedAt}</p>
               </div>
 
               <button
                 type="button"
                 onClick={() => setSelectedDocZoom(doc)}
-                className="w-full py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200 transition flex items-center justify-center gap-1.5 cursor-pointer"
+                className="w-full py-2 bg-slate-50 hover:bg-slate-100 text-[#0F172A] font-semibold text-xs rounded-[6px] border border-[#CBD5E1] transition flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Maximize2 className="w-3.5 h-3.5" />
-                <span>Inspect Document</span>
+                <span>View Full Scan</span>
               </button>
             </div>
           ))}
         </div>
       )}
 
-      {/* TAB 4: Contact & Personal Info */}
-      {activeTab === 'contact' && (
-        <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
-          <div className="border-b border-slate-100 pb-3">
-            <h3 className="text-base font-semibold text-slate-900">
-              Contact &amp; Identification Details
-            </h3>
-            <p className="text-xs text-slate-500">
-              Verified identification and contact records for this borrower
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 text-xs">
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">
-                Residential Address
-              </span>
-              <p className="font-medium text-slate-800 leading-snug">
-                {borrower.address || 'Street 271, Sangkat Boeng Tumpun, Khan Meanchey, Phnom Penh'}
-              </p>
-            </div>
-
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">
-                Occupation &amp; Sector
-              </span>
-              <p className="font-medium text-slate-800 leading-snug">
-                {borrower.occupation || 'Senior Lecturer / Education Sector'}
-              </p>
-            </div>
-
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">
-                National Identity #
-              </span>
-              <p className="font-mono font-bold text-slate-800 text-sm">
-                {borrower.nationalId || '010892441'}
-              </p>
-            </div>
-
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">
-                Primary Phone
-              </span>
-              <p className="font-mono font-bold text-slate-800 text-sm">
-                {borrower.phone}
-              </p>
-            </div>
-
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">
-                Email Address
-              </span>
-              <p className="font-medium text-slate-800">
-                {borrower.email}
-              </p>
-            </div>
-
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">
-                Emergency Contact (Guarantor / Spouse)
-              </span>
-              <p className="font-bold text-slate-800">
-                {borrower.emergencyContact?.name || 'Vanna Rath'}
-              </p>
-              <p className="text-[11px] font-mono text-slate-500">
-                {borrower.emergencyContact?.relationship || 'Spouse'} • {borrower.emergencyContact?.phone || '+855-12-998-112'}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
+      {/* ===================================================================== */}
       {/* TAB 5: Audit Trail */}
+      {/* ===================================================================== */}
       {activeTab === 'audit' && (
-        <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-4">
-          <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-900">
+        <div className="bg-white rounded-[8px] border border-[#CBD5E1] p-5 space-y-3">
+          <div className="border-b border-[#CBD5E1] pb-3 flex items-center justify-between">
+            <h3 className="text-sm font-bold text-[#0F172A]">
               Activity &amp; Audit Trail
             </h3>
-            <span className="text-xs text-slate-400 font-mono">
-              Audit log verified
+            <span className="text-xs text-[#64748B] font-mono">
+              Cryptographically Sequenced
             </span>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {auditLogs.map((log) => (
               <div
                 key={log.id}
-                className="p-3.5 rounded-lg border border-slate-200 bg-slate-50 flex items-start gap-3 text-xs"
+                className="p-3 rounded-[6px] border border-[#CBD5E1] bg-slate-50 flex items-start gap-3 text-xs"
               >
-                <div className="w-2 h-2 rounded-full bg-blue-600 mt-1.5 flex-shrink-0" />
+                <div className="w-2 h-2 rounded-full bg-[#2563EB] mt-1.5 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-0.5">
-                    <span className="font-semibold text-slate-900">{log.actor}</span>
-                    <span className="text-[10px] font-mono text-slate-400">{log.timestamp}</span>
+                    <span className="font-semibold text-[#0F172A]">{log.actor}</span>
+                    <span className="text-[11px] font-mono text-[#64748B]">{log.timestamp}</span>
                   </div>
-                  <p className="text-slate-600 leading-snug">{log.change}</p>
+                  <p className="text-[#64748B] leading-snug">{log.change}</p>
                 </div>
               </div>
             ))}
@@ -700,28 +655,28 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
         {selectedDocZoom && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-2xl bg-white rounded-xl border border-slate-200 shadow-2xl p-6 relative overflow-hidden"
+              exit={{ opacity: 0, scale: 0.98 }}
+              className="w-full max-w-2xl bg-white rounded-[8px] border border-[#CBD5E1] shadow-xl p-6 relative"
             >
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[#CBD5E1] mb-4">
                 <div>
-                  <h4 className="font-bold text-slate-900 text-sm">{selectedDocZoom.title}</h4>
-                  <p className="text-xs text-slate-400 font-mono">
+                  <h4 className="font-bold text-[#0F172A] text-sm">{selectedDocZoom.title}</h4>
+                  <p className="text-xs text-[#64748B] font-mono">
                     {selectedDocZoom.fileName} • {selectedDocZoom.fileSize}
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setSelectedDocZoom(null)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                  className="p-1 rounded-[4px] text-[#64748B] hover:text-[#0F172A] hover:bg-slate-100"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="max-h-[60vh] overflow-hidden rounded-xl border border-slate-200 mb-4 bg-slate-900 flex items-center justify-center">
+              <div className="max-h-[60vh] overflow-hidden rounded-[6px] border border-[#CBD5E1] mb-4 bg-slate-900 flex items-center justify-center">
                 <img
                   src={selectedDocZoom.previewUrl}
                   alt={selectedDocZoom.title}
@@ -730,13 +685,13 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
               </div>
 
               <div className="flex items-center justify-between text-xs">
-                <span className="text-emerald-700 font-semibold bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
+                <span className="badge badge-success">
                   Status: {selectedDocZoom.status}
                 </span>
                 <button
                   type="button"
                   onClick={() => alert(`Downloaded copy of ${selectedDocZoom.fileName}`)}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold flex items-center gap-1.5 transition"
+                  className="px-4 py-2 bg-[#0F172A] hover:bg-[#1E293B] text-white rounded-[6px] font-semibold flex items-center gap-1.5 transition"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Download Document</span>
@@ -746,7 +701,6 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
           </div>
         )}
       </AnimatePresence>
-
     </div>
   );
 };

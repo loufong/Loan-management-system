@@ -15,9 +15,20 @@ export function checkRole(
   allowedRoles: (UserRole | string)[] | (UserRole | string),
   ...restRoles: (UserRole | string)[]
 ) {
-  const rolesArray: string[] = (
+  const rawRoles = (
     Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles, ...restRoles]
-  ).map((r) => String(r));
+  ).map((r) => String(r).toUpperCase());
+
+  const expandedAllowed = new Set<string>();
+  for (const r of rawRoles) {
+    expandedAllowed.add(r);
+    if (r === 'ADMIN') {
+      expandedAllowed.add('MANAGER');
+    }
+    if (r === 'USER') {
+      expandedAllowed.add('BORROWER');
+    }
+  }
 
   return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
     if (!req.user) {
@@ -25,11 +36,12 @@ export function checkRole(
       return;
     }
 
-    if (!rolesArray.includes(req.user.role)) {
+    const userRole = String(req.user.role).toUpperCase();
+    if (!expandedAllowed.has(userRole)) {
       sendError(
         res,
         'FORBIDDEN',
-        `Access denied: role '${req.user.role}' is not authorized to access this resource`,
+        'Access Denied',
         403
       );
       return;

@@ -93,7 +93,7 @@ export class ApplicationService {
       throw { statusCode: 404, message: 'Borrower not found', code: 'BORROWER_NOT_FOUND' };
     }
 
-    if (dto.viewer.role === UserRole.BORROWER && borrower.userId !== dto.viewer.id) {
+    if ((dto.viewer.role === UserRole.BORROWER || dto.viewer.role === UserRole.USER) && borrower.userId !== dto.viewer.id) {
       throw {
         statusCode: 403,
         message: 'Access denied: borrowers can only create applications for themselves',
@@ -339,8 +339,8 @@ export class ApplicationService {
       throw { statusCode: 404, message: 'Application not found', code: 'APPLICATION_NOT_FOUND' };
     }
 
-    if (viewer.role === UserRole.BORROWER && app.borrower.userId !== viewer.id) {
-      throw { statusCode: 403, message: 'Access denied: not your application', code: 'FORBIDDEN_OWNERSHIP' };
+    if ((viewer.role === UserRole.BORROWER || viewer.role === UserRole.USER) && app.borrower.userId !== viewer.id) {
+      throw { statusCode: 403, message: 'Access denied: you can only view your own loan application', code: 'FORBIDDEN_OWNERSHIP' };
     }
 
     const principal = Number(app.requestedAmount);
@@ -724,7 +724,7 @@ export class ApplicationService {
       }
     }
 
-    if (viewer.role === UserRole.BORROWER) {
+    if (viewer.role === UserRole.BORROWER || viewer.role === UserRole.USER) {
       const borrower = await prisma.borrower.findFirst({
         where: { userId: viewer.id }
       });
@@ -818,7 +818,7 @@ export class ApplicationService {
       throw { statusCode: 404, message: 'Loan application not found', code: 'APPLICATION_NOT_FOUND' };
     }
 
-    if (viewer.role === UserRole.BORROWER && app.borrower.userId !== viewer.id) {
+    if ((viewer.role === UserRole.BORROWER || viewer.role === UserRole.USER) && app.borrower.userId !== viewer.id) {
       throw {
         statusCode: 403,
         message: 'Access denied: you can only view your own loan applications',

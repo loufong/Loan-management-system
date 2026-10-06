@@ -25,6 +25,8 @@ import { Sidebar } from './components/layout/Sidebar';
 import { TopBar, BreadcrumbItem } from './components/layout/TopBar';
 import { AppLayout } from './components/layout/AppLayout';
 import { Dashboard } from './components/dashboard/Dashboard';
+import { AdminDashboard } from './components/dashboard/AdminDashboard';
+import { UserDashboard } from './components/dashboard/UserDashboard';
 
 // Screen 1: Borrowers Directory & 360° Dossier
 import { BorrowerList } from './components/borrowers/BorrowerList';
@@ -67,7 +69,7 @@ import { UserRoleManagement } from './components/admin/UserRoleManagement';
 // Screen 12: System Settings & Policies
 import { SystemSettings } from './components/admin/SystemSettings';
 
-import { Search, X, DollarSign, FileText, User, CreditCard, Shield } from 'lucide-react';
+import { Search, X, DollarSign, FileText, User, CreditCard, Shield, AlertCircle } from 'lucide-react';
 import { api } from './services/api';
 import { LoginPage } from './components/auth/LoginPage';
 import { RegisterPage } from './components/auth/RegisterPage';
@@ -96,10 +98,11 @@ export const App: React.FC = () => {
   const [authOtpPurpose, setAuthOtpPurpose] = useState<'register_verification' | 'forgot_password'>('register_verification');
   const [authResetToken, setAuthResetToken] = useState<string>('');
   const [authNotice, setAuthNotice] = useState<string | null>(null);
+  const [accessDeniedMessage, setAccessDeniedMessage] = useState<string | null>(null);
 
   // Navigation & Role State
   const [activeTab, setActiveTab] = useState<string>('dashboard');
-  const [activeRole, setActiveRole] = useState<UserRole>(() => authUser?.role || 'MANAGER');
+  const [activeRole, setActiveRole] = useState<UserRole>(() => authUser?.role || 'admin');
   const [currentUser, setCurrentUser] = useState<UserProfile>(() => authUser || USER_PROFILES.MANAGER);
   const [currency, setCurrency] = useState<Currency>('USD');
   const selectedBranch = currentUser.branch || 'Phnom Penh Main Branch';
@@ -112,22 +115,99 @@ export const App: React.FC = () => {
     }
   }, [authUser]);
 
+  // Synchronize route and enforce Point 4 & Point 8 access control
+  useEffect(() => {
+    const handleUrlSync = () => {
+      const path = window.location.pathname;
+
+      if (!authIsAuthenticated) {
+        if (path === '/register') setAuthView('register');
+        else if (path === '/forgot-password') setAuthView('forgot_password');
+        else {
+          setAuthView('login');
+          if (path.startsWith('/admin') || path.startsWith('/user')) {
+            window.history.replaceState(null, '', '/login');
+          }
+        }
+        return;
+      }
+
+      const isAdmin = currentUser.role === 'admin' || currentUser.role === 'ADMIN' || currentUser.role === 'MANAGER';
+
+      // Point 4: If a normal user tries to access an admin URL directly (/admin/*), reject and return "Access Denied"
+      if (!isAdmin && path.startsWith('/admin')) {
+        setAccessDeniedMessage('Access Denied');
+        setActiveTab('user_dashboard');
+        window.history.replaceState(null, '', '/user/dashboard');
+        setTimeout(() => setAccessDeniedMessage(null), 5000);
+        return;
+      }
+
+      if (path === '/admin/dashboard' || (isAdmin && (path === '/login' || path === '/'))) {
+        setActiveTab('dashboard');
+        window.history.replaceState(null, '', '/admin/dashboard');
+      } else if (path === '/user/dashboard' || (!isAdmin && (path === '/login' || path === '/'))) {
+        setActiveTab('user_dashboard');
+        window.history.replaceState(null, '', '/user/dashboard');
+      } else if (path === '/admin/users') {
+        setActiveTab('user_management');
+      } else if (path === '/admin/borrowers') {
+        setActiveTab('borrowers');
+      } else if (path === '/admin/loan_products') {
+        setActiveTab('loan_products');
+      } else if (path === '/admin/applications') {
+        setActiveTab('applications');
+      } else if (path === '/admin/credit_reviews') {
+        setActiveTab('credit_reviews');
+      } else if (path === '/admin/approvals') {
+        setActiveTab('approvals');
+      } else if (path === '/admin/disbursements') {
+        setActiveTab('cashier');
+      } else if (path === '/admin/payments') {
+        setActiveTab('cashier');
+      } else if (path === '/admin/overdue') {
+        setActiveTab('overdue');
+      } else if (path === '/admin/reports') {
+        setActiveTab('reports');
+      } else if (path === '/admin/audit_logs') {
+        setActiveTab('audit_logs');
+      } else if (path === '/admin/settings') {
+        setActiveTab('system_config');
+      } else if (path === '/user/profile') {
+        setActiveTab('borrower-detail');
+      } else if (path === '/user/apply_loan') {
+        setActiveTab('new-application');
+      } else if (path === '/user/my_applications') {
+        setActiveTab('applications');
+      } else if (path === '/user/my_loans') {
+        setActiveTab('loans');
+      } else if (path === '/user/repayment_schedule') {
+        setActiveTab('loans');
+      } else if (path === '/user/payments') {
+        setActiveTab('cashier');
+      }
+    };
+
+    handleUrlSync();
+    window.addEventListener('popstate', handleUrlSync);
+    return () => window.removeEventListener('popstate', handleUrlSync);
+  }, [authIsAuthenticated, currentUser.role]);
+
   // Auth Handlers
   const handleLoginSuccess = (user: UserProfile, token: string, rememberMe = true) => {
     contextSetSession(user, token, rememberMe);
     setCurrentUser(user);
     setActiveRole(user.role);
     setAuthNotice(null);
+    setAccessDeniedMessage(null);
 
-    if (user.role === 'BORROWER') {
-      setSelectedBorrowerId(user.borrowerId || 'BOR-2026-0001');
-      setActiveTab('dashboard'); // Direct to dynamic borrower dashboard
-    } else if (user.role === 'CASHIER') {
-      setActiveTab('cashier');
-    } else if (user.role === 'LOAN_OFFICER') {
-      setActiveTab('credit_reviews');
-    } else {
+    const isAdmin = user.role === 'admin' || user.role === 'ADMIN' || user.role === 'MANAGER';
+    if (isAdmin) {
+      window.history.replaceState(null, '', '/admin/dashboard');
       setActiveTab('dashboard');
+    } else {
+      window.history.replaceState(null, '', '/user/dashboard');
+      setActiveTab('user_dashboard');
     }
   };
 
@@ -135,6 +215,8 @@ export const App: React.FC = () => {
     await contextLogout();
     setAuthView('login');
     setAuthNotice(null);
+    setAccessDeniedMessage(null);
+    window.history.replaceState(null, '', '/login');
   };
 
   // Domain Entity State
@@ -222,6 +304,8 @@ export const App: React.FC = () => {
     switch (activeTab) {
       case 'dashboard':
         return [{ label: 'Executive Dashboard' }, { label: 'Operational Overview', active: true }];
+      case 'user_dashboard':
+        return [{ label: 'User Portal' }, { label: 'My Dashboard', active: true }];
       case 'borrowers':
         return [{ label: 'Institutional Registry', onClick: () => setActiveTab('borrowers') }, { label: 'Borrowers Directory', active: true }];
       case 'borrower-detail':
@@ -259,45 +343,105 @@ export const App: React.FC = () => {
     }
   };
 
-  // Sidebar navigation mapping
+  // Sidebar navigation mapping & access control enforcement
   const handleNavSelection = (navId: string) => {
-    if (navId === 'borrower_portal') {
-      setSelectedBorrowerId('BOR-2026-0001');
-      setActiveTab('borrower-detail');
-    } else if (navId === 'apply_loan') {
-      setActiveTab('new-application');
-    } else if (navId === 'my_loans') {
-      setActiveTab('loans');
-    } else if (navId === 'my_repayments') {
-      setActiveTab('cashier');
-    } else if (navId === 'borrowers') {
-      setActiveTab('borrowers');
-    } else if (navId === 'applications') {
-      setActiveTab('applications');
-    } else if (navId === 'loan_products') {
-      setActiveTab('loan_products');
-    } else if (navId === 'credit_reviews') {
-      setActiveTab('credit_reviews');
-    } else if (navId === 'risk_assessment') {
-      setActiveTab('risk_assessment');
-    } else if (navId === 'cashier_desk' || navId === 'disbursements' || navId === 'receipts') {
-      setActiveTab('cashier');
-    } else if (navId === 'approvals') {
-      setActiveTab('approvals');
-    } else if (navId === 'loans') {
-      setActiveTab('loans');
-    } else if (navId === 'overdue') {
-      setActiveTab('overdue');
-    } else if (navId === 'reports') {
-      setActiveTab('reports');
-    } else if (navId === 'audit_logs') {
-      setActiveTab('audit_logs');
+    const isAdmin = currentUser.role === 'admin' || currentUser.role === 'ADMIN' || currentUser.role === 'MANAGER';
+
+    // Point 4: If a normal user tries to access admin tabs, reject with "Access Denied" and redirect to user dashboard
+    const adminRestrictedTabs = [
+      'user_management',
+      'borrowers',
+      'loan_products',
+      'credit_reviews',
+      'risk_assessment',
+      'approvals',
+      'audit_logs',
+      'system_config',
+      'reports',
+      'overdue',
+    ];
+
+    if (!isAdmin && adminRestrictedTabs.includes(navId)) {
+      setAccessDeniedMessage('Access Denied');
+      setActiveTab('user_dashboard');
+      window.history.replaceState(null, '', '/user/dashboard');
+      setTimeout(() => setAccessDeniedMessage(null), 5000);
+      return;
+    }
+
+    if (navId === 'dashboard') {
+      if (isAdmin) {
+        setActiveTab('dashboard');
+        window.history.pushState(null, '', '/admin/dashboard');
+      } else {
+        setActiveTab('user_dashboard');
+        window.history.pushState(null, '', '/user/dashboard');
+      }
     } else if (navId === 'user_management') {
       setActiveTab('user_management');
+      window.history.pushState(null, '', '/admin/users');
+    } else if (navId === 'borrowers') {
+      setActiveTab('borrowers');
+      window.history.pushState(null, '', '/admin/borrowers');
+    } else if (navId === 'borrower_portal') {
+      setSelectedBorrowerId(currentUser.borrowerId || 'BOR-2026-0001');
+      setActiveTab('borrower-detail');
+      window.history.pushState(null, '', '/user/profile');
+    } else if (navId === 'apply_loan') {
+      setActiveTab('new-application');
+      window.history.pushState(null, '', '/user/apply_loan');
+    } else if (navId === 'my_applications') {
+      setActiveTab('applications');
+      window.history.pushState(null, '', '/user/my_applications');
+    } else if (navId === 'my_loans') {
+      setActiveTab('loans');
+      window.history.pushState(null, '', '/user/my_loans');
+    } else if (navId === 'repayment_schedule') {
+      setActiveTab('loans');
+      window.history.pushState(null, '', '/user/repayment_schedule');
+    } else if (navId === 'my_repayments') {
+      setActiveTab('cashier');
+      window.history.pushState(null, '', '/user/payments');
+    } else if (navId === 'applications') {
+      setActiveTab('applications');
+      window.history.pushState(null, '', '/admin/applications');
+    } else if (navId === 'loan_products') {
+      setActiveTab('loan_products');
+      window.history.pushState(null, '', '/admin/loan_products');
+    } else if (navId === 'credit_reviews') {
+      setActiveTab('credit_reviews');
+      window.history.pushState(null, '', '/admin/credit_reviews');
+    } else if (navId === 'risk_assessment') {
+      setActiveTab('risk_assessment');
+    } else if (navId === 'cashier_desk' || navId === 'disbursements' || navId === 'receipts' || navId === 'cashier') {
+      setActiveTab('cashier');
+      window.history.pushState(null, '', isAdmin ? '/admin/disbursements' : '/user/payments');
+    } else if (navId === 'approvals') {
+      setActiveTab('approvals');
+      window.history.pushState(null, '', '/admin/approvals');
+    } else if (navId === 'loans') {
+      setActiveTab('loans');
+      window.history.pushState(null, '', isAdmin ? '/admin/loans' : '/user/my_loans');
+    } else if (navId === 'overdue') {
+      setActiveTab('overdue');
+      window.history.pushState(null, '', '/admin/overdue');
+    } else if (navId === 'reports') {
+      setActiveTab('reports');
+      window.history.pushState(null, '', '/admin/reports');
+    } else if (navId === 'audit_logs') {
+      setActiveTab('audit_logs');
+      window.history.pushState(null, '', '/admin/audit_logs');
     } else if (navId === 'system_config') {
       setActiveTab('system_config');
+      window.history.pushState(null, '', '/admin/settings');
     } else {
-      setActiveTab('dashboard');
+      if (isAdmin) {
+        setActiveTab('dashboard');
+        window.history.pushState(null, '', '/admin/dashboard');
+      } else {
+        setActiveTab('user_dashboard');
+        window.history.pushState(null, '', '/user/dashboard');
+      }
     }
   };
 
@@ -566,18 +710,59 @@ export const App: React.FC = () => {
         onMarkNotificationRead={handleMarkNotificationRead}
       >
         <div className="h-full">
-          {/* Executive Dashboard */}
+          {/* Point 4: Access Denied Banner when unauthorized access is rejected */}
+          {accessDeniedMessage && (
+            <div className="mb-4 mx-6 mt-4 p-3 bg-red-50 border border-red-200 rounded-[8px] flex items-center justify-between text-[#DC2626] text-xs font-semibold">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-[#DC2626] shrink-0" />
+                <span>Access Denied: You do not have administrative authorization. Redirected to User Dashboard.</span>
+              </div>
+              <button
+                onClick={() => setAccessDeniedMessage(null)}
+                className="text-[#DC2626] hover:text-red-800 font-bold ml-2 text-base leading-none"
+              >
+                ×
+              </button>
+            </div>
+          )}
+
+          {/* Point 11: Admin Dashboard (10 KPIs) vs Point 12: User Dashboard */}
           {activeTab === 'dashboard' && (
-            <Dashboard
+            (currentUser.role === 'admin' || currentUser.role === 'ADMIN' || currentUser.role === 'MANAGER') ? (
+              <AdminDashboard
+                currency={currency}
+                onNavigate={handleNavSelection}
+                loans={loans}
+                borrowers={borrowers}
+                applications={applications}
+                receipts={receipts}
+              />
+            ) : (
+              <UserDashboard
+                currentUser={currentUser}
+                currency={currency}
+                loans={loans}
+                applications={applications}
+                receipts={receipts}
+                onNavigate={handleNavSelection}
+                onOpenApplyLoan={() => setActiveTab('new-application')}
+                onOpenQuickPayment={(loanId) => {
+                  if (loanId) setSelectedLoanId(loanId);
+                  setActiveTab('cashier');
+                }}
+              />
+            )
+          )}
+
+          {activeTab === 'user_dashboard' && (
+            <UserDashboard
+              currentUser={currentUser}
               currency={currency}
-              onNavigate={(tab) => {
-                if (tab === 'new-borrower') setActiveTab('borrowers');
-                else if (tab === 'new-application') setActiveTab('new-application');
-                else if (tab === 'quick-payment') setActiveTab('cashier');
-                else handleNavSelection(tab);
-              }}
-              onOpenNewBorrower={() => setActiveTab('borrowers')}
-              onOpenNewApplication={() => setActiveTab('new-application')}
+              loans={loans}
+              applications={applications}
+              receipts={receipts}
+              onNavigate={handleNavSelection}
+              onOpenApplyLoan={() => setActiveTab('new-application')}
               onOpenQuickPayment={(loanId) => {
                 if (loanId) setSelectedLoanId(loanId);
                 setActiveTab('cashier');
@@ -828,32 +1013,32 @@ export const App: React.FC = () => {
 
       {/* Global Quick Search Modal (Ctrl + K) */}
       {searchModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-slate-950/60 p-4 animate-in fade-in duration-150">
-          <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden">
-            <div className="flex items-center px-4 py-3 border-b border-slate-200">
-              <Search className="w-5 h-5 text-slate-400 mr-3" />
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-slate-900/50 p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-[8px] shadow-lg border border-[#CBD5E1] w-full max-w-2xl overflow-hidden">
+            <div className="flex items-center px-3.5 py-2.5 border-b border-[#CBD5E1]">
+              <Search className="w-4 h-4 text-[#64748B] mr-2.5" />
               <input
                 type="text"
                 autoFocus
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Quick search Borrowers, Loan #, National ID, Applications..."
-                className="w-full text-slate-800 placeholder-slate-400 bg-transparent text-sm focus:outline-none"
+                className="w-full text-[#0F172A] placeholder-[#64748B] bg-transparent text-xs focus:outline-none"
               />
               <button
                 onClick={() => setSearchModalOpen(false)}
-                className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                className="p-1 rounded-[4px] text-[#64748B] hover:text-[#0F172A] hover:bg-slate-100"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             <div className="max-h-96 overflow-y-auto p-2">
-              <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Top Matches &amp; Direct Navigations
+              <div className="px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+                Top Matches & Direct Navigation
               </div>
               {filteredSearch.length === 0 ? (
-                <div className="text-center py-8 text-sm text-slate-500">
+                <div className="text-center py-8 text-xs text-[#64748B]">
                   No matching accounts or records found for "{searchQuery}".
                 </div>
               ) : (
@@ -868,41 +1053,41 @@ export const App: React.FC = () => {
                       setSearchModalOpen(false);
                       setSearchQuery('');
                     }}
-                    className="w-full text-left flex items-start gap-3 p-3 rounded-lg hover:bg-indigo-50/70 group transition-colors"
+                    className="w-full text-left flex items-start gap-2.5 p-2 rounded-[6px] hover:bg-slate-50 transition-colors"
                   >
-                    <div className="p-2 rounded-lg bg-slate-100 group-hover:bg-indigo-100 text-slate-600 group-hover:text-indigo-700 transition-colors">
-                      {res.type === 'borrower' && <User className="w-4 h-4" />}
-                      {res.type === 'loan' && <CreditCard className="w-4 h-4" />}
-                      {res.type === 'application' && <FileText className="w-4 h-4" />}
-                      {res.type === 'cashier' && <DollarSign className="w-4 h-4" />}
-                      {res.type === 'overdue' && <CreditCard className="w-4 h-4" />}
-                      {res.type === 'products' && <FileText className="w-4 h-4" />}
-                      {res.type === 'reports' && <FileText className="w-4 h-4" />}
-                      {res.type === 'audit' && <FileText className="w-4 h-4" />}
+                    <div className="p-1.5 rounded-[4px] bg-slate-100 border border-[#CBD5E1] text-[#0F172A]">
+                      {res.type === 'borrower' && <User className="w-3.5 h-3.5" />}
+                      {res.type === 'loan' && <CreditCard className="w-3.5 h-3.5" />}
+                      {res.type === 'application' && <FileText className="w-3.5 h-3.5" />}
+                      {res.type === 'cashier' && <DollarSign className="w-3.5 h-3.5" />}
+                      {res.type === 'overdue' && <CreditCard className="w-3.5 h-3.5" />}
+                      {res.type === 'products' && <FileText className="w-3.5 h-3.5" />}
+                      {res.type === 'reports' && <FileText className="w-3.5 h-3.5" />}
+                      {res.type === 'audit' && <FileText className="w-3.5 h-3.5" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-slate-800 group-hover:text-indigo-900">{res.title}</span>
-                        <span className="text-xs font-mono font-medium text-slate-400">{res.id}</span>
+                        <span className="text-xs font-semibold text-[#0F172A]">{res.title}</span>
+                        <span className="text-[11px] font-mono text-[#64748B]">{res.id}</span>
                       </div>
-                      <p className="text-xs text-slate-500 truncate mt-0.5">{res.sub}</p>
+                      <p className="text-[11px] text-[#64748B] truncate mt-0.5">{res.sub}</p>
                     </div>
                   </button>
                 ))
               )}
             </div>
 
-            <div className="bg-slate-50 px-4 py-2.5 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
-              <div className="flex items-center gap-2">
+            <div className="bg-slate-50 px-3.5 py-2 border-t border-[#CBD5E1] flex items-center justify-between text-[11px] text-[#64748B]">
+              <div className="flex items-center gap-1.5">
                 <span>Navigate with</span>
-                <kbd className="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] font-mono">↑</kbd>
-                <kbd className="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] font-mono">↓</kbd>
+                <kbd className="px-1.5 py-0.5 bg-white border border-[#CBD5E1] rounded-[4px] text-[10px] font-mono text-[#0F172A]">↑</kbd>
+                <kbd className="px-1.5 py-0.5 bg-white border border-[#CBD5E1] rounded-[4px] text-[10px] font-mono text-[#0F172A]">↓</kbd>
                 <span>Select with</span>
-                <kbd className="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] font-mono">Enter</kbd>
+                <kbd className="px-1.5 py-0.5 bg-white border border-[#CBD5E1] rounded-[4px] text-[10px] font-mono text-[#0F172A]">Enter</kbd>
               </div>
               <div>
                 <span>Press</span>
-                <kbd className="ml-1 px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] font-mono">ESC</kbd> to close
+                <kbd className="ml-1 px-1.5 py-0.5 bg-white border border-[#CBD5E1] rounded-[4px] text-[10px] font-mono text-[#0F172A]">ESC</kbd> to close
               </div>
             </div>
           </div>

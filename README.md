@@ -255,4 +255,3 @@ npm run build
 For detailed academic defense papers, Mermaid architecture diagrams, LaTeX mathematical formulas, and a 7-minute live presentation script, refer to:
 [Academic Project Documentation](file:///e:/Loan/Loansystem/docs/academic_project_documentation.md)
 
->>>>>>> 3713fa2 (feat: complete refactor of Apex LMS core banking platform with 3D tactile UI and 4 consolidated roles)

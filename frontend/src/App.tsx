@@ -86,6 +86,7 @@ export const App: React.FC = () => {
     isLoading: authLoading,
     logout: contextLogout,
     switchRole: contextSwitchRole,
+    setSession: contextSetSession,
   } = useAuth();
 
   // Modern Auth Sub-Views
@@ -113,18 +114,10 @@ export const App: React.FC = () => {
 
   // Auth Handlers
   const handleLoginSuccess = (user: UserProfile, token: string, rememberMe = true) => {
+    contextSetSession(user, token, rememberMe);
     setCurrentUser(user);
     setActiveRole(user.role);
     setAuthNotice(null);
-
-    // Save tokens
-    if (rememberMe) {
-      localStorage.setItem('apex_token', token);
-      localStorage.setItem('apex_user', JSON.stringify(user));
-    } else {
-      sessionStorage.setItem('apex_token', token);
-      sessionStorage.setItem('apex_user', JSON.stringify(user));
-    }
 
     if (user.role === 'BORROWER') {
       setSelectedBorrowerId(user.borrowerId || 'BOR-2026-0001');

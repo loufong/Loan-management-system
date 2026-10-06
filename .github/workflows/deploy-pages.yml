@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -40,6 +40,16 @@ jobs:
         working-directory: frontend
         run: npm run build
 
+      - name: Ensure .nojekyll in dist
+        run: touch frontend/dist/.nojekyll
+
+      - name: Deploy to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./frontend/dist
+          keep_files: false
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
@@ -48,6 +58,7 @@ jobs:
         with:
           path: frontend/dist
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages (Actions provider)
         id: deployment
+        continue-on-error: true
         uses: actions/deploy-pages@v4

@@ -12,6 +12,7 @@ interface AuthContextType {
   refreshUser: () => Promise<UserProfile | null>;
   switchRole: (role: UserRole) => Promise<void>;
   updateSettings: (settings: Partial<UserSettings>) => Promise<void>;
+  setSession: (user: UserProfile, token: string, rememberMe?: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,6 +35,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   });
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  const setSession = (newUser: UserProfile, newToken: string, rememberMe = true) => {
+    setToken(newToken);
+    setUser(newUser);
+    api.setToken(newToken);
+    if (rememberMe) {
+      localStorage.setItem('apex_token', newToken);
+      localStorage.setItem('apex_user', JSON.stringify(newUser));
+    } else {
+      sessionStorage.setItem('apex_token', newToken);
+      sessionStorage.setItem('apex_user', JSON.stringify(newUser));
+    }
+  };
 
   // Initialize session & fetch fresh user profile from DB on mount
   useEffect(() => {
@@ -63,7 +77,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           }
         }
       } catch (err) {
-        console.warn('Session expired or could not verify credentials, resetting:', err);
+        console.warn('Backend unavailable, validating local cached session:', err);
+        const rawUser = localStorage.getItem('apex_user') || sessionStorage.getItem('apex_user');
+        if (rawUser && isMounted) {
+          try {
+            const cachedUser = JSON.parse(rawUser);
+            setUser(cachedUser);
+            setToken(activeToken);
+            return;
+          } catch {
+            // Malformed cached user
+          }
+        }
         if (isMounted) {
           api.setToken(null);
           setToken(null);
@@ -96,17 +121,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     try {
       const result = await api.login(usernameOrEmail, password, rememberMe, roleOverride);
-      setToken(result.token);
-      setUser(result.user);
-
-      if (rememberMe) {
-        localStorage.setItem('apex_token', result.token);
-        localStorage.setItem('apex_user', JSON.stringify(result.user));
-      } else {
-        sessionStorage.setItem('apex_token', result.token);
-        sessionStorage.setItem('apex_user', JSON.stringify(result.user));
-      }
-
+      setSession(result.user, result.token, rememberMe);
       return result.user;
     } finally {
       setIsLoading(false);
@@ -183,6 +198,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         refreshUser,
         switchRole,
         updateSettings,
+        setSession,
       }}
     >
       {children}

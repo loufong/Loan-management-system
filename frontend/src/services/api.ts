@@ -68,12 +68,16 @@ class ApiService {
     rememberMe = false,
     roleOverride?: UserRole
   ): Promise<{ token: string; user: UserProfile }> {
-    const password = typeof roleOrPassword === 'string' && roleOrPassword.length > 5 && !['MANAGER', 'LOAN_OFFICER', 'CASHIER', 'BORROWER'].includes(roleOrPassword)
-      ? roleOrPassword
-      : 'Password123!';
-    const roleHint = typeof roleOrPassword === 'string' && ['MANAGER', 'LOAN_OFFICER', 'CASHIER', 'BORROWER'].includes(roleOrPassword)
-      ? (roleOrPassword as UserRole)
-      : roleOverride;
+    let password = 'Password123!';
+    let roleHint = roleOverride;
+
+    if (typeof roleOrPassword === 'string') {
+      if (['MANAGER', 'LOAN_OFFICER', 'CASHIER', 'BORROWER'].includes(roleOrPassword)) {
+        roleHint = roleOrPassword as UserRole;
+      } else if (roleOrPassword) {
+        password = roleOrPassword;
+      }
+    }
 
     try {
       const res = await this.request<{ accessToken: string; user: any }>('/auth/login', {
@@ -102,20 +106,31 @@ class ApiService {
         token: res.accessToken,
         user: matchedProfile,
       };
-    } catch {
-      // Fallback in mock / offline mode
-      const userRole = roleHint || (usernameOrEmail.includes('officer') ? 'LOAN_OFFICER' : usernameOrEmail.includes('cashier') ? 'CASHIER' : usernameOrEmail.includes('borrower') ? 'BORROWER' : 'MANAGER');
-      const base = USER_PROFILES[userRole] || USER_PROFILES.MANAGER;
-      const user: UserProfile = {
-        ...base,
-        name: usernameOrEmail,
-        fullName: usernameOrEmail,
-        email: usernameOrEmail.includes('@') ? usernameOrEmail : `${usernameOrEmail}@apex.local`,
-        avatarUrl: base.avatar,
-        lastLogin: new Date().toISOString(),
-        createdAt: '2026-01-01',
-      };
-      return { token: 'mock-jwt-token-2026', user };
+    } catch (err: any) {
+      // In static / offline environments (like GitHub Pages where /api/v1 returns 404 or fails to fetch),
+      // provide seamless fallback demo authentication instead of blocking login.
+      const isStaticOrOffline =
+        typeof window !== 'undefined' &&
+        (!window.location.hostname.includes('localhost') ||
+          (err?.message && (err.message.includes('404') || err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))));
+
+      if (isStaticOrOffline) {
+        const userRole = roleHint || (usernameOrEmail.includes('officer') ? 'LOAN_OFFICER' : usernameOrEmail.includes('cashier') ? 'CASHIER' : usernameOrEmail.includes('borrower') ? 'BORROWER' : 'MANAGER');
+        const base = USER_PROFILES[userRole] || USER_PROFILES.MANAGER;
+        const user: UserProfile = {
+          ...base,
+          name: base.fullName || usernameOrEmail,
+          fullName: base.fullName || usernameOrEmail,
+          email: usernameOrEmail.includes('@') ? usernameOrEmail : `${usernameOrEmail}@apex.local`,
+          avatarUrl: base.avatar,
+          lastLogin: new Date().toISOString(),
+          createdAt: '2026-01-01',
+        };
+        const token = 'mock-jwt-token-2026';
+        this.setToken(token);
+        return { token, user };
+      }
+      throw err;
     }
   }
 

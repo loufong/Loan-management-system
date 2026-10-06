@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { UserRole, UserProfile } from '../../types';
 import { api } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 interface LoginPageProps {
   onLoginSuccess: (user: UserProfile, token: string, rememberMe: boolean) => void;
@@ -30,6 +31,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   onNavigateToForgotPassword,
   successNotice,
 }) => {
+  const { login } = useAuth();
   const [usernameOrEmail, setUsernameOrEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [rememberMe, setRememberMe] = useState<boolean>(true);
@@ -62,8 +64,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         roleHint = 'MANAGER';
       }
 
-      const res = await api.login(identifier, password, rememberMe, roleHint);
-      onLoginSuccess(res.user, res.token, rememberMe);
+      const loggedInUser = await login(identifier, password, rememberMe, roleHint);
+      const activeToken = localStorage.getItem('apex_token') || sessionStorage.getItem('apex_token') || 'token';
+      onLoginSuccess(loggedInUser, activeToken, rememberMe);
     } catch (err: any) {
       setError(err?.message || 'Invalid email or password. Please verify your credentials.');
     } finally {

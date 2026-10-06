@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-# My Loan Management System README
-=======
-# Academic Loan Management System (LMS) - Enterprise Documentation
+# Apex LMS - Academic & Enterprise Loan Management System
 
 A production-grade, enterprise-ready Loan Management System (LMS) designed for academic institutions, universities, and micro-lending programs. Built with **Node.js**, **Express**, **TypeScript**, **Prisma ORM**, and **PostgreSQL**.
 

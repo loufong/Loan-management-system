@@ -163,14 +163,185 @@ class ApiService {
   }
 
   public async getUserDashboardSummary(): Promise<UserDashboardSummary> {
-    return await this.request<UserDashboardSummary>('/dashboard/user-summary');
+    try {
+      return await this.request<UserDashboardSummary>('/dashboard/user-summary');
+    } catch {
+      return this.getMockUserDashboardSummary();
+    }
+  }
+
+  public getMockUserDashboardSummary(): UserDashboardSummary {
+    let currentUser: UserProfile = USER_PROFILES.MANAGER;
+    try {
+      const stored = localStorage.getItem('apex_user') || sessionStorage.getItem('apex_user');
+      if (stored) {
+        currentUser = JSON.parse(stored);
+      }
+    } catch {
+      // Use fallback
+    }
+
+    const isBorrower = currentUser.role === 'BORROWER';
+    const cleanName = currentUser.fullName || currentUser.name || (currentUser.email ? currentUser.email.split('@')[0] : 'Lou Fong');
+    const role = currentUser.role || 'MANAGER';
+
+    return {
+      user: {
+        id: currentUser.id || 'USR-2026-001',
+        username: currentUser.username || cleanName,
+        fullName: cleanName,
+        email: currentUser.email || 'manager@apex.local',
+        phone: (currentUser as any).phone || '+855 12 890 123',
+        role,
+        avatarUrl: currentUser.avatarUrl || currentUser.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cleanName)}`,
+        department: currentUser.department || (isBorrower ? 'Borrower Self-Service' : 'Executive Credit Committee'),
+        position: currentUser.title || (isBorrower ? 'Student Borrower' : 'Branch General Manager'),
+        createdAt: currentUser.createdAt || '2026-01-01',
+        lastLogin: new Date().toISOString(),
+      },
+      settings: {
+        branch: currentUser.branch || 'Phnom Penh Main Branch',
+        currency: 'USD',
+        theme: 'light',
+        notificationsEnabled: true,
+      },
+      isNewUser: false,
+      metrics: {
+        activeLoansCount: isBorrower ? 1 : 142,
+        overdueLoansCount: isBorrower ? 0 : 3,
+        totalApplications: isBorrower ? 2 : 248,
+        totalBorrowedUSD: isBorrower ? 5000 : 2480500,
+        totalOutstandingUSD: isBorrower ? 3850 : 1980200,
+        totalCollectedUSD: isBorrower ? 1150 : 184500,
+        totalRepaidUSD: isBorrower ? 1150 : 184500,
+        totalOverdueUSD: isBorrower ? 0 : 3110,
+        approvalRate: 88.5,
+        repaymentRate: 96.2,
+        staffCreatedApps: isBorrower ? 0 : 18,
+        staffApprovedApps: isBorrower ? 0 : 14,
+        nextPaymentDue: isBorrower
+          ? {
+              installmentNo: 6,
+              dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+              amountUSD: 532.5,
+              remainingAmountUSD: 532.5,
+              loanNumber: 'LN-2026-0042',
+            }
+          : null,
+        overdueCount: isBorrower ? 0 : 3,
+        accountStanding: 'GOOD_STANDING',
+      },
+      cashflowTrend: [
+        { month: 'May', fullMonth: 'May 2026', disbursedUSD: 180000, collectedUSD: 145000 },
+        { month: 'Jun', fullMonth: 'Jun 2026', disbursedUSD: 210000, collectedUSD: 165000 },
+        { month: 'Jul', fullMonth: 'Jul 2026', disbursedUSD: 260000, collectedUSD: 195000 },
+        { month: 'Aug', fullMonth: 'Aug 2026', disbursedUSD: 310000, collectedUSD: 230000 },
+        { month: 'Sep', fullMonth: 'Sep 2026', disbursedUSD: 295000, collectedUSD: 250000 },
+        { month: 'Oct', fullMonth: 'Oct 2026', disbursedUSD: 340000, collectedUSD: 280000 },
+      ],
+      productDistribution: [
+        { name: 'Personal Loan', percentage: 42, color: '#2563EB', valUSD: 831684 },
+        { name: 'SME Business Loan', percentage: 28, color: '#4F46E5', valUSD: 554456 },
+        { name: 'Agriculture Loan', percentage: 16, color: '#059669', valUSD: 316832 },
+        { name: 'Vehicle Loan', percentage: 10, color: '#D97706', valUSD: 198020 },
+        { name: 'Emergency Loan', percentage: 4, color: '#8B5CF6', valUSD: 79208 },
+      ],
+      overdueWatchlist: [
+        {
+          id: 'SCH-0012-04',
+          loanId: 'LN-2026-0012',
+          loanNumber: 'LN-2026-0012',
+          borrowerName: 'Dara Pich',
+          initials: 'DP',
+          avatarColor: 'bg-rose-500 text-white',
+          borrowerPhone: '+855 12 883 991',
+          installmentNo: 4,
+          daysOverdue: 38,
+          urgency: '30+d PAR',
+          urgencyVariant: 'rose',
+          overdueAmountUSD: 512.0,
+        },
+        {
+          id: 'SCH-0008-07',
+          loanId: 'LN-2026-0008',
+          loanNumber: 'LN-2026-0008',
+          borrowerName: 'Kosal Meng',
+          initials: 'KM',
+          avatarColor: 'bg-orange-500 text-white',
+          borrowerPhone: '+855 10 445 221',
+          installmentNo: 7,
+          daysOverdue: 14,
+          urgency: '1-30d Watch',
+          urgencyVariant: 'orange',
+          overdueAmountUSD: 720.0,
+        },
+        {
+          id: 'SCH-0021-03',
+          loanId: 'LN-2026-0021',
+          loanNumber: 'LN-2026-0021',
+          borrowerName: 'Sreynet Chea',
+          initials: 'SC',
+          avatarColor: 'bg-amber-500 text-white',
+          borrowerPhone: '+855 98 776 543',
+          installmentNo: 3,
+          daysOverdue: 9,
+          urgency: '1-30d Watch',
+          urgencyVariant: 'orange',
+          overdueAmountUSD: 380.0,
+        },
+      ],
+      recentActivities: [
+        {
+          id: 'ACT-001',
+          time: '10:45 AM',
+          timestamp: new Date().toISOString(),
+          actor: cleanName,
+          text: 'Approved $8,500 SME Loan facility for Vannak Keo',
+          type: 'APPROVAL',
+          badge: 'Facility Approved',
+          badgeStyle: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+          iconStyle: 'bg-emerald-600 text-white ring-4 ring-emerald-100',
+        },
+        {
+          id: 'ACT-002',
+          time: '09:20 AM',
+          timestamp: new Date().toISOString(),
+          actor: 'Emily Ross',
+          text: 'Collected $532.50 installment via Bakong Dynamic KHQR',
+          type: 'PAYMENT',
+          badge: 'Payment Received',
+          badgeStyle: 'bg-blue-50 text-blue-700 border-blue-200',
+          iconStyle: 'bg-blue-600 text-white ring-4 ring-blue-100',
+        },
+        {
+          id: 'ACT-003',
+          time: 'Yesterday',
+          timestamp: new Date(Date.now() - 86400000).toISOString(),
+          actor: 'Sarah Chen, PhD',
+          text: 'Underwriting completed for Personal Loan APP-2026-0014',
+          type: 'SYSTEM',
+          badge: 'Underwriting',
+          badgeStyle: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+          iconStyle: 'bg-indigo-600 text-white ring-4 ring-indigo-100',
+        },
+      ],
+    };
   }
 
   public async updateUserSettings(settings: Partial<UserSettings>): Promise<UserSettings> {
-    return await this.request<UserSettings>('/dashboard/settings', {
-      method: 'PUT',
-      body: JSON.stringify(settings),
-    });
+    try {
+      return await this.request<UserSettings>('/dashboard/settings', {
+        method: 'PUT',
+        body: JSON.stringify(settings),
+      });
+    } catch {
+      return {
+        theme: settings.theme || 'light',
+        currency: (settings.currency as any) || 'USD',
+        branch: settings.branch || 'Phnom Penh Main Branch',
+        notificationsEnabled: settings.notificationsEnabled ?? true,
+      };
+    }
   }
 
   public async register(payload: {

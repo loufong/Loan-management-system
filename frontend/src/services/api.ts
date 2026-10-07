@@ -18,6 +18,14 @@ import {
   USER_PROFILES,
 } from '../data/mockData';
 
+export const isStaticHost =
+  typeof window !== 'undefined' &&
+  (window.location.hostname.includes('github.io') ||
+   window.location.protocol === 'file:' ||
+   window.location.hostname.endsWith('.pages.dev') ||
+   window.location.hostname.includes('netlify.app') ||
+   window.location.hostname.includes('vercel.app'));
+
 const BASE_URL = '/api/v1';
 
 class ApiService {
@@ -75,8 +83,8 @@ class ApiService {
         }
       }
 
-      // Clear token if unauthorized on protected resource
-      if (response.status === 401 && endpoint !== '/auth/login') {
+      // Clear token if unauthorized on protected resource (only when live backend is connected)
+      if (response.status === 401 && endpoint !== '/auth/login' && !isStaticHost) {
         this.setToken(null);
       }
 
@@ -93,6 +101,99 @@ class ApiService {
   // Rate-limiting tracker for demo/offline fallback: 5 failed attempts -> 5 minutes block
   private failedAttempts: Record<string, { count: number; blockedUntil?: number }> = {};
 
+  // Mock Authentication for static hosting (GitHub Pages) or offline local dev
+  private authenticateMock(cleanId: string, password: string): { token: string; user: UserProfile } {
+    const record = this.failedAttempts[cleanId] || { count: 0 };
+    if (record.blockedUntil && Date.now() < record.blockedUntil) {
+      const remainingMinutes = Math.ceil((record.blockedUntil - Date.now()) / 60000);
+      throw new Error(`Too many failed login attempts. Please try again after ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''}.`);
+    }
+
+    let registeredUsersMap: Record<string, any> = {};
+    try {
+      const stored = localStorage.getItem('apex_registered_users');
+      if (stored) registeredUsersMap = JSON.parse(stored);
+    } catch {}
+
+    const mockAccounts: Record<
+      string,
+      {
+        role: 'admin' | 'user';
+        status: 'active' | 'inactive' | 'suspended';
+        name: string;
+        email: string;
+        username: string;
+        borrowerId?: string;
+        password?: string;
+      }
+    > = {
+      'admin@loansystem.edu': { role: 'admin', status: 'active', name: 'System Administrator', email: 'admin@loansystem.edu', username: 'admin' },
+      'admin': { role: 'admin', status: 'active', name: 'System Administrator', email: 'admin@loansystem.edu', username: 'admin' },
+      'admin@example.com': { role: 'admin', status: 'active', name: 'System Administrator', email: 'admin@loansystem.edu', username: 'admin' },
+      'johnathan.doe@student.edu': { role: 'user', status: 'active', name: 'Johnathan Doe', email: 'johnathan.doe@student.edu', username: 'j.doe', borrowerId: 'BOR-2026-0001' },
+      'j.doe': { role: 'user', status: 'active', name: 'Johnathan Doe', email: 'johnathan.doe@student.edu', username: 'j.doe', borrowerId: 'BOR-2026-0001' },
+      'borrower@apex.local': { role: 'user', status: 'active', name: 'Sokha Chan', email: 'borrower@apex.local', username: 'borrower', borrowerId: 'BOR-2026-0001' },
+      'borrower': { role: 'user', status: 'active', name: 'Sokha Chan', email: 'borrower@apex.local', username: 'borrower', borrowerId: 'BOR-2026-0001' },
+      'user@example.com': { role: 'user', status: 'active', name: 'Standard User', email: 'user@example.com', username: 'user', borrowerId: 'BOR-2026-0001' },
+      'user': { role: 'user', status: 'active', name: 'Standard User', email: 'user@example.com', username: 'user', borrowerId: 'BOR-2026-0001' },
+      'manager@apex.local': { role: 'user', status: 'active', name: 'Executive Branch Manager', email: 'manager@apex.local', username: 'manager' },
+      'manager': { role: 'user', status: 'active', name: 'Executive Branch Manager', email: 'manager@apex.local', username: 'manager' },
+      'inactive@example.com': { role: 'user', status: 'inactive', name: 'Inactive User', email: 'inactive@example.com', username: 'inactive' },
+      'inactive': { role: 'user', status: 'inactive', name: 'Inactive User', email: 'inactive@example.com', username: 'inactive' },
+      'suspended@example.com': { role: 'user', status: 'suspended', name: 'Suspended User', email: 'suspended@example.com', username: 'suspended' },
+      'suspended': { role: 'user', status: 'suspended', name: 'Suspended User', email: 'suspended@example.com', username: 'suspended' },
+      ...registeredUsersMap,
+    };
+
+    const account = mockAccounts[cleanId];
+    if (!account) {
+      record.count += 1;
+      if (record.count >= 5) record.blockedUntil = Date.now() + 5 * 60 * 1000;
+      this.failedAttempts[cleanId] = record;
+      throw new Error('Invalid email/username or password.');
+    }
+
+    const expectedPassword = account.password || 'Password123!';
+    if (password !== expectedPassword) {
+      record.count += 1;
+      if (record.count >= 5) record.blockedUntil = Date.now() + 5 * 60 * 1000;
+      this.failedAttempts[cleanId] = record;
+      throw new Error('Invalid email/username or password.');
+    }
+
+    delete this.failedAttempts[cleanId];
+
+    if (account.status === 'inactive') {
+      throw new Error('Your account is inactive. Please contact the administrator.');
+    }
+    if (account.status === 'suspended') {
+      throw new Error('Your account has been suspended. Please contact the administrator.');
+    }
+
+    const token = `jwt-token-${cleanId}-${Date.now()}`;
+    this.setToken(token);
+
+    const user: UserProfile = {
+      id: `usr-${cleanId.replace(/[^a-z0-9]/g, '-')}`,
+      username: account.username,
+      name: account.name,
+      fullName: account.name,
+      email: account.email,
+      role: account.role as UserRole,
+      status: account.status,
+      title: account.role === 'admin' ? 'System Administrator' : 'Client Borrower',
+      department: account.role === 'admin' ? 'Executive Administration' : 'Client Services',
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(account.username)}`,
+      avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(account.username)}`,
+      branch: 'Phnom Penh Main Branch',
+      borrowerId: account.borrowerId,
+      createdAt: '2026-01-01',
+      lastLogin: new Date().toISOString(),
+    };
+
+    return { token, user };
+  }
+
   // --- AUTHENTICATION & PROFILE ---
   public async login(
     usernameOrEmail: string,
@@ -104,6 +205,11 @@ class ApiService {
     // Step 1: Validate input
     if (!usernameOrEmail.trim() || !password) {
       throw new Error('Invalid email/username or password.');
+    }
+
+    // On GitHub Pages or static host, authenticate directly
+    if (isStaticHost) {
+      return this.authenticateMock(cleanId, password);
     }
 
     try {
@@ -128,6 +234,7 @@ class ApiService {
         avatar: u?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u?.username || usernameOrEmail)}`,
         avatarUrl: u?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u?.username || usernameOrEmail)}`,
         branch: 'Phnom Penh Main Branch',
+        borrowerId: u?.borrowers?.[0]?.borrowerId,
         createdAt: u?.createdAt,
         lastLogin: new Date().toISOString(),
       };
@@ -136,107 +243,59 @@ class ApiService {
         user: matchedProfile,
       };
     } catch (err: any) {
-      // If error came directly from backend API (e.g. 401, 403 status message), re-throw it!
+      // If error came directly from backend API (e.g. 401, 403, 422), re-throw it unless it's a 404 or connection failure
       if (
-        err?.message &&
-        !err.message.includes('Failed to fetch') &&
-        !err.message.includes('NetworkError') &&
-        !err.message.includes('404')
+        err?.status &&
+        (err.status === 401 || err.status === 403 || err.status === 422) &&
+        err.message &&
+        !err.message.includes('404') &&
+        !err.message.includes('Unable to connect')
       ) {
         throw err;
       }
 
-      // Offline / Static fallback authentication (ensures complete functionality anywhere)
-      const record = this.failedAttempts[cleanId] || { count: 0 };
-      if (record.blockedUntil && Date.now() < record.blockedUntil) {
-        const remainingMinutes = Math.ceil((record.blockedUntil - Date.now()) / 60000);
-        throw new Error(`Too many failed login attempts. Please try again after ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''}.`);
-      }
-
-      // Predefined accounts matching exact requirements
-      const mockAccounts: Record<string, { role: 'admin' | 'user'; status: 'active' | 'inactive' | 'suspended'; name: string; email: string; username: string }> = {
-        'admin@loansystem.edu': { role: 'admin', status: 'active', name: 'Admin', email: 'admin@loansystem.edu', username: 'admin' },
-        'admin@example.com': { role: 'admin', status: 'active', name: 'Admin', email: 'admin@loansystem.edu', username: 'admin' },
-        'admin': { role: 'admin', status: 'active', name: 'Admin', email: 'admin@example.com', username: 'admin' },
-        'user@example.com': { role: 'user', status: 'active', name: 'Standard User', email: 'user@example.com', username: 'user' },
-        'user': { role: 'user', status: 'active', name: 'Standard User', email: 'user@example.com', username: 'user' },
-        'inactive@example.com': { role: 'user', status: 'inactive', name: 'Inactive User', email: 'inactive@example.com', username: 'inactive' },
-        'inactive': { role: 'user', status: 'inactive', name: 'Inactive User', email: 'inactive@example.com', username: 'inactive' },
-        'suspended@example.com': { role: 'user', status: 'suspended', name: 'Suspended User', email: 'suspended@example.com', username: 'suspended' },
-        'suspended': { role: 'user', status: 'suspended', name: 'Suspended User', email: 'suspended@example.com', username: 'suspended' },
-        'manager@apex.local': { role: 'user', status: 'active', name: 'Executive Branch Manager', email: 'manager@apex.local', username: 'manager' },
-        'manager': { role: 'user', status: 'active', name: 'Executive Branch Manager', email: 'manager@apex.local', username: 'manager' },
-        'borrower@apex.local': { role: 'user', status: 'active', name: 'Sokha Chan', email: 'borrower@apex.local', username: 'borrower' },
-        'borrower': { role: 'user', status: 'active', name: 'Sokha Chan', email: 'borrower@apex.local', username: 'borrower' },
-      };
-
-      const account = mockAccounts[cleanId];
-      // Step 2 & 3: User existence check (generic message)
-      if (!account) {
-        record.count += 1;
-        if (record.count >= 5) record.blockedUntil = Date.now() + 5 * 60 * 1000;
-        this.failedAttempts[cleanId] = record;
-        throw new Error('Invalid email/username or password.');
-      }
-
-      // Step 4 & 5: Password verification (generic message)
-      if (password !== 'Password123!') {
-        record.count += 1;
-        if (record.count >= 5) record.blockedUntil = Date.now() + 5 * 60 * 1000;
-        this.failedAttempts[cleanId] = record;
-        throw new Error('Invalid email/username or password.');
-      }
-
-      // Clear failed attempts on valid credentials
-      delete this.failedAttempts[cleanId];
-
-      // Step 6: Status check with required messages
-      if (account.status === 'inactive') {
-        throw new Error('Your account is inactive. Please contact the administrator.');
-      }
-      if (account.status === 'suspended') {
-        throw new Error('Your account has been suspended. Please contact the administrator.');
-      }
-
-      // Step 7, 8 & 9: Create session/token, update last_login, role redirect
-      const token = `jwt-token-${cleanId}-${Date.now()}`;
-      this.setToken(token);
-
-      const user: UserProfile = {
-        id: `usr-${cleanId}`,
-        username: account.username,
-        name: account.name,
-        fullName: account.name,
-        email: account.email,
-        role: account.role as UserRole,
-        status: account.status,
-        title: account.role === 'admin' ? 'Administrator' : 'Client Borrower',
-        department: account.role === 'admin' ? 'Executive Administration' : 'Client Services',
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(account.username)}`,
-        avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(account.username)}`,
-        branch: 'Phnom Penh Main Branch',
-        borrowerId: account.role === 'user' ? 'BOR-2026-0001' : undefined,
-        createdAt: '2026-01-01',
-        lastLogin: new Date().toISOString(),
-      };
-
-      return { token, user };
+      // Offline / Network fallback (backend server down or static preview)
+      return this.authenticateMock(cleanId, password);
     }
   }
 
   public async getMe(): Promise<UserProfile> {
+    if (isStaticHost) {
+      const stored = localStorage.getItem('apex_user') || sessionStorage.getItem('apex_user');
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch {}
+      }
+      return {
+        id: 'usr-admin',
+        username: 'admin',
+        name: 'System Administrator',
+        fullName: 'System Administrator',
+        email: 'admin@loansystem.edu',
+        role: 'admin',
+        title: 'System Administrator',
+        department: 'Executive Administration',
+        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin',
+        branch: 'Phnom Penh Main Branch',
+        createdAt: '2026-01-01',
+        lastLogin: new Date().toISOString(),
+      };
+    }
+
     try {
       const res = await this.request<any>('/auth/me');
       const u = res.user || res;
+      const normalizedRole = (u?.role === 'admin' || u?.role === 'ADMIN') ? 'admin' : 'user';
       return {
         id: u.id,
         username: u.username,
-        name: u.fullName,
-        fullName: u.fullName,
+        name: u.fullName || u.name,
+        fullName: u.fullName || u.name,
         email: u.email,
-        role: u.role as UserRole,
-        title: u.position || (u.role === 'MANAGER' ? 'Executive Branch Manager' : u.role === 'CASHIER' ? 'Desk Cashier' : u.role === 'LOAN_OFFICER' ? 'Senior Underwriter' : 'Retail Client'),
-        department: u.department || 'Banking Operations',
+        role: normalizedRole as UserRole,
+        title: u.position || (normalizedRole === 'admin' ? 'System Administrator' : 'Client Borrower'),
+        department: u.department || (normalizedRole === 'admin' ? 'Executive Administration' : 'Client Services'),
         avatar: u.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.username)}`,
         avatarUrl: u.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.username)}`,
         branch: u.userSetting?.branch || 'Phnom Penh Main Branch',
@@ -247,7 +306,11 @@ class ApiService {
     } catch {
       // Return cached user profile if offline
       const stored = localStorage.getItem('apex_user') || sessionStorage.getItem('apex_user');
-      if (stored) return JSON.parse(stored);
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch {}
+      }
       return USER_PROFILES.MANAGER;
     }
   }
@@ -443,6 +506,31 @@ class ApiService {
     }
   }
 
+  private saveRegisteredMockUser(payload: {
+    fullName: string;
+    username: string;
+    email: string;
+    password?: string;
+  }) {
+    try {
+      const existing = JSON.parse(localStorage.getItem('apex_registered_users') || '{}');
+      const cleanEmail = payload.email.trim().toLowerCase();
+      const cleanUsername = payload.username.trim().toLowerCase();
+      const newUser = {
+        role: 'user' as const,
+        status: 'active' as const,
+        name: payload.fullName || payload.username,
+        email: payload.email,
+        username: payload.username,
+        password: payload.password || 'Password123!',
+        borrowerId: `BOR-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+      };
+      existing[cleanEmail] = newUser;
+      existing[cleanUsername] = newUser;
+      localStorage.setItem('apex_registered_users', JSON.stringify(existing));
+    } catch {}
+  }
+
   public async register(payload: {
     fullName: string;
     username: string;
@@ -452,12 +540,25 @@ class ApiService {
     confirmPassword?: string;
     role?: UserRole;
   }): Promise<{ success: boolean; message: string; email: string; devOtp?: string }> {
+    if (isStaticHost) {
+      this.saveRegisteredMockUser(payload);
+      return {
+        success: true,
+        message: 'Account created successfully. A verification code has been sent to your Gmail.',
+        email: payload.email,
+        devOtp: '482915',
+      };
+    }
     try {
       return await this.request('/auth/register', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
-    } catch {
+    } catch (err: any) {
+      if (err?.status === 400 || err?.status === 409 || err?.status === 422) {
+        throw err;
+      }
+      this.saveRegisteredMockUser(payload);
       return {
         success: true,
         message: 'Account created successfully. A verification code has been sent to your Gmail.',

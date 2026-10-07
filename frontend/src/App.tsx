@@ -81,6 +81,46 @@ import { useAuth } from './context/AuthContext';
 
 type AuthView = 'login' | 'register' | 'otp_verify' | 'forgot_password' | 'set_new_password';
 
+// GitHub Pages & Static Environment Route Helpers
+const getBasePath = (): string => {
+  if (typeof window === 'undefined') return '';
+  const pathname = window.location.pathname;
+  if (pathname.startsWith('/Loan-management-system')) {
+    return '/Loan-management-system';
+  }
+  return '';
+};
+
+const getNormalizedPath = (): string => {
+  if (typeof window === 'undefined') return '/';
+  let p = window.location.pathname;
+  const base = getBasePath();
+  if (base && p.startsWith(base)) {
+    p = p.slice(base.length);
+  }
+  if (!p || p === '') p = '/';
+  if (p.length > 1 && p.endsWith('/')) {
+    p = p.slice(0, -1);
+  }
+  return p;
+};
+
+const pushAppRoute = (route: string) => {
+  const base = getBasePath();
+  const target = `${base}${route.startsWith('/') ? route : '/' + route}`;
+  if (window.location.pathname !== target) {
+    window.history.pushState(null, '', target);
+  }
+};
+
+const replaceAppRoute = (route: string) => {
+  const base = getBasePath();
+  const target = `${base}${route.startsWith('/') ? route : '/' + route}`;
+  if (window.location.pathname !== target) {
+    window.history.replaceState(null, '', target);
+  }
+};
+
 export const App: React.FC = () => {
   // Global Auth Context Hook
   const {
@@ -138,7 +178,7 @@ export const App: React.FC = () => {
   // Synchronize route and enforce Point 4 & Point 8 access control
   useEffect(() => {
     const handleUrlSync = () => {
-      const path = window.location.pathname;
+      const path = getNormalizedPath();
 
       if (!authIsAuthenticated || !authUser) {
         if (path === '/register') setAuthView('register');
@@ -146,7 +186,7 @@ export const App: React.FC = () => {
         else {
           setAuthView('login');
           if (path.startsWith('/admin') || path.startsWith('/user')) {
-            window.history.replaceState(null, '', '/login');
+            replaceAppRoute('/login');
           }
         }
         return;
@@ -157,7 +197,7 @@ export const App: React.FC = () => {
       // If a normal user tries to access an admin URL directly (/admin/*), reject and return Access Denied
       if (!isAdmin && (path.startsWith('/admin') || path === '/access-denied')) {
         setActiveTab('access_denied');
-        window.history.replaceState(null, '', '/access-denied');
+        replaceAppRoute('/access-denied');
         return;
       }
 
@@ -166,12 +206,12 @@ export const App: React.FC = () => {
         return;
       }
 
-      if (path === '/admin/dashboard' || (isAdmin && (path === '/login' || path === '/'))) {
+      if (path === '/admin/dashboard' || (isAdmin && (path === '/login' || path === '/' || path === ''))) {
         setActiveTab('dashboard');
-        window.history.replaceState(null, '', '/admin/dashboard');
-      } else if (path === '/user/dashboard' || (!isAdmin && (path === '/login' || path === '/'))) {
+        replaceAppRoute('/admin/dashboard');
+      } else if (path === '/user/dashboard' || (!isAdmin && (path === '/login' || path === '/' || path === ''))) {
         setActiveTab('user_dashboard');
-        window.history.replaceState(null, '', '/user/dashboard');
+        replaceAppRoute('/user/dashboard');
       } else if (path === '/admin/users') {
         setActiveTab('user_management');
       } else if (path === '/admin/borrowers') {
@@ -208,6 +248,14 @@ export const App: React.FC = () => {
         setActiveTab('loans');
       } else if (path === '/user/payments') {
         setActiveTab('cashier');
+      } else {
+        if (isAdmin) {
+          setActiveTab('dashboard');
+          replaceAppRoute('/admin/dashboard');
+        } else {
+          setActiveTab('user_dashboard');
+          replaceAppRoute('/user/dashboard');
+        }
       }
     };
 
@@ -224,10 +272,10 @@ export const App: React.FC = () => {
 
     const isAdmin = user.role === 'admin' || user.role === 'ADMIN';
     if (isAdmin) {
-      window.history.replaceState(null, '', '/admin/dashboard');
+      replaceAppRoute('/admin/dashboard');
       setActiveTab('dashboard');
     } else {
-      window.history.replaceState(null, '', '/user/dashboard');
+      replaceAppRoute('/user/dashboard');
       setActiveTab('user_dashboard');
     }
   };
@@ -237,7 +285,7 @@ export const App: React.FC = () => {
     setAuthView('login');
     setAuthNotice(null);
     setAccessDeniedMessage(null);
-    window.history.replaceState(null, '', '/login');
+    replaceAppRoute('/login');
   };
 
   // Domain Entity State
@@ -371,82 +419,82 @@ export const App: React.FC = () => {
 
     if (!isAdmin && adminRestrictedTabs.includes(navId)) {
       setActiveTab('access_denied');
-      window.history.replaceState(null, '', '/access-denied');
+      replaceAppRoute('/access-denied');
       return;
     }
 
     if (navId === 'dashboard') {
       if (isAdmin) {
         setActiveTab('dashboard');
-        window.history.pushState(null, '', '/admin/dashboard');
+        pushAppRoute('/admin/dashboard');
       } else {
         setActiveTab('user_dashboard');
-        window.history.pushState(null, '', '/user/dashboard');
+        pushAppRoute('/user/dashboard');
       }
     } else if (navId === 'user_management') {
       setActiveTab('user_management');
-      window.history.pushState(null, '', '/admin/users');
+      pushAppRoute('/admin/users');
     } else if (navId === 'borrowers') {
       setActiveTab('borrowers');
-      window.history.pushState(null, '', '/admin/borrowers');
+      pushAppRoute('/admin/borrowers');
     } else if (navId === 'borrower_portal') {
       setSelectedBorrowerId(currentUser.borrowerId || 'BOR-2026-0001');
       setActiveTab('borrower-detail');
-      window.history.pushState(null, '', '/user/profile');
+      pushAppRoute('/user/profile');
     } else if (navId === 'apply_loan') {
       setActiveTab('new-application');
-      window.history.pushState(null, '', '/user/apply_loan');
+      pushAppRoute('/user/apply_loan');
     } else if (navId === 'my_applications') {
       setActiveTab('applications');
-      window.history.pushState(null, '', '/user/my_applications');
+      pushAppRoute('/user/my_applications');
     } else if (navId === 'my_loans') {
       setActiveTab('loans');
-      window.history.pushState(null, '', '/user/my_loans');
+      pushAppRoute('/user/my_loans');
     } else if (navId === 'repayment_schedule') {
       setActiveTab('loans');
-      window.history.pushState(null, '', '/user/repayment_schedule');
+      pushAppRoute('/user/repayment_schedule');
     } else if (navId === 'my_repayments') {
       setActiveTab('cashier');
-      window.history.pushState(null, '', '/user/payments');
+      pushAppRoute('/user/payments');
     } else if (navId === 'applications') {
       setActiveTab('applications');
-      window.history.pushState(null, '', '/admin/applications');
+      pushAppRoute('/admin/applications');
     } else if (navId === 'loan_products') {
       setActiveTab('loan_products');
-      window.history.pushState(null, '', '/admin/loan_products');
+      pushAppRoute('/admin/loan_products');
     } else if (navId === 'credit_reviews') {
       setActiveTab('credit_reviews');
-      window.history.pushState(null, '', '/admin/credit_reviews');
+      pushAppRoute('/admin/credit_reviews');
     } else if (navId === 'risk_assessment') {
       setActiveTab('risk_assessment');
     } else if (navId === 'cashier_desk' || navId === 'disbursements' || navId === 'receipts' || navId === 'cashier') {
       setActiveTab('cashier');
-      window.history.pushState(null, '', isAdmin ? '/admin/disbursements' : '/user/payments');
+      pushAppRoute(isAdmin ? '/admin/disbursements' : '/user/payments');
     } else if (navId === 'approvals') {
       setActiveTab('approvals');
-      window.history.pushState(null, '', '/admin/approvals');
+      pushAppRoute('/admin/approvals');
     } else if (navId === 'loans') {
       setActiveTab('loans');
-      window.history.pushState(null, '', isAdmin ? '/admin/loans' : '/user/my_loans');
+      pushAppRoute(isAdmin ? '/admin/loans' : '/user/my_loans');
     } else if (navId === 'overdue') {
       setActiveTab('overdue');
-      window.history.pushState(null, '', '/admin/overdue');
+      pushAppRoute('/admin/overdue');
     } else if (navId === 'reports') {
       setActiveTab('reports');
-      window.history.pushState(null, '', '/admin/reports');
+      pushAppRoute('/admin/reports');
     } else if (navId === 'audit_logs') {
       setActiveTab('audit_logs');
-      window.history.pushState(null, '', '/admin/audit_logs');
+      pushAppRoute('/admin/audit_logs');
     } else if (navId === 'system_config') {
       setActiveTab('system_config');
-      window.history.pushState(null, '', '/admin/settings');
+      pushAppRoute('/admin/settings');
     } else {
       if (isAdmin) {
         setActiveTab('dashboard');
-        window.history.pushState(null, '', '/admin/dashboard');
+        pushAppRoute('/admin/dashboard');
       } else {
         setActiveTab('user_dashboard');
-        window.history.pushState(null, '', '/user/dashboard');
+        pushAppRoute('/user/dashboard');
       }
     }
   };
@@ -736,7 +784,7 @@ export const App: React.FC = () => {
           {activeTab === 'access_denied' && (
             <AccessDeniedPage
               onBackToDashboard={() => {
-                window.history.replaceState(null, '', '/user/dashboard');
+                replaceAppRoute('/user/dashboard');
                 setActiveTab('user_dashboard');
               }}
               onLogout={handleLogout}

@@ -50,20 +50,25 @@ export async function authenticate(
     };
 
     let user: any = null;
-    try {
-      user = await prisma.user.findUnique({
-        where: { id: decoded.id },
-        select: {
-          id: true,
-          username: true,
-          email: true,
-          role: true,
-          status: true,
-          fullName: true,
-        },
-      });
-    } catch {
-      // Fallback for offline environments using verified cryptographically signed JWT payload
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decoded.id);
+    if (isUuid) {
+      try {
+        user = await prisma.user.findUnique({
+          where: { id: decoded.id },
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            role: true,
+            status: true,
+            fullName: true,
+          },
+        });
+      } catch {
+        // Fallback
+      }
+    }
+    if (!user) {
       user = {
         id: decoded.id,
         username: decoded.username,

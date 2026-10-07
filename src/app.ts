@@ -18,6 +18,8 @@ import { reportRouter } from './modules/reports/report.routes';
 import { notificationRouter } from './modules/notifications/notification.routes';
 import { userRouter } from './modules/users/user.routes';
 import { demoRouter } from './modules/demo/demo.routes';
+import { authenticate, verifyToken } from './middlewares/auth.middleware';
+import { checkRole } from './middlewares/rbac.middleware';
 import { sendError, sendSuccess } from './utils/response';
 
 export function createApp(): Application {
@@ -69,6 +71,85 @@ export function createApp(): Application {
     });
   });
 
+  // =========================================================================
+  // BACKEND ADMIN ROUTE PROTECTION (/admin, /admin/*)
+  // Direct access is strictly guarded: unauthenticated -> 401 / /login,
+  // normal users (USER) -> 403 Forbidden / /user/dashboard or /access-denied.
+  // =========================================================================
+  app.all(['/admin', '/admin/*'], (req: Request, res: Response) => {
+    const authHeader = req.headers.authorization;
+    const queryToken = typeof req.query.token === 'string' ? req.query.token : undefined;
+    const token = (authHeader && authHeader.startsWith('Bearer '))
+      ? authHeader.split(' ')[1]
+      : queryToken;
+
+    const isBrowserHtmlRequest =
+      req.accepts('html') &&
+      !req.xhr &&
+      !req.headers.accept?.includes('application/json') &&
+      !authHeader;
+
+    if (!token) {
+      if (isBrowserHtmlRequest) {
+        return res.redirect('/login');
+      }
+      return sendError(
+        res,
+        'Authentication required to access administrative resources',
+        401,
+        'UNAUTHORIZED'
+      );
+    }
+
+    try {
+      const decoded = verifyToken(token);
+      const userRole = String(decoded.role || '').toUpperCase();
+
+      if (userRole !== 'ADMIN') {
+        if (req.accepts('html') && !req.headers.accept?.includes('application/json')) {
+          return res.redirect('/user/dashboard?denied=true');
+        }
+        return sendError(
+          res,
+          'Access Denied: You do not have permission to access this page.',
+          403,
+          'FORBIDDEN'
+        );
+      }
+
+      // Authenticated ADMIN requesting HTML page
+      const indexPath = path.join(publicDir, 'index.html');
+      if (req.accepts('html') && fs.existsSync(indexPath)) {
+        return res.sendFile(indexPath);
+      }
+
+      return sendSuccess(res, {
+        service: 'Admin Console API',
+        message: 'Admin access authorized',
+        route: req.originalUrl,
+      });
+    } catch {
+      if (req.accepts('html') && !req.headers.accept?.includes('application/json')) {
+        return res.redirect('/login');
+      }
+      return sendError(res, 'Invalid authentication token', 401, 'INVALID_TOKEN');
+    }
+  });
+
+  // Dedicated Admin API endpoints (/api/admin, /api/v1/admin)
+  app.use(
+    ['/api/admin', '/api/v1/admin'],
+    authenticate,
+    checkRole('ADMIN'),
+    (req: Request, res: Response) => {
+      sendSuccess(res, {
+        service: 'Administrative Core API',
+        status: 'AUTHORIZED',
+        adminUser: (req as any).user?.email
+      });
+    }
+  );
+
   // 1. Authentication & RBAC
   app.use(['/api/auth', '/api/v1/auth'], authRouter);
 
@@ -100,11 +181,23 @@ export function createApp(): Application {
   // 10. Notifications & Alerts
   app.use(['/api/notifications', '/api/v1/notifications'], notificationRouter);
 
-  // 11. User & Role Management (Admin / Manager, Cashier, Borrower)
+  // 11. User & Role Management (Strictly Admin superuser access)
   app.use(['/api/users', '/api/v1/users'], userRouter);
 
-  // 12. Live Fast-Forward Demo Trigger (Point 44)
-  app.use(['/api/demo', '/api/v1/demo'], demoRouter);
+  // 12. Live Fast-Forward Demo Trigger
+  app.use(['/api/demo', '/api/demo'], demoRouter);
+
+  // SPA Route Fallback for browser client navigation
+  app.get(
+    ['/user', '/user/*', '/access-denied', '/login', '/register', '/forgot-password'],
+    (req: Request, res: Response) => {
+      const indexPath = path.join(publicDir, 'index.html');
+      if (req.accepts('html') && fs.existsSync(indexPath)) {
+        return res.sendFile(indexPath);
+      }
+      return sendSuccess(res, { route: req.originalUrl });
+    }
+  );
 
   // 404 Route Handler
   app.use((req: Request, res: Response) => {

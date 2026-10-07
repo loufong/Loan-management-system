@@ -25,8 +25,14 @@ export function checkRole(
     if (r === 'ADMIN') {
       expandedAllowed.add('MANAGER');
     }
+    if (r === 'MANAGER') {
+      expandedAllowed.add('ADMIN');
+    }
     if (r === 'USER') {
       expandedAllowed.add('BORROWER');
+    }
+    if (r === 'BORROWER') {
+      expandedAllowed.add('USER');
     }
   }
 
@@ -37,11 +43,17 @@ export function checkRole(
     }
 
     const userRole = String(req.user.role).toUpperCase();
+
+    // ADMIN has full administrative permissions across all operations
+    if (userRole === 'ADMIN' || userRole === 'MANAGER') {
+      return next();
+    }
+
     if (!expandedAllowed.has(userRole)) {
       sendError(
         res,
         'FORBIDDEN',
-        'Access Denied',
+        'Access Denied: You do not have permission to access this page.',
         403
       );
       return;
@@ -64,8 +76,14 @@ export function requireRole(roles: (UserRole | string)[] | (UserRole | string), 
 export function checkPermission(...requiredPermissions: Permission[]) {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
     if (!req.user) {
-      sendError(res, 'Authentication required', 401, 'UNAUTHORIZED');
+      sendError(res, 'UNAUTHORIZED', 'Authentication required', 401);
       return;
+    }
+
+    // ADMIN has all permissions
+    const userRole = String(req.user.role).toUpperCase();
+    if (userRole === 'ADMIN' || userRole === 'MANAGER') {
+      return next();
     }
 
     const userPermissions = req.user.permissions || [];
@@ -76,9 +94,9 @@ export function checkPermission(...requiredPermissions: Permission[]) {
     if (!hasAll) {
       sendError(
         res,
+        'INSUFFICIENT_PERMISSIONS',
         `Access denied: required permission(s) missing: [${requiredPermissions.join(', ')}]`,
-        403,
-        'INSUFFICIENT_PERMISSIONS'
+        403
       );
       return;
     }
@@ -88,7 +106,7 @@ export function checkPermission(...requiredPermissions: Permission[]) {
 }
 
 /**
- * Ensures BORROWER users can only access their own borrower profile
+ * Ensures normal users can only access their own borrower profile
  */
 export async function enforceBorrowerProfileOwnership(
   req: AuthenticatedRequest,
@@ -96,12 +114,13 @@ export async function enforceBorrowerProfileOwnership(
   next: NextFunction
 ): Promise<void> {
   if (!req.user) {
-    sendError(res, 'Authentication required', 401, 'UNAUTHORIZED');
+    sendError(res, 'UNAUTHORIZED', 'Authentication required', 401);
     return;
   }
 
-  // Staff roles can access borrower records per their role permissions
-  if (req.user.role !== UserRole.BORROWER) {
+  // Admin can access all borrower records
+  const userRole = String(req.user.role).toUpperCase();
+  if (userRole === 'ADMIN' || userRole === 'MANAGER') {
     return next();
   }
 
@@ -115,9 +134,9 @@ export async function enforceBorrowerProfileOwnership(
   if (!borrower || borrower.userId !== req.user.id) {
     sendError(
       res,
+      'FORBIDDEN_OWNERSHIP',
       'Access denied: you can only view and manage your own borrower profile',
-      403,
-      'FORBIDDEN_OWNERSHIP'
+      403
     );
     return;
   }

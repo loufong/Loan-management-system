@@ -62,7 +62,7 @@ export class UserCreationService {
             passwordHash: pendingRegistration.passwordHash, // Copied already-hashed!
             fullName: pendingRegistration.fullName.trim(),
             phone: pendingRegistration.phone.trim(),
-            role: UserRole.BORROWER, // Public registrations always default to BORROWER
+            role: UserRole.USER, // Public registrations always default to USER
             status: UserStatus.ACTIVE,
             avatarUrl: defaultAvatar,
             lastLogin: now,
@@ -116,7 +116,7 @@ export class UserCreationService {
         email: cleanEmail,
         fullName: pendingRegistration.fullName.trim(),
         phone: pendingRegistration.phone.trim(),
-        role: UserRole.BORROWER,
+        role: UserRole.USER,
         status: UserStatus.ACTIVE,
         avatarUrl: defaultAvatar,
         lastLogin: now,

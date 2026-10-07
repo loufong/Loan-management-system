@@ -46,11 +46,15 @@ const registerSchema = z
     phone: z.string().min(8, 'Please enter a valid phone number (min 8 digits)').max(20),
     password: passwordRule,
     confirmPassword: z.string().min(1, 'Please confirm your password'),
-    role: z.enum(['ADMIN', 'MANAGER', 'LOAN_OFFICER', 'CREDIT_OFFICER', 'CASHIER', 'BORROWER']).optional(),
+    role: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
     path: ['confirmPassword'],
+  })
+  .refine((data) => !data.role || String(data.role).toUpperCase() !== 'ADMIN', {
+    message: 'Registering as an administrator is forbidden. Normal users can only register as standard users.',
+    path: ['role'],
   });
 
 // 3. Verify OTP Schema

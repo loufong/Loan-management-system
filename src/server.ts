@@ -8,7 +8,30 @@ import { initRegistrationCleanupCron, stopRegistrationCleanupCron } from './modu
 
 const PORT = parseInt(process.env.PORT || '5000', 10);
 
+async function ensureDatabaseConnected() {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    console.log('✅ Connected to PostgreSQL Database.');
+  } catch (err: any) {
+    if (process.platform === 'win32') {
+      try {
+        console.log('⚠️ Database not ready. Ensuring WSL PostgreSQL service is running...');
+        const { execSync } = require('child_process');
+        execSync('wsl -d Ubuntu -u root service postgresql start', { stdio: 'ignore' });
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        await prisma.$queryRaw`SELECT 1`;
+        console.log('✅ Connected to PostgreSQL Database via WSL.');
+        return;
+      } catch {
+        // Fall through
+      }
+    }
+    throw err;
+  }
+}
+
 async function bootstrap() {
+  await ensureDatabaseConnected();
   const app = createApp();
 
   const server = app.listen(PORT, () => {

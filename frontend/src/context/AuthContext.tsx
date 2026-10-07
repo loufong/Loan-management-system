@@ -7,7 +7,7 @@ interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (usernameOrEmail: string, password?: string, rememberMe?: boolean, roleOverride?: UserRole) => Promise<UserProfile>;
+  login: (usernameOrEmail: string, password?: string, rememberMe?: boolean) => Promise<UserProfile>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<UserProfile | null>;
   switchRole: (role: UserRole) => Promise<void>;
@@ -115,12 +115,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = async (
     usernameOrEmail: string,
     password = 'Password123!',
-    rememberMe = true,
-    roleOverride?: UserRole
+    rememberMe = true
   ): Promise<UserProfile> => {
     setIsLoading(true);
     try {
-      const result = await api.login(usernameOrEmail, password, rememberMe, roleOverride);
+      const result = await api.login(usernameOrEmail, password, rememberMe);
       setSession(result.user, result.token, rememberMe);
       return result.user;
     } finally {
@@ -159,19 +158,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const switchRole = async (role: UserRole) => {
-    if (!user) return;
-    const updated = {
-      ...user,
-      role,
-      title: role === 'MANAGER' ? 'Executive Branch Manager' : role === 'CASHIER' ? 'Desk Cashier' : role === 'LOAN_OFFICER' ? 'Senior Underwriter' : 'Retail Client',
-    };
-    setUser(updated);
-    if (localStorage.getItem('apex_token')) {
-      localStorage.setItem('apex_user', JSON.stringify(updated));
-    } else {
-      sessionStorage.setItem('apex_user', JSON.stringify(updated));
-    }
+  const switchRole = async (_role: UserRole) => {
+    // Role switching disabled: role is strictly determined by server authentication
+    return;
   };
 
   const updateSettings = async (settings: Partial<UserSettings>) => {

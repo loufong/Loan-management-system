@@ -9,12 +9,9 @@ import {
   CheckCircle2,
   Wallet,
   CreditCard,
-  AlertTriangle,
   Layers,
   BarChart3,
-  History,
   UserCircle,
-  FilePlus,
   Receipt,
   Settings,
   ChevronLeft,
@@ -51,53 +48,26 @@ export interface NavSection {
   items: NavItem[];
 }
 
-// Enterprise Standardized Navigation Structure
+// Enterprise Standardized Navigation Structure matching exact user requirements
 export const ADMIN_SECTIONS: NavSection[] = [
   {
     items: [
-      { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, allowedRoles: ['admin', 'ADMIN', 'MANAGER'] },
-    ]
-  },
-  {
-    title: 'Loan Management',
-    items: [
-      { id: 'applications', label: 'Loan Applications', icon: FileText, badge: '7', badgeVariant: 'amber', allowedRoles: ['admin', 'ADMIN', 'MANAGER'] },
-      { id: 'loans', label: 'Active Loans', icon: Wallet, allowedRoles: ['admin', 'ADMIN', 'MANAGER'] },
-      { id: 'loan_products', label: 'Loan Products', icon: Layers, allowedRoles: ['admin', 'ADMIN', 'MANAGER'] },
-      { id: 'disbursements', label: 'Disbursement', icon: Landmark, allowedRoles: ['admin', 'ADMIN', 'MANAGER'] },
-    ]
-  },
-  {
-    title: 'Borrowers',
-    items: [
-      { id: 'borrowers', label: 'All Borrowers', icon: Users, allowedRoles: ['admin', 'ADMIN', 'MANAGER'] },
-      { id: 'borrower_portal', label: 'Borrower Profiles', icon: UserCircle, allowedRoles: ['admin', 'ADMIN', 'MANAGER'] },
-      { id: 'loan_history', label: 'Loan History', icon: History, allowedRoles: ['admin', 'ADMIN', 'MANAGER'] },
-    ]
-  },
-  {
-    title: 'Payments',
-    items: [
-      { id: 'cashier', label: 'Payments', icon: CreditCard, allowedRoles: ['admin', 'ADMIN', 'MANAGER'] },
-      { id: 'payment_history', label: 'Payment History', icon: Receipt, allowedRoles: ['admin', 'ADMIN', 'MANAGER'] },
-      { id: 'repayment_schedule', label: 'Repayment Schedule', icon: Calendar, allowedRoles: ['admin', 'ADMIN', 'MANAGER'] },
-      { id: 'outstanding_balance', label: 'Outstanding Balance', icon: Wallet, allowedRoles: ['admin', 'ADMIN', 'MANAGER'] },
-      { id: 'overdue', label: 'Overdue Loans', icon: AlertTriangle, badge: '1', badgeVariant: 'rose', allowedRoles: ['admin', 'ADMIN', 'MANAGER'] },
-    ]
-  },
-  {
-    title: 'Governance & Insights',
-    items: [
-      { id: 'reports', label: 'Reports', icon: BarChart3, allowedRoles: ['admin', 'ADMIN', 'MANAGER'] },
-      { id: 'notifications', label: 'Notifications', icon: Bell, allowedRoles: ['admin', 'ADMIN', 'MANAGER'] },
-      { id: 'audit_logs', label: 'Audit Logs', icon: History, allowedRoles: ['admin', 'ADMIN', 'MANAGER'] },
-    ]
-  },
-  {
-    title: 'Administration',
-    items: [
-      { id: 'user_management', label: 'Users', icon: Users, allowedRoles: ['admin', 'ADMIN', 'MANAGER'] },
-      { id: 'system_config', label: 'Settings', icon: Settings, allowedRoles: ['admin', 'ADMIN', 'MANAGER'] },
+      { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, allowedRoles: ['admin', 'ADMIN'] },
+      { id: 'user_management', label: 'Users', icon: Users, allowedRoles: ['admin', 'ADMIN'] },
+      { id: 'roles_permissions', label: 'Roles & Permissions', icon: ShieldCheck, allowedRoles: ['admin', 'ADMIN'] },
+      { id: 'borrowers', label: 'Borrowers', icon: Users, allowedRoles: ['admin', 'ADMIN'] },
+      { id: 'loan_products', label: 'Loan Products', icon: Layers, allowedRoles: ['admin', 'ADMIN'] },
+      { id: 'applications', label: 'Loan Applications', icon: FileText, allowedRoles: ['admin', 'ADMIN'] },
+      { id: 'credit_reviews', label: 'Loan Review', icon: CheckCircle2, allowedRoles: ['admin', 'ADMIN'] },
+      { id: 'approvals', label: 'Approvals', icon: ShieldCheck, allowedRoles: ['admin', 'ADMIN'] },
+      { id: 'disbursements', label: 'Disbursement', icon: Landmark, allowedRoles: ['admin', 'ADMIN'] },
+      { id: 'repayment_schedule', label: 'Repayments', icon: Calendar, allowedRoles: ['admin', 'ADMIN'] },
+      { id: 'cashier', label: 'Payments', icon: CreditCard, allowedRoles: ['admin', 'ADMIN'] },
+      { id: 'reports', label: 'Reports', icon: BarChart3, allowedRoles: ['admin', 'ADMIN'] },
+      { id: 'notifications', label: 'Notifications', icon: Bell, allowedRoles: ['admin', 'ADMIN'] },
+      { id: 'system_config', label: 'Settings', icon: Settings, allowedRoles: ['admin', 'ADMIN'] },
+      { id: 'profile', label: 'Profile', icon: UserCircle, allowedRoles: ['admin', 'ADMIN'] },
+      { id: 'logout', label: 'Logout', icon: LogOut, isLogout: true, allowedRoles: ['admin', 'ADMIN'] },
     ]
   }
 ];
@@ -105,25 +75,15 @@ export const ADMIN_SECTIONS: NavSection[] = [
 export const USER_SECTIONS: NavSection[] = [
   {
     items: [
-      { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, allowedRoles: ['user', 'USER', 'BORROWER'] },
-    ]
-  },
-  {
-    title: 'Borrower Services',
-    items: [
+      { id: 'user_dashboard', label: 'Dashboard', icon: LayoutDashboard, allowedRoles: ['user', 'USER', 'BORROWER'] },
       { id: 'borrower_portal', label: 'My Profile', icon: UserCircle, allowedRoles: ['user', 'USER', 'BORROWER'] },
-      { id: 'apply_loan', label: 'Apply for Loan', icon: FilePlus, allowedRoles: ['user', 'USER', 'BORROWER'] },
-      { id: 'my_applications', label: 'My Applications', icon: FileText, allowedRoles: ['user', 'USER', 'BORROWER'] },
+      { id: 'my_applications', label: 'My Loan Applications', icon: FileText, allowedRoles: ['user', 'USER', 'BORROWER'] },
       { id: 'my_loans', label: 'My Loans', icon: Wallet, allowedRoles: ['user', 'USER', 'BORROWER'] },
-      { id: 'repayment_schedule', label: 'Repayment Schedule', icon: Calendar, allowedRoles: ['user', 'USER', 'BORROWER'] },
-      { id: 'my_repayments', label: 'Payments', icon: Receipt, allowedRoles: ['user', 'USER', 'BORROWER'] },
-    ]
-  },
-  {
-    title: 'Account',
-    items: [
+      { id: 'repayment_schedule', label: 'My Repayment Schedule', icon: Calendar, allowedRoles: ['user', 'USER', 'BORROWER'] },
+      { id: 'my_repayments', label: 'My Payments', icon: Receipt, allowedRoles: ['user', 'USER', 'BORROWER'] },
       { id: 'notifications', label: 'Notifications', icon: Bell, allowedRoles: ['user', 'USER', 'BORROWER'] },
-      { id: 'system_config', label: 'Settings', icon: Settings, allowedRoles: ['user', 'USER', 'BORROWER'] },
+      { id: 'system_config', label: 'Settings/Profile', icon: Settings, allowedRoles: ['user', 'USER', 'BORROWER'] },
+      { id: 'logout', label: 'Logout', icon: LogOut, isLogout: true, allowedRoles: ['user', 'USER', 'BORROWER'] },
     ]
   }
 ];
@@ -140,7 +100,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [internalCollapsed, setInternalCollapsed] = useState(false);
   const [hoveredItemId, setHoveredItemId] = useState<string | null>(null);
 
-  const isCollapsed = controlledCollapsed !== undefined ? controlledCollapsed : internalCollapsed;
+  const isControlled = controlledCollapsed !== undefined;
+  const isCollapsed = isControlled ? controlledCollapsed : internalCollapsed;
 
   const handleToggle = () => {
     if (onToggleCollapse) {
@@ -152,26 +113,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const isAdmin =
     currentUser.role === 'admin' ||
-    currentUser.role === 'ADMIN' ||
-    currentUser.role === 'MANAGER';
+    currentUser.role === 'ADMIN';
 
   const visibleSections = isAdmin ? ADMIN_SECTIONS : USER_SECTIONS;
 
   const isItemActive = (itemId: string) => {
     if (activeNavId === itemId) return true;
-    if (itemId === 'borrowers' && activeNavId === 'borrower-detail') return true;
-    if (itemId === 'applications' && (activeNavId === 'new-application' || activeNavId === 'my_applications' || activeNavId === 'credit_reviews' || activeNavId === 'risk_assessment' || activeNavId === 'approvals')) return true;
-    if (itemId === 'loans' && (activeNavId === 'loan-detail' || activeNavId === 'loan_history' || activeNavId === 'outstanding_balance')) return true;
-    if (itemId === 'disbursements' && activeNavId === 'cashier') return true;
-    if (itemId === 'payment_history' && activeNavId === 'cashier') return true;
-    if (itemId === 'repayment_schedule' && (activeNavId === 'loans' || activeNavId === 'loan-detail')) return true;
-    if (itemId === 'borrower_portal' && activeNavId === 'borrower-detail') return true;
-    if (itemId === 'apply_loan' && activeNavId === 'new-application') return true;
-    if (itemId === 'my_applications' && activeNavId === 'applications') return true;
-    if (itemId === 'my_loans' && (activeNavId === 'loans' || activeNavId === 'loan-detail')) return true;
-    if (itemId === 'my_repayments' && activeNavId === 'cashier') return true;
-    if (itemId === 'user_management' && activeNavId === 'user_management') return true;
-    if (itemId === 'system_config' && activeNavId === 'system_config') return true;
+    if (itemId === 'dashboard' && activeNavId === 'dashboard') return true;
+    if (itemId === 'user_dashboard' && (activeNavId === 'user_dashboard' || activeNavId === 'dashboard')) return true;
+    if (itemId === 'user_management' && (activeNavId === 'user_management' || activeNavId === 'users')) return true;
+    if (itemId === 'roles_permissions' && activeNavId === 'roles_permissions') return true;
+    if (itemId === 'borrowers' && (activeNavId === 'borrowers' || activeNavId === 'borrower-detail')) return true;
+    if (itemId === 'loan_products' && activeNavId === 'loan_products') return true;
+    if (itemId === 'applications' && (activeNavId === 'applications' || activeNavId === 'new-application')) return true;
+    if (itemId === 'credit_reviews' && activeNavId === 'credit_reviews') return true;
+    if (itemId === 'approvals' && activeNavId === 'approvals') return true;
+    if (itemId === 'disbursements' && (activeNavId === 'disbursements' || activeNavId === 'cashier')) return true;
+    if (itemId === 'repayment_schedule' && (activeNavId === 'repayment_schedule' || activeNavId === 'loans')) return true;
+    if (itemId === 'cashier' && activeNavId === 'cashier') return true;
+    if (itemId === 'reports' && activeNavId === 'reports') return true;
+    if (itemId === 'notifications' && activeNavId === 'notifications') return true;
+    if (itemId === 'system_config' && (activeNavId === 'system_config' || activeNavId === 'settings')) return true;
+    if (itemId === 'profile' && activeNavId === 'profile') return true;
+    if (itemId === 'borrower_portal' && (activeNavId === 'borrower_portal' || activeNavId === 'borrower-detail')) return true;
+    if (itemId === 'my_applications' && (activeNavId === 'my_applications' || activeNavId === 'applications')) return true;
+    if (itemId === 'my_loans' && (activeNavId === 'my_loans' || activeNavId === 'loans' || activeNavId === 'loan-detail')) return true;
+    if (itemId === 'my_repayments' && (activeNavId === 'my_repayments' || activeNavId === 'cashier')) return true;
     return false;
   };
 
@@ -341,7 +308,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     {currentUser.name}
                   </span>
                   <span className="text-[11px] text-slate-400 truncate uppercase">
-                    {currentUser.role}
+                    {isAdmin ? 'ADMIN' : 'USER'}
                   </span>
                 </motion.div>
               )}
@@ -353,7 +320,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onClick={onLogout}
               title="Logout"
               aria-label="Logout"
-              className="p-1.5 rounded-[6px] text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              className="p-1.5 rounded-[6px] text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
             </button>

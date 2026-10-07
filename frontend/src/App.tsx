@@ -71,6 +71,7 @@ import { SystemSettings } from './components/admin/SystemSettings';
 
 import { Search, X, DollarSign, FileText, User, CreditCard, Shield, AlertCircle } from 'lucide-react';
 import { api } from './services/api';
+import { AccessDeniedPage } from './components/common/AccessDeniedPage';
 import { LoginPage } from './components/auth/LoginPage';
 import { RegisterPage } from './components/auth/RegisterPage';
 import { OtpVerificationPage } from './components/auth/OtpVerificationPage';
@@ -101,13 +102,25 @@ export const App: React.FC = () => {
   const [accessDeniedMessage, setAccessDeniedMessage] = useState<string | null>(null);
 
   // Navigation & Role State
-  const [activeTab, setActiveTab] = useState<string>('dashboard');
-  const [activeRole, setActiveRole] = useState<UserRole>(() => authUser?.role || 'admin');
-  const [currentUser, setCurrentUser] = useState<UserProfile>(() => authUser || USER_PROFILES.MANAGER);
-  const [currency, setCurrency] = useState<Currency>('USD');
-  const selectedBranch = currentUser.branch || 'Phnom Penh Main Branch';
+  const defaultFallbackUser: UserProfile = {
+    id: 'usr-default',
+    username: 'user',
+    name: 'User',
+    fullName: 'User',
+    email: 'user@example.com',
+    role: 'user',
+    status: 'active',
+    title: 'Client Borrower',
+    department: 'Client Services',
+    branch: 'Phnom Penh Main Branch',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=user',
+    createdAt: '2026-01-01',
+    lastLogin: new Date().toISOString(),
+  };
 
-  // Sync state when authenticated user profile updates
+  const [currentUser, setCurrentUser] = useState<UserProfile>(() => authUser || defaultFallbackUser);
+  const [activeRole, setActiveRole] = useState<UserRole>(() => (authUser?.role || 'user') as UserRole);
+
   useEffect(() => {
     if (authUser) {
       setCurrentUser(authUser);
@@ -115,12 +128,19 @@ export const App: React.FC = () => {
     }
   }, [authUser]);
 
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    const role = (authUser?.role || '').toLowerCase();
+    return role === 'admin' ? 'dashboard' : 'user_dashboard';
+  });
+  const [currency, setCurrency] = useState<Currency>('USD');
+  const selectedBranch = currentUser.branch || 'Phnom Penh Main Branch';
+
   // Synchronize route and enforce Point 4 & Point 8 access control
   useEffect(() => {
     const handleUrlSync = () => {
       const path = window.location.pathname;
 
-      if (!authIsAuthenticated) {
+      if (!authIsAuthenticated || !authUser) {
         if (path === '/register') setAuthView('register');
         else if (path === '/forgot-password') setAuthView('forgot_password');
         else {
@@ -132,14 +152,17 @@ export const App: React.FC = () => {
         return;
       }
 
-      const isAdmin = currentUser.role === 'admin' || currentUser.role === 'ADMIN' || currentUser.role === 'MANAGER';
+      const isAdmin = authUser.role === 'admin' || authUser.role === 'ADMIN';
 
-      // Point 4: If a normal user tries to access an admin URL directly (/admin/*), reject and return "Access Denied"
-      if (!isAdmin && path.startsWith('/admin')) {
-        setAccessDeniedMessage('Access Denied');
-        setActiveTab('user_dashboard');
-        window.history.replaceState(null, '', '/user/dashboard');
-        setTimeout(() => setAccessDeniedMessage(null), 5000);
+      // If a normal user tries to access an admin URL directly (/admin/*), reject and return Access Denied
+      if (!isAdmin && (path.startsWith('/admin') || path === '/access-denied')) {
+        setActiveTab('access_denied');
+        window.history.replaceState(null, '', '/access-denied');
+        return;
+      }
+
+      if (path === '/access-denied') {
+        setActiveTab('access_denied');
         return;
       }
 
@@ -191,17 +214,15 @@ export const App: React.FC = () => {
     handleUrlSync();
     window.addEventListener('popstate', handleUrlSync);
     return () => window.removeEventListener('popstate', handleUrlSync);
-  }, [authIsAuthenticated, currentUser.role]);
+  }, [authIsAuthenticated, authUser]);
 
   // Auth Handlers
   const handleLoginSuccess = (user: UserProfile, token: string, rememberMe = true) => {
     contextSetSession(user, token, rememberMe);
-    setCurrentUser(user);
-    setActiveRole(user.role);
     setAuthNotice(null);
     setAccessDeniedMessage(null);
 
-    const isAdmin = user.role === 'admin' || user.role === 'ADMIN' || user.role === 'MANAGER';
+    const isAdmin = user.role === 'admin' || user.role === 'ADMIN';
     if (isAdmin) {
       window.history.replaceState(null, '', '/admin/dashboard');
       setActiveTab('dashboard');
@@ -260,22 +281,8 @@ export const App: React.FC = () => {
   }, []);
 
   // Handle Role Switch
-  const handleRoleSwitch = (newRole: UserRole) => {
-    setActiveRole(newRole);
-    const profile = USER_PROFILES[newRole] || USER_PROFILES.MANAGER;
-    setCurrentUser(profile);
-    api.login(profile.username, newRole).catch(() => {});
-
-    if (newRole === 'BORROWER') {
-      setSelectedBorrowerId('BOR-2026-0001');
-      setActiveTab('borrower-detail');
-    } else if (newRole === 'CASHIER') {
-      setActiveTab('cashier');
-    } else if (newRole === 'LOAN_OFFICER') {
-      setActiveTab('credit_reviews');
-    } else {
-      setActiveTab('dashboard');
-    }
+  const handleRoleSwitch = (_newRole: UserRole) => {
+    // Role switching is strictly disabled: user role is determined solely by server authentication
   };
 
   // Keyboard shortcut listener for Ctrl+K / Cmd+K
@@ -345,11 +352,11 @@ export const App: React.FC = () => {
 
   // Sidebar navigation mapping & access control enforcement
   const handleNavSelection = (navId: string) => {
-    const isAdmin = currentUser.role === 'admin' || currentUser.role === 'ADMIN' || currentUser.role === 'MANAGER';
+    const isAdmin = currentUser.role === 'admin' || currentUser.role === 'ADMIN';
 
-    // Point 4: If a normal user tries to access admin tabs, reject with "Access Denied" and redirect to user dashboard
     const adminRestrictedTabs = [
       'user_management',
+      'roles_permissions',
       'borrowers',
       'loan_products',
       'credit_reviews',
@@ -359,13 +366,12 @@ export const App: React.FC = () => {
       'system_config',
       'reports',
       'overdue',
+      'disbursements',
     ];
 
     if (!isAdmin && adminRestrictedTabs.includes(navId)) {
-      setAccessDeniedMessage('Access Denied');
-      setActiveTab('user_dashboard');
-      window.history.replaceState(null, '', '/user/dashboard');
-      setTimeout(() => setAccessDeniedMessage(null), 5000);
+      setActiveTab('access_denied');
+      window.history.replaceState(null, '', '/access-denied');
       return;
     }
 
@@ -726,9 +732,20 @@ export const App: React.FC = () => {
             </div>
           )}
 
+          {/* Access Denied Page */}
+          {activeTab === 'access_denied' && (
+            <AccessDeniedPage
+              onBackToDashboard={() => {
+                window.history.replaceState(null, '', '/user/dashboard');
+                setActiveTab('user_dashboard');
+              }}
+              onLogout={handleLogout}
+            />
+          )}
+
           {/* Point 11: Admin Dashboard (10 KPIs) vs Point 12: User Dashboard */}
           {activeTab === 'dashboard' && (
-            (currentUser.role === 'admin' || currentUser.role === 'ADMIN' || currentUser.role === 'MANAGER') ? (
+            (currentUser.role === 'admin' || currentUser.role === 'ADMIN') ? (
               <AdminDashboard
                 currency={currency}
                 onNavigate={handleNavSelection}

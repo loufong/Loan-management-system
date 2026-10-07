@@ -44,10 +44,11 @@ async function main() {
   const defaultPasswordHash = await bcrypt.hash('Password123!', 10);
 
   // ==========================================
-  // 2. SEED USERS (All 6 Roles)
+  // 2. SEED USERS (Exactly ONE ADMIN, all others NORMAL USER)
   // ==========================================
-  console.log('👤 Seeding System Users...');
+  console.log('👤 Seeding System Users (Exactly ONE ADMIN, All Others NORMAL USER)...');
 
+  // The ONLY Admin account in the entire system
   const adminUser = await prisma.user.create({
     data: {
       username: 'admin',
@@ -57,7 +58,7 @@ async function main() {
       phone: '+1-555-0100',
       position: 'Chief Information Officer & LMS Administrator',
       department: 'IT & Systems Governance',
-      role: UserRole.MANAGER,
+      role: UserRole.ADMIN,
       status: UserStatus.ACTIVE
     }
   });
@@ -71,7 +72,7 @@ async function main() {
       phone: '+1-555-0101',
       position: 'Head of Financial Aid & Lending',
       department: 'Credit & Financial Affairs',
-      role: UserRole.MANAGER,
+      role: UserRole.USER,
       status: UserStatus.ACTIVE
     }
   });
@@ -85,7 +86,7 @@ async function main() {
       phone: '+1-555-0102',
       position: 'Senior Credit Risk Analyst',
       department: 'Risk Management',
-      role: UserRole.LOAN_OFFICER,
+      role: UserRole.USER,
       status: UserStatus.ACTIVE
     }
   });
@@ -99,7 +100,7 @@ async function main() {
       phone: '+1-555-0103',
       position: 'Senior Loan Origination Officer',
       department: 'Student Financial Services',
-      role: UserRole.LOAN_OFFICER,
+      role: UserRole.USER,
       status: UserStatus.ACTIVE
     }
   });
@@ -113,7 +114,7 @@ async function main() {
       phone: '+1-555-0104',
       position: 'University Bursar & Lead Cashier',
       department: 'Disbursement & Treasury',
-      role: UserRole.CASHIER,
+      role: UserRole.USER,
       status: UserStatus.ACTIVE
     }
   });
@@ -127,7 +128,7 @@ async function main() {
       phone: '+1-555-0201',
       position: 'Graduate Research Assistant',
       department: 'School of Computer Science',
-      role: UserRole.BORROWER,
+      role: UserRole.USER,
       status: UserStatus.ACTIVE
     }
   });
@@ -141,12 +142,12 @@ async function main() {
       phone: '+1-555-0202',
       position: 'Undergraduate Senior',
       department: 'Faculty of Engineering',
-      role: UserRole.BORROWER,
+      role: UserRole.USER,
       status: UserStatus.ACTIVE
     }
   });
 
-  // 4 Core Required Apex LMS Evaluation Users
+  // Additional Normal Users
   const apexManager = await prisma.user.create({
     data: {
       username: 'manager_apex',
@@ -156,7 +157,7 @@ async function main() {
       phone: '+1-555-0901',
       position: 'Credit Underwriting Manager',
       department: 'Credit Committee',
-      role: UserRole.MANAGER,
+      role: UserRole.USER,
       status: UserStatus.ACTIVE
     }
   });
@@ -170,7 +171,7 @@ async function main() {
       phone: '+1-555-0902',
       position: 'Senior Loan & DTI Officer',
       department: 'Origination & Risk',
-      role: UserRole.LOAN_OFFICER,
+      role: UserRole.USER,
       status: UserStatus.ACTIVE
     }
   });
@@ -184,7 +185,7 @@ async function main() {
       phone: '+1-555-0903',
       position: 'Lead Teller & Cashier',
       department: 'Disbursement & Treasury',
-      role: UserRole.CASHIER,
+      role: UserRole.USER,
       status: UserStatus.ACTIVE
     }
   });
@@ -198,7 +199,7 @@ async function main() {
       phone: '+1-555-0904',
       position: 'Graduate Research Student',
       department: 'School of Computer Science',
-      role: UserRole.BORROWER,
+      role: UserRole.USER,
       status: UserStatus.ACTIVE
     }
   });

@@ -23,7 +23,7 @@ export class UserController {
    */
   static async getById(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const user = await UserService.getUserById(req.params.id);
+      const user = await UserService.getUserById(req.params.id, req.user);
       sendSuccess(res, user, 'User details retrieved successfully');
     } catch (err) {
       next(err);
@@ -37,7 +37,7 @@ export class UserController {
     try {
       const validated = createUserSchema.parse(req.body);
       const ipAddress = (req.headers['x-forwarded-for'] as string) || req.ip;
-      const user = await UserService.createUser(validated, req.user!.id, ipAddress);
+      const user = await UserService.createUser(validated, req.user!.id, ipAddress, req.user);
       sendSuccess(res, user, 'User created successfully with assigned role', 201);
     } catch (err) {
       next(err);
@@ -51,7 +51,7 @@ export class UserController {
     try {
       const validated = updateUserSchema.parse(req.body);
       const ipAddress = (req.headers['x-forwarded-for'] as string) || req.ip;
-      const user = await UserService.updateUser(req.params.id, validated, req.user!.id, ipAddress);
+      const user = await UserService.updateUser(req.params.id, validated, req.user!.id, ipAddress, req.user);
       sendSuccess(res, user, 'User updated successfully');
     } catch (err) {
       next(err);

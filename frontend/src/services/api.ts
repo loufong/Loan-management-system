@@ -47,15 +47,43 @@ class ApiService {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
 
-    const response = await fetch(`${BASE_URL}${endpoint}`, {
-      ...options,
-      headers,
-    });
+    let response: Response;
+    try {
+      response = await fetch(`${BASE_URL}${endpoint}`, {
+        ...options,
+        headers,
+      });
+    } catch {
+      throw new Error('Unable to connect to the server. Please try again later.');
+    }
 
     if (!response.ok) {
       const errorBody = await response.json().catch(() => ({}));
-      const msg = errorBody.message || errorBody.error?.message || `Request failed with status ${response.status}`;
-      throw new Error(msg);
+      let msg = errorBody.message || errorBody.error?.message;
+
+      if (!msg) {
+        if (response.status === 401) {
+          msg = 'Please log in to continue.';
+        } else if (response.status === 403) {
+          msg = 'You do not have permission to access this page.';
+        } else if (response.status === 400 || response.status === 422) {
+          msg = 'Please check the information you entered.';
+        } else if (response.status >= 500) {
+          msg = 'Unable to connect to the server. Please try again later.';
+        } else {
+          msg = `Request failed with status ${response.status}`;
+        }
+      }
+
+      // Clear token if unauthorized on protected resource
+      if (response.status === 401 && endpoint !== '/auth/login') {
+        this.setToken(null);
+      }
+
+      const err = new Error(msg) as any;
+      err.status = response.status;
+      err.code = errorBody.code;
+      throw err;
     }
 
     const json = await response.json();
@@ -69,8 +97,7 @@ class ApiService {
   public async login(
     usernameOrEmail: string,
     password = 'Password123!',
-    rememberMe = false,
-    roleOverride?: UserRole
+    rememberMe = false
   ): Promise<{ token: string; user: UserProfile }> {
     const cleanId = usernameOrEmail.trim().toLowerCase();
 
@@ -87,7 +114,7 @@ class ApiService {
       const activeToken = res.accessToken || res.token || 'jwt-token-active';
       this.setToken(activeToken);
       const u = res.user;
-      const normalizedRole = (u?.role === 'admin' || u?.role === 'ADMIN' || u?.role === 'MANAGER') ? 'admin' : 'user';
+      const normalizedRole = (u?.role === 'admin' || u?.role === 'ADMIN') ? 'admin' : 'user';
       const matchedProfile: UserProfile = {
         id: u?.id || 'usr-default',
         username: u?.username || usernameOrEmail,
@@ -128,7 +155,8 @@ class ApiService {
 
       // Predefined accounts matching exact requirements
       const mockAccounts: Record<string, { role: 'admin' | 'user'; status: 'active' | 'inactive' | 'suspended'; name: string; email: string; username: string }> = {
-        'admin@example.com': { role: 'admin', status: 'active', name: 'Admin', email: 'admin@example.com', username: 'admin' },
+        'admin@loansystem.edu': { role: 'admin', status: 'active', name: 'Admin', email: 'admin@loansystem.edu', username: 'admin' },
+        'admin@example.com': { role: 'admin', status: 'active', name: 'Admin', email: 'admin@loansystem.edu', username: 'admin' },
         'admin': { role: 'admin', status: 'active', name: 'Admin', email: 'admin@example.com', username: 'admin' },
         'user@example.com': { role: 'user', status: 'active', name: 'Standard User', email: 'user@example.com', username: 'user' },
         'user': { role: 'user', status: 'active', name: 'Standard User', email: 'user@example.com', username: 'user' },
@@ -136,8 +164,8 @@ class ApiService {
         'inactive': { role: 'user', status: 'inactive', name: 'Inactive User', email: 'inactive@example.com', username: 'inactive' },
         'suspended@example.com': { role: 'user', status: 'suspended', name: 'Suspended User', email: 'suspended@example.com', username: 'suspended' },
         'suspended': { role: 'user', status: 'suspended', name: 'Suspended User', email: 'suspended@example.com', username: 'suspended' },
-        'manager@apex.local': { role: 'admin', status: 'active', name: 'Executive Branch Manager', email: 'manager@apex.local', username: 'manager' },
-        'manager': { role: 'admin', status: 'active', name: 'Executive Branch Manager', email: 'manager@apex.local', username: 'manager' },
+        'manager@apex.local': { role: 'user', status: 'active', name: 'Executive Branch Manager', email: 'manager@apex.local', username: 'manager' },
+        'manager': { role: 'user', status: 'active', name: 'Executive Branch Manager', email: 'manager@apex.local', username: 'manager' },
         'borrower@apex.local': { role: 'user', status: 'active', name: 'Sokha Chan', email: 'borrower@apex.local', username: 'borrower' },
         'borrower': { role: 'user', status: 'active', name: 'Sokha Chan', email: 'borrower@apex.local', username: 'borrower' },
       };

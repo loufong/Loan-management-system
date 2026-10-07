@@ -404,37 +404,6 @@ export const TopBar: React.FC<TopBarProps> = ({
                   </div>
                 </div>
 
-                {/* Role Switcher for Testing */}
-                <div className="pt-1 border-t border-[#CBD5E1]">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B] px-2 py-1">
-                    Switch Persona
-                  </p>
-                  <div className="space-y-0.5">
-                    {[
-                      { role: 'MANAGER' as UserRole, label: 'Administrator' },
-                      { role: 'CASHIER' as UserRole, label: 'Cashier' },
-                      { role: 'BORROWER' as UserRole, label: 'Borrower' },
-                    ].map((item) => (
-                      <button
-                        key={item.role}
-                        onClick={() => {
-                          onRoleSwitch(item.role);
-                          setProfileDropdownOpen(false);
-                        }}
-                        className={cn(
-                          'w-full flex items-center justify-between px-2.5 py-1.5 rounded-[4px] text-[12px] text-left transition',
-                          currentRole === item.role
-                            ? 'bg-[#2563EB] text-white font-medium'
-                            : 'text-[#0F172A] hover:bg-slate-100'
-                        )}
-                      >
-                        <span>{item.label}</span>
-                        {currentRole === item.role && <span className="text-[10px]">Active</span>}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 {/* Sign Out Button */}
                 {onLogout && (
                   <div className="pt-1.5 border-t border-[#CBD5E1]">

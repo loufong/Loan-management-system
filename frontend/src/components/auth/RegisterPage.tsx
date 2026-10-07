@@ -55,6 +55,18 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
       return;
     }
 
+    const trimmedUsername = username.trim();
+    if (!/^[a-zA-Z0-9_.-]+$/.test(trimmedUsername)) {
+      setError('Username can only contain letters, numbers, and underscores');
+      return;
+    }
+
+    const trimmedEmail = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+
     if (!isPasswordValid) {
       setError('Please make sure your password meets all complexity requirements.');
       return;
@@ -154,6 +166,9 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                   />
                   <User className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
+                <p className="text-[11px] text-[#64748B] mt-1">
+                  Letters, numbers, and underscores only
+                </p>
               </div>
             </div>
 

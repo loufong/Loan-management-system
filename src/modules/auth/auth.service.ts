@@ -29,7 +29,7 @@ export interface RegisterUserDto {
   phone: string;
   password: string;
   confirmPassword?: string;
-  role?: UserRole;
+  role?: UserRole | string;
   ipAddress?: string;
 }
 
@@ -114,17 +114,35 @@ export class AuthService {
     this.failedLoginAttempts.delete(key);
   }
 
-  // Pre-seeded core banking accounts for offline evaluation
+  // Pre-seeded accounts for offline evaluation (Strictly ONE ADMIN, all others USER)
   private static seedUsers: Map<string, InMemoryUser> = new Map([
+    [
+      'admin@loansystem.edu',
+      {
+        id: 'user-admin-0001',
+        username: 'admin',
+        email: 'admin@loansystem.edu',
+        passwordHash: bcrypt.hashSync('Password123!', 10),
+        fullName: 'Dr. Alexander Wright',
+        phone: '+1-555-0100',
+        role: UserRole.ADMIN,
+        status: UserStatus.ACTIVE,
+        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+        lastLogin: new Date(Date.now() - 1000 * 60 * 15),
+        emailVerifiedAt: new Date(),
+        createdAt: new Date('2025-01-01T08:00:00Z'),
+        updatedAt: new Date(),
+      },
+    ],
     [
       'admin@example.com',
       {
         id: 'user-admin-0001',
         username: 'admin',
-        email: 'admin@example.com',
+        email: 'admin@loansystem.edu',
         passwordHash: bcrypt.hashSync('Password123!', 10),
-        fullName: 'Admin',
-        phone: '+855 12 345 678',
+        fullName: 'Dr. Alexander Wright',
+        phone: '+1-555-0100',
         role: UserRole.ADMIN,
         status: UserStatus.ACTIVE,
         avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
@@ -197,10 +215,10 @@ export class AuthService {
         passwordHash: bcrypt.hashSync('Password123!', 10),
         fullName: 'Executive Branch Manager',
         phone: '+855 12 345 678',
-        role: UserRole.MANAGER,
+        role: UserRole.USER,
         status: UserStatus.ACTIVE,
         avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-        lastLogin: new Date(Date.now() - 1000 * 60 * 15), // 15 mins ago
+        lastLogin: new Date(Date.now() - 1000 * 60 * 15),
         emailVerifiedAt: new Date(),
         createdAt: new Date('2025-01-15T08:00:00Z'),
         updatedAt: new Date(),
@@ -215,10 +233,10 @@ export class AuthService {
         passwordHash: bcrypt.hashSync('Password123!', 10),
         fullName: 'Senior Underwriting Officer',
         phone: '+855 12 888 999',
-        role: UserRole.LOAN_OFFICER,
+        role: UserRole.USER,
         status: UserStatus.ACTIVE,
         avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-        lastLogin: new Date(Date.now() - 1000 * 60 * 45), // 45 mins ago
+        lastLogin: new Date(Date.now() - 1000 * 60 * 45),
         emailVerifiedAt: new Date(),
         createdAt: new Date('2025-02-01T09:30:00Z'),
         updatedAt: new Date(),
@@ -233,10 +251,10 @@ export class AuthService {
         passwordHash: bcrypt.hashSync('Password123!', 10),
         fullName: 'Head Teller & Cashier',
         phone: '+855 16 555 777',
-        role: UserRole.CASHIER,
+        role: UserRole.USER,
         status: UserStatus.ACTIVE,
         avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-        lastLogin: new Date(Date.now() - 1000 * 60 * 5), // 5 mins ago
+        lastLogin: new Date(Date.now() - 1000 * 60 * 5),
         emailVerifiedAt: new Date(),
         createdAt: new Date('2025-03-10T10:15:00Z'),
         updatedAt: new Date(),
@@ -251,10 +269,10 @@ export class AuthService {
         passwordHash: bcrypt.hashSync('Password123!', 10),
         fullName: 'Sokha Chan',
         phone: '+855 92 612 045',
-        role: UserRole.BORROWER,
+        role: UserRole.USER,
         status: UserStatus.ACTIVE,
         avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
-        lastLogin: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hrs ago
+        lastLogin: new Date(Date.now() - 1000 * 60 * 60 * 2),
         emailVerifiedAt: new Date(),
         createdAt: new Date('2025-06-20T14:20:00Z'),
         updatedAt: new Date(),
@@ -305,8 +323,8 @@ export class AuthService {
       const dbUser = await prisma.user.findFirst({
         where: {
           OR: [
-            { username: { equals: identifier, mode: 'insensitive' } },
-            { email: { equals: identifier, mode: 'insensitive' } },
+            { username: { equals: clean, mode: 'insensitive' } },
+            { email: { equals: clean, mode: 'insensitive' } },
           ],
         },
       });
@@ -435,6 +453,15 @@ export class AuthService {
    * Real user record is created only after OTP verification.
    */
   static async register(dto: RegisterUserDto) {
+    // Normal users must NEVER be able to register as Admin
+    if (dto.role && String(dto.role).toUpperCase() === 'ADMIN') {
+      throw {
+        statusCode: 400,
+        message: 'Registering as an administrator is forbidden. Normal users can only register as standard users.',
+        code: 'ADMIN_REGISTRATION_FORBIDDEN'
+      };
+    }
+
     const cleanEmail = PendingRegistrationService.normalizeEmail(dto.email);
     const cleanUsername = PendingRegistrationService.normalizeUsername(dto.username);
 
@@ -780,7 +807,7 @@ export class AuthService {
     }
 
     const defaultAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.username)}`;
-    const normalizedRole = (user.role === UserRole.ADMIN || user.role === UserRole.MANAGER) ? 'admin' : 'user';
+    const normalizedRole = user.role === UserRole.ADMIN ? 'admin' : 'user';
 
     // Step 9 & Response Format (Point 13)
     return {
@@ -793,6 +820,7 @@ export class AuthService {
       user: {
         id: user.id,
         name: user.fullName || user.username,
+        fullName: user.fullName || user.username,
         username: user.username,
         email: user.email,
         role: normalizedRole,
@@ -949,34 +977,38 @@ export class AuthService {
   }
 
   static async getProfile(userId: string) {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
     try {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: {
-          id: true,
-          username: true,
-          email: true,
-          fullName: true,
-          phone: true,
-          position: true,
-          department: true,
-          avatarUrl: true,
-          lastLogin: true,
-          role: true,
-          status: true,
-          createdAt: true,
-          userSetting: true,
-          borrowers: {
-            select: {
-              id: true,
-              borrowerId: true,
-              monthlyIncome: true,
-              occupation: true,
-              status: true,
+      let user: any = null;
+      if (isUuid) {
+        user = await prisma.user.findUnique({
+          where: { id: userId },
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            fullName: true,
+            phone: true,
+            position: true,
+            department: true,
+            avatarUrl: true,
+            lastLogin: true,
+            role: true,
+            status: true,
+            createdAt: true,
+            userSetting: true,
+            borrowers: {
+              select: {
+                id: true,
+                borrowerId: true,
+                monthlyIncome: true,
+                occupation: true,
+                status: true,
+              },
             },
           },
-        },
-      });
+        });
+      }
 
       if (user) {
         return {

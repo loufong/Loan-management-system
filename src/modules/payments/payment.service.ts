@@ -274,7 +274,7 @@ export class PaymentService {
       throw { statusCode: 404, message: 'Payment receipt not found', code: 'RECEIPT_NOT_FOUND' };
     }
 
-    if (viewer.role === UserRole.BORROWER && payment.loan.borrower.userId !== viewer.id) {
+    if (viewer.role !== UserRole.ADMIN && viewer.role !== UserRole.MANAGER && payment.loan.borrower.userId !== viewer.id) {
       throw {
         statusCode: 403,
         message: 'Access denied: you can only view receipts for your own loans',
@@ -341,7 +341,7 @@ export class PaymentService {
       if (filters.endDate) where.paymentDate.lte = new Date(filters.endDate);
     }
 
-    if (viewer.role === UserRole.BORROWER) {
+    if (viewer.role !== UserRole.ADMIN && viewer.role !== UserRole.MANAGER) {
       const borrower = await prisma.borrower.findFirst({
         where: { userId: viewer.id }
       });

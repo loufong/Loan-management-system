@@ -60,6 +60,11 @@ export class BorrowerService {
       }
     }
 
+    // Normal users can only see their own borrower profile
+    if (viewer.role !== UserRole.ADMIN && viewer.role !== UserRole.MANAGER) {
+      where.userId = viewer.id;
+    }
+
     const orderBy = { [query.sortBy]: query.sortOrder };
 
     const [total, items] = await Promise.all([
@@ -131,8 +136,8 @@ export class BorrowerService {
 
     const isOwner = borrower.userId === viewer.id;
 
-    // Strict constraint: BORROWER user cannot view other borrowers' profiles!
-    if (viewer.role === UserRole.BORROWER && !isOwner) {
+    // Strict constraint: Normal user cannot view other borrowers' profiles!
+    if (viewer.role !== UserRole.ADMIN && viewer.role !== UserRole.MANAGER && !isOwner) {
       throw {
         statusCode: 403,
         message: 'Access denied: you can only view your own borrower profile',
@@ -256,7 +261,7 @@ export class BorrowerService {
       throw { statusCode: 404, message: 'Borrower record not found', code: 'BORROWER_NOT_FOUND' };
     }
 
-    if (viewer.role === UserRole.BORROWER && existing.userId !== viewer.id) {
+    if (viewer.role !== UserRole.ADMIN && viewer.role !== UserRole.MANAGER && existing.userId !== viewer.id) {
       throw {
         statusCode: 403,
         message: 'Access denied: you can only update your own borrower profile',

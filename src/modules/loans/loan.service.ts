@@ -11,6 +11,7 @@ import {
 import { recordAuditLog } from '../../utils/audit';
 import { LoanCalculatorService } from '../calculator/loan-calculator.service';
 import { AuthUser } from '../../middlewares/auth.middleware';
+import { isStaffRole } from '../../security/permissions';
 
 export interface DisburseLoanDto {
   loanId: string;
@@ -51,7 +52,7 @@ export class LoanService {
       }
     }
 
-    if (viewer.role !== UserRole.ADMIN && viewer.role !== UserRole.MANAGER) {
+    if (!isStaffRole(viewer.role)) {
       const borrower = await prisma.borrower.findFirst({
         where: { userId: viewer.id }
       });
@@ -125,7 +126,7 @@ export class LoanService {
       throw { statusCode: 404, message: 'Loan account not found', code: 'LOAN_NOT_FOUND' };
     }
 
-    if (viewer.role !== UserRole.ADMIN && viewer.role !== UserRole.MANAGER && loan.borrower.userId !== viewer.id) {
+    if (!isStaffRole(viewer.role) && loan.borrower.userId !== viewer.id) {
       throw {
         statusCode: 403,
         message: 'Access denied: you can only view your own loan account',
@@ -192,7 +193,7 @@ export class LoanService {
       throw { statusCode: 404, message: 'Loan not found', code: 'LOAN_NOT_FOUND' };
     }
 
-    if (viewer.role !== UserRole.ADMIN && viewer.role !== UserRole.MANAGER && loan.borrower.userId !== viewer.id) {
+    if (!isStaffRole(viewer.role) && loan.borrower.userId !== viewer.id) {
       throw { statusCode: 403, message: 'Access denied: you can only view your own loan schedules', code: 'FORBIDDEN_OWNERSHIP' };
     }
 
@@ -207,11 +208,12 @@ export class LoanService {
    * Rule 4: Installment 1 is set to UNPAID; future installments to UPCOMING.
    */
   static async disburseLoan(dto: DisburseLoanDto) {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(dto.loanId);
+
     const targetLoan = await prisma.loan.findFirst({
       where: {
         OR: [
-          { id: dto.loanId },
-          { applicationId: dto.loanId },
+          ...(isUuid ? [{ id: dto.loanId }, { applicationId: dto.loanId }] : []),
           { loanNumber: dto.loanId },
           { application: { applicationNo: dto.loanId } }
         ]
@@ -229,7 +231,7 @@ export class LoanService {
       const app = await prisma.loanApplication.findFirst({
         where: {
           OR: [
-            { id: dto.loanId },
+            ...(isUuid ? [{ id: dto.loanId }] : []),
             { applicationNo: dto.loanId }
           ]
         },

@@ -14,10 +14,10 @@ borrowerRouter.get('/', BorrowerController.list);
 // 2. Get Borrower Details (Full profile with loans & payment history; ownership enforced)
 borrowerRouter.get('/:id', BorrowerController.getById);
 
-// 3. Onboard New Borrower (Staff: MANAGER, LOAN_OFFICER)
+// 3. Onboard New Borrower (Staff: MANAGER, LOAN_OFFICER, or Borrower self-onboarding)
 borrowerRouter.post(
   '/',
-  authorize(UserRole.MANAGER, UserRole.LOAN_OFFICER),
+  authorize(UserRole.MANAGER, UserRole.LOAN_OFFICER, UserRole.BORROWER, UserRole.USER),
   BorrowerController.create
 );
 

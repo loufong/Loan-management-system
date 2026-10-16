@@ -125,6 +125,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           onMobileMenuToggle={() => setMobileDrawerOpen(true)}
           currentUser={currentUser}
           onLogout={onLogout}
+          onNavigate={onNavigate}
         />
 
         <main className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 bg-[#F8FAFC]">

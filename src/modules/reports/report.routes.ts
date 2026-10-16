@@ -10,7 +10,7 @@ reportRouter.use(authenticate);
 
 // Staff access only
 reportRouter.use(
-  authorize(UserRole.MANAGER, UserRole.LOAN_OFFICER, UserRole.CASHIER)
+  authorize(UserRole.MANAGER, UserRole.LOAN_OFFICER, UserRole.CREDIT_OFFICER, UserRole.CASHIER)
 );
 
 // 1. KPI Summary
@@ -25,6 +25,7 @@ reportRouter.get('/overdue-loans', ReportController.getOverdueLoans);
 reportRouter.get('/disbursements', ReportController.getDisbursements);
 reportRouter.get('/daily-collections', ReportController.getDailyCollections);
 reportRouter.get('/collections', ReportController.getCollections);
+reportRouter.get('/audit-logs', ReportController.getAuditLogs);
 
 // 3. Generic CSV Export Route
 reportRouter.get('/export', ReportController.exportCsv);

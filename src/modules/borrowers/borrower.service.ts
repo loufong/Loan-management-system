@@ -2,6 +2,7 @@ import { prisma } from '../../config/prisma';
 import { LoanStatus, UserRole, UserStatus } from '@prisma/client';
 import { recordAuditLog } from '../../utils/audit';
 import { sanitizeBorrowerPII } from '../../security/masking';
+import { isStaffRole } from '../../security/permissions';
 import { AuthUser } from '../../middlewares/auth.middleware';
 import { CreateBorrowerInput, QueryBorrowerInput, UpdateBorrowerInput } from './borrower.validation';
 
@@ -60,8 +61,8 @@ export class BorrowerService {
       }
     }
 
-    // Normal users can only see their own borrower profile
-    if (viewer.role !== UserRole.ADMIN && viewer.role !== UserRole.MANAGER) {
+    // Normal borrowers can only see their own borrower profile
+    if (!isStaffRole(viewer.role)) {
       where.userId = viewer.id;
     }
 
@@ -136,8 +137,8 @@ export class BorrowerService {
 
     const isOwner = borrower.userId === viewer.id;
 
-    // Strict constraint: Normal user cannot view other borrowers' profiles!
-    if (viewer.role !== UserRole.ADMIN && viewer.role !== UserRole.MANAGER && !isOwner) {
+    // Strict constraint: Normal borrower cannot view other borrowers' profiles!
+    if (!isStaffRole(viewer.role) && !isOwner) {
       throw {
         statusCode: 403,
         message: 'Access denied: you can only view your own borrower profile',
@@ -221,7 +222,7 @@ export class BorrowerService {
     const borrower = await prisma.borrower.create({
       data: {
         borrowerId,
-        userId: dto.userId || null,
+        userId: dto.userId || createdById,
         fullName: dto.fullName,
         gender: dto.gender,
         dob: new Date(dto.dob),
@@ -261,7 +262,7 @@ export class BorrowerService {
       throw { statusCode: 404, message: 'Borrower record not found', code: 'BORROWER_NOT_FOUND' };
     }
 
-    if (viewer.role !== UserRole.ADMIN && viewer.role !== UserRole.MANAGER && existing.userId !== viewer.id) {
+    if (!isStaffRole(viewer.role) && existing.userId !== viewer.id) {
       throw {
         statusCode: 403,
         message: 'Access denied: you can only update your own borrower profile',

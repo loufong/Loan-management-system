@@ -108,3 +108,15 @@ export function roleHasPermission(role: UserRole, permission: Permission): boole
   const permissions = getPermissionsForRole(role);
   return permissions.includes(permission);
 }
+
+export function isStaffRole(role: UserRole | string | undefined | null): boolean {
+  if (!role) return false;
+  const r = String(role).toUpperCase();
+  return (
+    r === 'ADMIN' ||
+    r === 'MANAGER' ||
+    r === 'LOAN_OFFICER' ||
+    r === 'CREDIT_OFFICER' ||
+    r === 'CASHIER'
+  );
+}

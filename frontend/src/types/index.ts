@@ -10,6 +10,7 @@ export type UserRole =
   | 'USER'
   | 'BORROWER'
   | 'LOAN_OFFICER'
+  | 'CREDIT_OFFICER'
   | 'CASHIER'
   | 'MANAGER';
 

@@ -3,8 +3,24 @@ import { AuthService } from '../src/modules/auth/auth.service';
 import { PendingRegistrationService } from '../src/modules/auth/pending-registration.service';
 import { UserCreationService } from '../src/modules/auth/user-creation.service';
 
+import { prisma } from '../src/config/prisma';
+
 async function runPendingAuthTests() {
   console.log('🧪 Starting Pending Registration Storage & Gmail OTP Engine Test Suite...\n');
+
+  // Clean up any test users from prior runs
+  await prisma.user.deleteMany({
+    where: { OR: [{ email: 'david.pending@gmail.com' }, { username: 'davidserey_pending' }] }
+  });
+  await prisma.otpVerification.deleteMany({
+    where: { email: 'david.pending@gmail.com' }
+  });
+  await prisma.otp.deleteMany({
+    where: { email: 'david.pending@gmail.com' }
+  });
+  await prisma.pendingRegistration.deleteMany({
+    where: { OR: [{ email: 'david.pending@gmail.com' }, { username: 'davidserey_pending' }] }
+  });
 
   // 1. Password Strength and Complexity Rule Verification
   console.log('--- 1. Testing Password Security Rules ---');

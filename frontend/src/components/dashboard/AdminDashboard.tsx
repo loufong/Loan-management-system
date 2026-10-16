@@ -53,42 +53,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }).format(valUSD);
   };
 
-  // Derive the 10 KPIs requested in Point 11:
-  // 1. Total Users (registered users + borrowers)
-  const totalUsersCount = 28;
-  // 2. Total Borrowers
-  const totalBorrowersCount = borrowers.length > 0 ? borrowers.length : 12;
-  // 3. Total Loan Applications
-  const totalApplicationsCount = applications.length > 0 ? applications.length : 14;
-  // 4. Approved Loans
+  // Real metrics derived from actual database records
+  const totalBorrowersCount = borrowers.length;
+  const totalApplicationsCount = applications.length;
+  const underReviewCount = applications.filter(
+    (a) => a.status === 'UNDER_REVIEW' || a.status === 'SUBMITTED'
+  ).length;
   const approvedLoansCount = applications.filter(
     (a) => a.status === 'APPROVED' || (a.status as any) === 'DISBURSED' || (a.status as any) === 'ACTIVE'
-  ).length || 8;
-  // 5. Rejected Loans
-  const rejectedLoansCount = applications.filter((a) => a.status === 'REJECTED').length || 2;
-  // 6. Active Loans
-  const activeLoansCount = loans.filter((l) => l.status === 'ACTIVE').length || 5;
-  // 7. Overdue Loans
-  const overdueLoansCount = loans.filter((l) => l.status === 'OVERDUE' || (l.daysOverdue ?? 0) > 0).length || 2;
-  // 8. Total Disbursed
-  const totalDisbursedUSD = loans.reduce((sum, l) => sum + (l.principalUSD || 0), 0) || 2480500;
-  // 9. Total Collected
-  const totalCollectedUSD = receipts.reduce((sum, r) => sum + (r.amountPaidUSD || 0), 0) || 184500;
-  // 10. Outstanding Balance
-  const totalOutstandingUSD = loans.reduce((sum, l) => sum + (l.outstandingBalanceUSD || 0), 0) || 1980200;
+  ).length;
+  const rejectedLoansCount = applications.filter((a) => a.status === 'REJECTED').length;
+  const activeLoansCount = loans.filter((l) => l.status === 'ACTIVE').length;
+  const completedLoansCount = loans.filter((l) => l.status === 'COMPLETED').length;
+  const overdueLoansCount = loans.filter((l) => l.status === 'OVERDUE' || (l.daysOverdue ?? 0) > 0).length;
+  const totalDisbursedUSD = loans.reduce((sum, l) => sum + (l.principalUSD || 0), 0);
+  const totalCollectedUSD = receipts.reduce((sum, r) => sum + (r.amountPaidUSD || 0), 0);
+  const totalOutstandingUSD = loans.reduce((sum, l) => sum + (l.outstandingBalanceUSD || 0), 0);
+
+  const approvalRate = totalApplicationsCount > 0
+    ? (Math.round((approvedLoansCount / totalApplicationsCount) * 1000) / 10).toFixed(1)
+    : '0.0';
+  const denominatorRepayment = totalCollectedUSD + totalOutstandingUSD;
+  const repaymentRate = denominatorRepayment > 0
+    ? (Math.round((totalCollectedUSD / denominatorRepayment) * 1000) / 10).toFixed(1)
+    : '0.0';
+  const overdueRate = totalOutstandingUSD > 0
+    ? (Math.round((loans.filter(l => l.status === 'OVERDUE').reduce((sum, l) => sum + (l.outstandingBalanceUSD || 0), 0) / totalOutstandingUSD) * 1000) / 10).toFixed(1)
+    : '0.0';
 
   const kpis = [
-    {
-      id: 'kpi-users',
-      title: 'Total Users',
-      value: totalUsersCount.toLocaleString(),
-      sub: 'Platform accounts & staff',
-      icon: Users,
-      color: 'text-blue-600',
-      bg: 'bg-blue-50',
-      border: 'border-blue-100',
-      tab: 'user_management',
-    },
     {
       id: 'kpi-borrowers',
       title: 'Total Borrowers',
@@ -115,7 +108,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       id: 'kpi-approved',
       title: 'Approved Loans',
       value: approvedLoansCount.toLocaleString(),
-      sub: 'Committee sanctioned facilities',
+      sub: `${approvalRate}% approval rate`,
       icon: CheckCircle2,
       color: 'text-emerald-600',
       bg: 'bg-emerald-50',
@@ -148,7 +141,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       id: 'kpi-overdue',
       title: 'Overdue Loans',
       value: overdueLoansCount.toLocaleString(),
-      sub: 'PAR 30+ delinquency watchlist',
+      sub: `${overdueRate}% delinquency rate`,
       icon: AlertTriangle,
       color: 'text-amber-600',
       bg: 'bg-amber-50',
@@ -170,7 +163,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       id: 'kpi-collected',
       title: 'Total Collected',
       value: formatMoney(totalCollectedUSD),
-      sub: 'Recovered installments',
+      sub: `${repaymentRate}% recovery rate`,
       icon: DollarSign,
       color: 'text-teal-600',
       bg: 'bg-teal-50',
@@ -192,14 +185,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   return (
     <div className="space-y-6 font-sans">
-      {/* Header (Part 13 Requirement) */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-[#CBD5E1]">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0F172A]">
-            Dashboard
+            Executive Dashboard
           </h1>
           <p className="text-sm text-[#64748B] mt-1">
-            Good morning, Administrator. Here's your loan management overview.
+            Enterprise loan portfolio overview derived from live institutional ledger.
           </p>
         </div>
         <div className="flex items-center gap-2.5">
@@ -220,7 +213,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       </div>
 
-      {/* Part 13: Core 4 KPI Section (Flat White Surfaces, Subtle #CBD5E1 Borders) */}
+      {/* Core 4 KPI Section (Flat White Surfaces, Subtle #CBD5E1 Borders) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* KPI 1: TOTAL BORROWERS */}
         <div
@@ -231,7 +224,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             TOTAL BORROWERS
           </div>
           <div className="text-2xl sm:text-3xl font-bold text-[#0F172A] mt-2 tracking-tight">
-            1,248
+            {totalBorrowersCount.toLocaleString()}
           </div>
           <div className="text-[12px] text-[#64748B] mt-1 flex items-center justify-between">
             <span>Registered dossiers</span>
@@ -248,7 +241,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             ACTIVE LOANS
           </div>
           <div className="text-2xl sm:text-3xl font-bold text-[#0F172A] mt-2 tracking-tight">
-            326
+            {activeLoansCount.toLocaleString()}
           </div>
           <div className="text-[12px] text-[#64748B] mt-1 flex items-center justify-between">
             <span>Currently servicing</span>
@@ -265,7 +258,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             PENDING APPLICATIONS
           </div>
           <div className="text-2xl sm:text-3xl font-bold text-[#0F172A] mt-2 tracking-tight">
-            18
+            {underReviewCount.toLocaleString()}
           </div>
           <div className="text-[12px] text-[#64748B] mt-1 flex items-center justify-between">
             <span>Under review</span>
@@ -282,7 +275,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             OUTSTANDING BALANCE
           </div>
           <div className="text-2xl sm:text-3xl font-bold text-[#0F172A] mt-2 tracking-tight">
-            {formatMoney(248500)}
+            {formatMoney(totalOutstandingUSD)}
           </div>
           <div className="text-[12px] text-[#64748B] mt-1 flex items-center justify-between">
             <span>Active book portfolio</span>
@@ -291,7 +284,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       </div>
 
-      {/* Institutional Supplementary Metrics Grid (Approved, Rejected, Disbursed, Collected, Overdue, Total Users) */}
+      {/* Institutional Supplementary Metrics Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <div onClick={() => onNavigate('approvals')} className="bg-white border border-[#CBD5E1] rounded-[8px] p-3.5 cursor-pointer hover:border-slate-400">
           <div className="text-[11px] font-medium text-[#64748B] uppercase">Approved Loans</div>
@@ -313,13 +306,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="text-[11px] font-medium text-[#64748B] uppercase">Total Collected</div>
           <div className="text-lg font-bold text-[#0F172A] mt-1">{formatMoney(totalCollectedUSD)}</div>
         </div>
-        <div onClick={() => onNavigate('user_management')} className="bg-white border border-[#CBD5E1] rounded-[8px] p-3.5 cursor-pointer hover:border-slate-400">
-          <div className="text-[11px] font-medium text-[#64748B] uppercase">Total Users</div>
-          <div className="text-lg font-bold text-[#0F172A] mt-1">{totalUsersCount}</div>
+        <div onClick={() => onNavigate('loans')} className="bg-white border border-[#CBD5E1] rounded-[8px] p-3.5 cursor-pointer hover:border-slate-400">
+          <div className="text-[11px] font-medium text-[#64748B] uppercase">Completed Loans</div>
+          <div className="text-lg font-bold text-[#2563EB] mt-1">{completedLoansCount}</div>
         </div>
       </div>
 
-      {/* Part 13: Loan Application Overview & Payment Overview */}
+      {/* Loan Application Overview & Payment Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Loan Application Overview */}
         <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-5">
@@ -338,17 +331,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="grid grid-cols-3 gap-3 pt-4 text-center">
             <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
               <div className="text-[11px] text-[#64748B] uppercase font-semibold">Under Review</div>
-              <div className="text-xl font-bold text-[#2563EB] mt-1">7</div>
+              <div className="text-xl font-bold text-[#2563EB] mt-1">{underReviewCount}</div>
               <div className="text-[11px] text-[#64748B] mt-0.5">Stage 1 &amp; 2 KYC</div>
             </div>
             <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
               <div className="text-[11px] text-[#64748B] uppercase font-semibold">Sanctioned</div>
-              <div className="text-xl font-bold text-[#16A34A] mt-1">8</div>
+              <div className="text-xl font-bold text-[#16A34A] mt-1">{approvedLoansCount}</div>
               <div className="text-[11px] text-[#64748B] mt-0.5">Ready for release</div>
             </div>
             <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
               <div className="text-[11px] text-[#64748B] uppercase font-semibold">Declined</div>
-              <div className="text-xl font-bold text-[#DC2626] mt-1">2</div>
+              <div className="text-xl font-bold text-[#DC2626] mt-1">{rejectedLoansCount}</div>
               <div className="text-[11px] text-[#64748B] mt-0.5">DTI limit exceeded</div>
             </div>
           </div>
@@ -371,18 +364,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="grid grid-cols-3 gap-3 pt-4 text-center">
             <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
               <div className="text-[11px] text-[#64748B] uppercase font-semibold">Recovery Rate</div>
-              <div className="text-xl font-bold text-[#16A34A] mt-1">96.2%</div>
+              <div className="text-xl font-bold text-[#16A34A] mt-1">{repaymentRate}%</div>
               <div className="text-[11px] text-[#64748B] mt-0.5">On-time installment</div>
             </div>
             <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
-              <div className="text-[11px] text-[#64748B] uppercase font-semibold">Collections MTD</div>
-              <div className="text-xl font-bold text-[#0F172A] mt-1">{formatMoney(18450)}</div>
-              <div className="text-[11px] text-[#64748B] mt-0.5">32 vouchers</div>
+              <div className="text-[11px] text-[#64748B] uppercase font-semibold">Collections Total</div>
+              <div className="text-xl font-bold text-[#0F172A] mt-1">{formatMoney(totalCollectedUSD)}</div>
+              <div className="text-[11px] text-[#64748B] mt-0.5">{receipts.length} vouchers</div>
             </div>
             <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
-              <div className="text-[11px] text-[#64748B] uppercase font-semibold">PAR 30 Watchlist</div>
-              <div className="text-xl font-bold text-[#D97706] mt-1">1.4%</div>
-              <div className="text-[11px] text-[#64748B] mt-0.5">Within tolerance</div>
+              <div className="text-[11px] text-[#64748B] uppercase font-semibold">Overdue Rate</div>
+              <div className="text-xl font-bold text-[#D97706] mt-1">{overdueRate}%</div>
+              <div className="text-[11px] text-[#64748B] mt-0.5">{overdueLoansCount} delinquent</div>
             </div>
           </div>
         </div>

@@ -26,7 +26,12 @@ import { TopBar, BreadcrumbItem } from './components/layout/TopBar';
 import { AppLayout } from './components/layout/AppLayout';
 import { Dashboard } from './components/dashboard/Dashboard';
 import { AdminDashboard } from './components/dashboard/AdminDashboard';
+import { ManagerDashboard } from './components/dashboard/ManagerDashboard';
+import { LoanOfficerDashboard } from './components/dashboard/LoanOfficerDashboard';
+import { CreditOfficerDashboard } from './components/dashboard/CreditOfficerDashboard';
+import { CashierDashboard } from './components/dashboard/CashierDashboard';
 import { UserDashboard } from './components/dashboard/UserDashboard';
+import { DisbursementsQueue } from './components/cashier/DisbursementsQueue';
 
 // Screen 1: Borrowers Directory & 360° Dossier
 import { BorrowerList } from './components/borrowers/BorrowerList';
@@ -77,6 +82,7 @@ import { RegisterPage } from './components/auth/RegisterPage';
 import { OtpVerificationPage } from './components/auth/OtpVerificationPage';
 import { ForgotPasswordPage } from './components/auth/ForgotPasswordPage';
 import { SetNewPasswordPage } from './components/auth/SetNewPasswordPage';
+import { ChangePasswordPage } from './components/auth/ChangePasswordPage';
 import { useAuth } from './context/AuthContext';
 
 type AuthView = 'login' | 'register' | 'otp_verify' | 'forgot_password' | 'set_new_password';
@@ -183,19 +189,23 @@ export const App: React.FC = () => {
       if (!authIsAuthenticated || !authUser) {
         if (path === '/register') setAuthView('register');
         else if (path === '/forgot-password') setAuthView('forgot_password');
+        else if (path === '/verify-otp') setAuthView('otp_verify');
+        else if (path === '/reset-password') setAuthView('set_new_password');
         else {
           setAuthView('login');
-          if (path.startsWith('/admin') || path.startsWith('/user')) {
+          if (path.startsWith('/admin') || path.startsWith('/user') || path.startsWith('/settings')) {
             replaceAppRoute('/login');
           }
         }
         return;
       }
 
-      const isAdmin = authUser.role === 'admin' || authUser.role === 'ADMIN';
+      const userRole = (authUser.role || 'BORROWER').toUpperCase();
+      const isBorrower = userRole === 'BORROWER' || userRole === 'USER';
+      const isStaff = !isBorrower;
 
-      // If a normal user tries to access an admin URL directly (/admin/*), reject and return Access Denied
-      if (!isAdmin && (path.startsWith('/admin') || path === '/access-denied')) {
+      // If a borrower tries to access an admin URL directly (/admin/*), reject and return Access Denied
+      if (isBorrower && (path.startsWith('/admin') || path === '/access-denied')) {
         setActiveTab('access_denied');
         replaceAppRoute('/access-denied');
         return;
@@ -206,10 +216,10 @@ export const App: React.FC = () => {
         return;
       }
 
-      if (path === '/admin/dashboard' || (isAdmin && (path === '/login' || path === '/' || path === ''))) {
+      if (path === '/admin/dashboard' || (isStaff && (path === '/login' || path === '/' || path === ''))) {
         setActiveTab('dashboard');
         replaceAppRoute('/admin/dashboard');
-      } else if (path === '/user/dashboard' || (!isAdmin && (path === '/login' || path === '/' || path === ''))) {
+      } else if (path === '/user/dashboard' || (!isStaff && (path === '/login' || path === '/' || path === ''))) {
         setActiveTab('user_dashboard');
         replaceAppRoute('/user/dashboard');
       } else if (path === '/admin/users') {
@@ -225,7 +235,7 @@ export const App: React.FC = () => {
       } else if (path === '/admin/approvals') {
         setActiveTab('approvals');
       } else if (path === '/admin/disbursements') {
-        setActiveTab('cashier');
+        setActiveTab('disbursements');
       } else if (path === '/admin/payments') {
         setActiveTab('cashier');
       } else if (path === '/admin/overdue') {
@@ -248,8 +258,10 @@ export const App: React.FC = () => {
         setActiveTab('loans');
       } else if (path === '/user/payments') {
         setActiveTab('cashier');
+      } else if (path === '/settings/change-password' || path === '/change-password') {
+        setActiveTab('change_password');
       } else {
-        if (isAdmin) {
+        if (isStaff) {
           setActiveTab('dashboard');
           replaceAppRoute('/admin/dashboard');
         } else {
@@ -270,8 +282,9 @@ export const App: React.FC = () => {
     setAuthNotice(null);
     setAccessDeniedMessage(null);
 
-    const isAdmin = user.role === 'admin' || user.role === 'ADMIN';
-    if (isAdmin) {
+    const userRole = (user.role || 'BORROWER').toUpperCase();
+    const isStaff = userRole !== 'BORROWER' && userRole !== 'USER';
+    if (isStaff) {
       replaceAppRoute('/admin/dashboard');
       setActiveTab('dashboard');
     } else {
@@ -307,25 +320,32 @@ export const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeReceiptModal, setActiveReceiptModal] = useState<PaymentReceipt | null>(null);
 
-  // Sync API Data on Mount
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [b, p, l, a] = await Promise.all([
-          api.getBorrowers(),
-          api.getProducts(),
-          api.getLoans(),
-          api.getApplications(),
-        ]);
-        if (b?.length) setBorrowers(b);
-        if (p?.length) setProducts(p);
-        if (l?.length) setLoans(l);
-        if (a?.length) setApplications(a);
-      } catch (err) {
-        console.warn('Using local demo data (API server unavailable):', err);
-      }
+  // Sync API Data on Mount and Reload
+  const reloadAllData = async () => {
+    try {
+      const [b, p, l, a, r, n, audits] = await Promise.all([
+        api.getBorrowers().catch(() => []),
+        api.getProducts().catch(() => []),
+        api.getLoans().catch(() => []),
+        api.getApplications().catch(() => []),
+        api.getReceipts().catch(() => []),
+        api.getNotifications().catch(() => []),
+        api.getAuditLogs().catch(() => []),
+      ]);
+      if (b && b.length > 0) setBorrowers(b);
+      if (p && p.length > 0) setProducts(p);
+      if (l && l.length > 0) setLoans(l);
+      if (a && a.length > 0) setApplications(a);
+      if (r && r.length > 0) setReceipts(r);
+      if (n && n.length > 0) setNotifications(n);
+      if (audits && audits.length > 0) setAuditLogs(audits);
+    } catch (err) {
+      console.warn('API hydration error:', err);
     }
-    loadData();
+  };
+
+  useEffect(() => {
+    reloadAllData();
   }, []);
 
   // Handle Role Switch
@@ -375,6 +395,8 @@ export const App: React.FC = () => {
         return [{ label: 'Underwriting', onClick: () => setActiveTab('credit_reviews') }, { label: `DTI Risk Workbench (${selectedApplicationId})`, active: true }];
       case 'approvals':
         return [{ label: 'Credit Committee' }, { label: 'Executive Approvals Queue', active: true }];
+      case 'disbursements':
+        return [{ label: 'Treasury & Cashier', onClick: () => setActiveTab('disbursements') }, { label: 'Disbursements Queue', active: true }];
       case 'loans':
         return [{ label: 'Core Banking', onClick: () => setActiveTab('loans') }, { label: 'Active Facilities Directory', active: true }];
       case 'loan-detail':
@@ -393,6 +415,8 @@ export const App: React.FC = () => {
         return [{ label: 'Administration' }, { label: 'User Roles & Access Control', active: true }];
       case 'system_config':
         return [{ label: 'Administration' }, { label: 'System Settings & Lending Policies', active: true }];
+      case 'change_password':
+        return [{ label: 'Account Security' }, { label: 'Change Password', active: true }];
       default:
         return [{ label: 'Apex LMS Core Banking', active: true }];
     }
@@ -400,13 +424,19 @@ export const App: React.FC = () => {
 
   // Sidebar navigation mapping & access control enforcement
   const handleNavSelection = (navId: string) => {
-    const isAdmin = currentUser.role === 'admin' || currentUser.role === 'ADMIN';
+    const userRole = (currentUser.role || 'BORROWER').toUpperCase();
+    const isAdmin = userRole === 'ADMIN';
+    const isManager = userRole === 'MANAGER';
+    const isLoanOfficer = userRole === 'LOAN_OFFICER';
+    const isCreditOfficer = userRole === 'CREDIT_OFFICER';
+    const isCashier = userRole === 'CASHIER';
+    const isBorrower = userRole === 'BORROWER' || userRole === 'USER';
+    const isStaff = !isBorrower;
 
-    const adminRestrictedTabs = [
+    const borrowerBlockedTabs = [
       'user_management',
       'roles_permissions',
       'borrowers',
-      'loan_products',
       'credit_reviews',
       'risk_assessment',
       'approvals',
@@ -417,14 +447,44 @@ export const App: React.FC = () => {
       'disbursements',
     ];
 
-    if (!isAdmin && adminRestrictedTabs.includes(navId)) {
+    if (isBorrower && borrowerBlockedTabs.includes(navId)) {
       setActiveTab('access_denied');
       replaceAppRoute('/access-denied');
       return;
     }
 
+    if (navId === 'user_management' && !isAdmin && !isManager) {
+      setActiveTab('access_denied');
+      replaceAppRoute('/access-denied');
+      return;
+    }
+
+    if (navId === 'system_config' && !isAdmin) {
+      setActiveTab('access_denied');
+      replaceAppRoute('/access-denied');
+      return;
+    }
+
+    if (navId === 'approvals' && !isAdmin && !isManager) {
+      setActiveTab('access_denied');
+      replaceAppRoute('/access-denied');
+      return;
+    }
+
+    if (navId === 'disbursements' && !isAdmin && !isManager && !isCashier) {
+      setActiveTab('access_denied');
+      replaceAppRoute('/access-denied');
+      return;
+    }
+
+    if (navId === 'change_password') {
+      setActiveTab('change_password');
+      pushAppRoute('/settings/change-password');
+      return;
+    }
+
     if (navId === 'dashboard') {
-      if (isAdmin) {
+      if (isStaff) {
         setActiveTab('dashboard');
         pushAppRoute('/admin/dashboard');
       } else {
@@ -458,24 +518,27 @@ export const App: React.FC = () => {
       pushAppRoute('/user/payments');
     } else if (navId === 'applications') {
       setActiveTab('applications');
-      pushAppRoute('/admin/applications');
+      pushAppRoute(isStaff ? '/admin/applications' : '/user/my_applications');
     } else if (navId === 'loan_products') {
       setActiveTab('loan_products');
-      pushAppRoute('/admin/loan_products');
+      pushAppRoute(isStaff ? '/admin/loan_products' : '/products');
     } else if (navId === 'credit_reviews') {
       setActiveTab('credit_reviews');
       pushAppRoute('/admin/credit_reviews');
     } else if (navId === 'risk_assessment') {
       setActiveTab('risk_assessment');
-    } else if (navId === 'cashier_desk' || navId === 'disbursements' || navId === 'receipts' || navId === 'cashier') {
+    } else if (navId === 'disbursements') {
+      setActiveTab('disbursements');
+      pushAppRoute('/admin/disbursements');
+    } else if (navId === 'cashier_desk' || navId === 'cashier' || navId === 'receipts') {
       setActiveTab('cashier');
-      pushAppRoute(isAdmin ? '/admin/disbursements' : '/user/payments');
+      pushAppRoute(isStaff ? '/admin/payments' : '/user/payments');
     } else if (navId === 'approvals') {
       setActiveTab('approvals');
       pushAppRoute('/admin/approvals');
     } else if (navId === 'loans') {
       setActiveTab('loans');
-      pushAppRoute(isAdmin ? '/admin/loans' : '/user/my_loans');
+      pushAppRoute(isStaff ? '/admin/loans' : '/user/my_loans');
     } else if (navId === 'overdue') {
       setActiveTab('overdue');
       pushAppRoute('/admin/overdue');
@@ -489,7 +552,7 @@ export const App: React.FC = () => {
       setActiveTab('system_config');
       pushAppRoute('/admin/settings');
     } else {
-      if (isAdmin) {
+      if (isStaff) {
         setActiveTab('dashboard');
         pushAppRoute('/admin/dashboard');
       } else {
@@ -526,124 +589,74 @@ export const App: React.FC = () => {
   const activeApplication = applications.find((a) => a.id === selectedApplicationId) || applications[0];
 
   // Callback Handlers
-  const handleRecordPayment = (receipt: PaymentReceipt) => {
-    setReceipts((prev) => [receipt, ...prev]);
-    // Reconcile loan outstanding balance
-    setLoans((prev) =>
-      prev.map((l) => {
-        if (l.id === receipt.loanNumber || l.loanNumber === receipt.loanNumber) {
-          const newOutstanding = Math.max(0, l.outstandingBalanceUSD - receipt.amountPaidUSD);
-          const newPaid = l.totalPaidUSD + receipt.amountPaidUSD;
-          return {
-            ...l,
-            outstandingBalanceUSD: newOutstanding,
-            totalPaidUSD: newPaid,
-            status: newOutstanding <= 0 ? 'COMPLETED' : l.status,
-          };
-        }
-        return l;
-      })
-    );
-
-    // Record audit event
-    const newAudit: SystemActivityEvent = {
-      id: `AUD-${Math.floor(1000 + Math.random() * 9000)}`,
-      timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19),
-      actorName: currentUser.name,
-      actorRole: currentUser.role,
-      action: 'PAYMENT_COLLECTED_AT_WINDOW',
-      actionCategory: 'PAYMENT_RECORDED',
-      entityType: 'PAYMENT',
-      entityReference: receipt.receiptNo,
-      ipAddress: '192.168.1.104',
-      amountUSD: receipt.amountPaidUSD,
-      details: {
-        loanNumber: receipt.loanNumber,
-        borrower: receipt.borrowerName,
-        paymentMethod: receipt.paymentMethod,
-        ref: receipt.transactionRef
-      }
-    };
-    setAuditLogs((prev) => [newAudit, ...prev]);
-    setActiveReceiptModal(receipt);
+  const handleRecordPayment = async (paymentInput: any) => {
+    try {
+      const receipt = await api.recordPayment({
+        loanId: paymentInput.loanNumber || paymentInput.loanId || selectedLoanId,
+        amount: paymentInput.amountPaidUSD || paymentInput.amount,
+        method: paymentInput.paymentMethod || paymentInput.method || 'CASH',
+        referenceNo: paymentInput.transactionRef || paymentInput.referenceNo,
+        notes: paymentInput.notes || 'Recorded via window cashier POS',
+      });
+      await reloadAllData();
+      setActiveReceiptModal(receipt);
+      alert(`Payment of $${receipt.amountPaidUSD.toFixed(2)} recorded successfully! Receipt #${receipt.receiptNo}`);
+    } catch (err: any) {
+      console.error('Payment error:', err);
+      alert(`Payment failed: ${err.message || 'Error recording payment'}`);
+    }
   };
 
   const handleApplicationSubmit = async (appData: Partial<LoanApplication>, isDraft = false) => {
-    const created: LoanApplication = {
-      id: appData.applicationNo || `APP-2026-00${Math.floor(10 + Math.random() * 90)}`,
-      applicationNo: appData.applicationNo || `APP-2026-00${Math.floor(10 + Math.random() * 90)}`,
-      borrowerId: appData.borrowerId || selectedBorrowerId,
-      borrowerName: appData.borrowerName || activeBorrower.fullName,
-      borrowerAvatar: appData.borrowerAvatar || activeBorrower.avatarUrl,
-      borrowerIncomeUSD: appData.borrowerIncomeUSD || activeBorrower.monthlyIncomeUSD,
-      productId: appData.productId || products[0].id,
-      productName: appData.productName || products[0].name,
-      requestedAmountUSD: appData.requestedAmountUSD || 5000,
-      requestedTermMonths: appData.requestedTermMonths || 12,
-      frequency: appData.frequency || 'MONTHLY',
-      purpose: appData.purpose || 'Institutional credit request',
-      dtiRatio: appData.dtiRatio || 25.0,
-      riskTier: appData.riskTier || 'LOW RISK',
-      status: isDraft ? 'DRAFT' : 'SUBMITTED',
-      createdAt: new Date().toISOString().slice(0, 10),
-      documents: [],
-    };
-
-    setApplications((prev) => [created, ...prev]);
-    setSelectedApplicationId(created.id);
-    setActiveTab('applications');
-    alert(`Application ${created.applicationNo} ${isDraft ? 'saved as draft' : 'submitted for underwriting'}!`);
+    try {
+      const created = await api.submitApplication({
+        ...appData,
+        borrowerId: appData.borrowerId || selectedBorrowerId || activeBorrower?.id,
+        productId: appData.productId || products[0]?.id,
+        requestedAmountUSD: appData.requestedAmountUSD || 5000,
+        requestedTermMonths: appData.requestedTermMonths || 12,
+        purpose: appData.purpose || 'Institutional credit facility',
+        status: isDraft ? 'DRAFT' : 'SUBMITTED',
+      });
+      await reloadAllData();
+      if (created?.id) setSelectedApplicationId(created.id);
+      setActiveTab('applications');
+      alert(`Application ${created?.applicationNo || 'created'} ${isDraft ? 'saved as draft' : 'submitted for underwriting'}!`);
+    } catch (err: any) {
+      console.error('Submission error:', err);
+      alert(`Failed to submit application: ${err.message || 'Error occurred'}`);
+    }
   };
 
-  const handleExecutiveDecision = (
+  const handleExecutiveDecision = async (
     appId: string,
     decision: 'APPROVED' | 'REJECTED',
     terms?: { amount: number; term: number; rate: number; reason?: string }
   ) => {
-    setApplications((prev) =>
-      prev.map((a) => {
-        if (a.id === appId) {
-          return {
-            ...a,
-            status: decision,
-            committeeApproval: {
-              approverName: currentUser.name,
-              decision,
-              approvedAmountUSD: terms?.amount || a.requestedAmountUSD,
-              approvedTermMonths: terms?.term || a.requestedTermMonths,
-              approvedRate: terms?.rate || 10.5,
-              rationaleOrRejectionReason: terms?.reason || 'Approved by Executive Committee',
-              decidedAt: new Date().toISOString(),
-            },
-          };
+    try {
+      if (decision === 'APPROVED') {
+        await api.approveApplication(appId, {
+          amount: terms?.amount,
+          term: terms?.term,
+          rate: terms?.rate,
+          reason: terms?.reason || 'Approved by Executive Committee',
+        });
+        await reloadAllData();
+        alert(`Application ${appId} successfully APPROVED! Facility ready in Disbursements queue.`);
+        setActiveTab('disbursements');
+      } else {
+        if (!terms?.reason?.trim()) {
+          alert('A rejection reason is strictly mandatory.');
+          return;
         }
-        return a;
-      })
-    );
-
-    // Audit log insertion
-    const audit: SystemActivityEvent = {
-      id: `AUD-${Math.floor(1000 + Math.random() * 9000)}`,
-      timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19),
-      actorName: currentUser.name,
-      actorRole: currentUser.role,
-      action: decision === 'APPROVED' ? 'LOAN_APPLICATION_APPROVED' : 'LOAN_APPLICATION_REJECTED',
-      actionCategory: decision === 'APPROVED' ? 'LOAN_APPROVED' : 'SECURITY',
-      entityType: 'APPLICATION',
-      entityReference: appId,
-      ipAddress: '10.0.4.12',
-      amountUSD: terms?.amount,
-      details: {
-        decision,
-        terms,
-        approver: currentUser.name
+        await api.rejectApplication(appId, terms.reason);
+        await reloadAllData();
+        alert(`Application ${appId} marked as REJECTED.`);
+        setActiveTab('applications');
       }
-    };
-    setAuditLogs((prev) => [audit, ...prev]);
-
-    alert(`Application ${appId} marked as ${decision}.`);
-    if (decision === 'APPROVED') {
-      setActiveTab('loans');
+    } catch (err: any) {
+      console.error('Executive decision error:', err);
+      alert(`Decision action failed: ${err.message || 'Could not process decision'}`);
     }
   };
 
@@ -791,18 +804,65 @@ export const App: React.FC = () => {
             />
           )}
 
-          {/* Point 11: Admin Dashboard (10 KPIs) vs Point 12: User Dashboard */}
-          {activeTab === 'dashboard' && (
-            (currentUser.role === 'admin' || currentUser.role === 'ADMIN') ? (
-              <AdminDashboard
-                currency={currency}
-                onNavigate={handleNavSelection}
-                loans={loans}
-                borrowers={borrowers}
-                applications={applications}
-                receipts={receipts}
-              />
-            ) : (
+          {/* Multi-Role Dashboards (ADMIN, MANAGER, LOAN_OFFICER, CREDIT_OFFICER, CASHIER, BORROWER) */}
+          {activeTab === 'dashboard' && (() => {
+            const role = (currentUser.role || 'BORROWER').toUpperCase();
+            if (role === 'ADMIN') {
+              return (
+                <AdminDashboard
+                  currency={currency}
+                  onNavigate={handleNavSelection}
+                  loans={loans}
+                  borrowers={borrowers}
+                  applications={applications}
+                  receipts={receipts}
+                />
+              );
+            }
+            if (role === 'MANAGER') {
+              return (
+                <ManagerDashboard
+                  currency={currency}
+                  onNavigate={handleNavSelection}
+                  loans={loans}
+                  borrowers={borrowers}
+                  applications={applications}
+                  receipts={receipts}
+                />
+              );
+            }
+            if (role === 'LOAN_OFFICER') {
+              return (
+                <LoanOfficerDashboard
+                  currency={currency}
+                  onNavigate={handleNavSelection}
+                  applications={applications}
+                  borrowers={borrowers}
+                />
+              );
+            }
+            if (role === 'CREDIT_OFFICER') {
+              return (
+                <CreditOfficerDashboard
+                  currency={currency}
+                  onNavigate={handleNavSelection}
+                  applications={applications}
+                  borrowers={borrowers}
+                />
+              );
+            }
+            if (role === 'CASHIER') {
+              return (
+                <CashierDashboard
+                  currency={currency}
+                  onNavigate={handleNavSelection}
+                  loans={loans}
+                  applications={applications}
+                  receipts={receipts}
+                />
+              );
+            }
+            return (
               <UserDashboard
                 currentUser={currentUser}
                 currency={currency}
@@ -816,8 +876,8 @@ export const App: React.FC = () => {
                   setActiveTab('cashier');
                 }}
               />
-            )
-          )}
+            );
+          })()}
 
           {activeTab === 'user_dashboard' && (
             <UserDashboard
@@ -956,6 +1016,21 @@ export const App: React.FC = () => {
             />
           )}
 
+          {/* SCREEN: Cashier & Manager Disbursements Queue */}
+          {activeTab === 'disbursements' && (
+            <DisbursementsQueue
+              applications={applications}
+              currency={currency}
+              currentUserRole={activeRole}
+              currentUserName={currentUser.name}
+              onDisbursementComplete={() => reloadAllData()}
+              onNavigateToLoan={(loanId: string) => {
+                setSelectedLoanId(loanId);
+                setActiveTab('loan-detail');
+              }}
+            />
+          )}
+
           {/* SCREEN 5: Core Banking Loans & Repayment Schedule */}
           {activeTab === 'loans' && (
             <LoanList
@@ -1071,6 +1146,18 @@ export const App: React.FC = () => {
               currency={currency}
               onToggleCurrency={(c) => setCurrency(c)}
               onShowToast={(msg) => alert(msg)}
+            />
+          )}
+
+          {/* SCREEN 13: Change Password */}
+          {activeTab === 'change_password' && (
+            <ChangePasswordPage
+              onBack={() => {
+                const userRole = (currentUser.role || 'BORROWER').toUpperCase();
+                const isStaff = userRole !== 'BORROWER' && userRole !== 'USER';
+                handleNavSelection(isStaff ? 'dashboard' : 'user_dashboard');
+              }}
+              onLogout={handleLogout}
             />
           )}
         </div>

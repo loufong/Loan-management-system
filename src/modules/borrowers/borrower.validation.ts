@@ -3,7 +3,7 @@ import { UserStatus } from '@prisma/client';
 
 const phoneRegex = /^\+?[0-9\s\-().]{7,25}$/;
 
-export const createBorrowerSchema = z.object({
+export const baseBorrowerSchema = z.object({
   fullName: z
     .string({ required_error: 'Full name is required' })
     .trim()
@@ -47,7 +47,27 @@ export const createBorrowerSchema = z.object({
   userId: z.string().uuid('Invalid user UUID').optional()
 });
 
-export const updateBorrowerSchema = createBorrowerSchema.partial();
+const normalizeBorrowerInput = (val: any) => {
+  if (typeof val === 'object' && val !== null) {
+    const copy = { ...val };
+    if (!copy.idNumber && copy.nationalId) copy.idNumber = copy.nationalId;
+    if (!copy.dob && copy.dateOfBirth) copy.dob = copy.dateOfBirth;
+    if (!copy.address && copy.addressLine1) {
+      copy.address = copy.city ? `${copy.addressLine1}, ${copy.city}` : copy.addressLine1;
+    }
+    if (!copy.occupation && (copy.employerName || copy.employmentStatus)) {
+      copy.occupation = copy.employerName || copy.employmentStatus;
+    }
+    if (copy.monthlyIncome === undefined && copy.monthlyIncomeUSD !== undefined) {
+      copy.monthlyIncome = Number(copy.monthlyIncomeUSD);
+    }
+    return copy;
+  }
+  return val;
+};
+
+export const createBorrowerSchema = z.preprocess(normalizeBorrowerInput, baseBorrowerSchema);
+export const updateBorrowerSchema = z.preprocess(normalizeBorrowerInput, baseBorrowerSchema.partial());
 
 export const queryBorrowerSchema = z
   .object({

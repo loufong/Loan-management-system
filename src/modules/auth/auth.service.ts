@@ -14,6 +14,7 @@ import {
 import { OtpService, OtpPurpose } from './otp.service';
 import { PendingRegistrationService } from './pending-registration.service';
 import { UserCreationService } from './user-creation.service';
+import { EmailService } from '../../services/email.service';
 
 export interface LoginDto {
   usernameOrEmail: string;
@@ -23,7 +24,9 @@ export interface LoginDto {
 }
 
 export interface RegisterUserDto {
-  fullName: string;
+  firstName?: string;
+  lastName?: string;
+  fullName?: string;
   username: string;
   email: string;
   phone: string;
@@ -50,6 +53,8 @@ export interface RegisterBorrowerDto {
 
 export interface UpdateProfileDto {
   fullName?: string;
+  firstName?: string;
+  lastName?: string;
   phone?: string;
   position?: string;
   department?: string;
@@ -59,6 +64,7 @@ export interface UpdateProfileDto {
 export interface ChangePasswordDto {
   currentPassword: string;
   newPassword: string;
+  confirmPassword?: string;
   ipAddress?: string;
 }
 
@@ -122,6 +128,42 @@ export class AuthService {
         id: 'user-admin-0001',
         username: 'admin',
         email: 'admin@loansystem.edu',
+        passwordHash: bcrypt.hashSync('Password123!', 10),
+        fullName: 'Dr. Alexander Wright',
+        phone: '+1-555-0100',
+        role: UserRole.ADMIN,
+        status: UserStatus.ACTIVE,
+        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+        lastLogin: new Date(Date.now() - 1000 * 60 * 15),
+        emailVerifiedAt: new Date(),
+        createdAt: new Date('2025-01-01T08:00:00Z'),
+        updatedAt: new Date(),
+      },
+    ],
+    [
+      'admin@loansystem.edu',
+      {
+        id: 'user-admin-0001',
+        username: 'admin',
+        email: 'admin@loansystem.edu',
+        passwordHash: bcrypt.hashSync('Password123!', 10),
+        fullName: 'Dr. Alexander Wright',
+        phone: '+1-555-0100',
+        role: UserRole.ADMIN,
+        status: UserStatus.ACTIVE,
+        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+        lastLogin: new Date(Date.now() - 1000 * 60 * 15),
+        emailVerifiedAt: new Date(),
+        createdAt: new Date('2025-01-01T08:00:00Z'),
+        updatedAt: new Date(),
+      },
+    ],
+    [
+      'admin@apex.local',
+      {
+        id: 'user-admin-0001',
+        username: 'admin',
+        email: 'admin@apex.local',
         passwordHash: bcrypt.hashSync('Password123!', 10),
         fullName: 'Dr. Alexander Wright',
         phone: '+1-555-0100',
@@ -215,7 +257,7 @@ export class AuthService {
         passwordHash: bcrypt.hashSync('Password123!', 10),
         fullName: 'Executive Branch Manager',
         phone: '+855 12 345 678',
-        role: UserRole.USER,
+        role: UserRole.MANAGER,
         status: UserStatus.ACTIVE,
         avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
         lastLogin: new Date(Date.now() - 1000 * 60 * 15),
@@ -233,12 +275,30 @@ export class AuthService {
         passwordHash: bcrypt.hashSync('Password123!', 10),
         fullName: 'Senior Underwriting Officer',
         phone: '+855 12 888 999',
-        role: UserRole.USER,
+        role: UserRole.LOAN_OFFICER,
         status: UserStatus.ACTIVE,
         avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
         lastLogin: new Date(Date.now() - 1000 * 60 * 45),
         emailVerifiedAt: new Date(),
         createdAt: new Date('2025-02-01T09:30:00Z'),
+        updatedAt: new Date(),
+      },
+    ],
+    [
+      'credit@apex.local',
+      {
+        id: 'user-credit-0005',
+        username: 'credit',
+        email: 'credit@apex.local',
+        passwordHash: bcrypt.hashSync('Password123!', 10),
+        fullName: 'Senior Credit & Risk Officer',
+        phone: '+855 12 777 666',
+        role: UserRole.CREDIT_OFFICER,
+        status: UserStatus.ACTIVE,
+        avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+        lastLogin: new Date(Date.now() - 1000 * 60 * 30),
+        emailVerifiedAt: new Date(),
+        createdAt: new Date('2025-02-15T09:30:00Z'),
         updatedAt: new Date(),
       },
     ],
@@ -251,7 +311,7 @@ export class AuthService {
         passwordHash: bcrypt.hashSync('Password123!', 10),
         fullName: 'Head Teller & Cashier',
         phone: '+855 16 555 777',
-        role: UserRole.USER,
+        role: UserRole.CASHIER,
         status: UserStatus.ACTIVE,
         avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
         lastLogin: new Date(Date.now() - 1000 * 60 * 5),
@@ -269,7 +329,7 @@ export class AuthService {
         passwordHash: bcrypt.hashSync('Password123!', 10),
         fullName: 'Sokha Chan',
         phone: '+855 92 612 045',
-        role: UserRole.USER,
+        role: UserRole.BORROWER,
         status: UserStatus.ACTIVE,
         avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
         lastLogin: new Date(Date.now() - 1000 * 60 * 60 * 2),
@@ -452,13 +512,26 @@ export class AuthService {
    * The pending record is NOT an active user account.
    * Real user record is created only after OTP verification.
    */
+  /**
+   * 1. User Registration (Pending Registration Storage Flow)
+   * The pending record is NOT an active user account.
+   * Real user record is created only after OTP verification.
+   */
   static async register(dto: RegisterUserDto) {
     // Normal users must NEVER be able to register as Admin
     if (dto.role && String(dto.role).toUpperCase() === 'ADMIN') {
       throw {
         statusCode: 400,
         message: 'Registering as an administrator is forbidden. Normal users can only register as standard users.',
-        code: 'ADMIN_REGISTRATION_FORBIDDEN'
+        code: 'ADMIN_REGISTRATION_FORBIDDEN',
+      };
+    }
+
+    if (dto.confirmPassword && dto.password !== dto.confirmPassword) {
+      throw {
+        statusCode: 400,
+        message: 'Passwords do not match.',
+        code: 'PASSWORD_MISMATCH',
       };
     }
 
@@ -468,9 +541,14 @@ export class AuthService {
     // 1-3. Validate & Check active users table
     await PendingRegistrationService.assertNoActiveUser(cleanEmail, cleanUsername);
 
+    const calculatedFullName =
+      dto.fullName?.trim() ||
+      `${dto.firstName || ''} ${dto.lastName || ''}`.trim() ||
+      cleanUsername;
+
     // 4-6. Create or update pending_registrations record (30-min expiry, password pre-hashed)
     const pending = await PendingRegistrationService.createOrUpdatePending({
-      fullName: dto.fullName,
+      fullName: calculatedFullName,
       username: cleanUsername,
       email: cleanEmail,
       phone: dto.phone,
@@ -480,14 +558,17 @@ export class AuthService {
     // 7. Generate 6-digit OTP, store in otp_verifications linked to pendingRegistrationId, send via Gmail
     const otpResult = await OtpService.createAndSendOtp({
       email: cleanEmail,
-      recipientName: pending.fullName,
-      purpose: 'register_verification',
+      recipientName: calculatedFullName,
+      firstName: dto.firstName,
+      purpose: 'REGISTRATION',
       pendingRegistrationId: pending.id,
     });
 
     return {
       success: true,
-      message: otpResult.message || 'Registration submitted. A 6-digit verification code has been dispatched to your Gmail.',
+      message:
+        otpResult.message ||
+        'Registration submitted. A 6-digit verification code has been dispatched to your Gmail.',
       email: cleanEmail,
       pendingRegistrationId: pending.id,
       devOtp: otpResult.devOtp,
@@ -497,53 +578,90 @@ export class AuthService {
   /**
    * 2. Verify OTP for Registration or Password Reset
    */
-  static async verifyOtp(dto: { email: string; code: string; purpose: OtpPurpose; ipAddress?: string }) {
+  static async verifyOtp(dto: {
+    email: string;
+    code?: string;
+    otp?: string;
+    purpose?: OtpPurpose | string;
+    ipAddress?: string;
+  }) {
     const cleanEmail = dto.email.toLowerCase().trim();
+    const cleanCode = (dto.code || dto.otp || '').trim();
+    const purpose = dto.purpose || 'REGISTRATION';
+    const canonicalPurpose = OtpService.normalizePurpose(purpose);
 
     // 1-5. Verify OTP against otp_verifications
     const otpResult = await OtpService.verifyOtp({
       email: cleanEmail,
-      code: dto.code,
-      purpose: dto.purpose,
+      code: cleanCode,
+      purpose: canonicalPurpose,
     });
 
     if (!otpResult.valid) {
       throw { statusCode: 400, message: otpResult.message, code: 'INVALID_OTP' };
     }
 
-    // 6-12. If purpose is register_verification: Promote pending registration to permanent user
-    if (dto.purpose === 'register_verification') {
+    // If purpose is REGISTRATION: Promote pending registration or mark user verified
+    if (canonicalPurpose === 'REGISTRATION') {
       const pendingRegistration = await PendingRegistrationService.findValidByEmail(cleanEmail);
 
-      if (!pendingRegistration) {
-        throw {
-          statusCode: 400,
-          message: 'No active registration session found for this email. It may have expired (30-minute limit). Please submit the registration form again.',
-          code: 'PENDING_REGISTRATION_NOT_FOUND',
-        };
+      let createdUser: any;
+      if (pendingRegistration) {
+        // Execute transactional promotion into permanent users table & purge pending record
+        createdUser = await UserCreationService.promotePendingToUser({
+          pendingRegistration,
+          otpId: (otpResult as any).otpId,
+          ipAddress: dto.ipAddress,
+        });
+      } else {
+        // Fallback: check if user exists in User table directly but unverified
+        const existing = await prisma.user.findFirst({ where: { email: cleanEmail } });
+        if (existing) {
+          createdUser = await prisma.user.update({
+            where: { id: existing.id },
+            data: {
+              emailVerifiedAt: new Date(),
+              status: UserStatus.ACTIVE,
+            },
+          });
+        } else {
+          throw {
+            statusCode: 400,
+            message:
+              'No active registration session found for this email. It may have expired (30-minute limit). Please submit the registration form again.',
+            code: 'PENDING_REGISTRATION_NOT_FOUND',
+          };
+        }
       }
 
-      // Execute transactional promotion into permanent users table & purge pending record
-      const createdUser = await UserCreationService.promotePendingToUser({
-        pendingRegistration,
-        otpId: otpResult.otpId,
-        ipAddress: dto.ipAddress,
-      });
+      try {
+        await recordAuditLog({
+          userId: createdUser.id,
+          action: 'EMAIL_VERIFIED',
+          entityName: 'User',
+          entityId: createdUser.id,
+          details: { email: cleanEmail },
+          ipAddress: dto.ipAddress,
+        });
+      } catch {
+        // optional
+      }
 
       return {
         success: true,
-        message: 'Email verified successfully. Your account is now active! Please sign in.',
+        message: 'Your account has been verified successfully. You can now log in.',
         user: {
           id: createdUser.id,
           username: createdUser.username,
           email: createdUser.email,
           fullName: createdUser.fullName,
-          role: createdUser.role,
+          role: createdUser.role === UserRole.ADMIN ? 'admin' : 'user',
+          emailVerified: true,
         },
       };
     }
 
-    // If verifying forgot password, return signed reset token
+    // If purpose is PASSWORD_RESET, return signed reset token
     return {
       success: true,
       message: 'OTP verified successfully.',
@@ -553,27 +671,49 @@ export class AuthService {
   }
 
   /**
-   * 3. Resend OTP with 60-Second Cooldown & Pending Registration Check
+   * 2b. Verify Reset OTP helper specifically for /verify-reset-otp endpoint
    */
-  static async resendOtp(dto: { email: string; purpose: OtpPurpose }) {
-    const cleanEmail = dto.email.toLowerCase().trim();
+  static async verifyResetOtp(dto: {
+    email: string;
+    code?: string;
+    otp?: string;
+    ipAddress?: string;
+  }) {
+    return this.verifyOtp({
+      email: dto.email,
+      code: dto.code || dto.otp,
+      purpose: 'PASSWORD_RESET',
+      ipAddress: dto.ipAddress,
+    });
+  }
 
-    if (dto.purpose === 'register_verification') {
+  /**
+   * 3. Resend OTP with 60-Second Cooldown & Registration Check
+   */
+  static async resendOtp(dto: { email: string; purpose?: OtpPurpose | string }) {
+    const cleanEmail = dto.email.toLowerCase().trim();
+    const canonicalPurpose = OtpService.normalizePurpose(dto.purpose);
+
+    if (canonicalPurpose === 'REGISTRATION') {
       // Confirm pending registration exists and has not expired (30 mins)
       const pending = await PendingRegistrationService.findValidByEmail(cleanEmail);
       if (!pending) {
-        throw {
-          statusCode: 400,
-          message: 'Registration session expired or not found. Please fill out the registration form again.',
-          code: 'PENDING_REGISTRATION_EXPIRED',
-        };
+        // Check if unverified user exists
+        const existing = await prisma.user.findFirst({ where: { email: cleanEmail } });
+        if (!existing || existing.emailVerifiedAt !== null) {
+          throw {
+            statusCode: 400,
+            message: 'Registration session expired or not found. Please fill out the registration form again.',
+            code: 'PENDING_REGISTRATION_EXPIRED',
+          };
+        }
       }
 
       const otpResult = await OtpService.createAndSendOtp({
         email: cleanEmail,
-        recipientName: pending.fullName,
-        purpose: 'register_verification',
-        pendingRegistrationId: pending.id,
+        recipientName: pending?.fullName || 'Valued User',
+        purpose: 'REGISTRATION',
+        pendingRegistrationId: pending?.id || null,
       });
 
       if (!otpResult.success) {
@@ -593,7 +733,7 @@ export class AuthService {
     const otpResult = await OtpService.createAndSendOtp({
       email: cleanEmail,
       recipientName: activeUser?.fullName || 'Valued User',
-      purpose: 'forgot_password',
+      purpose: 'PASSWORD_RESET',
       pendingRegistrationId: null,
     });
 
@@ -621,7 +761,7 @@ export class AuthService {
       await OtpService.createAndSendOtp({
         email: cleanEmail,
         recipientName: user.fullName,
-        purpose: 'forgot_password',
+        purpose: 'PASSWORD_RESET',
         pendingRegistrationId: null,
       });
     }
@@ -629,18 +769,21 @@ export class AuthService {
     // Security best practice: Return generic success message so attacker cannot enumerate emails
     return {
       success: true,
-      message: 'If an account exists with this email, a verification code has been sent.',
+      message: 'If an account exists for this email, a verification code has been sent.',
     };
   }
 
   /**
-   * 5. Set New Password after OTP verification
+   * 5. Set New Password after OTP verification (supports resetToken or direct OTP)
    */
   static async resetPassword(dto: {
     email: string;
-    resetToken: string;
+    resetToken?: string;
+    otp?: string;
+    code?: string;
     newPassword: string;
     confirmPassword?: string;
+    ipAddress?: string;
   }) {
     const cleanEmail = dto.email.toLowerCase().trim();
 
@@ -648,25 +791,46 @@ export class AuthService {
       throw { statusCode: 400, message: 'Passwords do not match.', code: 'PASSWORD_MISMATCH' };
     }
 
-    // Verify reset token
-    let decoded: any;
-    try {
-      const secret = process.env.JWT_SECRET || 'apex-lms-jwt-secret-2026';
-      decoded = jwt.verify(dto.resetToken, secret);
-    } catch {
-      throw { statusCode: 400, message: 'Invalid or expired password reset session. Please request a new code.', code: 'INVALID_RESET_TOKEN' };
-    }
+    // Verify reset token or direct OTP
+    if (dto.resetToken) {
+      let decoded: any;
+      try {
+        const secret = process.env.JWT_SECRET || 'apex-lms-jwt-secret-2026';
+        decoded = jwt.verify(dto.resetToken, secret);
+      } catch {
+        throw {
+          statusCode: 400,
+          message: 'This verification code has expired. Please request a new code.',
+          code: 'INVALID_RESET_TOKEN',
+        };
+      }
 
-    if (decoded.email !== cleanEmail || decoded.purpose !== 'password_reset_authorized') {
-      throw { statusCode: 400, message: 'Invalid password reset authorization.', code: 'UNAUTHORIZED_RESET' };
+      if (decoded.email.toLowerCase() !== cleanEmail) {
+        throw { statusCode: 400, message: 'Invalid password reset authorization.', code: 'UNAUTHORIZED_RESET' };
+      }
+    } else if (dto.otp || dto.code) {
+      const verifyResult = await OtpService.verifyOtp({
+        email: cleanEmail,
+        code: (dto.otp || dto.code)!,
+        purpose: 'PASSWORD_RESET',
+      });
+      if (!verifyResult.valid) {
+        throw { statusCode: 400, message: verifyResult.message, code: 'INVALID_OTP' };
+      }
+    } else {
+      throw {
+        statusCode: 400,
+        message: 'Reset token or verification code is required.',
+        code: 'MISSING_VERIFICATION',
+      };
     }
 
     const newHash = await bcrypt.hash(dto.newPassword, 10);
 
-    // Update in memory fallback
-    const memUser = UserCreationService.memoryUsers.get(cleanEmail);
-    if (memUser) {
-      memUser.passwordHash = newHash;
+    // Find user
+    const user = await this.findActiveUserByEmailOrUsername(cleanEmail);
+    if (!user) {
+      throw { statusCode: 404, message: 'User not found.', code: 'USER_NOT_FOUND' };
     }
 
     // Update in database
@@ -675,9 +839,40 @@ export class AuthService {
         where: { email: cleanEmail },
         data: { passwordHash: newHash },
       });
+      await prisma.refreshToken.updateMany({
+        where: { userId: user.id, isRevoked: false },
+        data: { isRevoked: true },
+      });
+      await prisma.otpVerification.updateMany({
+        where: { email: cleanEmail, purpose: { in: ['PASSWORD_RESET', 'forgot_password'] } },
+        data: { invalidatedAt: new Date() },
+      });
     } catch {
-      // Fallback
+      // Memory fallback
+      const memUser = UserCreationService.memoryUsers.get(cleanEmail);
+      if (memUser) {
+        memUser.passwordHash = newHash;
+      }
     }
+
+    try {
+      await recordAuditLog({
+        userId: user.id,
+        action: 'PASSWORD_RESET',
+        entityName: 'User',
+        entityId: user.id,
+        details: { email: cleanEmail },
+        ipAddress: dto.ipAddress,
+      });
+    } catch {
+      // optional
+    }
+
+    // Send confirmation email
+    await EmailService.sendPasswordChangedEmail({
+      toEmail: cleanEmail,
+      recipientName: user.fullName || user.username,
+    });
 
     return {
       success: true,
@@ -708,7 +903,7 @@ export class AuthService {
     if (isPending) {
       throw {
         statusCode: 403,
-        message: 'This registration has not been verified yet. Please enter the 6-digit OTP code sent to your Gmail.',
+        message: 'Please verify your email before logging in.',
         code: 'ACCOUNT_UNVERIFIED',
       };
     }
@@ -738,11 +933,20 @@ export class AuthService {
     // Clear failed attempts on valid credentials
     this.clearFailedAttempts(cleanIdentifier);
 
+    // Check email verification status
+    if (!user.emailVerifiedAt) {
+      throw {
+        statusCode: 403,
+        message: 'Please verify your email before logging in.',
+        code: 'ACCOUNT_UNVERIFIED',
+      };
+    }
+
     // Step 6: Check user account status
     if (user.status === UserStatus.INACTIVE) {
       throw {
         statusCode: 403,
-        message: 'Your account is inactive. Please contact the administrator.',
+        message: 'Your account is currently inactive.',
         code: 'ACCOUNT_INACTIVE',
       };
     }
@@ -809,7 +1013,7 @@ export class AuthService {
     const defaultAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.username)}`;
     const normalizedRole = user.role === UserRole.ADMIN ? 'admin' : 'user';
 
-    // Step 9 & Response Format (Point 13)
+    // Step 9 & Response Format
     return {
       success: true,
       message: 'Login successful',
@@ -819,13 +1023,18 @@ export class AuthService {
       expiresIn: expiryTime,
       user: {
         id: user.id,
-        name: user.fullName || user.username,
         fullName: user.fullName || user.username,
+        name: user.fullName || user.username,
+        firstName: user.fullName ? user.fullName.split(' ')[0] : user.username,
+        lastName: user.fullName && user.fullName.includes(' ') ? user.fullName.split(' ').slice(1).join(' ') : '',
         username: user.username,
         email: user.email,
+        phone: user.phone,
         role: normalizedRole,
         originalRole: user.role,
         status: user.status.toLowerCase(),
+        emailVerified: user.emailVerifiedAt !== null,
+        emailVerifiedAt: user.emailVerifiedAt,
         avatarUrl: user.avatarUrl || defaultAvatar,
         lastLogin: user.lastLogin || now,
         createdAt: user.createdAt,
@@ -918,7 +1127,24 @@ export class AuthService {
    * 9. Change Password (Authenticated)
    */
   static async changePassword(userId: string, dto: ChangePasswordDto) {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (dto.confirmPassword && dto.newPassword !== dto.confirmPassword) {
+      throw { statusCode: 400, message: 'Passwords do not match.', code: 'PASSWORD_MISMATCH' };
+    }
+
+    let user: any = null;
+    try {
+      user = await prisma.user.findUnique({ where: { id: userId } });
+    } catch {
+      // offline fallback
+    }
+
+    if (!user) {
+      user = Array.from(UserCreationService.memoryUsers.values()).find((u) => u.id === userId);
+    }
+    if (!user) {
+      user = Array.from(this.seedUsers.values()).find((u) => u.id === userId);
+    }
+
     if (!user) {
       throw { statusCode: 404, message: 'User not found', code: 'USER_NOT_FOUND' };
     }
@@ -928,14 +1154,42 @@ export class AuthService {
       throw { statusCode: 400, message: 'Current password does not match', code: 'INVALID_PASSWORD' };
     }
 
+    if (dto.newPassword === dto.currentPassword) {
+      throw { statusCode: 400, message: 'New password cannot be the same as current password.', code: 'SAME_PASSWORD' };
+    }
+
     const newHash = await bcrypt.hash(dto.newPassword, 10);
 
-    await prisma.$transaction([
-      prisma.user.update({ where: { id: userId }, data: { passwordHash: newHash } }),
-      prisma.refreshToken.updateMany({ where: { userId, isRevoked: false }, data: { isRevoked: true } }),
-    ]);
+    try {
+      await prisma.$transaction([
+        prisma.user.update({ where: { id: userId }, data: { passwordHash: newHash } }),
+        prisma.refreshToken.updateMany({ where: { userId, isRevoked: false }, data: { isRevoked: true } }),
+      ]);
+    } catch {
+      user.passwordHash = newHash;
+    }
 
-    return { message: 'Password updated successfully. Please log in again with your new password.' };
+    try {
+      await recordAuditLog({
+        userId,
+        action: 'PASSWORD_CHANGE',
+        entityName: 'User',
+        entityId: userId,
+        details: { email: user.email },
+        ipAddress: dto.ipAddress,
+      });
+    } catch {
+      // Optional
+    }
+
+    // Deliver confirmation email to the user's Gmail
+    await EmailService.sendPasswordChangedEmail({
+      toEmail: user.email,
+      recipientName: user.fullName || user.username,
+      firstName: user.firstName,
+    });
+
+    return { success: true, message: 'Password updated successfully. Please log in again with your new password.' };
   }
 
   /**
@@ -943,10 +1197,16 @@ export class AuthService {
    */
   static async updateProfile(userId: string, dto: UpdateProfileDto) {
     try {
+      const derivedFullName =
+        dto.fullName?.trim() ||
+        (dto.firstName || dto.lastName
+          ? `${dto.firstName || ''} ${dto.lastName || ''}`.trim()
+          : undefined);
+
       const updated = await prisma.user.update({
         where: { id: userId },
         data: {
-          ...(dto.fullName && { fullName: dto.fullName }),
+          ...(derivedFullName && { fullName: derivedFullName }),
           ...(dto.phone && { phone: dto.phone }),
           ...(dto.position && { position: dto.position }),
           ...(dto.department && { department: dto.department }),
@@ -961,16 +1221,31 @@ export class AuthService {
           department: true,
           role: true,
           status: true,
+          emailVerifiedAt: true,
           updatedAt: true,
         },
       });
-      return updated;
+
+      return {
+        ...updated,
+        firstName: updated.fullName ? updated.fullName.split(' ')[0] : updated.username,
+        lastName: updated.fullName && updated.fullName.includes(' ') ? updated.fullName.split(' ').slice(1).join(' ') : '',
+        emailVerified: updated.emailVerifiedAt !== null,
+      };
     } catch {
       const memUser = Array.from(UserCreationService.memoryUsers.values()).find((u) => u.id === userId);
       if (memUser) {
         if (dto.fullName) memUser.fullName = dto.fullName;
+        else if (dto.firstName || dto.lastName) {
+          memUser.fullName = `${dto.firstName || ''} ${dto.lastName || ''}`.trim();
+        }
         if (dto.phone) memUser.phone = dto.phone;
-        return memUser;
+        return {
+          ...memUser,
+          firstName: memUser.fullName ? memUser.fullName.split(' ')[0] : memUser.username,
+          lastName: memUser.fullName && memUser.fullName.includes(' ') ? memUser.fullName.split(' ').slice(1).join(' ') : '',
+          emailVerified: memUser.emailVerifiedAt !== null,
+        };
       }
       throw { statusCode: 404, message: 'User not found' };
     }
@@ -995,6 +1270,7 @@ export class AuthService {
             lastLogin: true,
             role: true,
             status: true,
+            emailVerifiedAt: true,
             createdAt: true,
             userSetting: true,
             borrowers: {
@@ -1013,6 +1289,9 @@ export class AuthService {
       if (user) {
         return {
           ...user,
+          firstName: user.fullName ? user.fullName.split(' ')[0] : user.username,
+          lastName: user.fullName && user.fullName.includes(' ') ? user.fullName.split(' ').slice(1).join(' ') : '',
+          emailVerified: user.emailVerifiedAt !== null,
           avatarUrl: user.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.username)}`,
           permissions: getPermissionsForRole(user.role),
         };
@@ -1025,6 +1304,9 @@ export class AuthService {
     if (memUser) {
       return {
         ...memUser,
+        firstName: memUser.fullName ? memUser.fullName.split(' ')[0] : memUser.username,
+        lastName: memUser.fullName && memUser.fullName.includes(' ') ? memUser.fullName.split(' ').slice(1).join(' ') : '',
+        emailVerified: memUser.emailVerifiedAt !== null,
         avatarUrl: memUser.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(memUser.username)}`,
         userSetting: {
           theme: 'light',
@@ -1040,6 +1322,9 @@ export class AuthService {
     if (seed) {
       return {
         ...seed,
+        firstName: seed.fullName ? seed.fullName.split(' ')[0] : seed.username,
+        lastName: seed.fullName && seed.fullName.includes(' ') ? seed.fullName.split(' ').slice(1).join(' ') : '',
+        emailVerified: seed.emailVerifiedAt !== null,
         userSetting: {
           theme: 'light',
           currency: 'USD',

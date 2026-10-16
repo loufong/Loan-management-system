@@ -125,6 +125,20 @@ export class ReportController {
     }
   }
 
+  static async getAuditLogs(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (req.query.export === 'csv') {
+        const csv = await ReportService.exportReportCsv('audit-logs', req.query);
+        sendCsvResponse(res, `lms_audit_logs_${Date.now()}.csv`, csv);
+        return;
+      }
+      const data = await ReportService.getAuditLogsReport(req.query);
+      sendSuccess(res, data.items, 'Audit logs retrieved successfully', 200, data.meta);
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async exportCsv(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const reportType = (req.query.type as string) || 'daily-collections';

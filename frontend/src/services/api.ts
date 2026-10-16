@@ -18,7 +18,13 @@ import {
   USER_PROFILES,
 } from '../data/mockData';
 
+const rawBase = (import.meta as any).env?.VITE_API_URL || '';
+const BASE_URL = rawBase
+  ? (rawBase.endsWith('/api/v1') ? rawBase : `${rawBase.replace(/\/+$/, '')}/api/v1`)
+  : '/api/v1';
+
 export const isStaticHost =
+  !(import.meta as any).env?.VITE_API_URL &&
   typeof window !== 'undefined' &&
   (window.location.hostname.includes('github.io') ||
    window.location.protocol === 'file:' ||
@@ -26,7 +32,16 @@ export const isStaticHost =
    window.location.hostname.includes('netlify.app') ||
    window.location.hostname.includes('vercel.app'));
 
-const BASE_URL = '/api/v1';
+export function normalizeUserRole(role?: string): UserRole {
+  const r = (role || '').toUpperCase();
+  if (r === 'ADMIN' || r === 'ADMINISTRATOR') return 'ADMIN';
+  if (r === 'MANAGER') return 'MANAGER';
+  if (r === 'LOAN_OFFICER') return 'LOAN_OFFICER';
+  if (r === 'CREDIT_OFFICER') return 'CREDIT_OFFICER';
+  if (r === 'CASHIER') return 'CASHIER';
+  if (r === 'BORROWER') return 'BORROWER';
+  return 'USER';
+}
 
 class ApiService {
   private token: string | null = localStorage.getItem('apex_token') || sessionStorage.getItem('apex_token');
@@ -118,7 +133,7 @@ class ApiService {
     const mockAccounts: Record<
       string,
       {
-        role: 'admin' | 'user';
+        role: UserRole;
         status: 'active' | 'inactive' | 'suspended';
         name: string;
         email: string;
@@ -127,21 +142,23 @@ class ApiService {
         password?: string;
       }
     > = {
-      'admin@loansystem.edu': { role: 'admin', status: 'active', name: 'System Administrator', email: 'admin@loansystem.edu', username: 'admin' },
-      'admin': { role: 'admin', status: 'active', name: 'System Administrator', email: 'admin@loansystem.edu', username: 'admin' },
-      'admin@example.com': { role: 'admin', status: 'active', name: 'System Administrator', email: 'admin@loansystem.edu', username: 'admin' },
-      'johnathan.doe@student.edu': { role: 'user', status: 'active', name: 'Johnathan Doe', email: 'johnathan.doe@student.edu', username: 'j.doe', borrowerId: 'BOR-2026-0001' },
-      'j.doe': { role: 'user', status: 'active', name: 'Johnathan Doe', email: 'johnathan.doe@student.edu', username: 'j.doe', borrowerId: 'BOR-2026-0001' },
-      'borrower@apex.local': { role: 'user', status: 'active', name: 'Sokha Chan', email: 'borrower@apex.local', username: 'borrower', borrowerId: 'BOR-2026-0001' },
-      'borrower': { role: 'user', status: 'active', name: 'Sokha Chan', email: 'borrower@apex.local', username: 'borrower', borrowerId: 'BOR-2026-0001' },
-      'user@example.com': { role: 'user', status: 'active', name: 'Standard User', email: 'user@example.com', username: 'user', borrowerId: 'BOR-2026-0001' },
-      'user': { role: 'user', status: 'active', name: 'Standard User', email: 'user@example.com', username: 'user', borrowerId: 'BOR-2026-0001' },
-      'manager@apex.local': { role: 'user', status: 'active', name: 'Executive Branch Manager', email: 'manager@apex.local', username: 'manager' },
-      'manager': { role: 'user', status: 'active', name: 'Executive Branch Manager', email: 'manager@apex.local', username: 'manager' },
-      'inactive@example.com': { role: 'user', status: 'inactive', name: 'Inactive User', email: 'inactive@example.com', username: 'inactive' },
-      'inactive': { role: 'user', status: 'inactive', name: 'Inactive User', email: 'inactive@example.com', username: 'inactive' },
-      'suspended@example.com': { role: 'user', status: 'suspended', name: 'Suspended User', email: 'suspended@example.com', username: 'suspended' },
-      'suspended': { role: 'user', status: 'suspended', name: 'Suspended User', email: 'suspended@example.com', username: 'suspended' },
+      'admin@loansystem.edu': { role: 'ADMIN', status: 'active', name: 'System Administrator', email: 'admin@loansystem.edu', username: 'admin' },
+      'admin': { role: 'ADMIN', status: 'active', name: 'System Administrator', email: 'admin@loansystem.edu', username: 'admin' },
+      'admin@example.com': { role: 'ADMIN', status: 'active', name: 'System Administrator', email: 'admin@loansystem.edu', username: 'admin' },
+      'manager@apex.local': { role: 'MANAGER', status: 'active', name: 'Branch General Manager', email: 'manager@apex.local', username: 'manager' },
+      'manager': { role: 'MANAGER', status: 'active', name: 'Branch General Manager', email: 'manager@apex.local', username: 'manager' },
+      'officer@apex.local': { role: 'LOAN_OFFICER', status: 'active', name: 'Senior Loan Underwriter', email: 'officer@apex.local', username: 'loan_officer' },
+      'loan_officer': { role: 'LOAN_OFFICER', status: 'active', name: 'Senior Loan Underwriter', email: 'officer@apex.local', username: 'loan_officer' },
+      'credit@apex.local': { role: 'CREDIT_OFFICER', status: 'active', name: 'Credit Risk Analyst', email: 'credit@apex.local', username: 'credit_officer' },
+      'credit_officer': { role: 'CREDIT_OFFICER', status: 'active', name: 'Credit Risk Analyst', email: 'credit@apex.local', username: 'credit_officer' },
+      'cashier@apex.local': { role: 'CASHIER', status: 'active', name: 'Head Cashier', email: 'cashier@apex.local', username: 'cashier' },
+      'cashier': { role: 'CASHIER', status: 'active', name: 'Head Cashier', email: 'cashier@apex.local', username: 'cashier' },
+      'borrower@apex.local': { role: 'BORROWER', status: 'active', name: 'Sokha Chan', email: 'borrower@apex.local', username: 'borrower', borrowerId: 'BOR-2026-0001' },
+      'borrower': { role: 'BORROWER', status: 'active', name: 'Sokha Chan', email: 'borrower@apex.local', username: 'borrower', borrowerId: 'BOR-2026-0001' },
+      'user@example.com': { role: 'BORROWER', status: 'active', name: 'Standard User', email: 'user@example.com', username: 'user', borrowerId: 'BOR-2026-0001' },
+      'user': { role: 'BORROWER', status: 'active', name: 'Standard User', email: 'user@example.com', username: 'user', borrowerId: 'BOR-2026-0001' },
+      'inactive@example.com': { role: 'BORROWER', status: 'inactive', name: 'Inactive User', email: 'inactive@example.com', username: 'inactive' },
+      'suspended@example.com': { role: 'BORROWER', status: 'suspended', name: 'Suspended User', email: 'suspended@example.com', username: 'suspended' },
       ...registeredUsersMap,
     };
 
@@ -173,16 +190,17 @@ class ApiService {
     const token = `jwt-token-${cleanId}-${Date.now()}`;
     this.setToken(token);
 
+    const userRole = normalizeUserRole(account.role);
     const user: UserProfile = {
       id: `usr-${cleanId.replace(/[^a-z0-9]/g, '-')}`,
       username: account.username,
       name: account.name,
       fullName: account.name,
       email: account.email,
-      role: account.role as UserRole,
+      role: userRole,
       status: account.status,
-      title: account.role === 'admin' ? 'System Administrator' : 'Client Borrower',
-      department: account.role === 'admin' ? 'Executive Administration' : 'Client Services',
+      title: userRole === 'ADMIN' ? 'System Administrator' : userRole === 'MANAGER' ? 'Branch Manager' : userRole === 'CASHIER' ? 'Head Cashier' : userRole === 'LOAN_OFFICER' ? 'Loan Officer' : userRole === 'CREDIT_OFFICER' ? 'Credit Analyst' : 'Client Borrower',
+      department: userRole === 'ADMIN' || userRole === 'MANAGER' ? 'Executive Administration' : userRole === 'CASHIER' ? 'Treasury & Cashier' : userRole === 'LOAN_OFFICER' || userRole === 'CREDIT_OFFICER' ? 'Credit & Underwriting' : 'Client Services',
       avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(account.username)}`,
       avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(account.username)}`,
       branch: 'Phnom Penh Main Branch',
@@ -207,7 +225,7 @@ class ApiService {
       throw new Error('Invalid email/username or password.');
     }
 
-    // On GitHub Pages or static host, authenticate directly
+    // On GitHub Pages without custom backend URL, authenticate directly
     if (isStaticHost) {
       return this.authenticateMock(cleanId, password);
     }
@@ -220,20 +238,20 @@ class ApiService {
       const activeToken = res.accessToken || res.token || 'jwt-token-active';
       this.setToken(activeToken);
       const u = res.user;
-      const normalizedRole = (u?.role === 'admin' || u?.role === 'ADMIN') ? 'admin' : 'user';
+      const normalizedRole = normalizeUserRole(u?.role);
       const matchedProfile: UserProfile = {
         id: u?.id || 'usr-default',
         username: u?.username || usernameOrEmail,
-        name: u?.name || u?.fullName || usernameOrEmail,
+        name: u?.fullName || u?.name || usernameOrEmail,
         fullName: u?.fullName || u?.name || usernameOrEmail,
         email: u?.email || usernameOrEmail,
-        role: normalizedRole as UserRole,
+        role: normalizedRole,
         status: (u?.status || 'active').toLowerCase() as any,
-        title: normalizedRole === 'admin' ? 'System Administrator' : 'Client Borrower',
-        department: u?.department || (normalizedRole === 'admin' ? 'Administration' : 'Retail Banking'),
+        title: u?.position || (normalizedRole === 'ADMIN' ? 'System Administrator' : normalizedRole === 'MANAGER' ? 'Branch Manager' : normalizedRole === 'CASHIER' ? 'Head Cashier' : normalizedRole === 'LOAN_OFFICER' ? 'Loan Officer' : normalizedRole === 'CREDIT_OFFICER' ? 'Credit Analyst' : 'Client Borrower'),
+        department: u?.department || (normalizedRole === 'ADMIN' || normalizedRole === 'MANAGER' ? 'Executive Administration' : normalizedRole === 'CASHIER' ? 'Treasury & Cashier' : normalizedRole === 'LOAN_OFFICER' || normalizedRole === 'CREDIT_OFFICER' ? 'Credit & Underwriting' : 'Retail Banking'),
         avatar: u?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u?.username || usernameOrEmail)}`,
         avatarUrl: u?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u?.username || usernameOrEmail)}`,
-        branch: 'Phnom Penh Main Branch',
+        branch: u?.userSetting?.branch || 'Phnom Penh Main Branch',
         borrowerId: u?.borrowers?.[0]?.borrowerId,
         createdAt: u?.createdAt,
         lastLogin: new Date().toISOString(),
@@ -273,7 +291,7 @@ class ApiService {
         name: 'System Administrator',
         fullName: 'System Administrator',
         email: 'admin@loansystem.edu',
-        role: 'admin',
+        role: 'ADMIN',
         title: 'System Administrator',
         department: 'Executive Administration',
         avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin',
@@ -286,16 +304,16 @@ class ApiService {
     try {
       const res = await this.request<any>('/auth/me');
       const u = res.user || res;
-      const normalizedRole = (u?.role === 'admin' || u?.role === 'ADMIN') ? 'admin' : 'user';
+      const normalizedRole = normalizeUserRole(u?.role);
       return {
         id: u.id,
         username: u.username,
         name: u.fullName || u.name,
         fullName: u.fullName || u.name,
         email: u.email,
-        role: normalizedRole as UserRole,
-        title: u.position || (normalizedRole === 'admin' ? 'System Administrator' : 'Client Borrower'),
-        department: u.department || (normalizedRole === 'admin' ? 'Executive Administration' : 'Client Services'),
+        role: normalizedRole,
+        title: u.position || (normalizedRole === 'ADMIN' ? 'System Administrator' : normalizedRole === 'MANAGER' ? 'Branch Manager' : normalizedRole === 'CASHIER' ? 'Head Cashier' : normalizedRole === 'LOAN_OFFICER' ? 'Loan Officer' : normalizedRole === 'CREDIT_OFFICER' ? 'Credit Analyst' : 'Client Borrower'),
+        department: u.department || (normalizedRole === 'ADMIN' || normalizedRole === 'MANAGER' ? 'Executive Administration' : normalizedRole === 'CASHIER' ? 'Treasury & Cashier' : normalizedRole === 'LOAN_OFFICER' || normalizedRole === 'CREDIT_OFFICER' ? 'Credit & Underwriting' : 'Client Services'),
         avatar: u.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.username)}`,
         avatarUrl: u.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u.username)}`,
         branch: u.userSetting?.branch || 'Phnom Penh Main Branch',
@@ -532,7 +550,9 @@ class ApiService {
   }
 
   public async register(payload: {
-    fullName: string;
+    firstName?: string;
+    lastName?: string;
+    fullName?: string;
     username: string;
     email: string;
     phone?: string;
@@ -540,8 +560,14 @@ class ApiService {
     confirmPassword?: string;
     role?: UserRole;
   }): Promise<{ success: boolean; message: string; email: string; devOtp?: string }> {
+    const formattedFullName = payload.fullName || `${payload.firstName || ''} ${payload.lastName || ''}`.trim() || payload.username;
+    const bodyPayload = {
+      ...payload,
+      fullName: formattedFullName,
+    };
+
     if (isStaticHost) {
-      this.saveRegisteredMockUser(payload);
+      this.saveRegisteredMockUser(bodyPayload as any);
       return {
         success: true,
         message: 'Account created successfully. A verification code has been sent to your Gmail.',
@@ -552,13 +578,13 @@ class ApiService {
     try {
       return await this.request('/auth/register', {
         method: 'POST',
-        body: JSON.stringify(payload),
+        body: JSON.stringify(bodyPayload),
       });
     } catch (err: any) {
-      if (err?.status === 400 || err?.status === 409 || err?.status === 422) {
+      if (err?.status) {
         throw err;
       }
-      this.saveRegisteredMockUser(payload);
+      this.saveRegisteredMockUser(bodyPayload as any);
       return {
         success: true,
         message: 'Account created successfully. A verification code has been sent to your Gmail.',
@@ -571,19 +597,27 @@ class ApiService {
   public async verifyOtp(payload: {
     email: string;
     code: string;
-    purpose: 'register_verification' | 'forgot_password' | 'email_verification';
+    purpose: 'register_verification' | 'forgot_password' | 'email_verification' | 'REGISTRATION' | 'PASSWORD_RESET';
   }): Promise<{ success: boolean; message: string; resetToken?: string }> {
     try {
       return await this.request('/auth/verify-otp', {
         method: 'POST',
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          email: payload.email,
+          code: payload.code,
+          otp: payload.code,
+          purpose: payload.purpose,
+        }),
       });
     } catch (err: any) {
+      if (!isStaticHost || err?.status) {
+        throw new Error(err?.message || 'Invalid verification code');
+      }
       if (payload.code.length === 6) {
         return {
           success: true,
-          message: payload.purpose === 'register_verification' ? 'Email verified successfully. Your account is now active!' : 'OTP verified successfully.',
-          resetToken: payload.purpose === 'forgot_password' ? `simulated-reset-token-${Date.now()}` : undefined,
+          message: payload.purpose === 'register_verification' || payload.purpose === 'REGISTRATION' ? 'Email verified successfully. Your account is now active!' : 'OTP verified successfully.',
+          resetToken: payload.purpose === 'forgot_password' || payload.purpose === 'PASSWORD_RESET' ? `simulated-reset-token-${Date.now()}` : undefined,
         };
       }
       throw new Error(err?.message || 'Invalid verification code');
@@ -592,14 +626,17 @@ class ApiService {
 
   public async resendOtp(payload: {
     email: string;
-    purpose: 'register_verification' | 'forgot_password' | 'email_verification';
+    purpose: 'register_verification' | 'forgot_password' | 'email_verification' | 'REGISTRATION' | 'PASSWORD_RESET';
   }): Promise<{ success: boolean; message: string; expiresInSeconds: number; devOtp?: string }> {
     try {
       return await this.request('/auth/resend-otp', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
-    } catch {
+    } catch (err: any) {
+      if (err?.status === 429) {
+        throw err;
+      }
       return {
         success: true,
         message: 'A fresh 6-digit verification code has been dispatched to your Gmail.',
@@ -615,17 +652,22 @@ class ApiService {
         method: 'POST',
         body: JSON.stringify(payload),
       });
-    } catch {
+    } catch (err: any) {
+      if (err?.status && err.status !== 404) {
+        throw err;
+      }
       return {
         success: true,
-        message: 'If an account exists with this email, a verification code has been sent.',
+        message: 'If an account exists for this email, a verification code has been sent.',
       };
     }
   }
 
   public async resetPassword(payload: {
     email: string;
-    resetToken: string;
+    resetToken?: string;
+    otp?: string;
+    code?: string;
     newPassword: string;
     confirmPassword: string;
   }): Promise<{ success: boolean; message: string }> {
@@ -634,12 +676,26 @@ class ApiService {
         method: 'POST',
         body: JSON.stringify(payload),
       });
-    } catch {
+    } catch (err: any) {
+      if (err?.status) {
+        throw err;
+      }
       return {
         success: true,
         message: 'Your password has been successfully reset. Please log in with your new credentials.',
       };
     }
+  }
+
+  public async changePassword(payload: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword?: string;
+  }): Promise<{ success: boolean; message: string }> {
+    return await this.request('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
   }
 
   public async logout(): Promise<void> {
@@ -660,27 +716,54 @@ class ApiService {
   public async getBorrowers(): Promise<Borrower[]> {
     try {
       const data = await this.request<{ items: Borrower[] }>('/borrowers');
-      return data.items || data as any;
+      return data.items || (data as any);
     } catch {
       return MOCK_BORROWERS;
     }
+  }
+
+  public async createBorrower(payload: Partial<Borrower>): Promise<Borrower> {
+    return await this.request<Borrower>('/borrowers', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
   }
 
   // --- PRODUCTS ---
   public async getProducts(): Promise<LoanProduct[]> {
     try {
       const data = await this.request<{ items: LoanProduct[] }>('/loan-products');
-      return data.items || data as any;
+      return data.items || (data as any);
     } catch {
       return MOCK_PRODUCTS;
     }
+  }
+
+  public async createProduct(payload: Partial<LoanProduct>): Promise<LoanProduct> {
+    return await this.request<LoanProduct>('/loan-products', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  public async updateProduct(id: string, payload: Partial<LoanProduct>): Promise<LoanProduct> {
+    return await this.request<LoanProduct>(`/loan-products/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  public async toggleProductStatus(id: string): Promise<any> {
+    return await this.request(`/loan-products/${id}/toggle-status`, {
+      method: 'PATCH',
+    });
   }
 
   // --- LOAN APPLICATIONS ---
   public async getApplications(): Promise<LoanApplication[]> {
     try {
       const data = await this.request<{ items: LoanApplication[] }>('/loan-applications');
-      return data.items || data as any;
+      return data.items || (data as any);
     } catch {
       return MOCK_APPLICATIONS;
     }
@@ -688,9 +771,17 @@ class ApiService {
 
   public async submitApplication(applicationData: Partial<LoanApplication>): Promise<LoanApplication> {
     try {
+      const payload = {
+        borrowerId: applicationData.borrowerId,
+        productId: applicationData.productId,
+        requestedAmount: applicationData.requestedAmountUSD || 5000,
+        term: applicationData.requestedTermMonths || 12,
+        repaymentFrequency: applicationData.frequency || 'MONTHLY',
+        purpose: applicationData.purpose || 'Personal financing',
+      };
       return await this.request<LoanApplication>('/loan-applications', {
         method: 'POST',
-        body: JSON.stringify(applicationData),
+        body: JSON.stringify(payload),
       });
     } catch {
       const newApp: LoanApplication = {
@@ -716,28 +807,165 @@ class ApiService {
     }
   }
 
-  // --- LOANS ---
+  public async reviewApplication(
+    applicationId: string,
+    data: {
+      recommendation: string;
+      creditScore?: number;
+      monthlyIncome?: number;
+      monthlyExpenses?: number;
+      existingDebt?: number;
+      notes?: string;
+    }
+  ): Promise<any> {
+    return await this.request(`/loan-applications/${applicationId}/review`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  public async approveApplication(
+    applicationId: string,
+    terms?: { amount?: number; term?: number; rate?: number; reason?: string }
+  ): Promise<any> {
+    return await this.request(`/loan-applications/${applicationId}/approve`, {
+      method: 'POST',
+      body: JSON.stringify({
+        approvedAmount: terms?.amount,
+        approvedTerm: terms?.term,
+        interestRate: terms?.rate,
+        notes: terms?.reason || 'Approved by Executive Committee',
+      }),
+    });
+  }
+
+  public async rejectApplication(
+    applicationId: string,
+    rejectionReason: string
+  ): Promise<any> {
+    return await this.request(`/loan-applications/${applicationId}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({
+        rejectionReason: rejectionReason || 'Credit underwriting criteria not satisfied',
+      }),
+    });
+  }
+
+  // --- LOANS & DISBURSEMENTS ---
   public async getLoans(): Promise<LoanAccount[]> {
     try {
       const data = await this.request<{ items: LoanAccount[] }>('/loans');
-      return data.items || data as any;
+      return data.items || (data as any);
     } catch {
       return MOCK_LOANS;
     }
   }
 
-  // --- PAYMENTS ---
+  public async disburseLoan(
+    applicationId: string,
+    payload: {
+      disbursementMethod?: string;
+      firstPaymentDate?: string;
+      notes?: string;
+      disbursementReference?: string;
+    } = {}
+  ): Promise<any> {
+    return await this.request(`/loans/${applicationId}/disburse`, {
+      method: 'POST',
+      body: JSON.stringify({
+        disbursementMethod: payload.disbursementMethod || 'BANK_TRANSFER',
+        firstPaymentDate: payload.firstPaymentDate,
+        notes: payload.notes || 'Disbursed via Cashier Operations Desk',
+        disbursementReference: payload.disbursementReference || `DISB-${Date.now().toString().slice(-6)}`,
+      }),
+    });
+  }
+
+  public async getDisbursements(): Promise<any[]> {
+    try {
+      return await this.request<any[]>('/loans/disbursements');
+    } catch {
+      return [];
+    }
+  }
+
+  public async getLoanSchedules(loanId: string): Promise<any[]> {
+    try {
+      return await this.request<any[]>(`/loans/${loanId}/schedules`);
+    } catch {
+      return [];
+    }
+  }
+
+  // --- PAYMENTS & RECEIPTS ---
   public async getReceipts(): Promise<PaymentReceipt[]> {
-    return MOCK_RECEIPTS;
+    try {
+      const res = await this.request<any>('/payments');
+      const items = res?.items || (Array.isArray(res) ? res : []);
+      if (!items || items.length === 0) return MOCK_RECEIPTS;
+
+      return items.map((p: any) => ({
+        receiptNo: p.receiptNo || p.referenceNo || `REC-${p.id?.slice(0, 8)}`,
+        loanNumber: p.loan?.loanNumber || p.loanId || 'LN-2026-0042',
+        borrowerId: p.loan?.borrower?.id || p.borrowerId || 'BOR-2026-0001',
+        borrowerName: p.loan?.borrower?.fullName || p.borrowerName || 'Borrower Client',
+        installmentNo: p.installmentNo || 1,
+        amountPaidUSD: Number(p.amount || 0),
+        amountPaidKHR: Math.round(Number(p.amount || 0) * 4100),
+        paymentMethod: p.paymentMethod || 'Bank Transfer',
+        transactionRef: p.referenceNo || `TX-${Date.now().toString().slice(-6)}`,
+        paidAt: p.paymentDate || p.createdAt || new Date().toISOString(),
+        cashierName: p.receivedByUser?.fullName || p.receivedByUser?.username || 'Cashier',
+        principalAllocatedUSD: Number(p.principalPaid || p.amount * 0.85),
+        interestAllocatedUSD: Number(p.interestPaid || p.amount * 0.15),
+        lateFeeAllocatedUSD: Number(p.lateFeePaid || 0),
+        outstandingBalanceAfterUSD: Number(p.loan?.outstandingBalance || 0),
+        notes: p.notes || 'Recorded via window cashier',
+      }));
+    } catch {
+      return MOCK_RECEIPTS;
+    }
   }
 
   public async recordPayment(payload: any): Promise<PaymentReceipt> {
     try {
-      return await this.request<PaymentReceipt>('/payments', {
+      const backendPayload = {
+        loanId: payload.loanId || payload.loanNumber,
+        amount: payload.amountUSD || payload.amount,
+        paymentMethod: (payload.method || payload.paymentMethod || 'CASH')
+          .toString()
+          .toUpperCase()
+          .replace(/\s+/g, '_'),
+        referenceNo: payload.transactionRef || payload.referenceNo || `REF-${Date.now().toString().slice(-6)}`,
+        notes: payload.notes || 'Recorded via Cashier POS Terminal',
+      };
+
+      const res = await this.request<any>('/payments', {
         method: 'POST',
-        body: JSON.stringify(payload),
+        body: JSON.stringify(backendPayload),
       });
-    } catch {
+
+      const p = res?.payment || res;
+      return {
+        receiptNo: res?.receiptNo || p?.receiptNo || `REC-${Date.now().toString().slice(-6)}`,
+        loanNumber: payload.loanNumber || p?.loan?.loanNumber || payload.loanId,
+        borrowerId: payload.borrowerId || 'BOR-2026-0001',
+        borrowerName: payload.borrowerName || 'Borrower Client',
+        installmentNo: 1,
+        amountPaidUSD: Number(backendPayload.amount),
+        amountPaidKHR: Math.round(Number(backendPayload.amount) * 4100),
+        paymentMethod: backendPayload.paymentMethod,
+        transactionRef: backendPayload.referenceNo,
+        paidAt: new Date().toLocaleString(),
+        cashierName: payload.cashierName || 'Emily Ross',
+        principalAllocatedUSD: backendPayload.amount * 0.85,
+        interestAllocatedUSD: backendPayload.amount * 0.15,
+        lateFeeAllocatedUSD: 0,
+        outstandingBalanceAfterUSD: res?.remainingBalance ?? 0,
+        notes: backendPayload.notes,
+      };
+    } catch (err) {
+      if (!isStaticHost) throw err;
       const newReceipt: PaymentReceipt = {
         receiptNo: `REC-2026-${Math.floor(1000 + Math.random() * 9000)}`,
         loanNumber: payload.loanId || payload.loanNumber || 'LN-2026-0042',
@@ -757,6 +985,109 @@ class ApiService {
         notes: payload.notes || 'Recorded via Cashier POS Terminal',
       };
       return newReceipt;
+    }
+  }
+
+  // --- USER MANAGEMENT (ADMIN) ---
+  public async getUsers(): Promise<any[]> {
+    try {
+      const res = await this.request<any>('/users');
+      return res?.items || (Array.isArray(res) ? res : []);
+    } catch {
+      return [];
+    }
+  }
+
+  public async createUser(userData: any): Promise<any> {
+    return await this.request('/users', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
+  }
+
+  public async updateUser(userId: string, userData: any): Promise<any> {
+    return await this.request(`/users/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify(userData),
+    });
+  }
+
+  public async toggleUserStatus(userId: string): Promise<any> {
+    return await this.request(`/users/${userId}/toggle-status`, {
+      method: 'PATCH',
+    });
+  }
+
+  public async setUserStatus(userId: string, status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'): Promise<any> {
+    return await this.request(`/users/${userId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  public async resetUserPassword(userId: string, newPassword = 'Password123!'): Promise<any> {
+    return await this.request(`/users/${userId}/reset-password`, {
+      method: 'POST',
+      body: JSON.stringify({ newPassword }),
+    });
+  }
+
+  // --- AUDIT LOGS & REPORTS ---
+  public async getAuditLogs(filters: { search?: string; startDate?: string; endDate?: string } = {}): Promise<any[]> {
+    try {
+      const params = new URLSearchParams();
+      if (filters.search) params.append('search', filters.search);
+      if (filters.startDate) params.append('startDate', filters.startDate);
+      if (filters.endDate) params.append('endDate', filters.endDate);
+      const query = params.toString() ? `?${params.toString()}` : '';
+
+      const res = await this.request<any>(`/reports/audit-logs${query}`);
+      return res?.items || (Array.isArray(res) ? res : []);
+    } catch {
+      return [];
+    }
+  }
+
+  public async getDashboardKpis(): Promise<any> {
+    try {
+      return await this.request<any>('/dashboard/kpis');
+    } catch {
+      return null;
+    }
+  }
+
+  public async getOverdueLoans(): Promise<any[]> {
+    try {
+      const res = await this.request<any>('/overdue');
+      return res?.items || (Array.isArray(res) ? res : []);
+    } catch {
+      return [];
+    }
+  }
+
+  // --- NOTIFICATIONS ---
+  public async getNotifications(): Promise<any[]> {
+    try {
+      const res = await this.request<any>('/notifications');
+      return res?.items || (Array.isArray(res) ? res : []);
+    } catch {
+      return [];
+    }
+  }
+
+  public async markNotificationRead(id: string): Promise<any> {
+    try {
+      return await this.request(`/notifications/${id}/read`, { method: 'PATCH' });
+    } catch {
+      return null;
+    }
+  }
+
+  public async markAllNotificationsRead(): Promise<any> {
+    try {
+      return await this.request('/notifications/read-all', { method: 'PATCH' });
+    } catch {
+      return null;
     }
   }
 

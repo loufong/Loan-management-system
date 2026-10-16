@@ -26,6 +26,9 @@ authRouter.post('/otp/send', AuthController.resendOtp); // Alias per Point 9
 // Forgot Password - Send recovery OTP to Gmail
 authRouter.post('/forgot-password', AuthController.forgotPassword);
 
+// Verify Reset OTP (returns signed resetToken)
+authRouter.post('/verify-reset-otp', AuthController.verifyResetOtp);
+
 // Set New Password using verified OTP reset token
 authRouter.post('/reset-password', AuthController.resetPassword);
 

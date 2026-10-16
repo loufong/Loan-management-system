@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Users,
   ShieldCheck,
@@ -13,7 +13,8 @@ import {
   ArrowRightLeft,
   Check,
   X,
-  ShieldAlert
+  ShieldAlert,
+  Loader2
 } from 'lucide-react';
 import {
   ManagedUser,
@@ -24,6 +25,7 @@ import {
   CORE_ROLE_DEFINITIONS,
   PERMISSION_MATRIX_DATA
 } from '../../data/mockData';
+import { api } from '../../services/api';
 
 interface UserRoleManagementProps {
   currentUserRole: UserRole;
@@ -37,6 +39,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
   onShowToast
 }) => {
   const [users, setUsers] = useState<ManagedUser[]>(MOCK_MANAGED_USERS);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'users' | 'matrix' | 'overview'>('users');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRoleFilter, setSelectedRoleFilter] = useState<string>('ALL');
@@ -56,25 +59,84 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
   const [formPassword, setFormPassword] = useState('Password123!');
   const [formStatus, setFormStatus] = useState<'ACTIVE' | 'INACTIVE' | 'SUSPENDED'>('ACTIVE');
 
+  // Fetch real users from backend
+  const fetchUsers = async () => {
+    setIsLoading(true);
+    try {
+      const data = await api.getUsers();
+      if (data && data.length > 0) {
+        const mapped: ManagedUser[] = data.map((u: any) => ({
+          id: u.id,
+          name: u.fullName || u.name || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.username,
+          username: u.username,
+          email: u.email,
+          role: u.role,
+          title: u.position || (u.role === 'ADMIN' ? 'System Administrator' : u.role === 'MANAGER' ? 'Branch Manager' : u.role === 'CASHIER' ? 'Head Cashier' : u.role === 'LOAN_OFFICER' ? 'Loan Officer' : u.role === 'CREDIT_OFFICER' ? 'Credit Risk Analyst' : 'Client Borrower'),
+          department: u.department || 'General Lending',
+          status: (u.status || 'ACTIVE').toUpperCase() as any,
+          phone: u.phone || '+855 12 000 000',
+          avatar: (u.fullName || u.username || 'AP').slice(0, 2).toUpperCase(),
+          createdAt: u.createdAt ? new Date(u.createdAt).toISOString().slice(0, 10) : '2026-01-01',
+          lastLogin: u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : 'Never',
+          borrowerId: u.borrower?.id,
+        }));
+        setUsers(mapped);
+      }
+    } catch (err) {
+      console.warn('Could not load users from backend, maintaining current state:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  // Requirement 24: Do not allow an administrator to accidentally remove the final system administrator
+  const isLastSystemAdmin = (user: ManagedUser) => {
+    const isTargetAdmin = user.role === 'ADMIN' || user.role === 'MANAGER';
+    if (!isTargetAdmin) return false;
+    const activeAdmins = users.filter(
+      (u) => (u.role === 'ADMIN' || u.role === 'MANAGER') && u.status === 'ACTIVE'
+    );
+    return activeAdmins.length <= 1 && activeAdmins[0]?.id === user.id;
+  };
+
   // Actions
-  const handleSuspendUser = (user: ManagedUser) => {
-    setUsers((prev) =>
-      prev.map((u) => (u.id === user.id ? { ...u, status: 'SUSPENDED' as any } : u))
-    );
-    onShowToast?.(`Account for ${user.name} has been suspended.`, 'info');
+  const handleSuspendUser = async (user: ManagedUser) => {
+    if (isLastSystemAdmin(user)) {
+      alert('Security Policy: Cannot suspend the last active System Administrator.');
+      return;
+    }
+    try {
+      await api.setUserStatus(user.id, 'SUSPENDED');
+      onShowToast?.(`Account for ${user.name} has been suspended.`, 'info');
+      await fetchUsers();
+    } catch (err: any) {
+      alert(`Error suspending user: ${err.message || 'Operation failed'}`);
+    }
   };
 
-  const handleActivateUser = (user: ManagedUser) => {
-    setUsers((prev) =>
-      prev.map((u) => (u.id === user.id ? { ...u, status: 'ACTIVE' as any } : u))
-    );
-    onShowToast?.(`Account for ${user.name} has been activated.`, 'success');
+  const handleActivateUser = async (user: ManagedUser) => {
+    try {
+      await api.setUserStatus(user.id, 'ACTIVE');
+      onShowToast?.(`Account for ${user.name} has been activated.`, 'success');
+      await fetchUsers();
+    } catch (err: any) {
+      alert(`Error activating user: ${err.message || 'Operation failed'}`);
+    }
   };
 
-  const handleResetPassword = (user: ManagedUser) => {
+  const handleResetPassword = async (user: ManagedUser) => {
     const confirmed = window.confirm(`Reset password for user "${user.name}" (${user.username}) to "Password123!"?`);
     if (confirmed) {
-      onShowToast?.(`Password for ${user.name} reset to "Password123!" successfully.`, 'success');
+      try {
+        await api.resetUserPassword(user.id, 'Password123!');
+        onShowToast?.(`Password for ${user.name} reset to "Password123!" successfully.`, 'success');
+      } catch (err: any) {
+        alert(`Failed to reset password: ${err.message || 'Error occurred'}`);
+      }
     }
   };
 
@@ -100,7 +162,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
   // Counts
   const stats = useMemo(() => {
     const total = users.length;
-    const managers = users.filter((u) => u.role === 'MANAGER').length;
+    const managers = users.filter((u) => u.role === 'ADMIN' || u.role === 'MANAGER').length;
     const cashiers = users.filter((u) => u.role === 'CASHIER').length;
     const borrowers = users.filter((u) => u.role === 'BORROWER').length;
     const active = users.filter((u) => u.status === 'ACTIVE').length;
@@ -108,17 +170,19 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
   }, [users]);
 
   // Actions
-  const handleToggleStatus = (id: string) => {
-    setUsers((prev) =>
-      prev.map((u) => {
-        if (u.id === id) {
-          const nextStatus = u.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-          onShowToast?.(`User ${u.name} status updated to ${nextStatus}`, 'info');
-          return { ...u, status: nextStatus };
-        }
-        return u;
-      })
-    );
+  const handleToggleStatus = async (user: ManagedUser) => {
+    const nextStatus = user.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    if (nextStatus === 'INACTIVE' && isLastSystemAdmin(user)) {
+      alert('Security Policy: Cannot deactivate the last active System Administrator.');
+      return;
+    }
+    try {
+      await api.setUserStatus(user.id, nextStatus as any);
+      onShowToast?.(`User ${user.name} status updated to ${nextStatus}`, 'info');
+      await fetchUsers();
+    } catch (err: any) {
+      alert(`Error toggling status: ${err.message || 'Operation failed'}`);
+    }
   };
 
   const handleOpenCreateModal = () => {
@@ -126,7 +190,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
     setFormUsername('');
     setFormEmail('');
     setFormRole('BORROWER');
-    setFormDepartment('Academic Affairs');
+    setFormDepartment('General Lending');
     setFormPhone('');
     setFormPassword('Password123!');
     setIsCreateModalOpen(true);
@@ -143,75 +207,85 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
     setFormStatus((user.status as any) || 'ACTIVE');
   };
 
-  const handleSaveCreate = (e: React.FormEvent) => {
+  const handleSaveCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim() || !formEmail.trim() || !formUsername.trim()) {
       alert('Please fill out all required fields.');
       return;
     }
 
-    const newUser: ManagedUser = {
-      id: `USR-${Math.floor(100 + Math.random() * 900)}`,
-      name: formName.trim(),
-      username: formUsername.trim().toLowerCase(),
-      email: formEmail.trim().toLowerCase(),
-      role: formRole,
-      title:
-        formRole === 'MANAGER'
-          ? 'Credit & System Administrator'
-          : formRole === 'CASHIER'
-          ? 'Desk Cashier & Bursar'
-          : 'Enrolled Academic Borrower',
-      department: formDepartment.trim() || 'General Lending',
-      status: 'ACTIVE',
-      phone: formPhone.trim() || '+855 12 000 000',
-      avatar: formName
-        .split(' ')
-        .map((p) => p[0])
-        .join('')
-        .slice(0, 2)
-        .toUpperCase(),
-      createdAt: new Date().toISOString().slice(0, 10),
-      lastLogin: 'Never'
-    };
-
-    setUsers((prev) => [newUser, ...prev]);
-    setIsCreateModalOpen(false);
-    onShowToast?.(`New user ${newUser.name} created as ${formRole}!`, 'success');
+    try {
+      await api.createUser({
+        fullName: formName.trim(),
+        username: formUsername.trim().toLowerCase(),
+        email: formEmail.trim().toLowerCase(),
+        password: formPassword || 'Password123!',
+        role: formRole,
+        department: formDepartment.trim() || 'General Lending',
+        phone: formPhone.trim() || '+855 12 000 000',
+      });
+      setIsCreateModalOpen(false);
+      onShowToast?.(`New user ${formName} created as ${formRole}!`, 'success');
+      await fetchUsers();
+    } catch (err: any) {
+      alert(`Failed to create user: ${err.message || 'Operation failed'}`);
+    }
   };
 
-  const handleSaveEdit = (e: React.FormEvent) => {
+  const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingUser) return;
 
-    setUsers((prev) =>
-      prev.map((u) => {
-        if (u.id === editingUser.id) {
-          return {
-            ...u,
-            name: formName.trim(),
-            email: formEmail.trim(),
-            role: formRole,
-            department: formDepartment.trim(),
-            phone: formPhone.trim(),
-            status: formStatus
-          };
-        }
-        return u;
-      })
-    );
+    if (editingUser.role === 'ADMIN' && formRole !== 'ADMIN' && isLastSystemAdmin(editingUser)) {
+      alert('Security Policy: Cannot demote the last active System Administrator.');
+      return;
+    }
 
-    onShowToast?.(`User ${formName} updated successfully`, 'success');
-    setEditingUser(null);
+    try {
+      await api.updateUser(editingUser.id, {
+        fullName: formName.trim(),
+        email: formEmail.trim(),
+        role: formRole,
+        department: formDepartment.trim(),
+        phone: formPhone.trim(),
+        status: formStatus,
+      });
+      onShowToast?.(`User ${formName} updated successfully`, 'success');
+      setEditingUser(null);
+      await fetchUsers();
+    } catch (err: any) {
+      alert(`Failed to update user: ${err.message || 'Operation failed'}`);
+    }
   };
 
   const getRoleBadge = (role: UserRole) => {
     switch (role) {
+      case 'ADMIN':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[4px] text-xs font-semibold bg-slate-900 text-white">
+            <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
+            System Admin
+          </span>
+        );
       case 'MANAGER':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[4px] text-xs font-semibold bg-slate-100 text-[#0F172A] border border-[#CBD5E1]">
             <ShieldCheck className="w-3.5 h-3.5 text-[#2563EB]" />
-            Administrator
+            Manager
+          </span>
+        );
+      case 'LOAN_OFFICER':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[4px] text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+            <Shield className="w-3.5 h-3.5 text-indigo-600" />
+            Loan Officer
+          </span>
+        );
+      case 'CREDIT_OFFICER':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[4px] text-xs font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200">
+            <ShieldAlert className="w-3.5 h-3.5 text-cyan-600" />
+            Credit Analyst
           </span>
         );
       case 'CASHIER':
@@ -402,11 +476,11 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
             <div className="flex items-center gap-2 flex-wrap">
               <div className="flex items-center gap-1 bg-white p-0.5 rounded-[6px] border border-[#CBD5E1] text-xs">
                 <span className="px-2 text-[#64748B] font-semibold text-[11px]">Role:</span>
-                {(['ALL', 'MANAGER', 'CASHIER', 'BORROWER'] as const).map((r) => (
+                {(['ALL', 'ADMIN', 'MANAGER', 'LOAN_OFFICER', 'CREDIT_OFFICER', 'CASHIER', 'BORROWER'] as const).map((r) => (
                   <button
                     key={r}
                     onClick={() => setSelectedRoleFilter(r)}
-                    className={`px-2.5 py-1 rounded-[4px] text-xs font-semibold transition-colors ${
+                    className={`px-2 py-1 rounded-[4px] text-[11px] font-semibold transition-colors ${
                       selectedRoleFilter === r
                         ? 'bg-[#0F172A] text-white'
                         : 'text-[#64748B] hover:bg-slate-100 hover:text-[#0F172A]'
@@ -414,8 +488,14 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                   >
                     {r === 'ALL'
                       ? 'All'
-                      : r === 'MANAGER'
+                      : r === 'ADMIN'
                       ? 'Admin'
+                      : r === 'MANAGER'
+                      ? 'Manager'
+                      : r === 'LOAN_OFFICER'
+                      ? 'Officer'
+                      : r === 'CREDIT_OFFICER'
+                      ? 'Analyst'
                       : r === 'CASHIER'
                       ? 'Cashier'
                       : 'Borrower'}
@@ -431,6 +511,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                 <option value="ALL">Status: All</option>
                 <option value="ACTIVE">Active</option>
                 <option value="INACTIVE">Inactive</option>
+                <option value="SUSPENDED">Suspended</option>
               </select>
             </div>
           </div>
@@ -509,7 +590,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                       {/* Status */}
                       <td className="py-2.5 px-3">
                         <button
-                          onClick={() => handleToggleStatus(user.id)}
+                          onClick={() => handleToggleStatus(user)}
                           className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] text-xs font-semibold transition-colors ${
                             user.status === 'ACTIVE'
                               ? 'bg-emerald-50 text-[#16A34A] border border-emerald-200 hover:bg-emerald-100'
@@ -828,27 +909,39 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                   Select User Role *
                 </label>
                 <div className="grid grid-cols-3 gap-2">
-                  {(['MANAGER', 'CASHIER', 'BORROWER'] as const).map((r) => (
+                  {(['ADMIN', 'MANAGER', 'LOAN_OFFICER', 'CREDIT_OFFICER', 'CASHIER', 'BORROWER'] as const).map((r) => (
                     <button
                       key={r}
                       type="button"
                       onClick={() => setFormRole(r)}
-                      className={`p-2.5 rounded-[6px] border text-left transition-colors ${
+                      className={`p-2 rounded-[6px] border text-left transition-colors ${
                         formRole === r
                           ? 'border-[#0F172A] bg-slate-100 text-[#0F172A]'
                           : 'border-[#CBD5E1] hover:border-slate-400 text-[#64748B]'
                       }`}
                     >
                       <div className="font-bold text-xs">
-                        {r === 'MANAGER'
-                          ? 'Administrator'
+                        {r === 'ADMIN'
+                          ? 'Admin'
+                          : r === 'MANAGER'
+                          ? 'Manager'
+                          : r === 'LOAN_OFFICER'
+                          ? 'Loan Officer'
+                          : r === 'CREDIT_OFFICER'
+                          ? 'Credit Analyst'
                           : r === 'CASHIER'
                           ? 'Cashier'
                           : 'Borrower'}
                       </div>
                       <div className="text-[10px] text-[#64748B] mt-0.5">
-                        {r === 'MANAGER'
+                        {r === 'ADMIN'
+                          ? 'Superuser'
+                          : r === 'MANAGER'
                           ? 'Full Control'
+                          : r === 'LOAN_OFFICER'
+                          ? 'Underwriting'
+                          : r === 'CREDIT_OFFICER'
+                          ? 'DTI & Risk'
                           : r === 'CASHIER'
                           ? 'POS & Receipts'
                           : 'Self-Service'}
@@ -1001,27 +1094,39 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                   Assigned User Role *
                 </label>
                 <div className="grid grid-cols-3 gap-2">
-                  {(['MANAGER', 'CASHIER', 'BORROWER'] as const).map((r) => (
+                  {(['ADMIN', 'MANAGER', 'LOAN_OFFICER', 'CREDIT_OFFICER', 'CASHIER', 'BORROWER'] as const).map((r) => (
                     <button
                       key={r}
                       type="button"
                       onClick={() => setFormRole(r)}
-                      className={`p-2.5 rounded-[6px] border text-left transition-colors ${
+                      className={`p-2 rounded-[6px] border text-left transition-colors ${
                         formRole === r
                           ? 'border-[#0F172A] bg-slate-100 text-[#0F172A]'
                           : 'border-[#CBD5E1] hover:border-slate-400 text-[#64748B]'
                       }`}
                     >
                       <div className="font-bold text-xs">
-                        {r === 'MANAGER'
-                          ? 'Administrator'
+                        {r === 'ADMIN'
+                          ? 'Admin'
+                          : r === 'MANAGER'
+                          ? 'Manager'
+                          : r === 'LOAN_OFFICER'
+                          ? 'Loan Officer'
+                          : r === 'CREDIT_OFFICER'
+                          ? 'Credit Analyst'
                           : r === 'CASHIER'
                           ? 'Cashier'
                           : 'Borrower'}
                       </div>
                       <div className="text-[10px] text-[#64748B] mt-0.5">
-                        {r === 'MANAGER'
+                        {r === 'ADMIN'
+                          ? 'Superuser'
+                          : r === 'MANAGER'
                           ? 'Full Control'
+                          : r === 'LOAN_OFFICER'
+                          ? 'Underwriting'
+                          : r === 'CREDIT_OFFICER'
+                          ? 'DTI & Risk'
                           : r === 'CASHIER'
                           ? 'POS & Receipts'
                           : 'Self-Service'}

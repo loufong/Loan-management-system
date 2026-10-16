@@ -44,14 +44,14 @@ applicationRouter.post(
 // 5. Credit Simulation Assessment
 applicationRouter.get(
   '/:id/simulate-assessment',
-  authorize(UserRole.MANAGER, UserRole.LOAN_OFFICER),
+  authorize(UserRole.MANAGER, UserRole.LOAN_OFFICER, UserRole.CREDIT_OFFICER),
   ApplicationController.simulateAssessment
 );
 
-// 6. Underwriting Review (LOAN_OFFICER, MANAGER)
+// 6. Underwriting Review (LOAN_OFFICER, CREDIT_OFFICER, MANAGER)
 applicationRouter.post(
   '/:id/review',
-  authorize(UserRole.LOAN_OFFICER, UserRole.MANAGER),
+  authorize(UserRole.LOAN_OFFICER, UserRole.CREDIT_OFFICER, UserRole.MANAGER),
   ApplicationController.review
 );
 

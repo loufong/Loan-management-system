@@ -18,13 +18,14 @@ const passwordRule = z
 const loginSchema = z
   .object({
     usernameOrEmail: z.string().optional(),
+    emailOrUsername: z.string().optional(),
     username: z.string().optional(),
     email: z.string().optional(),
     password: z.string().min(1, 'Password is required'),
     rememberMe: z.boolean().optional().default(false),
   })
   .transform((data) => ({
-    usernameOrEmail: (data.usernameOrEmail || data.username || data.email || '').trim(),
+    usernameOrEmail: (data.usernameOrEmail || data.emailOrUsername || data.username || data.email || '').trim(),
     password: data.password,
     rememberMe: data.rememberMe,
   }))
@@ -36,7 +37,9 @@ const loginSchema = z
 // 2. Register Schema
 const registerSchema = z
   .object({
-    fullName: z.string().min(2, 'Full name is required (min 2 characters)').max(100),
+    firstName: z.string().min(1, 'First name is required').max(50).optional(),
+    lastName: z.string().min(1, 'Last name is required').max(50).optional(),
+    fullName: z.string().min(2, 'Full name is required (min 2 characters)').max(100).optional(),
     username: z
       .string()
       .min(3, 'Username must be at least 3 characters')
@@ -48,6 +51,14 @@ const registerSchema = z
     confirmPassword: z.string().min(1, 'Please confirm your password'),
     role: z.string().optional(),
   })
+  .transform((data) => ({
+    ...data,
+    fullName: (data.fullName || `${data.firstName || ''} ${data.lastName || ''}`.trim() || data.username).trim(),
+  }))
+  .refine((data) => !!data.fullName && data.fullName.length >= 2, {
+    message: 'Name is required (at least 2 characters)',
+    path: ['fullName'],
+  })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
     path: ['confirmPassword'],
@@ -58,71 +69,116 @@ const registerSchema = z
   });
 
 // 3. Verify OTP Schema
-const verifyOtpSchema = z.object({
-  email: z.string().email('Valid email is required'),
-  code: z.string().length(6, 'Verification code must be exactly 6 digits'),
-  purpose: z.enum(['register_verification', 'forgot_password', 'email_verification'] as const),
-});
+const verifyOtpSchema = z
+  .object({
+    email: z.string().email('Valid email is required'),
+    code: z.string().optional(),
+    otp: z.string().optional(),
+    purpose: z.string().optional().default('REGISTRATION'),
+  })
+  .transform((data) => ({
+    email: data.email,
+    code: (data.code || data.otp || '').trim(),
+    otp: (data.code || data.otp || '').trim(),
+    purpose: data.purpose,
+  }))
+  .refine((data) => /^\d{6}$/.test(data.code), {
+    message: 'Verification code must be exactly 6 digits',
+    path: ['code'],
+  });
 
 // 4. Send/Resend OTP Schema
 const resendOtpSchema = z.object({
   email: z.string().email('Valid email is required'),
-  purpose: z.enum(['register_verification', 'forgot_password', 'email_verification'] as const),
+  purpose: z.string().optional().default('REGISTRATION'),
 });
 
-// 5. Forgot Password Schema
+// 5. Verify Reset OTP Schema
+const verifyResetOtpSchema = z
+  .object({
+    email: z.string().email('Valid email is required'),
+    code: z.string().optional(),
+    otp: z.string().optional(),
+  })
+  .transform((data) => ({
+    email: data.email,
+    code: (data.code || data.otp || '').trim(),
+    otp: (data.code || data.otp || '').trim(),
+  }))
+  .refine((data) => /^\d{6}$/.test(data.code), {
+    message: 'Verification code must be exactly 6 digits',
+    path: ['code'],
+  });
+
+// 6. Forgot Password Schema
 const forgotPasswordSchema = z.object({
   email: z.string().email('Please provide a valid registered email address'),
 });
 
-// 6. Reset Password Schema
+// 7. Reset Password Schema
 const resetPasswordSchema = z
   .object({
     email: z.string().email('Valid email is required'),
-    resetToken: z.string().min(10, 'Valid reset token is required'),
+    resetToken: z.string().optional(),
+    otp: z.string().optional(),
+    code: z.string().optional(),
     newPassword: passwordRule,
     confirmPassword: z.string().min(1, 'Please confirm your new password'),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
     message: 'Passwords do not match',
     path: ['confirmPassword'],
+  })
+  .refine((data) => !!(data.resetToken || data.otp || data.code), {
+    message: 'Reset token or verification OTP code is required',
+    path: ['resetToken'],
   });
 
-// 7. Refresh Token Schema
+// 8. Refresh Token Schema
 const refreshSchema = z.object({
   refreshToken: z.string().min(1, 'Refresh token is required'),
 });
 
-// 8. Update Profile Schema
+// 9. Update Profile Schema
 const updateProfileSchema = z
   .object({
     fullName: z.string().min(2).max(100).optional(),
+    firstName: z.string().min(1).max(50).optional(),
+    lastName: z.string().min(1).max(50).optional(),
     name: z.string().min(2).max(100).optional(),
     phone: z.string().min(5).optional(),
     position: z.string().optional(),
     department: z.string().optional(),
   })
   .transform((data) => ({
-    fullName: data.fullName || data.name,
+    fullName: data.fullName || data.name || `${data.firstName || ''} ${data.lastName || ''}`.trim() || undefined,
+    firstName: data.firstName,
+    lastName: data.lastName,
     phone: data.phone,
     position: data.position,
     department: data.department,
   }));
 
-// 9. Change Password Schema
+// 10. Change Password Schema
 const changePasswordSchema = z
   .object({
     currentPassword: z.string().optional(),
     oldPassword: z.string().optional(),
     newPassword: passwordRule,
+    confirmPassword: z.string().optional(),
   })
   .transform((data) => ({
     currentPassword: (data.currentPassword || data.oldPassword || '') as string,
     newPassword: data.newPassword,
+    confirmPassword: data.confirmPassword,
   }))
   .refine((data) => !!data.currentPassword, {
     message: 'Current or old password is required',
     path: ['currentPassword'],
+  })
+  .refine((data) => !data.confirmPassword || data.newPassword === data.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
   });
 
 export class AuthController {
@@ -206,6 +262,21 @@ export class AuthController {
     try {
       const { email } = forgotPasswordSchema.parse(req.body);
       const result = await AuthService.forgotPassword(email);
+      sendSuccess(res, result, result.message);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * POST /api/auth/verify-reset-otp
+   * Verifies OTP code for password reset and returns signed resetToken
+   */
+  static async verifyResetOtp(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const validated = verifyResetOtpSchema.parse(req.body);
+      const ipAddress = (req.headers['x-forwarded-for'] as string) || req.ip;
+      const result = await AuthService.verifyResetOtp({ ...validated, ipAddress });
       sendSuccess(res, result, result.message);
     } catch (err) {
       next(err);

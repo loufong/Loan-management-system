@@ -10,16 +10,22 @@ import {
   ApprovalDecision
 } from '@prisma/client';
 
-const applicationInputSchema = z.object({
+const baseApplicationInputSchema = z.object({
   borrowerId: z.string().min(1, 'Borrower ID is required'),
   productId: z.string().min(1, 'Loan Product ID is required'),
   requestedAmount: z.number().positive('Requested amount must be greater than 0'),
-  requestedTerm: z.number().int().positive('Term must be at least 1 month'),
+  requestedTerm: z.number().int().positive('Term must be at least 1 month').optional(),
+  term: z.number().int().positive().optional(),
   purpose: z.string().min(3, 'Purpose must be at least 3 characters'),
   monthlyIncome: z.number().nonnegative().optional(),
   supportingInfo: z.string().optional(),
   isDraft: z.boolean().optional()
 });
+
+const applicationInputSchema = baseApplicationInputSchema.transform((data) => ({
+  ...data,
+  requestedTerm: data.requestedTerm ?? data.term ?? 12,
+}));
 
 const reviewSchema = z.object({
   recommendation: z.nativeEnum(ReviewRecommendation),
@@ -59,7 +65,7 @@ export class ApplicationController {
   // Update existing Draft
   static async updateDraft(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const validated = applicationInputSchema.partial().parse(req.body);
+      const validated = baseApplicationInputSchema.partial().parse(req.body);
       const ipAddress = (req.headers['x-forwarded-for'] as string) || req.ip;
       const app = await ApplicationService.updateDraft(
         req.params.id,

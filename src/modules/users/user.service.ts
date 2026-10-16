@@ -10,7 +10,7 @@ export interface UserSummaryItem {
   id: string;
   username: string;
   email: string;
-  fullName: string;
+  fullName: string | null;
   phone: string | null;
   position: string | null;
   department: string | null;

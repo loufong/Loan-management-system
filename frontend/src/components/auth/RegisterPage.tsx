@@ -23,7 +23,8 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
   onRegisterSuccess,
   onNavigateToLogin,
 }) => {
-  const [fullName, setFullName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -50,7 +51,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
     e.preventDefault();
     setError(null);
 
-    if (!fullName.trim() || !username.trim() || !email.trim() || !phone.trim() || !password) {
+    if (!firstName.trim() || !lastName.trim() || !username.trim() || !email.trim() || !phone.trim() || !password) {
       setError('Please fill in all required fields.');
       return;
     }
@@ -81,7 +82,9 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
 
     try {
       const res = await api.register({
-        fullName: fullName.trim(),
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        fullName: `${firstName.trim()} ${lastName.trim()}`,
         username: username.trim(),
         email: email.trim(),
         phone: phone.trim(),
@@ -136,14 +139,14 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-[13px] font-medium text-[#0F172A] mb-1.5">
-                  Full Name
+                  First Name
                 </label>
                 <div className="relative">
                   <input
                     type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="e.g. Sokha Chan"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="e.g. Sokha"
                     required
                     className="w-full h-[44px] px-3.5 pl-10 rounded-[6px] bg-white border border-[#CBD5E1] text-[#0F172A] text-[14px] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#64748B]"
                   />
@@ -151,6 +154,25 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                 </div>
               </div>
 
+              <div>
+                <label className="block text-[13px] font-medium text-[#0F172A] mb-1.5">
+                  Last Name
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="e.g. Chan"
+                    required
+                    className="w-full h-[44px] px-3.5 pl-10 rounded-[6px] bg-white border border-[#CBD5E1] text-[#0F172A] text-[14px] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#64748B]"
+                  />
+                  <User className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-[13px] font-medium text-[#0F172A] mb-1.5">
                   Username
@@ -170,9 +192,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                   Letters, numbers, and underscores only
                 </p>
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-[13px] font-medium text-[#0F172A] mb-1.5">
                   Email Address
@@ -182,31 +202,32 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@example.com"
+                    placeholder="name@gmail.com"
                     required
                     className="w-full h-[44px] px-3.5 pl-10 rounded-[6px] bg-white border border-[#CBD5E1] text-[#0F172A] text-[14px] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#64748B]"
                   />
                   <Mail className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
               </div>
+            </div>
 
-              <div>
-                <label className="block text-[13px] font-medium text-[#0F172A] mb-1.5">
-                  Phone Number
-                </label>
-                <div className="relative">
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="012 345 678"
-                    required
-                    className="w-full h-[44px] px-3.5 pl-10 rounded-[6px] bg-white border border-[#CBD5E1] text-[#0F172A] text-[14px] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#64748B]"
-                  />
-                  <Phone className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
+            <div>
+              <label className="block text-[13px] font-medium text-[#0F172A] mb-1.5">
+                Phone Number
+              </label>
+              <div className="relative">
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="e.g. +855 12 345 678"
+                  required
+                  className="w-full h-[44px] px-3.5 pl-10 rounded-[6px] bg-white border border-[#CBD5E1] text-[#0F172A] text-[14px] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#64748B]"
+                />
+                <Phone className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
             </div>
+
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>

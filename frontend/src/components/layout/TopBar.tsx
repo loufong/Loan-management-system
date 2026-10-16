@@ -10,7 +10,8 @@ import {
   CheckCheck,
   LogOut,
   User,
-  Settings
+  Settings,
+  KeyRound
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -32,6 +33,7 @@ export interface TopBarProps {
   onMobileMenuToggle?: () => void;
   currentUser?: UserProfile;
   onLogout?: () => void;
+  onNavigate?: (navId: string) => void;
 }
 
 const ROLE_DISPLAY_CONFIG: Record<
@@ -74,6 +76,12 @@ const ROLE_DISPLAY_CONFIG: Record<
     description: 'Underwriting & Risk Assessment',
     color: 'bg-slate-100 text-[#0F172A] border-[#CBD5E1]'
   },
+  CREDIT_OFFICER: {
+    label: 'Credit Analyst',
+    badge: 'Credit Analyst',
+    description: 'Credit Evaluation & DTI Analysis',
+    color: 'bg-slate-100 text-[#0F172A] border-[#CBD5E1]'
+  },
 
   USER: {
     label: 'User',
@@ -101,6 +109,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onMobileMenuToggle,
   currentUser,
   onLogout,
+  onNavigate,
 }) => {
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
@@ -404,9 +413,25 @@ export const TopBar: React.FC<TopBarProps> = ({
                   </div>
                 </div>
 
+                {/* Change Password Button */}
+                {onNavigate && (
+                  <div className="pt-1.5 border-t border-[#CBD5E1]">
+                    <button
+                      onClick={() => {
+                        setProfileDropdownOpen(false);
+                        onNavigate('change_password');
+                      }}
+                      className="w-full flex items-center gap-2 px-2.5 py-2 rounded-[4px] text-[13px] text-[#0F172A] hover:bg-slate-100 font-medium transition text-left"
+                    >
+                      <KeyRound className="w-4 h-4 text-[#64748B]" />
+                      <span>Change Password</span>
+                    </button>
+                  </div>
+                )}
+
                 {/* Sign Out Button */}
                 {onLogout && (
-                  <div className="pt-1.5 border-t border-[#CBD5E1]">
+                  <div className="pt-1 border-t border-[#CBD5E1]">
                     <button
                       onClick={() => {
                         setProfileDropdownOpen(false);

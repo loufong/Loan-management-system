@@ -53,6 +53,10 @@ export class UserCreationService {
     // Execute atomic transaction
     try {
       createdUser = await prisma.$transaction(async (tx) => {
+        const nameParts = pendingRegistration.fullName.trim().split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || undefined;
+
         // 1. Create real permanent user with avatar, lastLogin, and default settings
         const user = await tx.user.create({
           data: {
@@ -64,9 +68,9 @@ export class UserCreationService {
             phone: pendingRegistration.phone.trim(),
             role: UserRole.USER, // Public registrations always default to USER
             status: UserStatus.ACTIVE,
+            emailVerifiedAt: now,
             avatarUrl: defaultAvatar,
             lastLogin: now,
-            emailVerifiedAt: now,
             userSetting: {
               create: {
                 theme: 'light',
@@ -78,10 +82,8 @@ export class UserCreationService {
           },
         });
 
-        // 2. Delete pending registration record
-        await tx.pendingRegistration.deleteMany({
-          where: { id: pendingRegistration.id },
-        });
+        // 2. Delete pending registration record (both in DB transaction and in-memory cache)
+        await PendingRegistrationService.deletePendingRegistration(pendingRegistration.id, tx);
 
         // 3. Invalidate OTP if provided
         if (otpId) {
@@ -98,7 +100,7 @@ export class UserCreationService {
           id: user.id,
           username: user.username,
           email: user.email,
-          fullName: user.fullName,
+          fullName: user.fullName || pendingRegistration.fullName.trim(),
           phone: user.phone || undefined,
           role: user.role,
           status: user.status,

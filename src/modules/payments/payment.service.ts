@@ -10,6 +10,7 @@ import {
 import { recordAuditLog } from '../../utils/audit';
 import { AuthUser } from '../../middlewares/auth.middleware';
 import { LoanCalculatorService } from '../calculator/loan-calculator.service';
+import { isStaffRole } from '../../security/permissions';
 
 export interface RecordPaymentDto {
   loanId: string;
@@ -274,7 +275,7 @@ export class PaymentService {
       throw { statusCode: 404, message: 'Payment receipt not found', code: 'RECEIPT_NOT_FOUND' };
     }
 
-    if (viewer.role !== UserRole.ADMIN && viewer.role !== UserRole.MANAGER && payment.loan.borrower.userId !== viewer.id) {
+    if (!isStaffRole(viewer.role) && payment.loan.borrower.userId !== viewer.id) {
       throw {
         statusCode: 403,
         message: 'Access denied: you can only view receipts for your own loans',
@@ -341,7 +342,7 @@ export class PaymentService {
       if (filters.endDate) where.paymentDate.lte = new Date(filters.endDate);
     }
 
-    if (viewer.role !== UserRole.ADMIN && viewer.role !== UserRole.MANAGER) {
+    if (!isStaffRole(viewer.role)) {
       const borrower = await prisma.borrower.findFirst({
         where: { userId: viewer.id }
       });

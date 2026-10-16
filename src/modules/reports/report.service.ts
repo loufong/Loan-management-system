@@ -508,7 +508,75 @@ export class ReportService {
   }
 
   /**
-   * 10. CSV Exporter Utility
+   * 10. Audit Logs Forensic Report
+   */
+  static async getAuditLogsReport(filters: ReportFilterDto) {
+    const where: any = {};
+    if (filters.search) {
+      where.OR = [
+        { action: { contains: filters.search, mode: 'insensitive' } },
+        { entityName: { contains: filters.search, mode: 'insensitive' } },
+        { entityId: { contains: filters.search, mode: 'insensitive' } },
+      ];
+    }
+    if (filters.startDate) {
+      where.timestamp = { ...(where.timestamp || {}), gte: new Date(filters.startDate) };
+    }
+    if (filters.endDate) {
+      where.timestamp = { ...(where.timestamp || {}), lte: new Date(filters.endDate) };
+    }
+
+    const limit = Math.min(100, Math.max(1, Number(filters.limit || 50)));
+    const page = Math.max(1, Number(filters.page || 1));
+    const skip = (page - 1) * limit;
+
+    const [total, logs] = await Promise.all([
+      prisma.auditLog.count({ where }),
+      prisma.auditLog.findMany({
+        where,
+        take: limit,
+        skip,
+        orderBy: { timestamp: 'desc' },
+        include: {
+          user: {
+            select: { fullName: true, username: true, role: true }
+          }
+        }
+      })
+    ]);
+
+    return {
+      items: logs.map((l) => ({
+        id: l.id,
+        timestamp: l.timestamp.toISOString().replace('T', ' ').slice(0, 19),
+        actorName: l.user?.fullName || l.user?.username || 'System',
+        actorRole: l.user?.role || 'SYSTEM',
+        action: l.action,
+        actionCategory: l.action.includes('PAYMENT')
+          ? 'PAYMENT_RECORDED'
+          : l.action.includes('APPROV')
+          ? 'LOAN_APPROVED'
+          : l.action.includes('DISBURSE')
+          ? 'DISBURSEMENT'
+          : l.action.includes('SUBMIT')
+          ? 'APPLICATION_SUBMITTED'
+          : 'SECURITY',
+        entityType: l.entityName,
+        entityReference: l.entityId,
+        ipAddress: l.ipAddress || '127.0.0.1',
+        details: l.details || {}
+      })),
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    };
+  }
+
+  /**
+   * 11. CSV Exporter Utility
    */
   static async exportReportCsv(reportType: string, filters: ReportFilterDto): Promise<string> {
     let data: any[] = [];
@@ -535,6 +603,11 @@ export class ReportService {
       case 'disbursements':
         data = await this.getDisbursementsReport(filters);
         break;
+      case 'audit-logs': {
+        const auditRes = await this.getAuditLogsReport(filters);
+        data = auditRes.items;
+        break;
+      }
       case 'collections':
       default:
         data = await this.getCollectionsReport(filters);

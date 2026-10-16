@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import {
   PrismaClient,
   UserRole,
@@ -18,8 +19,18 @@ import {
   Prisma
 } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import * as dotenv from 'dotenv';
+import path from 'path';
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+console.log('Seeding using DATABASE_URL:', process.env.DATABASE_URL);
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL || 'postgresql://postgres:postgres@172.31.55.59:5432/loansystem_db?schema=public'
+    }
+  }
+});
 
 async function main() {
   console.log('🚀 Starting Academic Loan Management System database seed...');
@@ -72,7 +83,7 @@ async function main() {
       phone: '+1-555-0101',
       position: 'Head of Financial Aid & Lending',
       department: 'Credit & Financial Affairs',
-      role: UserRole.USER,
+      role: UserRole.MANAGER,
       status: UserStatus.ACTIVE
     }
   });
@@ -86,7 +97,7 @@ async function main() {
       phone: '+1-555-0102',
       position: 'Senior Credit Risk Analyst',
       department: 'Risk Management',
-      role: UserRole.USER,
+      role: UserRole.CREDIT_OFFICER,
       status: UserStatus.ACTIVE
     }
   });
@@ -100,7 +111,7 @@ async function main() {
       phone: '+1-555-0103',
       position: 'Senior Loan Origination Officer',
       department: 'Student Financial Services',
-      role: UserRole.USER,
+      role: UserRole.LOAN_OFFICER,
       status: UserStatus.ACTIVE
     }
   });
@@ -114,7 +125,7 @@ async function main() {
       phone: '+1-555-0104',
       position: 'University Bursar & Lead Cashier',
       department: 'Disbursement & Treasury',
-      role: UserRole.USER,
+      role: UserRole.CASHIER,
       status: UserStatus.ACTIVE
     }
   });
@@ -128,7 +139,7 @@ async function main() {
       phone: '+1-555-0201',
       position: 'Graduate Research Assistant',
       department: 'School of Computer Science',
-      role: UserRole.USER,
+      role: UserRole.BORROWER,
       status: UserStatus.ACTIVE
     }
   });
@@ -142,12 +153,12 @@ async function main() {
       phone: '+1-555-0202',
       position: 'Undergraduate Senior',
       department: 'Faculty of Engineering',
-      role: UserRole.USER,
+      role: UserRole.BORROWER,
       status: UserStatus.ACTIVE
     }
   });
 
-  // Additional Normal Users
+  // Additional Apex System Users
   const apexManager = await prisma.user.create({
     data: {
       username: 'manager_apex',
@@ -157,7 +168,21 @@ async function main() {
       phone: '+1-555-0901',
       position: 'Credit Underwriting Manager',
       department: 'Credit Committee',
-      role: UserRole.USER,
+      role: UserRole.MANAGER,
+      status: UserStatus.ACTIVE
+    }
+  });
+
+  const apexCredit = await prisma.user.create({
+    data: {
+      username: 'credit_apex',
+      email: 'credit@apex.local',
+      passwordHash: defaultPasswordHash,
+      fullName: 'Sarah Chen (Credit Officer)',
+      phone: '+1-555-0905',
+      position: 'Credit Risk Officer',
+      department: 'Credit Assessment',
+      role: UserRole.CREDIT_OFFICER,
       status: UserStatus.ACTIVE
     }
   });
@@ -167,11 +192,11 @@ async function main() {
       username: 'officer_apex',
       email: 'officer@apex.local',
       passwordHash: defaultPasswordHash,
-      fullName: 'Sarah Chen (Loan Officer)',
+      fullName: 'David Miller (Loan Officer)',
       phone: '+1-555-0902',
       position: 'Senior Loan & DTI Officer',
       department: 'Origination & Risk',
-      role: UserRole.USER,
+      role: UserRole.LOAN_OFFICER,
       status: UserStatus.ACTIVE
     }
   });
@@ -185,7 +210,7 @@ async function main() {
       phone: '+1-555-0903',
       position: 'Lead Teller & Cashier',
       department: 'Disbursement & Treasury',
-      role: UserRole.USER,
+      role: UserRole.CASHIER,
       status: UserStatus.ACTIVE
     }
   });
@@ -199,7 +224,7 @@ async function main() {
       phone: '+1-555-0904',
       position: 'Graduate Research Student',
       department: 'School of Computer Science',
-      role: UserRole.USER,
+      role: UserRole.BORROWER,
       status: UserStatus.ACTIVE
     }
   });

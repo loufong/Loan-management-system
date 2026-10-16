@@ -22,6 +22,11 @@ loanRouter.get('/:id/schedules', LoanController.getSchedules);
 
 // 3. Core Banking: Loan Disbursement & Activation (CASHIER, MANAGER)
 loanRouter.post(
+  '/disburse',
+  authorize(UserRole.CASHIER, UserRole.MANAGER),
+  LoanController.disburse
+);
+loanRouter.post(
   '/:applicationId/disburse',
   authorize(UserRole.CASHIER, UserRole.MANAGER),
   LoanController.disburse

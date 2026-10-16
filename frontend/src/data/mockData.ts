@@ -37,6 +37,17 @@ export const USER_PROFILES: Record<UserRole, UserProfile> = {
     avatar: 'SC',
     branch: 'Phnom Penh Main Branch',
   },
+  CREDIT_OFFICER: {
+    id: 'USR-007',
+    username: 'credit_officer',
+    name: 'Dara Seng, CFA',
+    email: 'credit@apex.local',
+    role: 'CREDIT_OFFICER',
+    title: 'Senior Credit Risk Analyst',
+    department: 'Risk & Underwriting Committee',
+    avatar: 'DS',
+    branch: 'Phnom Penh Main Branch',
+  },
   CASHIER: {
     id: 'USR-005',
     username: 'cashier_apex',

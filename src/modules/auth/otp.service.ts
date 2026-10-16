@@ -2,33 +2,22 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../../config/prisma';
 import { EmailService } from '../../services/email.service';
-import { RateLimitService } from '../../services/rate-limit.service';
 
-export type OtpPurpose = 'register_verification' | 'forgot_password' | 'email_verification';
-
-export interface OtpVerificationRecord {
-  id: string;
-  pendingRegistrationId?: string | null;
-  email: string;
-  otpHash: string;
-  purpose: OtpPurpose;
-  attempts: number;
-  expiresAt: Date;
-  verifiedAt?: Date | null;
-  invalidatedAt?: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-  plaintextForDev?: string;
-}
+export type OtpPurpose =
+  | 'REGISTRATION'
+  | 'PASSWORD_RESET'
+  | 'EMAIL_VERIFICATION'
+  | 'CHANGE_EMAIL'
+  | 'register_verification'
+  | 'forgot_password';
 
 export interface VerifyOtpResult {
   valid: boolean;
   message: string;
-  pendingRegistrationId?: string | null;
+  userId?: string | null;
   resetToken?: string;
-  otpId?: string;
   email?: string;
-  purpose?: OtpPurpose;
+  purpose?: string;
 }
 
 export interface SendOtpResult {
@@ -36,15 +25,27 @@ export interface SendOtpResult {
   message: string;
   expiresInSeconds: number;
   devOtp?: string;
-  pendingRegistrationId?: string | null;
 }
 
 export class OtpService {
   private static readonly OTP_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
+  private static readonly RESEND_COOLDOWN_SECONDS = 60; // 60 seconds
+  private static readonly MAX_ATTEMPTS = 5;
   private static readonly SALT = process.env.OTP_SALT || 'apex-lms-secure-otp-salt-2026';
+  private static readonly JWT_SECRET = process.env.JWT_SECRET || 'apex-lms-jwt-secret-2026';
 
-  // In-memory fallback store when PostgreSQL is offline
-  private static memoryStore: Map<string, OtpVerificationRecord[]> = new Map();
+  /**
+   * Normalizes purpose to standard canonical strings
+   */
+  public static normalizePurpose(purpose?: string): string {
+    if (!purpose) return 'REGISTRATION';
+    const upper = purpose.trim().toUpperCase();
+    if (upper === 'REGISTER_VERIFICATION' || upper === 'REGISTRATION') return 'REGISTRATION';
+    if (upper === 'FORGOT_PASSWORD' || upper === 'PASSWORD_RESET') return 'PASSWORD_RESET';
+    if (upper === 'EMAIL_VERIFICATION') return 'EMAIL_VERIFICATION';
+    if (upper === 'CHANGE_EMAIL') return 'CHANGE_EMAIL';
+    return upper;
+  }
 
   /**
    * Generates a cryptographically secure 6-digit numeric OTP code.
@@ -54,93 +55,109 @@ export class OtpService {
   }
 
   /**
-   * Hashes the 6-digit OTP using salted SHA-256.
+   * Hashes the 6-digit OTP using salted SHA-256 for secure database storage.
    */
   public static hashOtp(code: string, email: string): string {
     return crypto
       .createHash('sha256')
-      .update(`${code}:${email.toLowerCase().trim()}:${this.SALT}`)
+      .update(`${code.trim()}:${email.toLowerCase().trim()}:${this.SALT}`)
       .digest('hex');
   }
 
   /**
-   * Generates, stores, and sends an OTP for registration or password reset.
-   * Invalidates any prior active OTP for the same email and purpose.
+   * Creates, persists, and delivers an OTP to the user's Gmail.
+   * Enforces 60-second cooldown rate limiting and invalidates prior unverified codes.
    */
   public static async createAndSendOtp(params: {
     email: string;
     purpose: OtpPurpose;
     recipientName?: string;
+    firstName?: string;
+    userId?: string | null;
     pendingRegistrationId?: string | null;
   }): Promise<SendOtpResult> {
     const cleanEmail = params.email.toLowerCase().trim();
+    const canonicalPurpose = this.normalizePurpose(params.purpose);
+    const now = new Date();
 
-    // 1. Rate-limiting check: enforce 60-second cooldown
-    const rateCheck = RateLimitService.checkResendCooldown(cleanEmail, params.purpose);
-    if (!rateCheck.allowed) {
-      return {
-        success: false,
-        message: `Please wait ${rateCheck.remainingSeconds} seconds before requesting a new verification code.`,
-        expiresInSeconds: rateCheck.remainingSeconds,
-      };
+    // 1. Check Resend Rate Limit (60-second cooldown) via PostgreSQL
+    try {
+      const recentOtp = await prisma.otpVerification.findFirst({
+        where: {
+          email: cleanEmail,
+          purpose: {
+            in: [canonicalPurpose, params.purpose],
+          },
+          invalidatedAt: null,
+          verifiedAt: null,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (recentOtp) {
+        const lastSent = recentOtp.lastSentAt || recentOtp.createdAt;
+        const elapsedSeconds = Math.floor((now.getTime() - new Date(lastSent).getTime()) / 1000);
+        if (elapsedSeconds < this.RESEND_COOLDOWN_SECONDS) {
+          const remainingSeconds = this.RESEND_COOLDOWN_SECONDS - elapsedSeconds;
+          return {
+            success: false,
+            message: `Please wait ${remainingSeconds} seconds before requesting another code.`,
+            expiresInSeconds: remainingSeconds,
+          };
+        }
+      }
+    } catch {
+      // If DB error, proceed safely
     }
 
-    // 2. Invalidate previous unverified OTPs for this email and purpose
-    await this.invalidatePreviousOtps(cleanEmail, params.purpose);
-
-    // 3. Generate new 6-digit code and salted hash
-    const otpCode = this.generateCode();
-    const otpHash = this.hashOtp(otpCode, cleanEmail);
-    const now = new Date();
-    const expiresAt = new Date(Date.now() + this.OTP_EXPIRY_MS);
-
-    const record: OtpVerificationRecord = {
-      id: crypto.randomUUID(),
-      pendingRegistrationId: params.pendingRegistrationId || null,
-      email: cleanEmail,
-      otpHash,
-      purpose: params.purpose,
-      attempts: 0,
-      expiresAt,
-      verifiedAt: null,
-      invalidatedAt: null,
-      createdAt: now,
-      updatedAt: now,
-      plaintextForDev: otpCode,
-    };
-
-    // Store in-memory
-    const existingList = this.memoryStore.get(cleanEmail) || [];
-    existingList.push(record);
-    this.memoryStore.set(cleanEmail, existingList);
-
-    // Store in database table `otp_verifications`
+    // 2. Invalidate previous active unverified OTPs for this email and purpose in DB
     try {
-      await prisma.otpVerification.create({
+      await prisma.otpVerification.updateMany({
+        where: {
+          email: cleanEmail,
+          purpose: { in: [canonicalPurpose, params.purpose] },
+          verifiedAt: null,
+          invalidatedAt: null,
+        },
         data: {
-          id: record.id,
-          pendingRegistrationId: record.pendingRegistrationId || undefined,
-          email: record.email,
-          otpHash: record.otpHash,
-          purpose: record.purpose,
-          attempts: 0,
-          expiresAt: record.expiresAt,
-          createdAt: record.createdAt,
+          invalidatedAt: now,
         },
       });
     } catch {
-      // Fallback
+      // Ignore cleanup error
     }
 
-    // Record sent timestamp for cooldown
-    RateLimitService.recordOtpSent(cleanEmail, params.purpose);
+    // 3. Generate 6-digit cryptographically random code and hash
+    const otpCode = this.generateCode();
+    const otpHash = this.hashOtp(otpCode, cleanEmail);
+    const expiresAt = new Date(now.getTime() + this.OTP_EXPIRY_MS);
 
-    // 4. Deliver via Real Gmail SMTP
+    // 4. Persist OTP record in PostgreSQL database
+    try {
+      await prisma.otpVerification.create({
+        data: {
+          userId: params.userId || undefined,
+          pendingRegistrationId: params.pendingRegistrationId || undefined,
+          email: cleanEmail,
+          otpHash,
+          purpose: canonicalPurpose,
+          attempts: 0,
+          expiresAt,
+          lastSentAt: now,
+          createdAt: now,
+        },
+      });
+    } catch (err: any) {
+      console.error('Failed to persist OTP in PostgreSQL:', err?.message || err);
+    }
+
+    // 5. Deliver via Real Gmail SMTP
     const emailResult = await EmailService.sendOtpEmail({
       toEmail: cleanEmail,
-      recipientName: params.recipientName || 'Valued User',
+      recipientName: params.recipientName,
+      firstName: params.firstName,
       otpCode,
-      purpose: params.purpose,
+      purpose: canonicalPurpose as any,
     });
 
     if (!emailResult.success && !emailResult.isSimulated) {
@@ -148,220 +165,136 @@ export class OtpService {
         success: false,
         message: 'Unable to send the verification email. Please check your Gmail SMTP configuration.',
         expiresInSeconds: 0,
-        pendingRegistrationId: params.pendingRegistrationId,
       };
     }
 
+    // In non-production simulation, return devOtp for seamless automated testing
+    const devOtp = (process.env.NODE_ENV !== 'production' && emailResult.isSimulated) ? otpCode : undefined;
+
     return {
       success: true,
-      message: 'Verification code sent successfully to your Gmail.',
+      message: 'Verification code sent successfully to your email.',
       expiresInSeconds: 300,
-      devOtp: emailResult.isSimulated ? otpCode : undefined,
-      pendingRegistrationId: params.pendingRegistrationId,
+      devOtp,
     };
   }
 
   /**
-   * Verifies the submitted 6-digit OTP.
+   * Verifies the submitted 6-digit OTP code against PostgreSQL database.
    */
   public static async verifyOtp(params: {
     email: string;
     code: string;
-    purpose: OtpPurpose;
+    purpose: OtpPurpose | string;
   }): Promise<VerifyOtpResult> {
     const cleanEmail = params.email.toLowerCase().trim();
-    const cleanCode = params.code.trim();
+    const cleanCode = (params.code || '').trim();
+    const canonicalPurpose = this.normalizePurpose(params.purpose);
+    const now = new Date();
 
     if (!/^\d{6}$/.test(cleanCode)) {
-      return { valid: false, message: 'Invalid OTP format. Must be exactly 6 digits.' };
+      return { valid: false, message: 'Invalid verification code format. Must be exactly 6 digits.' };
     }
 
-    // Retrieve latest active OTP
-    const record = await this.getLatestActiveOtp(cleanEmail, params.purpose);
+    // 1. Fetch latest active OTP record from PostgreSQL
+    const record = await prisma.otpVerification.findFirst({
+      where: {
+        email: cleanEmail,
+        purpose: { in: [canonicalPurpose, params.purpose] },
+        verifiedAt: null,
+        invalidatedAt: null,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
 
     if (!record) {
       return {
         valid: false,
-        message: 'No active OTP found. Please request a new verification code.',
+        message: 'No active verification code found. Please request a new code.',
       };
     }
 
-    // Check invalidated
-    if (record.invalidatedAt || record.verifiedAt) {
+    // 2. Check Expiration (5 minutes)
+    if (now > new Date(record.expiresAt)) {
+      await prisma.otpVerification.update({
+        where: { id: record.id },
+        data: { invalidatedAt: now },
+      });
       return {
         valid: false,
-        message: 'This verification code is no longer active. Please request a new code.',
+        message: 'This verification code has expired. Please request a new code.',
       };
     }
 
-    // Check expiration (5 minutes)
-    if (new Date() > new Date(record.expiresAt)) {
+    // 3. Check Attempt Limit (Maximum 5 attempts)
+    if (record.attempts >= this.MAX_ATTEMPTS) {
+      await prisma.otpVerification.update({
+        where: { id: record.id },
+        data: { invalidatedAt: now },
+      });
       return {
         valid: false,
-        message: 'Verification code has expired. Please request a new code.',
+        message: 'Too many attempts. Please request a new code.',
       };
     }
 
-    // Check attempt limit (max 5)
-    const attemptCheck = RateLimitService.checkAttempts(record.id, record.attempts);
-    if (!attemptCheck.allowed) {
-      // Invalidate OTP
-      record.invalidatedAt = new Date();
-      await this.persistInvalidation(record.id);
-      return {
-        valid: false,
-        message: 'Too many incorrect attempts. This verification code has been locked. Please request a new code.',
-      };
-    }
-
-    // Verify hash
+    // 4. Verify Hash
     const inputHash = this.hashOtp(cleanCode, cleanEmail);
     if (inputHash !== record.otpHash) {
-      record.attempts += 1;
-      RateLimitService.recordFailedAttempt(record.id);
+      const newAttempts = record.attempts + 1;
+      const isLocked = newAttempts >= this.MAX_ATTEMPTS;
 
-      try {
-        await prisma.otpVerification.update({
-          where: { id: record.id },
-          data: { attempts: { increment: 1 } },
-        });
-      } catch {
-        // Fallback
-      }
-
-      const remaining = Math.max(0, 5 - record.attempts);
-      return {
-        valid: false,
-        message: remaining > 0 ? `Invalid OTP. ${remaining} attempt(s) remaining.` : 'Too many incorrect attempts. Code locked.',
-      };
-    }
-
-    // SUCCESS! Mark verified and invalidate
-    const now = new Date();
-    record.verifiedAt = now;
-    record.invalidatedAt = now;
-    RateLimitService.clearAttempts(record.id);
-
-    try {
       await prisma.otpVerification.update({
         where: { id: record.id },
         data: {
-          verifiedAt: now,
-          invalidatedAt: now,
+          attempts: newAttempts,
+          ...(isLocked ? { invalidatedAt: now } : {}),
         },
       });
-    } catch {
-      // Fallback
+
+      if (isLocked) {
+        return {
+          valid: false,
+          message: 'Too many attempts. Please request a new code.',
+        };
+      }
+
+      return {
+        valid: false,
+        message: 'Invalid verification code.',
+      };
     }
 
+    // 5. Code is valid: mark as verified and single-use invalidated
+    await prisma.otpVerification.update({
+      where: { id: record.id },
+      data: {
+        verifiedAt: now,
+        invalidatedAt: now,
+      },
+    });
+
+    // 6. Generate temporary resetToken if purpose is PASSWORD_RESET
     let resetToken: string | undefined;
-    if (params.purpose === 'forgot_password') {
-      const secret = process.env.JWT_SECRET || 'apex-lms-jwt-secret-2026';
+    if (canonicalPurpose === 'PASSWORD_RESET') {
       resetToken = jwt.sign(
         {
           email: cleanEmail,
-          purpose: 'password_reset_authorized',
-          otpId: record.id,
+          userId: record.userId,
+          purpose: 'PASSWORD_RESET',
         },
-        secret,
+        this.JWT_SECRET,
         { expiresIn: '15m' }
       );
     }
 
     return {
       valid: true,
-      message: 'OTP verified successfully.',
-      pendingRegistrationId: record.pendingRegistrationId,
+      message: 'Verification code verified successfully.',
+      userId: record.userId,
       resetToken,
-      otpId: record.id,
       email: cleanEmail,
-      purpose: params.purpose,
+      purpose: canonicalPurpose,
     };
-  }
-
-  /**
-   * Helper: Invalidates all active unverified OTPs for this email and purpose.
-   */
-  private static async invalidatePreviousOtps(email: string, purpose: OtpPurpose): Promise<void> {
-    const now = new Date();
-
-    try {
-      await prisma.otpVerification.updateMany({
-        where: {
-          email,
-          purpose,
-          verifiedAt: null,
-          invalidatedAt: null,
-        },
-        data: { invalidatedAt: now },
-      });
-    } catch {
-      // Fallback
-    }
-
-    const list = this.memoryStore.get(email);
-    if (list) {
-      for (const rec of list) {
-        if (rec.purpose === purpose && !rec.verifiedAt && !rec.invalidatedAt) {
-          rec.invalidatedAt = now;
-        }
-      }
-    }
-  }
-
-  /**
-   * Helper: Retrieves latest active OTP record.
-   */
-  private static async getLatestActiveOtp(email: string, purpose: OtpPurpose): Promise<OtpVerificationRecord | null> {
-    try {
-      const dbRecord = await prisma.otpVerification.findFirst({
-        where: {
-          email,
-          purpose,
-          invalidatedAt: null,
-          verifiedAt: null,
-        },
-        orderBy: { createdAt: 'desc' },
-      });
-
-      if (dbRecord) {
-        return {
-          id: dbRecord.id,
-          pendingRegistrationId: dbRecord.pendingRegistrationId,
-          email: dbRecord.email,
-          otpHash: dbRecord.otpHash,
-          purpose: dbRecord.purpose as OtpPurpose,
-          attempts: dbRecord.attempts,
-          expiresAt: dbRecord.expiresAt,
-          verifiedAt: dbRecord.verifiedAt,
-          invalidatedAt: dbRecord.invalidatedAt,
-          createdAt: dbRecord.createdAt,
-          updatedAt: dbRecord.updatedAt,
-        };
-      }
-    } catch {
-      // Fallback
-    }
-
-    const list = this.memoryStore.get(email) || [];
-    for (let i = list.length - 1; i >= 0; i--) {
-      const r = list[i];
-      if (r.purpose === purpose && !r.invalidatedAt && !r.verifiedAt) {
-        return r;
-      }
-    }
-
-    return null;
-  }
-
-  private static async persistInvalidation(id: string): Promise<void> {
-    try {
-      await prisma.otpVerification.update({
-        where: { id },
-        data: { invalidatedAt: new Date() },
-      });
-    } catch {
-      // Fallback
-    }
   }
 }

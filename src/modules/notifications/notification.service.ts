@@ -40,8 +40,8 @@ export class NotificationService {
       throw { statusCode: 404, message: 'Notification not found', code: 'NOTIFICATION_NOT_FOUND' };
     }
 
-    // Security: Only recipient or MANAGER can mark as read
-    if (notification.userId !== user.id && user.role !== 'MANAGER') {
+    // Security: Only recipient or ADMIN can mark as read
+    if (notification.userId !== user.id && user.role !== 'ADMIN') {
       throw { statusCode: 403, message: 'Access denied: not your notification', code: 'FORBIDDEN' };
     }
 

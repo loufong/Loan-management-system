@@ -15,27 +15,27 @@ productRouter.post('/calculate', ProductController.calculateAmortization);
 productRouter.post(
   '/',
   authenticate,
-  authorize(UserRole.MANAGER),
+  authorize(UserRole.ADMIN),
   ProductController.create
 );
 
 productRouter.put(
   '/:id',
   authenticate,
-  authorize(UserRole.MANAGER),
+  authorize(UserRole.ADMIN),
   ProductController.update
 );
 
 productRouter.patch(
   '/:id/toggle-status',
   authenticate,
-  authorize(UserRole.MANAGER),
+  authorize(UserRole.ADMIN),
   ProductController.toggleStatus
 );
 
 productRouter.patch(
   '/:id/status',
   authenticate,
-  authorize(UserRole.MANAGER),
+  authorize(UserRole.ADMIN),
   ProductController.toggleStatus
 );

@@ -60,13 +60,13 @@ export const AuditTrailLedger: React.FC<AuditTrailLedgerProps> = ({
   return (
     <div className="space-y-6 font-sans">
       {/* 1. Top Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-[#CBD5E1]">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-[#E2E8F0]">
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
               System Audit Trail &amp; Ledger
             </h1>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-xs font-mono font-semibold bg-slate-100 text-[#0F172A] border border-[#CBD5E1]">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-xs font-mono font-semibold bg-slate-100 text-[#0F172A] border border-[#E2E8F0]">
               Cryptographically Sequenced
             </span>
           </div>
@@ -77,7 +77,7 @@ export const AuditTrailLedger: React.FC<AuditTrailLedgerProps> = ({
       </div>
 
       {/* 2. Filter Bar */}
-      <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-4 space-y-3">
+      <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-4 space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
           {/* Search Query */}
           <div>
@@ -89,7 +89,7 @@ export const AuditTrailLedger: React.FC<AuditTrailLedgerProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Entity, IP, action..."
-                className="w-full h-9 pl-8 pr-3 bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB]"
+                className="w-full h-9 pl-8 pr-3 bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB]"
               />
             </div>
           </div>
@@ -100,7 +100,7 @@ export const AuditTrailLedger: React.FC<AuditTrailLedgerProps> = ({
             <select
               value={selectedUserFilter}
               onChange={(e) => setSelectedUserFilter(e.target.value)}
-              className="w-full h-9 px-3 bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] font-medium focus:outline-none focus:border-[#2563EB]"
+              className="w-full h-9 px-3 bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] font-medium focus:outline-none focus:border-[#2563EB]"
             >
               <option value="ALL">All Actors &amp; Officers</option>
               {actors.map((actor) => (
@@ -117,7 +117,7 @@ export const AuditTrailLedger: React.FC<AuditTrailLedgerProps> = ({
             <select
               value={selectedCategoryFilter}
               onChange={(e) => setSelectedCategoryFilter(e.target.value)}
-              className="w-full h-9 px-3 bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] font-medium focus:outline-none focus:border-[#2563EB]"
+              className="w-full h-9 px-3 bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] font-medium focus:outline-none focus:border-[#2563EB]"
             >
               <option value="ALL">All Event Categories</option>
               <option value="LOGIN">LOGIN (Auth)</option>
@@ -137,7 +137,7 @@ export const AuditTrailLedger: React.FC<AuditTrailLedgerProps> = ({
                 type="date"
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
-                className="w-full h-9 px-2.5 bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] font-mono text-xs focus:outline-none focus:border-[#2563EB]"
+                className="w-full h-9 px-2.5 bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] font-mono text-xs focus:outline-none focus:border-[#2563EB]"
               />
               {dateFilter && (
                 <button
@@ -153,7 +153,7 @@ export const AuditTrailLedger: React.FC<AuditTrailLedgerProps> = ({
       </div>
 
       {/* 3. Table of System Events */}
-      <div className="overflow-hidden rounded-[8px] border border-[#CBD5E1] bg-white">
+      <div className="overflow-hidden rounded-[8px] border border-[#E2E8F0] bg-white">
         <div className="overflow-x-auto">
           <table className="table-enterprise">
             <thead>
@@ -189,7 +189,7 @@ export const AuditTrailLedger: React.FC<AuditTrailLedgerProps> = ({
                     <td className="font-sans">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-[#0F172A]">{ev.actorName}</span>
-                        <span className="inline-flex px-1.5 py-0.2 rounded-[3px] text-[10px] font-mono font-medium bg-slate-100 text-[#0F172A] border border-[#CBD5E1]">
+                        <span className="inline-flex px-1.5 py-0.2 rounded-[3px] text-[10px] font-mono font-medium bg-slate-100 text-[#0F172A] border border-[#E2E8F0]">
                           {ev.actorRole}
                         </span>
                       </div>
@@ -232,7 +232,7 @@ export const AuditTrailLedger: React.FC<AuditTrailLedgerProps> = ({
                     <td className="text-right font-sans">
                       <button
                         onClick={() => setActiveJsonEvent(ev)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-[6px] bg-white hover:bg-slate-50 border border-[#CBD5E1] text-[#0F172A] transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-[6px] bg-white hover:bg-slate-50 border border-[#E2E8F0] text-[#0F172A] transition-colors cursor-pointer"
                       >
                         <Code className="w-3.5 h-3.5 text-[#2563EB]" />
                         <span>Payload</span>
@@ -249,8 +249,8 @@ export const AuditTrailLedger: React.FC<AuditTrailLedgerProps> = ({
       {/* 4. JSON Details Modal */}
       {activeJsonEvent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 font-sans">
-          <div className="bg-white rounded-[8px] border border-[#CBD5E1] shadow-xl w-full max-w-2xl p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#CBD5E1] pb-3">
+          <div className="bg-white rounded-[8px] border border-[#E2E8F0] shadow-xl w-full max-w-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
               <div className="flex items-center gap-2">
                 <Code className="w-4 h-4 text-[#2563EB]" />
                 <h3 className="text-sm font-bold text-[#0F172A]">
@@ -292,7 +292,7 @@ export const AuditTrailLedger: React.FC<AuditTrailLedgerProps> = ({
               <span>Timestamp: {activeJsonEvent.timestamp}</span>
               <button
                 onClick={() => setActiveJsonEvent(null)}
-                className="px-4 py-1.5 rounded-[6px] bg-white hover:bg-slate-50 border border-[#CBD5E1] text-[#0F172A] font-semibold font-sans cursor-pointer"
+                className="px-4 py-1.5 rounded-[6px] bg-white hover:bg-slate-50 border border-[#E2E8F0] text-[#0F172A] font-semibold font-sans cursor-pointer"
               >
                 Close
               </button>

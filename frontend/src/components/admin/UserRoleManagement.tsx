@@ -53,7 +53,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
   const [formName, setFormName] = useState('');
   const [formUsername, setFormUsername] = useState('');
   const [formEmail, setFormEmail] = useState('');
-  const [formRole, setFormRole] = useState<UserRole>('BORROWER');
+  const [formRole, setFormRole] = useState<UserRole>('USER');
   const [formDepartment, setFormDepartment] = useState('');
   const [formPhone, setFormPhone] = useState('');
   const [formPassword, setFormPassword] = useState('Password123!');
@@ -269,7 +269,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
         );
       case 'MANAGER':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[4px] text-xs font-semibold bg-slate-100 text-[#0F172A] border border-[#CBD5E1]">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[4px] text-xs font-semibold bg-slate-100 text-[#0F172A] border border-[#E2E8F0]">
             <ShieldCheck className="w-3.5 h-3.5 text-[#2563EB]" />
             Manager
           </span>
@@ -304,7 +304,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
         );
       default:
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-xs bg-slate-100 text-[#64748B] border border-[#CBD5E1]">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-xs bg-slate-100 text-[#64748B] border border-[#E2E8F0]">
             {role}
           </span>
         );
@@ -314,7 +314,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
   return (
     <div className="space-y-6">
       {/* Top Banner / Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-[8px] border border-[#CBD5E1]">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-[8px] border border-[#E2E8F0]">
         <div>
           <div className="flex items-center gap-1.5 text-xs font-semibold text-[#2563EB] uppercase tracking-wider mb-1">
             <Shield className="w-4 h-4" />
@@ -337,7 +337,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
             className={`px-3.5 py-2 text-xs font-semibold rounded-[6px] border transition-colors ${
               activeTab === 'matrix'
                 ? 'bg-[#0F172A] text-white border-[#0F172A]'
-                : 'bg-white text-[#0F172A] border-[#CBD5E1] hover:bg-slate-50'
+                : 'bg-white text-[#0F172A] border-[#E2E8F0] hover:bg-slate-50'
             }`}
           >
             <ShieldCheck className="w-3.5 h-3.5 inline mr-1.5" />
@@ -346,7 +346,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
 
           <button
             onClick={handleOpenCreateModal}
-            className="px-3.5 py-2 text-xs font-semibold text-white bg-[#0F172A] hover:bg-[#1E293B] rounded-[6px] transition-colors flex items-center gap-1.5 border border-[#0F172A]"
+            className="px-3.5 py-2 text-xs font-semibold text-white bg-[#2563EB] hover:bg-[#1D4ED8] rounded-[6px] transition-colors flex items-center gap-1.5 border border-transparent shadow-none cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             Add New User
@@ -357,7 +357,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
       {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Users */}
-        <div className="bg-white p-4 rounded-[8px] border border-[#CBD5E1] flex items-center justify-between">
+        <div className="bg-white p-4 rounded-[8px] border border-[#E2E8F0] flex items-center justify-between">
           <div>
             <p className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider">
               Total Accounts
@@ -368,13 +368,13 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
               {stats.active} Active accounts
             </span>
           </div>
-          <div className="w-10 h-10 rounded-[6px] bg-slate-100 border border-[#CBD5E1] flex items-center justify-center text-[#0F172A]">
+          <div className="w-10 h-10 rounded-[6px] bg-slate-100 border border-[#E2E8F0] flex items-center justify-center text-[#0F172A]">
             <Users className="w-5 h-5" />
           </div>
         </div>
 
         {/* Admin / Manager */}
-        <div className="bg-white p-4 rounded-[8px] border border-[#CBD5E1] flex items-center justify-between">
+        <div className="bg-white p-4 rounded-[8px] border border-[#E2E8F0] flex items-center justify-between">
           <div>
             <p className="text-[11px] font-semibold text-[#0F172A] uppercase tracking-wider">
               Admin / Manager
@@ -388,7 +388,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
         </div>
 
         {/* Cashier */}
-        <div className="bg-white p-4 rounded-[8px] border border-[#CBD5E1] flex items-center justify-between">
+        <div className="bg-white p-4 rounded-[8px] border border-[#E2E8F0] flex items-center justify-between">
           <div>
             <p className="text-[11px] font-semibold text-[#2563EB] uppercase tracking-wider">
               Cashier & POS
@@ -402,7 +402,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
         </div>
 
         {/* Borrower */}
-        <div className="bg-white p-4 rounded-[8px] border border-[#CBD5E1] flex items-center justify-between">
+        <div className="bg-white p-4 rounded-[8px] border border-[#E2E8F0] flex items-center justify-between">
           <div>
             <p className="text-[11px] font-semibold text-[#D97706] uppercase tracking-wider">
               Borrower Portal
@@ -417,7 +417,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-[#CBD5E1]">
+      <div className="flex items-center gap-1 border-b border-[#E2E8F0]">
         <button
           onClick={() => setActiveTab('users')}
           className={`pb-2.5 px-4 text-xs font-semibold transition-colors border-b-2 flex items-center gap-1.5 ${
@@ -457,9 +457,9 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
 
       {/* TAB 1: User Directory */}
       {activeTab === 'users' && (
-        <div className="bg-white rounded-[8px] border border-[#CBD5E1] overflow-hidden">
+        <div className="bg-white rounded-[8px] border border-[#E2E8F0] overflow-hidden">
           {/* Controls Bar */}
-          <div className="p-3 border-b border-[#CBD5E1] flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-50">
+          <div className="p-3 border-b border-[#E2E8F0] flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-50">
             {/* Search */}
             <div className="relative flex-1 max-w-md">
               <Search className="w-4 h-4 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2" />
@@ -468,13 +468,13 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search user by name, email, department, or username..."
-                className="w-full pl-9 pr-3 h-9 text-xs bg-white border border-[#CBD5E1] rounded-[6px] focus:outline-none focus:border-[#2563EB] text-[#0F172A] placeholder-[#64748B]"
+                className="w-full pl-9 pr-3 h-9 text-xs bg-white border border-[#E2E8F0] rounded-[6px] focus:outline-none focus:border-[#2563EB] text-[#0F172A] placeholder-[#64748B]"
               />
             </div>
 
             {/* Filters */}
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="flex items-center gap-1 bg-white p-0.5 rounded-[6px] border border-[#CBD5E1] text-xs">
+              <div className="flex items-center gap-1 bg-white p-0.5 rounded-[6px] border border-[#E2E8F0] text-xs">
                 <span className="px-2 text-[#64748B] font-semibold text-[11px]">Role:</span>
                 {(['ALL', 'ADMIN', 'MANAGER', 'LOAN_OFFICER', 'CREDIT_OFFICER', 'CASHIER', 'BORROWER'] as const).map((r) => (
                   <button
@@ -506,7 +506,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
               <select
                 value={selectedStatusFilter}
                 onChange={(e) => setSelectedStatusFilter(e.target.value)}
-                className="bg-white border border-[#CBD5E1] rounded-[6px] px-2.5 h-9 text-xs font-medium text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                className="bg-white border border-[#E2E8F0] rounded-[6px] px-2.5 h-9 text-xs font-medium text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
               >
                 <option value="ALL">Status: All</option>
                 <option value="ACTIVE">Active</option>
@@ -520,7 +520,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50 border-b border-[#CBD5E1] text-[#64748B] text-[11px] font-semibold uppercase tracking-wider">
+                <tr className="bg-slate-50 border-b border-[#E2E8F0] text-[#64748B] text-[11px] font-semibold uppercase tracking-wider">
                   <th className="py-2.5 px-3">User & Profile</th>
                   <th className="py-2.5 px-3">Role & Privileges</th>
                   <th className="py-2.5 px-3">Department & Contact</th>
@@ -529,7 +529,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                   <th className="py-2.5 px-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#CBD5E1] text-xs">
+              <tbody className="divide-y divide-[#E2E8F0] text-xs">
                 {filteredUsers.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="py-10 text-center text-[#64748B]">
@@ -549,7 +549,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                           <div
                             className={`w-8 h-8 rounded-[4px] flex items-center justify-center font-bold text-xs border ${
                               user.role === 'MANAGER'
-                                ? 'bg-slate-100 text-[#0F172A] border-[#CBD5E1]'
+                                ? 'bg-slate-100 text-[#0F172A] border-[#E2E8F0]'
                                 : user.role === 'CASHIER'
                                 ? 'bg-blue-50 text-[#2563EB] border-blue-200'
                                 : 'bg-amber-50 text-[#D97706] border-amber-200'
@@ -594,7 +594,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                           className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] text-xs font-semibold transition-colors ${
                             user.status === 'ACTIVE'
                               ? 'bg-emerald-50 text-[#16A34A] border border-emerald-200 hover:bg-emerald-100'
-                              : 'bg-slate-100 text-[#64748B] border border-[#CBD5E1] hover:bg-slate-200'
+                              : 'bg-slate-100 text-[#64748B] border border-[#E2E8F0] hover:bg-slate-200'
                           }`}
                           title="Click to toggle status"
                         >
@@ -681,12 +681,12 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
             {Object.entries(CORE_ROLE_DEFINITIONS).map(([key, def]) => (
               <div
                 key={key}
-                className="bg-white rounded-[8px] border border-[#CBD5E1] p-4 flex flex-col justify-between"
+                className="bg-white rounded-[8px] border border-[#E2E8F0] p-4 flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span
-                      className="px-2.5 py-0.5 rounded-[4px] text-xs font-semibold bg-slate-100 text-[#0F172A] border border-[#CBD5E1]"
+                      className="px-2.5 py-0.5 rounded-[4px] text-xs font-semibold bg-slate-100 text-[#0F172A] border border-[#E2E8F0]"
                     >
                       {def.badge}
                     </span>
@@ -699,7 +699,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                     {def.description}
                   </p>
 
-                  <div className="mt-3 pt-3 border-t border-[#CBD5E1]">
+                  <div className="mt-3 pt-3 border-t border-[#E2E8F0]">
                     <h4 className="text-[11px] font-semibold text-[#0F172A] uppercase tracking-wider mb-2">
                       Key Responsibilities:
                     </h4>
@@ -714,7 +714,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                   </div>
                 </div>
 
-                <div className="mt-4 pt-2.5 border-t border-[#CBD5E1] flex items-center justify-between text-xs text-[#64748B]">
+                <div className="mt-4 pt-2.5 border-t border-[#E2E8F0] flex items-center justify-between text-xs text-[#64748B]">
                   <span>Assigned Users:</span>
                   <span className="font-semibold text-[#0F172A]">
                     {users.filter((u) => u.role === key).length} accounts
@@ -725,8 +725,8 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
           </div>
 
           {/* Side-by-Side Permissions Table */}
-          <div className="bg-white rounded-[8px] border border-[#CBD5E1] overflow-hidden">
-            <div className="p-4 border-b border-[#CBD5E1]">
+          <div className="bg-white rounded-[8px] border border-[#E2E8F0] overflow-hidden">
+            <div className="p-4 border-b border-[#E2E8F0]">
               <h3 className="text-sm font-bold text-[#0F172A]">
                 Role-Based Access Control (RBAC) Matrix
               </h3>
@@ -738,7 +738,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-[#CBD5E1] text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+                  <tr className="bg-slate-50 border-b border-[#E2E8F0] text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
                     <th className="py-2.5 px-3 w-1/4">System Module & Action</th>
                     <th className="py-2.5 px-3 w-1/3">Permission Description</th>
                     <th className="py-2.5 px-3 text-center text-[#0F172A] bg-slate-100/60">
@@ -752,11 +752,11 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#CBD5E1] text-xs">
+                <tbody className="divide-y divide-[#E2E8F0] text-xs">
                   {PERMISSION_MATRIX_DATA.map((row, idx) => (
                     <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
                       <td className="py-2.5 px-3 font-semibold text-[#0F172A]">
-                        <span className="inline-block px-1.5 py-0.5 rounded-[4px] bg-slate-100 text-[#64748B] font-normal mr-2 border border-[#CBD5E1]">
+                        <span className="inline-block px-1.5 py-0.5 rounded-[4px] bg-slate-100 text-[#64748B] font-normal mr-2 border border-[#E2E8F0]">
                           {row.module}
                         </span>
                         {row.permission}
@@ -770,7 +770,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                             <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                           </span>
                         ) : (
-                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-[4px] bg-slate-100 text-slate-400 mx-auto border border-[#CBD5E1]">
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-[4px] bg-slate-100 text-slate-400 mx-auto border border-[#E2E8F0]">
                             <X className="w-3 h-3" />
                           </span>
                         )}
@@ -783,7 +783,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                             <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                           </span>
                         ) : (
-                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-[4px] bg-slate-100 text-slate-400 mx-auto border border-[#CBD5E1]">
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-[4px] bg-slate-100 text-slate-400 mx-auto border border-[#E2E8F0]">
                             <X className="w-3 h-3" />
                           </span>
                         )}
@@ -796,7 +796,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                             <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                           </span>
                         ) : (
-                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-[4px] bg-slate-100 text-slate-400 mx-auto border border-[#CBD5E1]">
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-[4px] bg-slate-100 text-slate-400 mx-auto border border-[#E2E8F0]">
                             <X className="w-3 h-3" />
                           </span>
                         )}
@@ -813,8 +813,8 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
       {/* TAB 3: Overview & Architecture */}
       {activeTab === 'overview' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white p-5 rounded-[8px] border border-[#CBD5E1] space-y-3">
-            <div className="w-10 h-10 rounded-[6px] bg-slate-100 border border-[#CBD5E1] flex items-center justify-center text-[#0F172A]">
+          <div className="bg-white p-5 rounded-[8px] border border-[#E2E8F0] space-y-3">
+            <div className="w-10 h-10 rounded-[6px] bg-slate-100 border border-[#E2E8F0] flex items-center justify-center text-[#0F172A]">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <h3 className="text-base font-bold text-[#0F172A]">1. Admin / Manager</h3>
@@ -823,18 +823,18 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
               decisioning, product limit definitions, and user security administration.
             </p>
             <div className="space-y-2 text-xs text-[#64748B]">
-              <div className="p-2.5 bg-slate-50 rounded-[6px] border border-[#CBD5E1]">
+              <div className="p-2.5 bg-slate-50 rounded-[6px] border border-[#E2E8F0]">
                 <span className="font-semibold text-[#0F172A] block mb-0.5">Scope:</span>
                 Institution-wide portfolio, full database read/write, audit logs
               </div>
-              <div className="p-2.5 bg-slate-50 rounded-[6px] border border-[#CBD5E1]">
+              <div className="p-2.5 bg-slate-50 rounded-[6px] border border-[#E2E8F0]">
                 <span className="font-semibold text-[#0F172A] block mb-0.5">Typical Users:</span>
                 Branch Managers, Credit Committee Heads, System Admins
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-5 rounded-[8px] border border-[#CBD5E1] space-y-3">
+          <div className="bg-white p-5 rounded-[8px] border border-[#E2E8F0] space-y-3">
             <div className="w-10 h-10 rounded-[6px] bg-blue-50 border border-blue-200 flex items-center justify-center text-[#2563EB]">
               <CreditCard className="w-5 h-5" />
             </div>
@@ -844,18 +844,18 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
               applications, collecting repayments, and printing official receipts.
             </p>
             <div className="space-y-2 text-xs text-[#64748B]">
-              <div className="p-2.5 bg-slate-50 rounded-[6px] border border-[#CBD5E1]">
+              <div className="p-2.5 bg-slate-50 rounded-[6px] border border-[#E2E8F0]">
                 <span className="font-semibold text-[#0F172A] block mb-0.5">Scope:</span>
                 Cash desk register, POS terminal, waterfall repayments, overdue watchlist
               </div>
-              <div className="p-2.5 bg-slate-50 rounded-[6px] border border-[#CBD5E1]">
+              <div className="p-2.5 bg-slate-50 rounded-[6px] border border-[#E2E8F0]">
                 <span className="font-semibold text-[#0F172A] block mb-0.5">Typical Users:</span>
                 University Bursar, Counter Tellers, Cashiers
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-5 rounded-[8px] border border-[#CBD5E1] space-y-3">
+          <div className="bg-white p-5 rounded-[8px] border border-[#E2E8F0] space-y-3">
             <div className="w-10 h-10 rounded-[6px] bg-amber-50 border border-amber-200 flex items-center justify-center text-[#D97706]">
               <User className="w-5 h-5" />
             </div>
@@ -865,11 +865,11 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
               ever view their own loans, installments, and receipts).
             </p>
             <div className="space-y-2 text-xs text-[#64748B]">
-              <div className="p-2.5 bg-slate-50 rounded-[6px] border border-[#CBD5E1]">
+              <div className="p-2.5 bg-slate-50 rounded-[6px] border border-[#E2E8F0]">
                 <span className="font-semibold text-[#0F172A] block mb-0.5">Scope:</span>
                 Personal active loans, digital payment QR, statement generation
               </div>
-              <div className="p-2.5 bg-slate-50 rounded-[6px] border border-[#CBD5E1]">
+              <div className="p-2.5 bg-slate-50 rounded-[6px] border border-[#E2E8F0]">
                 <span className="font-semibold text-[#0F172A] block mb-0.5">Typical Users:</span>
                 University Students, Faculty Members, Personal Borrowers
               </div>
@@ -881,10 +881,10 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
       {/* CREATE USER MODAL */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50">
-          <div className="bg-white rounded-[8px] max-w-lg w-full p-5 border border-[#CBD5E1] shadow-md">
-            <div className="flex items-center justify-between pb-3 border-b border-[#CBD5E1]">
+          <div className="bg-white rounded-[8px] max-w-lg w-full p-5 border border-[#E2E8F0] shadow-md">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
               <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-[6px] bg-slate-100 text-[#0F172A] border border-[#CBD5E1]">
+                <div className="p-1.5 rounded-[6px] bg-slate-100 text-[#0F172A] border border-[#E2E8F0]">
                   <Plus className="w-4 h-4" />
                 </div>
                 <div>
@@ -908,43 +908,23 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                 <label className="block text-[11px] font-semibold text-[#0F172A] uppercase tracking-wider mb-1">
                   Select User Role *
                 </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {(['ADMIN', 'MANAGER', 'LOAN_OFFICER', 'CREDIT_OFFICER', 'CASHIER', 'BORROWER'] as const).map((r) => (
+                <div className="grid grid-cols-2 gap-2">
+                  {(['ADMIN', 'USER'] as const).map((r) => (
                     <button
                       key={r}
                       type="button"
                       onClick={() => setFormRole(r)}
-                      className={`p-2 rounded-[6px] border text-left transition-colors ${
+                      className={`p-2.5 rounded-[6px] border text-left transition-colors ${
                         formRole === r
                           ? 'border-[#0F172A] bg-slate-100 text-[#0F172A]'
-                          : 'border-[#CBD5E1] hover:border-slate-400 text-[#64748B]'
+                          : 'border-[#E2E8F0] hover:border-slate-400 text-[#64748B]'
                       }`}
                     >
                       <div className="font-bold text-xs">
-                        {r === 'ADMIN'
-                          ? 'Admin'
-                          : r === 'MANAGER'
-                          ? 'Manager'
-                          : r === 'LOAN_OFFICER'
-                          ? 'Loan Officer'
-                          : r === 'CREDIT_OFFICER'
-                          ? 'Credit Analyst'
-                          : r === 'CASHIER'
-                          ? 'Cashier'
-                          : 'Borrower'}
+                        {r === 'ADMIN' ? 'Administrator' : 'Standard User'}
                       </div>
                       <div className="text-[10px] text-[#64748B] mt-0.5">
-                        {r === 'ADMIN'
-                          ? 'Superuser'
-                          : r === 'MANAGER'
-                          ? 'Full Control'
-                          : r === 'LOAN_OFFICER'
-                          ? 'Underwriting'
-                          : r === 'CREDIT_OFFICER'
-                          ? 'DTI & Risk'
-                          : r === 'CASHIER'
-                          ? 'POS & Receipts'
-                          : 'Self-Service'}
+                        {r === 'ADMIN' ? 'Full administrative access' : 'Client self-service & loan portal'}
                       </div>
                     </button>
                   ))}
@@ -963,7 +943,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
                     placeholder="e.g. Dr. Chan Sophat"
-                    className="w-full px-3 h-10 text-xs bg-white border border-[#CBD5E1] rounded-[6px] focus:outline-none focus:border-[#2563EB]"
+                    className="w-full px-3 h-10 text-xs bg-white border border-[#E2E8F0] rounded-[6px] focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
 
@@ -977,7 +957,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                     value={formUsername}
                     onChange={(e) => setFormUsername(e.target.value)}
                     placeholder="e.g. c.sophat"
-                    className="w-full px-3 h-10 text-xs bg-white border border-[#CBD5E1] rounded-[6px] focus:outline-none focus:border-[#2563EB] font-mono"
+                    className="w-full px-3 h-10 text-xs bg-white border border-[#E2E8F0] rounded-[6px] focus:outline-none focus:border-[#2563EB] font-mono"
                   />
                 </div>
               </div>
@@ -994,7 +974,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                     value={formEmail}
                     onChange={(e) => setFormEmail(e.target.value)}
                     placeholder="user@loansystem.edu"
-                    className="w-full px-3 h-10 text-xs bg-white border border-[#CBD5E1] rounded-[6px] focus:outline-none focus:border-[#2563EB]"
+                    className="w-full px-3 h-10 text-xs bg-white border border-[#E2E8F0] rounded-[6px] focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
 
@@ -1007,7 +987,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                     value={formPhone}
                     onChange={(e) => setFormPhone(e.target.value)}
                     placeholder="+855 12 345 678"
-                    className="w-full px-3 h-10 text-xs bg-white border border-[#CBD5E1] rounded-[6px] focus:outline-none focus:border-[#2563EB]"
+                    className="w-full px-3 h-10 text-xs bg-white border border-[#E2E8F0] rounded-[6px] focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
               </div>
@@ -1023,7 +1003,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                     value={formDepartment}
                     onChange={(e) => setFormDepartment(e.target.value)}
                     placeholder="e.g. Finance & Treasury"
-                    className="w-full px-3 h-10 text-xs bg-white border border-[#CBD5E1] rounded-[6px] focus:outline-none focus:border-[#2563EB]"
+                    className="w-full px-3 h-10 text-xs bg-white border border-[#E2E8F0] rounded-[6px] focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
 
@@ -1035,17 +1015,17 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                     type="text"
                     value={formPassword}
                     onChange={(e) => setFormPassword(e.target.value)}
-                    className="w-full px-3 h-10 text-xs bg-white border border-[#CBD5E1] rounded-[6px] focus:outline-none focus:border-[#2563EB] font-mono"
+                    className="w-full px-3 h-10 text-xs bg-white border border-[#E2E8F0] rounded-[6px] focus:outline-none focus:border-[#2563EB] font-mono"
                   />
                 </div>
               </div>
 
               {/* Submit Buttons */}
-              <div className="pt-3 border-t border-[#CBD5E1] flex items-center justify-end gap-2">
+              <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="px-3.5 py-2 text-xs font-semibold text-[#0F172A] hover:bg-slate-100 rounded-[6px] border border-[#CBD5E1] transition-colors"
+                  className="px-3.5 py-2 text-xs font-semibold text-[#0F172A] hover:bg-slate-100 rounded-[6px] border border-[#E2E8F0] transition-colors"
                 >
                   Cancel
                 </button>
@@ -1064,10 +1044,10 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
       {/* EDIT USER & ROLE MODAL */}
       {editingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50">
-          <div className="bg-white rounded-[8px] max-w-lg w-full p-5 border border-[#CBD5E1] shadow-md">
-            <div className="flex items-center justify-between pb-3 border-b border-[#CBD5E1]">
+          <div className="bg-white rounded-[8px] max-w-lg w-full p-5 border border-[#E2E8F0] shadow-md">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
               <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-[6px] bg-slate-100 text-[#0F172A] border border-[#CBD5E1]">
+                <div className="p-1.5 rounded-[6px] bg-slate-100 text-[#0F172A] border border-[#E2E8F0]">
                   <Edit2 className="w-4 h-4" />
                 </div>
                 <div>
@@ -1093,43 +1073,23 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                 <label className="block text-[11px] font-semibold text-[#0F172A] uppercase tracking-wider mb-1">
                   Assigned User Role *
                 </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {(['ADMIN', 'MANAGER', 'LOAN_OFFICER', 'CREDIT_OFFICER', 'CASHIER', 'BORROWER'] as const).map((r) => (
+                <div className="grid grid-cols-2 gap-2">
+                  {(['ADMIN', 'USER'] as const).map((r) => (
                     <button
                       key={r}
                       type="button"
                       onClick={() => setFormRole(r)}
-                      className={`p-2 rounded-[6px] border text-left transition-colors ${
+                      className={`p-2.5 rounded-[6px] border text-left transition-colors ${
                         formRole === r
                           ? 'border-[#0F172A] bg-slate-100 text-[#0F172A]'
-                          : 'border-[#CBD5E1] hover:border-slate-400 text-[#64748B]'
+                          : 'border-[#E2E8F0] hover:border-slate-400 text-[#64748B]'
                       }`}
                     >
                       <div className="font-bold text-xs">
-                        {r === 'ADMIN'
-                          ? 'Admin'
-                          : r === 'MANAGER'
-                          ? 'Manager'
-                          : r === 'LOAN_OFFICER'
-                          ? 'Loan Officer'
-                          : r === 'CREDIT_OFFICER'
-                          ? 'Credit Analyst'
-                          : r === 'CASHIER'
-                          ? 'Cashier'
-                          : 'Borrower'}
+                        {r === 'ADMIN' ? 'Administrator' : 'Standard User'}
                       </div>
                       <div className="text-[10px] text-[#64748B] mt-0.5">
-                        {r === 'ADMIN'
-                          ? 'Superuser'
-                          : r === 'MANAGER'
-                          ? 'Full Control'
-                          : r === 'LOAN_OFFICER'
-                          ? 'Underwriting'
-                          : r === 'CREDIT_OFFICER'
-                          ? 'DTI & Risk'
-                          : r === 'CASHIER'
-                          ? 'POS & Receipts'
-                          : 'Self-Service'}
+                        {r === 'ADMIN' ? 'Full administrative access' : 'Client self-service & loan portal'}
                       </div>
                     </button>
                   ))}
@@ -1146,7 +1106,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                   required
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  className="w-full px-3 h-10 text-xs bg-white border border-[#CBD5E1] rounded-[6px] focus:outline-none focus:border-[#2563EB]"
+                  className="w-full px-3 h-10 text-xs bg-white border border-[#E2E8F0] rounded-[6px] focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
@@ -1161,7 +1121,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                     required
                     value={formEmail}
                     onChange={(e) => setFormEmail(e.target.value)}
-                    className="w-full px-3 h-10 text-xs bg-white border border-[#CBD5E1] rounded-[6px] focus:outline-none focus:border-[#2563EB]"
+                    className="w-full px-3 h-10 text-xs bg-white border border-[#E2E8F0] rounded-[6px] focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
 
@@ -1173,7 +1133,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                     type="tel"
                     value={formPhone}
                     onChange={(e) => setFormPhone(e.target.value)}
-                    className="w-full px-3 h-10 text-xs bg-white border border-[#CBD5E1] rounded-[6px] focus:outline-none focus:border-[#2563EB]"
+                    className="w-full px-3 h-10 text-xs bg-white border border-[#E2E8F0] rounded-[6px] focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
               </div>
@@ -1187,7 +1147,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                   type="text"
                   value={formDepartment}
                   onChange={(e) => setFormDepartment(e.target.value)}
-                  className="w-full px-3 h-10 text-xs bg-white border border-[#CBD5E1] rounded-[6px] focus:outline-none focus:border-[#2563EB]"
+                  className="w-full px-3 h-10 text-xs bg-white border border-[#E2E8F0] rounded-[6px] focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
@@ -1199,7 +1159,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                 <select
                   value={formStatus}
                   onChange={(e) => setFormStatus(e.target.value as any)}
-                  className="w-full px-3 h-10 text-xs bg-white border border-[#CBD5E1] rounded-[6px] focus:outline-none focus:border-[#2563EB]"
+                  className="w-full px-3 h-10 text-xs bg-white border border-[#E2E8F0] rounded-[6px] focus:outline-none focus:border-[#2563EB]"
                 >
                   <option value="ACTIVE">Active</option>
                   <option value="INACTIVE">Inactive</option>
@@ -1208,11 +1168,11 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
               </div>
 
               {/* Submit Buttons */}
-              <div className="pt-3 border-t border-[#CBD5E1] flex items-center justify-end gap-2">
+              <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setEditingUser(null)}
-                  className="px-3.5 py-2 text-xs font-semibold text-[#0F172A] hover:bg-slate-100 rounded-[6px] border border-[#CBD5E1] transition-colors"
+                  className="px-3.5 py-2 text-xs font-semibold text-[#0F172A] hover:bg-slate-100 rounded-[6px] border border-[#E2E8F0] transition-colors"
                 >
                   Cancel
                 </button>

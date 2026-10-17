@@ -804,9 +804,9 @@ export const App: React.FC = () => {
             />
           )}
 
-          {/* Multi-Role Dashboards (ADMIN, MANAGER, LOAN_OFFICER, CREDIT_OFFICER, CASHIER, BORROWER) */}
+          {/* Two-Tier Dashboards (ADMIN: AdminDashboard, USER: UserDashboard) */}
           {activeTab === 'dashboard' && (() => {
-            const role = (currentUser.role || 'BORROWER').toUpperCase();
+            const role = (currentUser.role || 'USER').toUpperCase();
             if (role === 'ADMIN') {
               return (
                 <AdminDashboard
@@ -814,49 +814,6 @@ export const App: React.FC = () => {
                   onNavigate={handleNavSelection}
                   loans={loans}
                   borrowers={borrowers}
-                  applications={applications}
-                  receipts={receipts}
-                />
-              );
-            }
-            if (role === 'MANAGER') {
-              return (
-                <ManagerDashboard
-                  currency={currency}
-                  onNavigate={handleNavSelection}
-                  loans={loans}
-                  borrowers={borrowers}
-                  applications={applications}
-                  receipts={receipts}
-                />
-              );
-            }
-            if (role === 'LOAN_OFFICER') {
-              return (
-                <LoanOfficerDashboard
-                  currency={currency}
-                  onNavigate={handleNavSelection}
-                  applications={applications}
-                  borrowers={borrowers}
-                />
-              );
-            }
-            if (role === 'CREDIT_OFFICER') {
-              return (
-                <CreditOfficerDashboard
-                  currency={currency}
-                  onNavigate={handleNavSelection}
-                  applications={applications}
-                  borrowers={borrowers}
-                />
-              );
-            }
-            if (role === 'CASHIER') {
-              return (
-                <CashierDashboard
-                  currency={currency}
-                  onNavigate={handleNavSelection}
-                  loans={loans}
                   applications={applications}
                   receipts={receipts}
                 />
@@ -1166,8 +1123,8 @@ export const App: React.FC = () => {
       {/* Global Quick Search Modal (Ctrl + K) */}
       {searchModalOpen && (
         <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-slate-900/50 p-4 animate-in fade-in duration-150">
-          <div className="bg-white rounded-[8px] shadow-lg border border-[#CBD5E1] w-full max-w-2xl overflow-hidden">
-            <div className="flex items-center px-3.5 py-2.5 border-b border-[#CBD5E1]">
+          <div className="bg-white rounded-[8px] shadow-lg border border-[#E2E8F0] w-full max-w-2xl overflow-hidden">
+            <div className="flex items-center px-3.5 py-2.5 border-b border-[#E2E8F0]">
               <Search className="w-4 h-4 text-[#64748B] mr-2.5" />
               <input
                 type="text"
@@ -1207,7 +1164,7 @@ export const App: React.FC = () => {
                     }}
                     className="w-full text-left flex items-start gap-2.5 p-2 rounded-[6px] hover:bg-slate-50 transition-colors"
                   >
-                    <div className="p-1.5 rounded-[4px] bg-slate-100 border border-[#CBD5E1] text-[#0F172A]">
+                    <div className="p-1.5 rounded-[4px] bg-slate-100 border border-[#E2E8F0] text-[#0F172A]">
                       {res.type === 'borrower' && <User className="w-3.5 h-3.5" />}
                       {res.type === 'loan' && <CreditCard className="w-3.5 h-3.5" />}
                       {res.type === 'application' && <FileText className="w-3.5 h-3.5" />}
@@ -1229,17 +1186,17 @@ export const App: React.FC = () => {
               )}
             </div>
 
-            <div className="bg-slate-50 px-3.5 py-2 border-t border-[#CBD5E1] flex items-center justify-between text-[11px] text-[#64748B]">
+            <div className="bg-slate-50 px-3.5 py-2 border-t border-[#E2E8F0] flex items-center justify-between text-[11px] text-[#64748B]">
               <div className="flex items-center gap-1.5">
                 <span>Navigate with</span>
-                <kbd className="px-1.5 py-0.5 bg-white border border-[#CBD5E1] rounded-[4px] text-[10px] font-mono text-[#0F172A]">↑</kbd>
-                <kbd className="px-1.5 py-0.5 bg-white border border-[#CBD5E1] rounded-[4px] text-[10px] font-mono text-[#0F172A]">↓</kbd>
+                <kbd className="px-1.5 py-0.5 bg-white border border-[#E2E8F0] rounded-[4px] text-[10px] font-mono text-[#0F172A]">↑</kbd>
+                <kbd className="px-1.5 py-0.5 bg-white border border-[#E2E8F0] rounded-[4px] text-[10px] font-mono text-[#0F172A]">↓</kbd>
                 <span>Select with</span>
-                <kbd className="px-1.5 py-0.5 bg-white border border-[#CBD5E1] rounded-[4px] text-[10px] font-mono text-[#0F172A]">Enter</kbd>
+                <kbd className="px-1.5 py-0.5 bg-white border border-[#E2E8F0] rounded-[4px] text-[10px] font-mono text-[#0F172A]">Enter</kbd>
               </div>
               <div>
                 <span>Press</span>
-                <kbd className="ml-1 px-1.5 py-0.5 bg-white border border-[#CBD5E1] rounded-[4px] text-[10px] font-mono text-[#0F172A]">ESC</kbd> to close
+                <kbd className="ml-1 px-1.5 py-0.5 bg-white border border-[#E2E8F0] rounded-[4px] text-[10px] font-mono text-[#0F172A]">ESC</kbd> to close
               </div>
             </div>
           </div>

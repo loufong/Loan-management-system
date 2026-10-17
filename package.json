@@ -11,7 +11,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:validate": "prisma validate",
     "prisma:seed": "ts-node prisma/seed.ts",
-    "test": "ts-node test/security.test.ts && ts-node test/borrower-product.test.ts && ts-node test/loan-calculator.test.ts && ts-node test/integration-workflow.test.ts && ts-node test/api-endpoints.test.ts && ts-node test/application-approval-workflow.test.ts && ts-node test/loan-disbursement.test.ts && ts-node test/payment-reconciliation.test.ts && ts-node test/overdue-detection.test.ts && ts-node test/kpi-reporting.test.ts",
+    "test": "ts-node test/two-tier-auth-rbac.test.ts && ts-node test/security.test.ts && ts-node test/borrower-product.test.ts && ts-node test/loan-calculator.test.ts && ts-node test/integration-workflow.test.ts && ts-node test/api-endpoints.test.ts && ts-node test/application-approval-workflow.test.ts && ts-node test/loan-disbursement.test.ts && ts-node test/payment-reconciliation.test.ts && ts-node test/overdue-detection.test.ts && ts-node test/kpi-reporting.test.ts",
     "prisma:studio": "prisma studio",
     "db:push": "prisma db push",
     "db:reset": "prisma migrate reset",

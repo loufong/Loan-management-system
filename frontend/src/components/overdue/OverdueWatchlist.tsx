@@ -136,7 +136,7 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
   return (
     <div className="space-y-6 font-sans">
       {/* 1. Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-[#CBD5E1]">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-[#E2E8F0]">
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
@@ -183,7 +183,7 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
       {/* 2. Top Metrics Bar (3 Cards) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Card 1: Total Overdue Balance */}
-        <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-5 space-y-1">
+        <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-5 space-y-1">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B] block">
             Total Overdue Balance
           </span>
@@ -196,7 +196,7 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
         </div>
 
         {/* Card 2: Total Overdue Accounts */}
-        <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-5 space-y-1">
+        <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-5 space-y-1">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B] block">
             Total Overdue Accounts
           </span>
@@ -207,7 +207,7 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
         </div>
 
         {/* Card 3: Portfolio at Risk (PAR 30+) */}
-        <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-5 space-y-1">
+        <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-5 space-y-1">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
               Portfolio at Risk (PAR 30+)
@@ -237,8 +237,8 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
       </div>
 
       {/* 3. Severity Filter Tabs */}
-      <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-2.5">
-        <div className="flex items-center gap-1.5 overflow-x-auto bg-slate-100 p-0.5 rounded-[6px] border border-[#CBD5E1]">
+      <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-2.5">
+        <div className="flex items-center gap-1.5 overflow-x-auto bg-slate-100 p-0.5 rounded-[6px] border border-[#E2E8F0]">
           {[
             { key: 'ALL', label: 'All Delinquent' },
             { key: 'EARLY', label: '1–15 Days (Early Watch)' },
@@ -264,7 +264,7 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
       </div>
 
       {/* 4. Delinquency Data Table */}
-      <div className="overflow-hidden rounded-[8px] border border-[#CBD5E1] bg-white">
+      <div className="overflow-hidden rounded-[8px] border border-[#E2E8F0] bg-white">
         <div className="overflow-x-auto">
           <table className="table-enterprise">
             <thead>
@@ -378,7 +378,7 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
                           <button
                             onClick={() => handleSendReminder(r.borrowerName, r.borrowerPhone)}
                             title="Send Reminder"
-                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-[6px] bg-white hover:bg-slate-50 border border-[#CBD5E1] text-[#0F172A] transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-[6px] bg-white hover:bg-slate-50 border border-[#E2E8F0] text-[#0F172A] transition-colors cursor-pointer"
                           >
                             <Send className="w-3 h-3" />
                             <span>Reminder</span>

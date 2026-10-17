@@ -159,11 +159,11 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
   return (
     <div className="space-y-6 font-sans">
       {/* 1. Navigation Breadcrumb Bar */}
-      <div className="flex items-center justify-between pb-2 border-b border-[#CBD5E1]">
+      <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex items-center gap-2 text-xs font-semibold text-[#0F172A] hover:text-[#2563EB] bg-white hover:bg-slate-50 border border-[#CBD5E1] px-3.5 py-2 rounded-[6px] transition cursor-pointer"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-[#0F172A] hover:text-[#2563EB] bg-white hover:bg-slate-50 border border-[#E2E8F0] px-3.5 py-2 rounded-[6px] transition cursor-pointer"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Back to Borrowers Directory</span>
@@ -184,7 +184,7 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
       </div>
 
       {/* 2. Top Hero Card */}
-      <div className="bg-white rounded-[8px] border border-[#CBD5E1] p-6 space-y-6">
+      <div className="bg-white rounded-[8px] border border-[#E2E8F0] p-6 space-y-6">
         {/* Header Profile Info */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
           <div className="flex items-center gap-4 min-w-0">
@@ -239,15 +239,15 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-mono text-[#64748B] bg-slate-50 px-3 py-1.5 rounded-[4px] border border-[#CBD5E1]">
+            <span className="text-[11px] font-mono text-[#64748B] bg-slate-50 px-3 py-1.5 rounded-[4px] border border-[#E2E8F0]">
               Member Since: {borrower.createdAt ? borrower.createdAt.split('T')[0] : '2026-08-15'}
             </span>
           </div>
         </div>
 
         {/* 4-Metric Summary Row */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-[#CBD5E1]">
-          <div className="p-3.5 rounded-[6px] bg-slate-50 border border-[#CBD5E1]">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-[#E2E8F0]">
+          <div className="p-3.5 rounded-[6px] bg-slate-50 border border-[#E2E8F0]">
             <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">
               Monthly Income
             </span>
@@ -259,7 +259,7 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
             </span>
           </div>
 
-          <div className="p-3.5 rounded-[6px] bg-slate-50 border border-[#CBD5E1]">
+          <div className="p-3.5 rounded-[6px] bg-slate-50 border border-[#E2E8F0]">
             <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">
               Current DTI Ratio
             </span>
@@ -276,7 +276,7 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
             </span>
           </div>
 
-          <div className="p-3.5 rounded-[6px] bg-slate-50 border border-[#CBD5E1]">
+          <div className="p-3.5 rounded-[6px] bg-slate-50 border border-[#E2E8F0]">
             <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">
               Total Borrowed
             </span>
@@ -288,7 +288,7 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
             </span>
           </div>
 
-          <div className="p-3.5 rounded-[6px] bg-slate-50 border border-[#CBD5E1]">
+          <div className="p-3.5 rounded-[6px] bg-slate-50 border border-[#E2E8F0]">
             <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">
               Current Balance
             </span>
@@ -303,7 +303,7 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
       </div>
 
       {/* 3. Tab Navigation */}
-      <div className="border-b border-[#CBD5E1] flex items-center gap-1 sm:gap-4 overflow-x-auto">
+      <div className="border-b border-[#E2E8F0] flex items-center gap-1 sm:gap-4 overflow-x-auto">
         {tabList.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
@@ -331,8 +331,8 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
       {activeTab === 'profile' && (
         <div className="space-y-6">
           {/* Section 1: Personal & Identification Information */}
-          <div className="bg-white rounded-[8px] border border-[#CBD5E1] p-5">
-            <h3 className="text-sm font-bold text-[#0F172A] uppercase tracking-wider pb-3 border-b border-[#CBD5E1]">
+          <div className="bg-white rounded-[8px] border border-[#E2E8F0] p-5">
+            <h3 className="text-sm font-bold text-[#0F172A] uppercase tracking-wider pb-3 border-b border-[#E2E8F0]">
               Personal Information &amp; Identification
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 text-xs">
@@ -356,8 +356,8 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
           </div>
 
           {/* Section 2: Contact Information */}
-          <div className="bg-white rounded-[8px] border border-[#CBD5E1] p-5">
-            <h3 className="text-sm font-bold text-[#0F172A] uppercase tracking-wider pb-3 border-b border-[#CBD5E1]">
+          <div className="bg-white rounded-[8px] border border-[#E2E8F0] p-5">
+            <h3 className="text-sm font-bold text-[#0F172A] uppercase tracking-wider pb-3 border-b border-[#E2E8F0]">
               Contact Information
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 text-xs">
@@ -377,8 +377,8 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
           </div>
 
           {/* Section 3: Employment / Student Information */}
-          <div className="bg-white rounded-[8px] border border-[#CBD5E1] p-5">
-            <h3 className="text-sm font-bold text-[#0F172A] uppercase tracking-wider pb-3 border-b border-[#CBD5E1]">
+          <div className="bg-white rounded-[8px] border border-[#E2E8F0] p-5">
+            <h3 className="text-sm font-bold text-[#0F172A] uppercase tracking-wider pb-3 border-b border-[#E2E8F0]">
               Employment / Student Information
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 text-xs">
@@ -411,7 +411,7 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
       {activeTab === 'loans' && (
         <div className="space-y-4">
           {loans.length === 0 ? (
-            <div className="bg-white rounded-[8px] p-12 text-center border border-[#CBD5E1]">
+            <div className="bg-white rounded-[8px] p-12 text-center border border-[#E2E8F0]">
               <CreditCard className="w-10 h-10 text-[#64748B] mx-auto mb-2" />
               <h3 className="text-sm font-bold text-[#0F172A]">No Loan Facilities Found</h3>
               <p className="text-xs text-[#64748B] mt-1">
@@ -428,14 +428,14 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
                 return (
                   <div
                     key={loan.id}
-                    className="bg-white rounded-[8px] border border-[#CBD5E1] p-5 space-y-4"
+                    className="bg-white rounded-[8px] border border-[#E2E8F0] p-5 space-y-4"
                   >
-                    <div className="flex items-center justify-between pb-3 border-b border-[#CBD5E1]">
+                    <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
                       <div className="flex items-center gap-2">
                         <span className="font-mono font-bold text-[#2563EB] text-sm">
                           {loan.loanNumber}
                         </span>
-                        <span className="px-2 py-0.5 rounded-[4px] text-[11px] font-mono font-semibold bg-slate-100 text-[#0F172A] border border-[#CBD5E1]">
+                        <span className="px-2 py-0.5 rounded-[4px] text-[11px] font-mono font-semibold bg-slate-100 text-[#0F172A] border border-[#E2E8F0]">
                           {loan.productName || 'Personal Loan'}
                         </span>
                       </div>
@@ -457,7 +457,7 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 pt-2 border-t border-[#CBD5E1] text-xs font-mono">
+                    <div className="grid grid-cols-2 gap-3 pt-2 border-t border-[#E2E8F0] text-xs font-mono">
                       <div>
                         <span className="text-[#64748B] block text-[11px]">Outstanding Balance</span>
                         <span className="font-bold text-[#0F172A] text-sm">
@@ -493,8 +493,8 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
       {/* TAB 3: Payment History (Point 16) */}
       {/* ===================================================================== */}
       {activeTab === 'repayments' && (
-        <div className="bg-white rounded-[8px] border border-[#CBD5E1] overflow-hidden">
-          <div className="p-4 border-b border-[#CBD5E1] flex items-center justify-between">
+        <div className="bg-white rounded-[8px] border border-[#E2E8F0] overflow-hidden">
+          <div className="p-4 border-b border-[#E2E8F0] flex items-center justify-between">
             <h3 className="text-sm font-bold text-[#0F172A]">
               Payment History
             </h3>
@@ -550,7 +550,7 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
                         <button
                           type="button"
                           onClick={() => onViewReceipt?.(rec)}
-                          className="px-2.5 py-1 rounded-[6px] bg-slate-50 hover:bg-slate-100 border border-[#CBD5E1] text-[#0F172A] text-xs font-semibold transition inline-flex items-center gap-1 cursor-pointer"
+                          className="px-2.5 py-1 rounded-[6px] bg-slate-50 hover:bg-slate-100 border border-[#E2E8F0] text-[#0F172A] text-xs font-semibold transition inline-flex items-center gap-1 cursor-pointer"
                         >
                           <Printer className="w-3 h-3" />
                           <span>Receipt</span>
@@ -573,10 +573,10 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
           {kycDocuments.map((doc) => (
             <div
               key={doc.id}
-              className="bg-white rounded-[8px] border border-[#CBD5E1] p-4 flex flex-col justify-between space-y-3"
+              className="bg-white rounded-[8px] border border-[#E2E8F0] p-4 flex flex-col justify-between space-y-3"
             >
               <div>
-                <div className="relative h-40 w-full rounded-[6px] overflow-hidden bg-slate-100 border border-[#CBD5E1] mb-3 group cursor-pointer">
+                <div className="relative h-40 w-full rounded-[6px] overflow-hidden bg-slate-100 border border-[#E2E8F0] mb-3 group cursor-pointer">
                   <img
                     src={doc.previewUrl}
                     alt={doc.title}
@@ -606,7 +606,7 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
               <button
                 type="button"
                 onClick={() => setSelectedDocZoom(doc)}
-                className="w-full py-2 bg-slate-50 hover:bg-slate-100 text-[#0F172A] font-semibold text-xs rounded-[6px] border border-[#CBD5E1] transition flex items-center justify-center gap-1.5 cursor-pointer"
+                className="w-full py-2 bg-slate-50 hover:bg-slate-100 text-[#0F172A] font-semibold text-xs rounded-[6px] border border-[#E2E8F0] transition flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Maximize2 className="w-3.5 h-3.5" />
                 <span>View Full Scan</span>
@@ -620,8 +620,8 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
       {/* TAB 5: Audit Trail */}
       {/* ===================================================================== */}
       {activeTab === 'audit' && (
-        <div className="bg-white rounded-[8px] border border-[#CBD5E1] p-5 space-y-3">
-          <div className="border-b border-[#CBD5E1] pb-3 flex items-center justify-between">
+        <div className="bg-white rounded-[8px] border border-[#E2E8F0] p-5 space-y-3">
+          <div className="border-b border-[#E2E8F0] pb-3 flex items-center justify-between">
             <h3 className="text-sm font-bold text-[#0F172A]">
               Activity &amp; Audit Trail
             </h3>
@@ -634,7 +634,7 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
             {auditLogs.map((log) => (
               <div
                 key={log.id}
-                className="p-3 rounded-[6px] border border-[#CBD5E1] bg-slate-50 flex items-start gap-3 text-xs"
+                className="p-3 rounded-[6px] border border-[#E2E8F0] bg-slate-50 flex items-start gap-3 text-xs"
               >
                 <div className="w-2 h-2 rounded-full bg-[#2563EB] mt-1.5 shrink-0" />
                 <div className="flex-1 min-w-0">
@@ -658,9 +658,9 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}
-              className="w-full max-w-2xl bg-white rounded-[8px] border border-[#CBD5E1] shadow-xl p-6 relative"
+              className="w-full max-w-2xl bg-white rounded-[8px] border border-[#E2E8F0] shadow-xl p-6 relative"
             >
-              <div className="flex items-center justify-between pb-3 border-b border-[#CBD5E1] mb-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0] mb-4">
                 <div>
                   <h4 className="font-bold text-[#0F172A] text-sm">{selectedDocZoom.title}</h4>
                   <p className="text-xs text-[#64748B] font-mono">
@@ -676,7 +676,7 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
                 </button>
               </div>
 
-              <div className="max-h-[60vh] overflow-hidden rounded-[6px] border border-[#CBD5E1] mb-4 bg-slate-900 flex items-center justify-center">
+              <div className="max-h-[60vh] overflow-hidden rounded-[6px] border border-[#E2E8F0] mb-4 bg-slate-900 flex items-center justify-center">
                 <img
                   src={selectedDocZoom.previewUrl}
                   alt={selectedDocZoom.title}

@@ -140,11 +140,11 @@ const profile = {
   ]
 };
 
-const cashierProfileView = sanitizeBorrowerPII(profile, UserRole.CASHIER, false);
-if (cashierProfileView.idNumber !== '***-**-9201') throw new Error('ID should be masked for Cashier');
-if (cashierProfileView.phone !== '***-***-0201') throw new Error('Phone should be masked for Cashier');
-if (cashierProfileView.address !== 'Confidential (Protected PII)') throw new Error('Address should be protected');
+const userProfileView = sanitizeBorrowerPII(profile, UserRole.USER, false);
+if (userProfileView.idNumber !== '***-**-9201') throw new Error('ID should be masked for standard User');
+if (userProfileView.phone !== '***-***-0201') throw new Error('Phone should be masked for standard User');
+if (userProfileView.address !== 'Confidential (Protected PII)') throw new Error('Address should be protected');
 
-console.log('✅ Full profile masking verified for unprivileged roles');
+console.log('✅ Full profile masking verified for USER role');
 
 console.log('\n🎉 ALL BORROWER & PRODUCT MODULE TESTS PASSED SUCCESSFULLY!');

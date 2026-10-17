@@ -94,7 +94,7 @@ export const DisbursementsQueue: React.FC<DisbursementsQueueProps> = ({
   return (
     <div className="space-y-6 font-sans">
       {/* 1. Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-[#CBD5E1]">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-[#E2E8F0]">
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
@@ -111,7 +111,7 @@ export const DisbursementsQueue: React.FC<DisbursementsQueueProps> = ({
       </div>
 
       {/* 2. Filter & Search */}
-      <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="relative w-full sm:w-96">
           <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]" />
           <input
@@ -119,7 +119,7 @@ export const DisbursementsQueue: React.FC<DisbursementsQueueProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search approved applications, borrowers, products..."
-            className="w-full h-9 pl-8 pr-3 bg-white border border-[#CBD5E1] rounded-[6px] text-xs text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB]"
+            className="w-full h-9 pl-8 pr-3 bg-white border border-[#E2E8F0] rounded-[6px] text-xs text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB]"
           />
         </div>
         <div className="text-xs text-[#64748B]">
@@ -128,8 +128,8 @@ export const DisbursementsQueue: React.FC<DisbursementsQueueProps> = ({
       </div>
 
       {/* 3. Approved Facilities Queue */}
-      <div className="bg-white border border-[#CBD5E1] rounded-[8px] overflow-hidden">
-        <div className="p-4 border-b border-[#CBD5E1] flex items-center justify-between">
+      <div className="bg-white border border-[#E2E8F0] rounded-[8px] overflow-hidden">
+        <div className="p-4 border-b border-[#E2E8F0] flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Landmark className="w-4 h-4 text-[#2563EB]" />
             <h3 className="text-xs font-bold uppercase tracking-wider text-[#0F172A]">
@@ -206,8 +206,8 @@ export const DisbursementsQueue: React.FC<DisbursementsQueueProps> = ({
       {/* 4. Execution Modal */}
       {selectedApp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50">
-          <div className="bg-white rounded-[8px] max-w-lg w-full border border-[#CBD5E1] shadow-lg overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-[#CBD5E1] bg-slate-50">
+          <div className="bg-white rounded-[8px] max-w-lg w-full border border-[#E2E8F0] shadow-lg overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-[#E2E8F0] bg-slate-50">
               <div className="flex items-center gap-2.5">
                 <div className="w-7 h-7 rounded-[4px] bg-[#0F172A] text-white flex items-center justify-center">
                   <Landmark className="w-4 h-4" />
@@ -236,7 +236,7 @@ export const DisbursementsQueue: React.FC<DisbursementsQueueProps> = ({
               )}
 
               {/* Facility Summary */}
-              <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px] space-y-1.5">
+              <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px] space-y-1.5">
                 <div className="flex justify-between">
                   <span className="text-[#64748B]">Borrower:</span>
                   <span className="font-semibold text-[#0F172A]">{selectedApp.borrowerName}</span>
@@ -266,7 +266,7 @@ export const DisbursementsQueue: React.FC<DisbursementsQueueProps> = ({
                     className={`p-2.5 rounded-[6px] border text-center font-medium transition-colors ${
                       disbursementMethod === 'BANK_TRANSFER'
                         ? 'border-[#2563EB] bg-blue-50 text-[#2563EB]'
-                        : 'border-[#CBD5E1] bg-white text-[#0F172A]'
+                        : 'border-[#E2E8F0] bg-white text-[#0F172A]'
                     }`}
                   >
                     <Building className="w-4 h-4 mx-auto mb-1" />
@@ -278,7 +278,7 @@ export const DisbursementsQueue: React.FC<DisbursementsQueueProps> = ({
                     className={`p-2.5 rounded-[6px] border text-center font-medium transition-colors ${
                       disbursementMethod === 'CASH'
                         ? 'border-[#2563EB] bg-blue-50 text-[#2563EB]'
-                        : 'border-[#CBD5E1] bg-white text-[#0F172A]'
+                        : 'border-[#E2E8F0] bg-white text-[#0F172A]'
                     }`}
                   >
                     <Banknote className="w-4 h-4 mx-auto mb-1" />
@@ -290,7 +290,7 @@ export const DisbursementsQueue: React.FC<DisbursementsQueueProps> = ({
                     className={`p-2.5 rounded-[6px] border text-center font-medium transition-colors ${
                       disbursementMethod === 'CHEQUE'
                         ? 'border-[#2563EB] bg-blue-50 text-[#2563EB]'
-                        : 'border-[#CBD5E1] bg-white text-[#0F172A]'
+                        : 'border-[#E2E8F0] bg-white text-[#0F172A]'
                     }`}
                   >
                     <CreditCard className="w-4 h-4 mx-auto mb-1" />
@@ -309,7 +309,7 @@ export const DisbursementsQueue: React.FC<DisbursementsQueueProps> = ({
                   required
                   value={disbursementRef}
                   onChange={(e) => setDisbursementRef(e.target.value)}
-                  className="w-full h-9 px-3 bg-white border border-[#CBD5E1] rounded-[6px] text-xs font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                  className="w-full h-9 px-3 bg-white border border-[#E2E8F0] rounded-[6px] text-xs font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
@@ -323,7 +323,7 @@ export const DisbursementsQueue: React.FC<DisbursementsQueueProps> = ({
                   required
                   value={firstPaymentDate}
                   onChange={(e) => setFirstPaymentDate(e.target.value)}
-                  className="w-full h-9 px-3 bg-white border border-[#CBD5E1] rounded-[6px] text-xs font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                  className="w-full h-9 px-3 bg-white border border-[#E2E8F0] rounded-[6px] text-xs font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
@@ -337,16 +337,16 @@ export const DisbursementsQueue: React.FC<DisbursementsQueueProps> = ({
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="e.g. Funds cleared via National Clearing House / Account #0012384"
-                  className="w-full p-2 bg-white border border-[#CBD5E1] rounded-[6px] text-xs text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                  className="w-full p-2 bg-white border border-[#E2E8F0] rounded-[6px] text-xs text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#CBD5E1]">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#E2E8F0]">
                 <button
                   type="button"
                   disabled={isSubmitting}
                   onClick={() => setSelectedApp(null)}
-                  className="px-3.5 py-2 text-xs font-semibold text-[#0F172A] bg-white hover:bg-slate-50 border border-[#CBD5E1] rounded-[6px]"
+                  className="px-3.5 py-2 text-xs font-semibold text-[#0F172A] bg-white hover:bg-slate-50 border border-[#E2E8F0] rounded-[6px]"
                 >
                   Cancel
                 </button>

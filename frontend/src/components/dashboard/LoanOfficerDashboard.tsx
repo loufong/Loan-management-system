@@ -38,7 +38,7 @@ export const LoanOfficerDashboard: React.FC<LoanOfficerDashboardProps> = ({
   return (
     <div className="space-y-6 font-sans">
       {/* 1. Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#CBD5E1]">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
             Loan Officer Underwriting Dashboard
@@ -63,7 +63,7 @@ export const LoanOfficerDashboard: React.FC<LoanOfficerDashboardProps> = ({
         {/* Pending */}
         <div
           onClick={() => onNavigate('applications')}
-          className="bg-white border border-[#CBD5E1] rounded-[8px] p-4 cursor-pointer hover:border-[#2563EB] transition-colors"
+          className="bg-white border border-[#E2E8F0] rounded-[8px] p-4 cursor-pointer hover:border-[#2563EB] transition-colors"
         >
           <span className="text-[11px] font-bold text-[#64748B] uppercase">Pending Intake</span>
           <div className="text-2xl font-bold text-amber-600 mt-1">{pendingApps}</div>
@@ -73,7 +73,7 @@ export const LoanOfficerDashboard: React.FC<LoanOfficerDashboardProps> = ({
         {/* Under Review */}
         <div
           onClick={() => onNavigate('credit_reviews')}
-          className="bg-white border border-[#CBD5E1] rounded-[8px] p-4 cursor-pointer hover:border-[#2563EB] transition-colors"
+          className="bg-white border border-[#E2E8F0] rounded-[8px] p-4 cursor-pointer hover:border-[#2563EB] transition-colors"
         >
           <span className="text-[11px] font-bold text-[#64748B] uppercase">Under Review</span>
           <div className="text-2xl font-bold text-[#2563EB] mt-1">{underReviewApps}</div>
@@ -83,7 +83,7 @@ export const LoanOfficerDashboard: React.FC<LoanOfficerDashboardProps> = ({
         {/* Approved */}
         <div
           onClick={() => onNavigate('applications')}
-          className="bg-white border border-[#CBD5E1] rounded-[8px] p-4 cursor-pointer hover:border-slate-400 transition-colors"
+          className="bg-white border border-[#E2E8F0] rounded-[8px] p-4 cursor-pointer hover:border-slate-400 transition-colors"
         >
           <span className="text-[11px] font-bold text-[#64748B] uppercase">Sanctioned</span>
           <div className="text-2xl font-bold text-emerald-600 mt-1">{approvedApps}</div>
@@ -93,7 +93,7 @@ export const LoanOfficerDashboard: React.FC<LoanOfficerDashboardProps> = ({
         {/* Rejected */}
         <div
           onClick={() => onNavigate('applications')}
-          className="bg-white border border-[#CBD5E1] rounded-[8px] p-4 cursor-pointer hover:border-slate-400 transition-colors"
+          className="bg-white border border-[#E2E8F0] rounded-[8px] p-4 cursor-pointer hover:border-slate-400 transition-colors"
         >
           <span className="text-[11px] font-bold text-[#64748B] uppercase">Declined</span>
           <div className="text-2xl font-bold text-red-600 mt-1">{rejectedApps}</div>
@@ -103,7 +103,7 @@ export const LoanOfficerDashboard: React.FC<LoanOfficerDashboardProps> = ({
         {/* Assigned */}
         <div
           onClick={() => onNavigate('applications')}
-          className="bg-white border border-[#CBD5E1] rounded-[8px] p-4 cursor-pointer hover:border-slate-400 transition-colors"
+          className="bg-white border border-[#E2E8F0] rounded-[8px] p-4 cursor-pointer hover:border-slate-400 transition-colors"
         >
           <span className="text-[11px] font-bold text-[#64748B] uppercase">Total Pipeline</span>
           <div className="text-2xl font-bold text-[#0F172A] mt-1">{totalAssigned}</div>
@@ -113,7 +113,7 @@ export const LoanOfficerDashboard: React.FC<LoanOfficerDashboardProps> = ({
         {/* Workload */}
         <div
           onClick={() => onNavigate('credit_reviews')}
-          className="bg-white border border-[#CBD5E1] rounded-[8px] p-4 cursor-pointer hover:border-slate-400 transition-colors"
+          className="bg-white border border-[#E2E8F0] rounded-[8px] p-4 cursor-pointer hover:border-slate-400 transition-colors"
         >
           <span className="text-[11px] font-bold text-[#64748B] uppercase">Workload</span>
           <div className="text-2xl font-bold text-[#0F172A] mt-1">{activeWorkload} files</div>
@@ -122,8 +122,8 @@ export const LoanOfficerDashboard: React.FC<LoanOfficerDashboardProps> = ({
       </div>
 
       {/* 3. Applications Queue Table */}
-      <div className="bg-white border border-[#CBD5E1] rounded-[8px] overflow-hidden">
-        <div className="p-4 border-b border-[#CBD5E1] flex items-center justify-between">
+      <div className="bg-white border border-[#E2E8F0] rounded-[8px] overflow-hidden">
+        <div className="p-4 border-b border-[#E2E8F0] flex items-center justify-between">
           <div className="flex items-center gap-2">
             <FileText className="w-4 h-4 text-[#2563EB]" />
             <h3 className="text-xs font-bold uppercase tracking-wider text-[#0F172A]">

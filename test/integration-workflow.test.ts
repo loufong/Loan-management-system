@@ -280,27 +280,29 @@ if (fee45 !== 54.00) throw new Error(`Expected $54.00 fee, got ${fee45}`);
 console.log('✅ Overdue daily penalty calculation verified!\n');
 
 // ==========================================
-// 5. RBAC & PERMISSION BOUNDARIES
+// 5. RBAC & PERMISSION BOUNDARIES (TWO-TIER: ADMIN & USER)
 // ==========================================
-console.log('--- TEST 5: RBAC Role & Clearance Boundaries ---');
+console.log('--- TEST 5: RBAC Role & Clearance Boundaries (ADMIN & USER) ---');
 
-// Manager can APPROVE but cannot DISBURSE (in strict separation, let's verify manager permissions)
-const managerPerms = getPermissionsForRole(UserRole.MANAGER);
-if (!managerPerms.includes(Permission.APPLICATION_APPROVE)) throw new Error('Manager must be able to approve applications');
-console.log('✅ Manager permission verified (APPLICATION_APPROVE)');
+// ADMIN can APPROVE, DISBURSE, COLLECT PAYMENT, REVIEW, and MANAGE USERS
+const adminPerms = getPermissionsForRole(UserRole.ADMIN);
+if (!adminPerms.includes(Permission.APPLICATION_APPROVE)) throw new Error('ADMIN must be able to approve applications');
+if (!adminPerms.includes(Permission.LOAN_DISBURSE)) throw new Error('ADMIN must have LOAN_DISBURSE permission');
+if (!adminPerms.includes(Permission.PAYMENT_COLLECT)) throw new Error('ADMIN must have PAYMENT_COLLECT permission');
+if (!adminPerms.includes(Permission.APPLICATION_REVIEW)) throw new Error('ADMIN must have APPLICATION_REVIEW permission');
+if (!adminPerms.includes(Permission.USER_MANAGE)) throw new Error('ADMIN must have USER_MANAGE permission');
+console.log('✅ ADMIN permissions verified (Full administrative access across approval, disbursement, payment, audit)');
 
-// Cashier can DISBURSE and COLLECT PAYMENT but cannot APPROVE
-const cashierPerms = getPermissionsForRole(UserRole.CASHIER);
-if (!cashierPerms.includes(Permission.LOAN_DISBURSE)) throw new Error('Cashier must have LOAN_DISBURSE permission');
-if (!cashierPerms.includes(Permission.PAYMENT_COLLECT)) throw new Error('Cashier must have PAYMENT_COLLECT permission');
-if (cashierPerms.includes(Permission.APPLICATION_APPROVE)) throw new Error('Cashier must NOT have APPLICATION_APPROVE permission');
-console.log('✅ Cashier permission boundary verified (Can disburse & collect payment, cannot approve)');
-
-// Borrower can only view own profile/applications/payments
-const borrowerPerms = getPermissionsForRole(UserRole.BORROWER);
-if (borrowerPerms.includes(Permission.LOAN_DISBURSE)) throw new Error('Borrower cannot disburse');
-if (borrowerPerms.includes(Permission.APPLICATION_REVIEW)) throw new Error('Borrower cannot review');
-console.log('✅ Borrower permission boundary verified (Self-service only)\n');
+// USER can only self-service (view own loans/applications/payments, create own applications)
+const userPerms = getPermissionsForRole(UserRole.USER);
+if (userPerms.includes(Permission.LOAN_DISBURSE)) throw new Error('USER cannot disburse loans');
+if (userPerms.includes(Permission.APPLICATION_APPROVE)) throw new Error('USER cannot approve applications');
+if (userPerms.includes(Permission.APPLICATION_REVIEW)) throw new Error('USER cannot review applications');
+if (userPerms.includes(Permission.PAYMENT_COLLECT)) throw new Error('USER cannot collect payments for others');
+if (userPerms.includes(Permission.USER_MANAGE)) throw new Error('USER cannot manage other users');
+if (!userPerms.includes(Permission.APPLICATION_CREATE_OWN)) throw new Error('USER must be able to create own applications');
+if (!userPerms.includes(Permission.LOAN_READ_OWN)) throw new Error('USER must be able to read own loans');
+console.log('✅ USER permission boundary verified (Self-service only; strictly prohibited from admin operations)\n');
 
 // ==========================================
 // 6. BUSINESS INTELLIGENCE & KPI AGGREGATION

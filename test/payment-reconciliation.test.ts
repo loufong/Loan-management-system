@@ -62,11 +62,8 @@ async function runPaymentReconciliationTests() {
 
   // 1. Mock Users & Auth Helper
   const mockUsers: Record<string, any> = {
-    'cashier-user': { id: 'cashier-user', username: 'cashier_desk', email: 'cashier@bank.lms', role: UserRole.CASHIER, status: 'ACTIVE', fullName: 'Desk Cashier' },
-    'admin-user': { id: 'admin-user', username: 'admin_audit', email: 'admin@bank.lms', role: UserRole.MANAGER, status: 'ACTIVE', fullName: 'System Admin' },
-    'officer-user': { id: 'officer-user', username: 'officer_field', email: 'officer@bank.lms', role: UserRole.LOAN_OFFICER, status: 'ACTIVE', fullName: 'Field Officer' },
-    'borrower-user': { id: 'borrower-user', username: 'borrower_client', email: 'borrower@bank.lms', role: UserRole.BORROWER, status: 'ACTIVE', fullName: 'Client Borrower' },
-    'manager-user': { id: 'manager-user', username: 'manager_branch', email: 'manager@bank.lms', role: UserRole.MANAGER, status: 'ACTIVE', fullName: 'Branch Manager' }
+    'admin-user': { id: 'admin-user', username: 'admin_audit', email: 'admin@bank.lms', role: UserRole.ADMIN, status: 'ACTIVE', fullName: 'System Admin' },
+    'borrower-user': { id: 'borrower-user', username: 'borrower_client', email: 'borrower@bank.lms', role: UserRole.USER, status: 'ACTIVE', fullName: 'Client Borrower' },
   };
 
   prisma.user.findUnique = (async ({ where }: any) => {
@@ -77,18 +74,14 @@ async function runPaymentReconciliationTests() {
     return jwt.sign({ id: userId, username: mockUsers[userId].username, email: mockUsers[userId].email, role }, JWT_ACCESS_SECRET, { expiresIn: '1h' });
   }
 
-  const cashierToken = makeToken(UserRole.CASHIER, 'cashier-user');
-  const adminToken = makeToken(UserRole.MANAGER, 'admin-user');
-  const officerToken = makeToken(UserRole.LOAN_OFFICER, 'officer-user');
-  const borrowerToken = makeToken(UserRole.BORROWER, 'borrower-user');
-  const managerToken = makeToken(UserRole.MANAGER, 'manager-user');
+  const adminToken = makeToken(UserRole.ADMIN, 'admin-user');
+  const borrowerToken = makeToken(UserRole.USER, 'borrower-user');
 
   // --- TEST 1: Business Rule 3 - RBAC Authorization Guard on POST /api/payments ---
   console.log('--- 1. Verification of Role-Based Access Control (RBAC) on POST /api/payments ---');
-  // Allowed: CASHIER, MANAGER. Forbidden: BORROWER, LOAN_OFFICER
+  // Allowed: ADMIN. Forbidden: USER
   const unauthorizedRoles = [
-    { role: 'BORROWER', token: borrowerToken },
-    { role: 'LOAN_OFFICER', token: officerToken }
+    { role: 'USER', token: borrowerToken }
   ];
 
   for (const { role, token } of unauthorizedRoles) {
@@ -113,7 +106,7 @@ async function runPaymentReconciliationTests() {
     paymentMethod: 'CASH',
     referenceNo: 'POS-TEST-002'
   }, {
-    Authorization: `Bearer ${cashierToken}`
+    Authorization: `Bearer ${adminToken}`
   });
   assert.strictEqual(missingAmountRes.status, 400);
   assert.strictEqual(missingAmountRes.body.error.code, 'VALIDATION_ERROR');
@@ -126,7 +119,7 @@ async function runPaymentReconciliationTests() {
     paymentMethod: 'CASH',
     referenceNo: 'POS-TEST-003'
   }, {
-    Authorization: `Bearer ${cashierToken}`
+    Authorization: `Bearer ${adminToken}`
   });
   assert.strictEqual(negAmountRes.status, 400);
   assert.strictEqual(negAmountRes.body.error.code, 'VALIDATION_ERROR');

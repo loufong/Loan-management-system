@@ -31,7 +31,7 @@ export const Badge: React.FC<BadgeProps> = ({
 }) => {
   const norm = (variant || '').toLowerCase();
 
-  let colorClasses = 'bg-slate-100 text-[#64748B] border-[#CBD5E1]';
+  let colorClasses = 'bg-slate-100 text-[#64748B] border-[#E2E8F0]';
   let dotColor = 'bg-[#64748B]';
 
   if (
@@ -77,7 +77,7 @@ export const Badge: React.FC<BadgeProps> = ({
     norm.includes('closed') ||
     norm.includes('cancelled')
   ) {
-    colorClasses = 'bg-slate-50 text-[#64748B] border-[#CBD5E1]';
+    colorClasses = 'bg-slate-50 text-[#64748B] border-[#E2E8F0]';
     dotColor = 'bg-slate-400';
   }
 

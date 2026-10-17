@@ -92,7 +92,7 @@ export const ApprovalsQueue: React.FC<ApprovalsQueueProps> = ({
   return (
     <div className="space-y-6 font-sans">
       {/* 1. Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-[#CBD5E1]">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-[#E2E8F0]">
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
@@ -109,7 +109,7 @@ export const ApprovalsQueue: React.FC<ApprovalsQueueProps> = ({
       </div>
 
       {/* 2. Table */}
-      <div className="overflow-hidden rounded-[8px] border border-[#CBD5E1] bg-white">
+      <div className="overflow-hidden rounded-[8px] border border-[#E2E8F0] bg-white">
         <div className="overflow-x-auto">
           <table className="table-enterprise">
             <thead>
@@ -218,8 +218,8 @@ export const ApprovalsQueue: React.FC<ApprovalsQueueProps> = ({
       {/* APPROVAL MODAL */}
       {selectedAppForApproval && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 font-sans">
-          <div className="bg-white rounded-[8px] border border-[#CBD5E1] shadow-xl w-full max-w-lg p-6 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#CBD5E1]">
+          <div className="bg-white rounded-[8px] border border-[#E2E8F0] shadow-xl w-full max-w-lg p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-[4px] bg-emerald-50 text-[#16A34A] flex items-center justify-center">
                   <CheckCircle2 className="w-4 h-4" />
@@ -252,7 +252,7 @@ export const ApprovalsQueue: React.FC<ApprovalsQueueProps> = ({
                   required
                   value={approvedAmount}
                   onChange={(e) => setApprovedAmount(Number(e.target.value))}
-                  className="w-full h-10 px-3 bg-white border border-[#CBD5E1] rounded-[6px] font-mono font-bold text-[#0F172A] text-sm focus:outline-none focus:border-[#2563EB]"
+                  className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-[6px] font-mono font-bold text-[#0F172A] text-sm focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
@@ -268,7 +268,7 @@ export const ApprovalsQueue: React.FC<ApprovalsQueueProps> = ({
                     required
                     value={approvedTerm}
                     onChange={(e) => setApprovedTerm(Number(e.target.value))}
-                    className="w-full h-10 px-3 bg-white border border-[#CBD5E1] rounded-[6px] font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                    className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-[6px] font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
                 <div>
@@ -282,12 +282,12 @@ export const ApprovalsQueue: React.FC<ApprovalsQueueProps> = ({
                     required
                     value={approvedRate}
                     onChange={(e) => setApprovedRate(Number(e.target.value))}
-                    className="w-full h-10 px-3 bg-white border border-[#CBD5E1] rounded-[6px] font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                    className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-[6px] font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
               </div>
 
-              <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px] space-y-1 text-[11px] text-[#64748B]">
+              <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px] space-y-1 text-[11px] text-[#64748B]">
                 <div className="flex items-center gap-1.5 font-semibold text-[#0F172A]">
                   <Lock className="w-3.5 h-3.5 text-[#64748B]" />
                   <span>Immutable Audit Disclaimer</span>
@@ -300,11 +300,11 @@ export const ApprovalsQueue: React.FC<ApprovalsQueueProps> = ({
                 </p>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#CBD5E1]">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#E2E8F0]">
                 <button
                   type="button"
                   onClick={() => setSelectedAppForApproval(null)}
-                  className="px-4 py-2 rounded-[6px] text-[#0F172A] bg-white hover:bg-slate-50 border border-[#CBD5E1] font-semibold"
+                  className="px-4 py-2 rounded-[6px] text-[#0F172A] bg-white hover:bg-slate-50 border border-[#E2E8F0] font-semibold"
                 >
                   Cancel
                 </button>
@@ -323,8 +323,8 @@ export const ApprovalsQueue: React.FC<ApprovalsQueueProps> = ({
       {/* REJECTION MODAL */}
       {selectedAppForRejection && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 font-sans">
-          <div className="bg-white rounded-[8px] border border-[#CBD5E1] shadow-xl w-full max-w-lg p-6 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#CBD5E1]">
+          <div className="bg-white rounded-[8px] border border-[#E2E8F0] shadow-xl w-full max-w-lg p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-[4px] bg-red-50 text-[#DC2626] flex items-center justify-center">
                   <XCircle className="w-4 h-4" />
@@ -354,7 +354,7 @@ export const ApprovalsQueue: React.FC<ApprovalsQueueProps> = ({
                 <select
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
-                  className="w-full h-10 px-3 bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] font-medium focus:outline-none focus:border-[#2563EB]"
+                  className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] font-medium focus:outline-none focus:border-[#2563EB]"
                 >
                   <option value="HIGH_DTI">Excessive Debt-to-Income Ratio (&gt; 40%)</option>
                   <option value="INSUFFICIENT_INCOME">Unverified or Insufficient Stated Cashflow</option>
@@ -374,15 +374,15 @@ export const ApprovalsQueue: React.FC<ApprovalsQueueProps> = ({
                   value={rejectionNote}
                   onChange={(e) => setRejectionNote(e.target.value)}
                   placeholder="Enter specific audit explanation..."
-                  className="w-full p-2.5 bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                  className="w-full p-2.5 bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#CBD5E1]">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#E2E8F0]">
                 <button
                   type="button"
                   onClick={() => setSelectedAppForRejection(null)}
-                  className="px-4 py-2 rounded-[6px] text-[#0F172A] bg-white hover:bg-slate-50 border border-[#CBD5E1] font-semibold"
+                  className="px-4 py-2 rounded-[6px] text-[#0F172A] bg-white hover:bg-slate-50 border border-[#E2E8F0] font-semibold"
                 >
                   Cancel
                 </button>

@@ -111,9 +111,9 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
       </div>
 
       {/* Main Change Password Card */}
-      <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-6 sm:p-8 space-y-6 shadow-sm">
+      <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-6 sm:p-8 space-y-6 shadow-sm">
         {/* Card Header */}
-        <div className="border-b border-[#CBD5E1] pb-4 flex items-start justify-between">
+        <div className="border-b border-[#E2E8F0] pb-4 flex items-start justify-between">
           <div>
             <div className="inline-flex items-center gap-2 text-[#2563EB] mb-1">
               <KeyRound className="w-5 h-5 text-[#2563EB]" />
@@ -177,7 +177,7 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="Enter current password"
-                className="w-full h-[44px] px-3.5 pl-10 pr-10 bg-white border border-[#CBD5E1] rounded-[6px] text-[14px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                className="w-full h-[44px] px-3.5 pl-10 pr-10 bg-white border border-[#E2E8F0] rounded-[6px] text-[14px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
               />
               <Lock className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <button
@@ -203,7 +203,7 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Enter new strong password"
-                className="w-full h-[44px] px-3.5 pl-10 pr-10 bg-white border border-[#CBD5E1] rounded-[6px] text-[14px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                className="w-full h-[44px] px-3.5 pl-10 pr-10 bg-white border border-[#E2E8F0] rounded-[6px] text-[14px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
               />
               <Lock className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <button
@@ -229,7 +229,7 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm new password"
-                className="w-full h-[44px] px-3.5 pl-10 pr-10 bg-white border border-[#CBD5E1] rounded-[6px] text-[14px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                className="w-full h-[44px] px-3.5 pl-10 pr-10 bg-white border border-[#E2E8F0] rounded-[6px] text-[14px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
               />
               <Lock className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <button
@@ -244,7 +244,7 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
           </div>
 
           {/* Password Security Rules Verification Checklist */}
-          <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px] text-xs space-y-2">
+          <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px] text-xs space-y-2">
             <span className="font-semibold text-[#0F172A] block">
               Password Security Requirements:
             </span>
@@ -282,14 +282,14 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
               type="button"
               onClick={onBack}
               disabled={isLoading}
-              className="px-4 h-[44px] border border-[#CBD5E1] hover:bg-slate-50 text-[#0F172A] font-semibold text-xs rounded-[6px] transition"
+              className="px-4 h-[44px] border border-[#E2E8F0] hover:bg-slate-50 text-[#0F172A] font-semibold text-xs rounded-[6px] transition"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isLoading || !isPasswordValid || !passwordsMatch || !currentPassword}
-              className="flex-1 h-[44px] bg-[#0F172A] hover:bg-[#1E293B] disabled:opacity-50 text-white font-semibold text-xs rounded-[6px] transition flex items-center justify-center gap-2"
+              className="flex-1 h-[40px] bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white font-medium text-xs rounded-[6px] transition flex items-center justify-center gap-2 shadow-none cursor-pointer"
             >
               {isLoading ? (
                 <>

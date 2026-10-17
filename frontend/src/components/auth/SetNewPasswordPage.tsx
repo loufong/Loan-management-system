@@ -74,7 +74,7 @@ export const SetNewPasswordPage: React.FC<SetNewPasswordPageProps> = ({
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white p-8 border border-[#CBD5E1] rounded-[8px] space-y-6">
+        <div className="bg-white p-8 border border-[#E2E8F0] rounded-[8px] space-y-6">
           
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
@@ -112,7 +112,7 @@ export const SetNewPasswordPage: React.FC<SetNewPasswordPageProps> = ({
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Enter new password"
-                  className="w-full h-[44px] px-3.5 pl-10 pr-10 bg-white border border-[#CBD5E1] rounded-[6px] text-[14px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                  className="w-full h-[40px] px-3.5 pl-10 pr-10 bg-white border border-[#E2E8F0] rounded-[6px] text-[14px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
                 />
                 <Lock className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <button
@@ -136,7 +136,7 @@ export const SetNewPasswordPage: React.FC<SetNewPasswordPageProps> = ({
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm new password"
-                  className="w-full h-[44px] px-3.5 pl-10 pr-10 bg-white border border-[#CBD5E1] rounded-[6px] text-[14px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                  className="w-full h-[40px] px-3.5 pl-10 pr-10 bg-white border border-[#E2E8F0] rounded-[6px] text-[14px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
                 />
                 <Lock className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <button
@@ -150,7 +150,7 @@ export const SetNewPasswordPage: React.FC<SetNewPasswordPageProps> = ({
             </div>
 
             {/* Checklist */}
-            <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px] text-xs space-y-1">
+            <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px] text-xs space-y-1">
               <div className="grid grid-cols-2 gap-1 text-[11px]">
                 <div className={`flex items-center gap-1 ${hasMinLength ? 'text-[#16A34A]' : 'text-[#64748B]'}`}>
                   <Check className="w-3 h-3" /> 8+ Characters
@@ -170,7 +170,7 @@ export const SetNewPasswordPage: React.FC<SetNewPasswordPageProps> = ({
             <button
               type="submit"
               disabled={isLoading || !isPasswordValid || !passwordsMatch}
-              className="w-full h-[44px] bg-[#0F172A] hover:bg-[#1E293B] disabled:opacity-50 text-white font-medium text-[14px] rounded-[6px] transition-colors flex items-center justify-center gap-2 mt-4"
+              className="w-full h-[40px] bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white font-medium text-[14px] rounded-[6px] transition-colors flex items-center justify-center gap-2 mt-4 shadow-none cursor-pointer"
             >
               {isLoading ? (
                 <>

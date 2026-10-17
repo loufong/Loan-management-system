@@ -111,28 +111,12 @@ export class UserCreationService {
         };
       });
     } catch (err: any) {
-      // In-memory fallback if database server is offline
-      createdUser = {
-        id: userId,
-        username: cleanUsername,
-        email: cleanEmail,
-        fullName: pendingRegistration.fullName.trim(),
-        phone: pendingRegistration.phone.trim(),
-        role: UserRole.USER,
-        status: UserStatus.ACTIVE,
-        avatarUrl: defaultAvatar,
-        lastLogin: now,
-        emailVerifiedAt: now,
-        createdAt: now,
+      console.error('Failed to promote pending registration into PostgreSQL:', err);
+      throw {
+        statusCode: 500,
+        message: 'Failed to create user account in database. Please try again.',
+        code: 'USER_CREATION_FAILED',
       };
-
-      this.memoryUsers.set(cleanEmail, {
-        ...createdUser,
-        passwordHash: pendingRegistration.passwordHash,
-      });
-
-      // Remove from pending memory store
-      await PendingRegistrationService.deletePendingRegistration(pendingRegistration.id);
     }
 
     // Record audit log

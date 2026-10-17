@@ -41,7 +41,7 @@ export const CreditReviewQueue: React.FC<CreditReviewQueueProps> = ({
   return (
     <div className="space-y-6 font-sans">
       {/* 1. Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-[#CBD5E1]">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-[#E2E8F0]">
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
@@ -58,7 +58,7 @@ export const CreditReviewQueue: React.FC<CreditReviewQueueProps> = ({
       </div>
 
       {/* 2. Search Toolbar */}
-      <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-3.5">
+      <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-3.5">
         <div className="relative w-full max-w-md">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none" />
           <input
@@ -66,13 +66,13 @@ export const CreditReviewQueue: React.FC<CreditReviewQueueProps> = ({
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Filter queue by Application ID, Borrower, or Product..."
-            className="w-full h-10 pl-9 pr-3.5 text-xs bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB]"
+            className="w-full h-10 pl-9 pr-3.5 text-xs bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB]"
           />
         </div>
       </div>
 
       {/* 3. Review Queue Table */}
-      <div className="overflow-hidden rounded-[8px] border border-[#CBD5E1] bg-white">
+      <div className="overflow-hidden rounded-[8px] border border-[#E2E8F0] bg-white">
         <div className="overflow-x-auto">
           <table className="table-enterprise">
             <thead>

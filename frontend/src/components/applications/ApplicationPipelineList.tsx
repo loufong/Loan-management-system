@@ -66,13 +66,13 @@ export const ApplicationPipelineList: React.FC<ApplicationPipelineListProps> = (
   return (
     <div className="space-y-6 font-sans">
       {/* 1. Top Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-[#CBD5E1]">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-[#E2E8F0]">
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
               Loan Applications Pipeline
             </h1>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-xs font-mono font-semibold bg-slate-100 text-[#0F172A] border border-[#CBD5E1]">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-xs font-mono font-semibold bg-slate-100 text-[#0F172A] border border-[#E2E8F0]">
               {applications.length} Files
             </span>
           </div>
@@ -83,7 +83,7 @@ export const ApplicationPipelineList: React.FC<ApplicationPipelineListProps> = (
 
         <button
           onClick={onOpenNewApplication}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-[#0F172A] hover:bg-[#1E293B] rounded-[6px] transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-[#2563EB] hover:bg-[#1D4ED8] rounded-[6px] transition-colors cursor-pointer shadow-none"
         >
           <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
           <span>New Application</span>
@@ -91,10 +91,10 @@ export const ApplicationPipelineList: React.FC<ApplicationPipelineListProps> = (
       </div>
 
       {/* 2. Filter & Stage Bar */}
-      <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-3.5 space-y-3">
+      <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-3.5 space-y-3">
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
           {/* Horizontal Stage Pills */}
-          <div className="flex items-center gap-1.5 bg-slate-100 p-0.5 rounded-[6px] border border-[#CBD5E1] overflow-x-auto">
+          <div className="flex items-center gap-1.5 bg-slate-100 p-0.5 rounded-[6px] border border-[#E2E8F0] overflow-x-auto">
             {stages.map((stage) => {
               const active = selectedStage === stage.key;
               return (
@@ -111,7 +111,7 @@ export const ApplicationPipelineList: React.FC<ApplicationPipelineListProps> = (
                   <span
                     className={`font-mono tabular-nums text-[11px] px-1.5 py-0.2 rounded-[3px] ${
                       active
-                        ? 'bg-slate-100 text-[#0F172A] border border-[#CBD5E1]'
+                        ? 'bg-slate-100 text-[#0F172A] border border-[#E2E8F0]'
                         : 'bg-white text-[#64748B] border border-slate-200'
                     }`}
                   >
@@ -130,14 +130,14 @@ export const ApplicationPipelineList: React.FC<ApplicationPipelineListProps> = (
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by ID, borrower, product..."
-              className="w-full h-10 pl-9 pr-3.5 text-xs bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB] transition-colors"
+              className="w-full h-10 pl-9 pr-3.5 text-xs bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB] transition-colors"
             />
           </div>
         </div>
       </div>
 
       {/* 3. Table */}
-      <div className="overflow-hidden rounded-[8px] border border-[#CBD5E1] bg-white">
+      <div className="overflow-hidden rounded-[8px] border border-[#E2E8F0] bg-white">
         <div className="overflow-x-auto">
           <table className="table-enterprise">
             <thead>
@@ -231,7 +231,7 @@ export const ApplicationPipelineList: React.FC<ApplicationPipelineListProps> = (
                       <div className="inline-flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={() => onSelectApplication(app.id)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[6px] bg-white hover:bg-slate-50 border border-[#CBD5E1] text-[#0F172A] text-xs font-semibold transition-colors cursor-pointer"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[6px] bg-white hover:bg-slate-50 border border-[#E2E8F0] text-[#0F172A] text-xs font-semibold transition-colors cursor-pointer"
                         >
                           <span>Review</span>
                           <ArrowRight className="w-3 h-3" />

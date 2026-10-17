@@ -57,7 +57,7 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
   return (
     <div className="space-y-6 font-sans">
       {/* 1. Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#CBD5E1]">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
             Executive Branch Manager Dashboard
@@ -89,7 +89,7 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
         {/* Total Portfolio Value */}
         <div
           onClick={() => onNavigate('loans')}
-          className="bg-white border border-[#CBD5E1] rounded-[8px] p-5 cursor-pointer hover:border-[#2563EB] transition-colors"
+          className="bg-white border border-[#E2E8F0] rounded-[8px] p-5 cursor-pointer hover:border-[#2563EB] transition-colors"
         >
           <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] block">
             TOTAL PORTFOLIO VALUE
@@ -106,7 +106,7 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
         {/* Outstanding Balance */}
         <div
           onClick={() => onNavigate('loans')}
-          className="bg-white border border-[#CBD5E1] rounded-[8px] p-5 cursor-pointer hover:border-[#2563EB] transition-colors"
+          className="bg-white border border-[#E2E8F0] rounded-[8px] p-5 cursor-pointer hover:border-[#2563EB] transition-colors"
         >
           <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] block">
             OUTSTANDING BALANCE
@@ -123,7 +123,7 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
         {/* Approval Rate */}
         <div
           onClick={() => onNavigate('approvals')}
-          className="bg-white border border-[#CBD5E1] rounded-[8px] p-5 cursor-pointer hover:border-[#2563EB] transition-colors"
+          className="bg-white border border-[#E2E8F0] rounded-[8px] p-5 cursor-pointer hover:border-[#2563EB] transition-colors"
         >
           <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] block">
             APPROVAL RATE
@@ -140,7 +140,7 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
         {/* Collection Performance */}
         <div
           onClick={() => onNavigate('reports')}
-          className="bg-white border border-[#CBD5E1] rounded-[8px] p-5 cursor-pointer hover:border-[#2563EB] transition-colors"
+          className="bg-white border border-[#E2E8F0] rounded-[8px] p-5 cursor-pointer hover:border-[#2563EB] transition-colors"
         >
           <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] block">
             COLLECTION RECOVERY
@@ -158,8 +158,8 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
       {/* 3. Facility Status & Risk Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Approvals Action Board */}
-        <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-5 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-[#CBD5E1]">
+        <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-5 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
             <div>
               <h3 className="text-sm font-bold text-[#0F172A]">Applications Awaiting Committee Action</h3>
               <p className="text-xs text-[#64748B]">Sanction or reject underwriting submissions</p>
@@ -172,7 +172,7 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
             </button>
           </div>
 
-          <div className="divide-y divide-[#CBD5E1]">
+          <div className="divide-y divide-[#E2E8F0]">
             {applications.filter(a => a.status === 'UNDER_REVIEW').slice(0, 4).map((app) => (
               <div key={app.id} className="py-3 flex items-center justify-between">
                 <div>
@@ -203,8 +203,8 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
         </div>
 
         {/* Delinquency & Watchlist Overview */}
-        <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-5 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-[#CBD5E1]">
+        <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-5 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
             <div>
               <h3 className="text-sm font-bold text-[#0F172A]">Delinquency Watchlist</h3>
               <p className="text-xs text-[#64748B]">PAR 30+ delinquency risk accounts</p>
@@ -217,7 +217,7 @@ export const ManagerDashboard: React.FC<ManagerDashboardProps> = ({
             </button>
           </div>
 
-          <div className="divide-y divide-[#CBD5E1]">
+          <div className="divide-y divide-[#E2E8F0]">
             {loans.filter(l => l.status === 'OVERDUE' || (l.daysOverdue ?? 0) > 0).slice(0, 4).map((l) => (
               <div key={l.id} className="py-3 flex items-center justify-between">
                 <div>

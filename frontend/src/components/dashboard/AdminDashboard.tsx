@@ -186,13 +186,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   return (
     <div className="space-y-6 font-sans">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-[#CBD5E1]">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0F172A]">
-            Executive Dashboard
+          <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
+            Dashboard
           </h1>
-          <p className="text-sm text-[#64748B] mt-1">
-            Enterprise loan portfolio overview derived from live institutional ledger.
+          <p className="text-sm text-[#64748B] mt-0.5">
+            Good morning, Admin
           </p>
         </div>
         <div className="flex items-center gap-2.5">
@@ -213,12 +213,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       </div>
 
-      {/* Core 4 KPI Section (Flat White Surfaces, Subtle #CBD5E1 Borders) */}
+      {/* Core 4 KPI Section (Flat White Surfaces, Subtle #E2E8F0 Borders) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* KPI 1: TOTAL BORROWERS */}
         <div
           onClick={() => onNavigate('borrowers')}
-          className="bg-white border border-[#CBD5E1] rounded-[8px] p-5 cursor-pointer hover:border-[#2563EB] transition-colors"
+          className="bg-white border border-[#E2E8F0] rounded-[8px] p-5 cursor-pointer hover:border-[#2563EB] transition-colors"
         >
           <div className="text-[12px] font-bold uppercase tracking-wider text-[#64748B]">
             TOTAL BORROWERS
@@ -235,7 +235,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {/* KPI 2: ACTIVE LOANS */}
         <div
           onClick={() => onNavigate('loans')}
-          className="bg-white border border-[#CBD5E1] rounded-[8px] p-5 cursor-pointer hover:border-[#2563EB] transition-colors"
+          className="bg-white border border-[#E2E8F0] rounded-[8px] p-5 cursor-pointer hover:border-[#2563EB] transition-colors"
         >
           <div className="text-[12px] font-bold uppercase tracking-wider text-[#64748B]">
             ACTIVE LOANS
@@ -252,7 +252,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {/* KPI 3: PENDING APPLICATIONS */}
         <div
           onClick={() => onNavigate('applications')}
-          className="bg-white border border-[#CBD5E1] rounded-[8px] p-5 cursor-pointer hover:border-[#2563EB] transition-colors"
+          className="bg-white border border-[#E2E8F0] rounded-[8px] p-5 cursor-pointer hover:border-[#2563EB] transition-colors"
         >
           <div className="text-[12px] font-bold uppercase tracking-wider text-[#64748B]">
             PENDING APPLICATIONS
@@ -269,7 +269,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {/* KPI 4: OUTSTANDING BALANCE */}
         <div
           onClick={() => onNavigate('loans')}
-          className="bg-white border border-[#CBD5E1] rounded-[8px] p-5 cursor-pointer hover:border-[#2563EB] transition-colors"
+          className="bg-white border border-[#E2E8F0] rounded-[8px] p-5 cursor-pointer hover:border-[#2563EB] transition-colors"
         >
           <div className="text-[12px] font-bold uppercase tracking-wider text-[#64748B]">
             OUTSTANDING BALANCE
@@ -286,27 +286,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       {/* Institutional Supplementary Metrics Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <div onClick={() => onNavigate('approvals')} className="bg-white border border-[#CBD5E1] rounded-[8px] p-3.5 cursor-pointer hover:border-slate-400">
+        <div onClick={() => onNavigate('approvals')} className="bg-white border border-[#E2E8F0] rounded-[8px] p-3.5 cursor-pointer hover:border-slate-400">
           <div className="text-[11px] font-medium text-[#64748B] uppercase">Approved Loans</div>
           <div className="text-lg font-bold text-[#16A34A] mt-1">{approvedLoansCount}</div>
         </div>
-        <div onClick={() => onNavigate('applications')} className="bg-white border border-[#CBD5E1] rounded-[8px] p-3.5 cursor-pointer hover:border-slate-400">
+        <div onClick={() => onNavigate('applications')} className="bg-white border border-[#E2E8F0] rounded-[8px] p-3.5 cursor-pointer hover:border-slate-400">
           <div className="text-[11px] font-medium text-[#64748B] uppercase">Rejected Loans</div>
           <div className="text-lg font-bold text-[#DC2626] mt-1">{rejectedLoansCount}</div>
         </div>
-        <div onClick={() => onNavigate('overdue')} className="bg-white border border-[#CBD5E1] rounded-[8px] p-3.5 cursor-pointer hover:border-slate-400">
+        <div onClick={() => onNavigate('overdue')} className="bg-white border border-[#E2E8F0] rounded-[8px] p-3.5 cursor-pointer hover:border-slate-400">
           <div className="text-[11px] font-medium text-[#64748B] uppercase">Overdue Loans</div>
           <div className="text-lg font-bold text-[#D97706] mt-1">{overdueLoansCount}</div>
         </div>
-        <div onClick={() => onNavigate('cashier')} className="bg-white border border-[#CBD5E1] rounded-[8px] p-3.5 cursor-pointer hover:border-slate-400">
+        <div onClick={() => onNavigate('cashier')} className="bg-white border border-[#E2E8F0] rounded-[8px] p-3.5 cursor-pointer hover:border-slate-400">
           <div className="text-[11px] font-medium text-[#64748B] uppercase">Total Disbursed</div>
           <div className="text-lg font-bold text-[#0F172A] mt-1">{formatMoney(totalDisbursedUSD)}</div>
         </div>
-        <div onClick={() => onNavigate('cashier')} className="bg-white border border-[#CBD5E1] rounded-[8px] p-3.5 cursor-pointer hover:border-slate-400">
+        <div onClick={() => onNavigate('cashier')} className="bg-white border border-[#E2E8F0] rounded-[8px] p-3.5 cursor-pointer hover:border-slate-400">
           <div className="text-[11px] font-medium text-[#64748B] uppercase">Total Collected</div>
           <div className="text-lg font-bold text-[#0F172A] mt-1">{formatMoney(totalCollectedUSD)}</div>
         </div>
-        <div onClick={() => onNavigate('loans')} className="bg-white border border-[#CBD5E1] rounded-[8px] p-3.5 cursor-pointer hover:border-slate-400">
+        <div onClick={() => onNavigate('loans')} className="bg-white border border-[#E2E8F0] rounded-[8px] p-3.5 cursor-pointer hover:border-slate-400">
           <div className="text-[11px] font-medium text-[#64748B] uppercase">Completed Loans</div>
           <div className="text-lg font-bold text-[#2563EB] mt-1">{completedLoansCount}</div>
         </div>
@@ -315,8 +315,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* Loan Application Overview & Payment Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Loan Application Overview */}
-        <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-5">
-          <div className="flex items-center justify-between pb-3 border-b border-[#CBD5E1]">
+        <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-5">
+          <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
             <div>
               <h3 className="text-[15px] font-bold text-[#0F172A]">Loan Application Overview</h3>
               <p className="text-[12px] text-[#64748B]">Origination pipeline and committee disposition</p>
@@ -329,17 +329,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </button>
           </div>
           <div className="grid grid-cols-3 gap-3 pt-4 text-center">
-            <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
+            <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px]">
               <div className="text-[11px] text-[#64748B] uppercase font-semibold">Under Review</div>
               <div className="text-xl font-bold text-[#2563EB] mt-1">{underReviewCount}</div>
               <div className="text-[11px] text-[#64748B] mt-0.5">Stage 1 &amp; 2 KYC</div>
             </div>
-            <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
+            <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px]">
               <div className="text-[11px] text-[#64748B] uppercase font-semibold">Sanctioned</div>
               <div className="text-xl font-bold text-[#16A34A] mt-1">{approvedLoansCount}</div>
               <div className="text-[11px] text-[#64748B] mt-0.5">Ready for release</div>
             </div>
-            <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
+            <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px]">
               <div className="text-[11px] text-[#64748B] uppercase font-semibold">Declined</div>
               <div className="text-xl font-bold text-[#DC2626] mt-1">{rejectedLoansCount}</div>
               <div className="text-[11px] text-[#64748B] mt-0.5">DTI limit exceeded</div>
@@ -348,8 +348,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
 
         {/* Payment Overview */}
-        <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-5">
-          <div className="flex items-center justify-between pb-3 border-b border-[#CBD5E1]">
+        <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-5">
+          <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
             <div>
               <h3 className="text-[15px] font-bold text-[#0F172A]">Payment Overview</h3>
               <p className="text-[12px] text-[#64748B]">Portfolio recovery performance &amp; collection rates</p>
@@ -362,17 +362,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </button>
           </div>
           <div className="grid grid-cols-3 gap-3 pt-4 text-center">
-            <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
+            <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px]">
               <div className="text-[11px] text-[#64748B] uppercase font-semibold">Recovery Rate</div>
               <div className="text-xl font-bold text-[#16A34A] mt-1">{repaymentRate}%</div>
               <div className="text-[11px] text-[#64748B] mt-0.5">On-time installment</div>
             </div>
-            <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
+            <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px]">
               <div className="text-[11px] text-[#64748B] uppercase font-semibold">Collections Total</div>
               <div className="text-xl font-bold text-[#0F172A] mt-1">{formatMoney(totalCollectedUSD)}</div>
               <div className="text-[11px] text-[#64748B] mt-0.5">{receipts.length} vouchers</div>
             </div>
-            <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
+            <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px]">
               <div className="text-[11px] text-[#64748B] uppercase font-semibold">Overdue Rate</div>
               <div className="text-xl font-bold text-[#D97706] mt-1">{overdueRate}%</div>
               <div className="text-[11px] text-[#64748B] mt-0.5">{overdueLoansCount} delinquent</div>
@@ -382,8 +382,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       </div>
 
       {/* Part 13: Recent Loan Applications Table */}
-      <div className="bg-white border border-[#CBD5E1] rounded-[8px] overflow-hidden">
-        <div className="p-4 sm:p-5 border-b border-[#CBD5E1] flex items-center justify-between">
+      <div className="bg-white border border-[#E2E8F0] rounded-[8px] overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-[#E2E8F0] flex items-center justify-between">
           <div>
             <h3 className="text-[15px] font-bold text-[#0F172A]">Recent Loan Applications</h3>
             <p className="text-xs text-[#64748B] mt-0.5">New origination submissions requiring risk evaluation</p>
@@ -441,8 +441,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       </div>
 
       {/* Part 13: Overdue Loans Watchlist Table */}
-      <div className="bg-white border border-[#CBD5E1] rounded-[8px] overflow-hidden">
-        <div className="p-4 sm:p-5 border-b border-[#CBD5E1] flex items-center justify-between">
+      <div className="bg-white border border-[#E2E8F0] rounded-[8px] overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-[#E2E8F0] flex items-center justify-between">
           <div>
             <h3 className="text-[15px] font-bold text-[#0F172A]">Overdue Loans Watchlist</h3>
             <p className="text-xs text-[#64748B] mt-0.5">Accounts exceeding scheduled due dates requiring collection follow-up</p>

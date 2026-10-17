@@ -11,7 +11,7 @@ function getWslIp() {
   } catch (err) {
     // fallback
   }
-  return '172.31.55.59';
+  return '127.0.0.1';
 }
 
 const TARGET_HOST = getWslIp();

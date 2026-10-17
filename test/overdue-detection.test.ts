@@ -63,10 +63,8 @@ async function runOverdueDetectionTests() {
 
   // 1. Mock Users & Auth Tokens
   const mockUsers: Record<string, any> = {
-    'user-borrower': { id: 'user-borrower', username: 'borrower1', email: 'borrower@test.com', role: UserRole.BORROWER, status: 'ACTIVE', fullName: 'Sokha Chan' },
-    'user-officer': { id: 'user-officer', username: 'officer1', email: 'officer@test.com', role: UserRole.LOAN_OFFICER, status: 'ACTIVE', fullName: 'Dara Kim' },
-    'user-admin': { id: 'user-admin', username: 'admin1', email: 'admin@test.com', role: UserRole.MANAGER, status: 'ACTIVE', fullName: 'System Administrator' },
-    'user-manager': { id: 'user-manager', username: 'manager1', email: 'manager@test.com', role: UserRole.MANAGER, status: 'ACTIVE', fullName: 'Branch Manager' }
+    'user-borrower': { id: 'user-borrower', username: 'borrower1', email: 'borrower@test.com', role: UserRole.USER, status: 'ACTIVE', fullName: 'Sokha Chan' },
+    'user-admin': { id: 'user-admin', username: 'admin1', email: 'admin@test.com', role: UserRole.ADMIN, status: 'ACTIVE', fullName: 'System Administrator' },
   };
 
   prisma.user.findUnique = (async ({ where }: any) => {
@@ -74,7 +72,7 @@ async function runOverdueDetectionTests() {
   }) as any;
 
   prisma.user.findMany = (async () => {
-    return [{ id: 'user-officer', role: UserRole.LOAN_OFFICER }];
+    return [{ id: 'user-admin', role: UserRole.ADMIN }];
   }) as any;
 
   const mockOverdueSchedules: any[] = [
@@ -157,9 +155,8 @@ async function runOverdueDetectionTests() {
     return jwt.sign({ id: userId, username: mockUsers[userId].username, email: mockUsers[userId].email, role }, JWT_ACCESS_SECRET, { expiresIn: '1h' });
   }
 
-  const borrowerToken = makeToken(UserRole.BORROWER, 'user-borrower');
-  const officerToken = makeToken(UserRole.LOAN_OFFICER, 'user-officer');
-  const adminToken = makeToken(UserRole.MANAGER, 'user-admin');
+  const borrowerToken = makeToken(UserRole.USER, 'user-borrower');
+  const adminToken = makeToken(UserRole.ADMIN, 'user-admin');
 
   // --- TEST 1: Overdue Detection Query Logic & Formula Units ---
   console.log('--- 1. Verification of Overdue Detection Query Logic & Late Fee Formula ---');
@@ -203,9 +200,9 @@ async function runOverdueDetectionTests() {
 
   // --- TEST 2: Endpoint POST /api/overdue/run-check (Manual Trigger) ---
   console.log('\n--- 2. Manual Trigger Endpoint: POST /api/overdue/run-check ---');
-  // Accessible by staff (ADMIN, MANAGER, LOAN_OFFICER)
+  // Accessible by staff (ADMIN)
   const runCheckRes = await request(app, 'POST', '/api/overdue/run-check', {}, {
-    Authorization: `Bearer ${officerToken}`
+    Authorization: `Bearer ${adminToken}`
   });
   assert.strictEqual(runCheckRes.status, 200);
   assert.strictEqual(runCheckRes.body.success, true);

@@ -344,7 +344,7 @@ export class ApplicationService {
       throw { statusCode: 404, message: 'Application not found', code: 'APPLICATION_NOT_FOUND' };
     }
 
-    if ((viewer.role === UserRole.BORROWER || viewer.role === UserRole.USER) && app.borrower.userId !== viewer.id) {
+    if (viewer.role === UserRole.USER && app.borrower.userId !== viewer.id) {
       throw { statusCode: 403, message: 'Access denied: you can only view your own loan application', code: 'FORBIDDEN_OWNERSHIP' };
     }
 
@@ -864,7 +864,7 @@ export class ApplicationService {
       throw { statusCode: 404, message: 'Application not found', code: 'APPLICATION_NOT_FOUND' };
     }
 
-    if (viewer.role === UserRole.BORROWER && app.borrower.userId !== viewer.id) {
+    if (viewer.role === UserRole.USER && app.borrower.userId !== viewer.id) {
       throw { statusCode: 403, message: 'Access denied: you can only cancel your own applications', code: 'FORBIDDEN_OWNERSHIP' };
     }
 

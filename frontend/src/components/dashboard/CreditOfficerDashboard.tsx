@@ -40,7 +40,7 @@ export const CreditOfficerDashboard: React.FC<CreditOfficerDashboardProps> = ({
   return (
     <div className="space-y-6 font-sans">
       {/* 1. Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#CBD5E1]">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
             Credit Risk Officer Dashboard
@@ -65,7 +65,7 @@ export const CreditOfficerDashboard: React.FC<CreditOfficerDashboardProps> = ({
         {/* Pending */}
         <div
           onClick={() => onNavigate('credit_reviews')}
-          className="bg-white border border-[#CBD5E1] rounded-[8px] p-4 cursor-pointer hover:border-[#2563EB] transition-colors"
+          className="bg-white border border-[#E2E8F0] rounded-[8px] p-4 cursor-pointer hover:border-[#2563EB] transition-colors"
         >
           <span className="text-[11px] font-bold text-[#64748B] uppercase">Pending Assessment</span>
           <div className="text-2xl font-bold text-amber-600 mt-1">{pendingAssessments}</div>
@@ -75,7 +75,7 @@ export const CreditOfficerDashboard: React.FC<CreditOfficerDashboardProps> = ({
         {/* Completed */}
         <div
           onClick={() => onNavigate('credit_reviews')}
-          className="bg-white border border-[#CBD5E1] rounded-[8px] p-4 cursor-pointer hover:border-[#2563EB] transition-colors"
+          className="bg-white border border-[#E2E8F0] rounded-[8px] p-4 cursor-pointer hover:border-[#2563EB] transition-colors"
         >
           <span className="text-[11px] font-bold text-[#64748B] uppercase">Assessed</span>
           <div className="text-2xl font-bold text-emerald-600 mt-1">{completedAssessments}</div>
@@ -85,7 +85,7 @@ export const CreditOfficerDashboard: React.FC<CreditOfficerDashboardProps> = ({
         {/* High Risk */}
         <div
           onClick={() => onNavigate('credit_reviews')}
-          className="bg-white border border-[#CBD5E1] rounded-[8px] p-4 cursor-pointer hover:border-red-400 transition-colors"
+          className="bg-white border border-[#E2E8F0] rounded-[8px] p-4 cursor-pointer hover:border-red-400 transition-colors"
         >
           <span className="text-[11px] font-bold text-red-600 uppercase">High Risk (DTI &gt; 45%)</span>
           <div className="text-2xl font-bold text-red-600 mt-1">{highRisk}</div>
@@ -95,7 +95,7 @@ export const CreditOfficerDashboard: React.FC<CreditOfficerDashboardProps> = ({
         {/* Medium Risk */}
         <div
           onClick={() => onNavigate('credit_reviews')}
-          className="bg-white border border-[#CBD5E1] rounded-[8px] p-4 cursor-pointer hover:border-amber-400 transition-colors"
+          className="bg-white border border-[#E2E8F0] rounded-[8px] p-4 cursor-pointer hover:border-amber-400 transition-colors"
         >
           <span className="text-[11px] font-bold text-amber-600 uppercase">Medium Risk (35-45%)</span>
           <div className="text-2xl font-bold text-amber-600 mt-1">{mediumRisk}</div>
@@ -105,7 +105,7 @@ export const CreditOfficerDashboard: React.FC<CreditOfficerDashboardProps> = ({
         {/* Low Risk */}
         <div
           onClick={() => onNavigate('credit_reviews')}
-          className="bg-white border border-[#CBD5E1] rounded-[8px] p-4 cursor-pointer hover:border-emerald-400 transition-colors"
+          className="bg-white border border-[#E2E8F0] rounded-[8px] p-4 cursor-pointer hover:border-emerald-400 transition-colors"
         >
           <span className="text-[11px] font-bold text-emerald-600 uppercase">Low Risk (DTI &lt; 35%)</span>
           <div className="text-2xl font-bold text-emerald-600 mt-1">{lowRisk}</div>
@@ -114,8 +114,8 @@ export const CreditOfficerDashboard: React.FC<CreditOfficerDashboardProps> = ({
       </div>
 
       {/* 3. Risk Assessment Workbench Queue */}
-      <div className="bg-white border border-[#CBD5E1] rounded-[8px] overflow-hidden">
-        <div className="p-4 border-b border-[#CBD5E1] flex items-center justify-between">
+      <div className="bg-white border border-[#E2E8F0] rounded-[8px] overflow-hidden">
+        <div className="p-4 border-b border-[#E2E8F0] flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ShieldAlert className="w-4 h-4 text-[#2563EB]" />
             <h3 className="text-xs font-bold uppercase tracking-wider text-[#0F172A]">

@@ -90,7 +90,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
   return (
     <div className="space-y-6 font-sans">
       {/* Top Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-[#CBD5E1]">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-[#E2E8F0]">
         <div>
           <h1 className="text-2xl font-bold text-[#0F172A] tracking-tight">
             System Settings &amp; Credit Policies
@@ -104,7 +104,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
           <button
             type="button"
             onClick={handleResetDefaults}
-            className="px-3.5 py-2 text-xs font-semibold text-[#0F172A] bg-white hover:bg-slate-50 border border-[#CBD5E1] rounded-[6px] transition flex items-center gap-1.5 cursor-pointer"
+            className="px-3.5 py-2 text-xs font-semibold text-[#0F172A] bg-white hover:bg-slate-50 border border-[#E2E8F0] rounded-[6px] transition flex items-center gap-1.5 cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Reset Defaults</span>
@@ -114,12 +114,12 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="px-4 py-2 text-xs font-semibold text-white bg-[#0F172A] hover:bg-[#1E293B] rounded-[6px] transition flex items-center gap-1.5 cursor-pointer"
+            className="px-4 py-2 text-xs font-semibold text-white bg-[#2563EB] hover:bg-[#1D4ED8] rounded-[6px] transition flex items-center gap-1.5 cursor-pointer shadow-none"
           >
             {isSaving ? (
               <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : saveSuccess ? (
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-white" />
             ) : (
               <Save className="w-3.5 h-3.5" />
             )}
@@ -129,7 +129,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-[#CBD5E1] overflow-x-auto">
+      <div className="flex items-center gap-2 border-b border-[#E2E8F0] overflow-x-auto">
         {[
           { key: 'general', label: 'General & Currency', icon: Building2 },
           { key: 'lending', label: 'Lending & Risk Policies', icon: Percent },
@@ -159,8 +159,8 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
       {/* Tab 1: General & Currency */}
       {activeTab === 'general' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-[8px] border border-[#CBD5E1] p-5 space-y-4">
-            <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2 pb-2 border-b border-[#CBD5E1]">
+          <div className="bg-white rounded-[8px] border border-[#E2E8F0] p-5 space-y-4">
+            <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2 pb-2 border-b border-[#E2E8F0]">
               <Building2 className="w-4 h-4 text-[#2563EB]" />
               Organization Identity
             </h3>
@@ -174,7 +174,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
                   type="text"
                   value={institutionName}
                   onChange={(e) => setInstitutionName(e.target.value)}
-                  className="w-full h-10 px-3 bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                  className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
@@ -187,7 +187,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
                     type="text"
                     value={institutionCode}
                     onChange={(e) => setInstitutionCode(e.target.value)}
-                    className="w-full h-10 px-3 bg-white border border-[#CBD5E1] rounded-[6px] font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                    className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-[6px] font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
 
@@ -199,7 +199,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
                     type="text"
                     value={operatingBranch}
                     onChange={(e) => setOperatingBranch(e.target.value)}
-                    className="w-full h-10 px-3 bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                    className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
               </div>
@@ -211,7 +211,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
                 <select
                   value={fiscalYearStart}
                   onChange={(e) => setFiscalYearStart(e.target.value)}
-                  className="w-full h-10 px-3 bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                  className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
                 >
                   <option value="January 1st">January 1st (Calendar Year)</option>
                   <option value="October 1st">October 1st (Academic Year)</option>
@@ -221,8 +221,8 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
             </div>
           </div>
 
-          <div className="bg-white rounded-[8px] border border-[#CBD5E1] p-5 space-y-4">
-            <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2 pb-2 border-b border-[#CBD5E1]">
+          <div className="bg-white rounded-[8px] border border-[#E2E8F0] p-5 space-y-4">
+            <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2 pb-2 border-b border-[#E2E8F0]">
               <DollarSign className="w-4 h-4 text-[#16A34A]" />
               Currency &amp; Exchange Rates
             </h3>
@@ -239,7 +239,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
                     className={`p-3 rounded-[6px] border text-left transition-colors cursor-pointer ${
                       currency === 'USD'
                         ? 'border-[#2563EB] bg-blue-50/60 text-[#0F172A] font-bold'
-                        : 'border-[#CBD5E1] bg-white text-[#64748B] hover:bg-slate-50'
+                        : 'border-[#E2E8F0] bg-white text-[#64748B] hover:bg-slate-50'
                     }`}
                   >
                     <div className="text-sm font-bold text-[#0F172A]">USD ($)</div>
@@ -252,7 +252,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
                     className={`p-3 rounded-[6px] border text-left transition-colors cursor-pointer ${
                       currency === 'KHR'
                         ? 'border-[#2563EB] bg-blue-50/60 text-[#0F172A] font-bold'
-                        : 'border-[#CBD5E1] bg-white text-[#64748B] hover:bg-slate-50'
+                        : 'border-[#E2E8F0] bg-white text-[#64748B] hover:bg-slate-50'
                     }`}
                   >
                     <div className="text-sm font-bold text-[#0F172A]">KHR (៛)</div>
@@ -270,7 +270,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
                     type="number"
                     value={khrExchangeRate}
                     onChange={(e) => setKhrExchangeRate(Number(e.target.value))}
-                    className="w-full h-10 pl-3 pr-24 bg-white border border-[#CBD5E1] rounded-[6px] font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                    className="w-full h-10 pl-3 pr-24 bg-white border border-[#E2E8F0] rounded-[6px] font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#64748B]">
                     KHR / 1 USD
@@ -288,8 +288,8 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
       {/* Tab 2: Lending & Risk Policies */}
       {activeTab === 'lending' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-[8px] border border-[#CBD5E1] p-5 space-y-4">
-            <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2 pb-2 border-b border-[#CBD5E1]">
+          <div className="bg-white rounded-[8px] border border-[#E2E8F0] p-5 space-y-4">
+            <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2 pb-2 border-b border-[#E2E8F0]">
               <Percent className="w-4 h-4 text-[#2563EB]" />
               Underwriting Risk Ceilings
             </h3>
@@ -351,20 +351,20 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
                   max="15"
                   value={gracePeriodDays}
                   onChange={(e) => setGracePeriodDays(Number(e.target.value))}
-                  className="w-full h-10 px-3 bg-white border border-[#CBD5E1] rounded-[6px] font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                  className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-[6px] font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-[8px] border border-[#CBD5E1] p-5 space-y-4">
-            <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2 pb-2 border-b border-[#CBD5E1]">
+          <div className="bg-white rounded-[8px] border border-[#E2E8F0] p-5 space-y-4">
+            <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2 pb-2 border-b border-[#E2E8F0]">
               <Clock className="w-4 h-4 text-[#D97706]" />
               Automated Delinquency &amp; Approval Ceilings
             </h3>
 
             <div className="space-y-4 text-xs">
-              <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-[6px] border border-[#CBD5E1]">
+              <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-[6px] border border-[#E2E8F0]">
                 <div>
                   <div className="text-xs font-bold text-[#0F172A]">
                     Automated Daily Overdue Cron Job
@@ -390,7 +390,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
                     type="number"
                     value={dualApprovalThreshold}
                     onChange={(e) => setDualApprovalThreshold(Number(e.target.value))}
-                    className="w-full h-10 pl-3 pr-12 bg-white border border-[#CBD5E1] rounded-[6px] font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                    className="w-full h-10 pl-3 pr-12 bg-white border border-[#E2E8F0] rounded-[6px] font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#64748B]">
                     USD
@@ -408,7 +408,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
                   max="5"
                   value={maxActiveLoans}
                   onChange={(e) => setMaxActiveLoans(Number(e.target.value))}
-                  className="w-full h-10 px-3 bg-white border border-[#CBD5E1] rounded-[6px] font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                  className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-[6px] font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
             </div>
@@ -419,8 +419,8 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
       {/* Tab 3: Security & Sessions */}
       {activeTab === 'security' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-[8px] border border-[#CBD5E1] p-5 space-y-4">
-            <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2 pb-2 border-b border-[#CBD5E1]">
+          <div className="bg-white rounded-[8px] border border-[#E2E8F0] p-5 space-y-4">
+            <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2 pb-2 border-b border-[#E2E8F0]">
               <Lock className="w-4 h-4 text-[#2563EB]" />
               Session &amp; Token Parameters
             </h3>
@@ -436,7 +436,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
                   max="120"
                   value={jwtExpiryMinutes}
                   onChange={(e) => setJwtExpiryMinutes(Number(e.target.value))}
-                  className="w-full h-10 px-3 bg-white border border-[#CBD5E1] rounded-[6px] font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                  className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-[6px] font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
                 />
                 <p className="text-[11px] text-[#64748B] mt-1">
                   Production standard: 15 minutes (stateless cryptographically signed JWT).
@@ -453,7 +453,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
                   max="30"
                   value={refreshTokenDays}
                   onChange={(e) => setRefreshTokenDays(Number(e.target.value))}
-                  className="w-full h-10 px-3 bg-white border border-[#CBD5E1] rounded-[6px] font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                  className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-[6px] font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
@@ -467,20 +467,20 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
                   max="10"
                   value={maxLoginAttempts}
                   onChange={(e) => setMaxLoginAttempts(Number(e.target.value))}
-                  className="w-full h-10 px-3 bg-white border border-[#CBD5E1] rounded-[6px] font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                  className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-[6px] font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-[8px] border border-[#CBD5E1] p-5 space-y-4">
-            <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2 pb-2 border-b border-[#CBD5E1]">
+          <div className="bg-white rounded-[8px] border border-[#E2E8F0] p-5 space-y-4">
+            <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2 pb-2 border-b border-[#E2E8F0]">
               <KeyRound className="w-4 h-4 text-[#16A34A]" />
               Authentication &amp; Compliance Retention
             </h3>
 
             <div className="space-y-4 text-xs">
-              <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-[6px] border border-[#CBD5E1]">
+              <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-[6px] border border-[#E2E8F0]">
                 <div>
                   <div className="text-xs font-bold text-[#0F172A]">
                     Two-Factor Authentication (2FA) for Staff
@@ -504,7 +504,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
                 <select
                   value={auditLogRetentionYears}
                   onChange={(e) => setAuditLogRetentionYears(Number(e.target.value))}
-                  className="w-full h-10 px-3 bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                  className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
                 >
                   <option value={1}>1 Year</option>
                   <option value={3}>3 Years</option>
@@ -522,14 +522,14 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
 
       {/* Tab 4: Alerts & Dispatches */}
       {activeTab === 'notifications' && (
-        <div className="bg-white rounded-[8px] border border-[#CBD5E1] p-5 space-y-4 max-w-3xl">
-          <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2 pb-2 border-b border-[#CBD5E1]">
+        <div className="bg-white rounded-[8px] border border-[#E2E8F0] p-5 space-y-4 max-w-3xl">
+          <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2 pb-2 border-b border-[#E2E8F0]">
             <Bell className="w-4 h-4 text-[#2563EB]" />
             Automated Customer &amp; Staff Alerts
           </h3>
 
           <div className="space-y-3 text-xs">
-            <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-[6px] border border-[#CBD5E1]">
+            <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-[6px] border border-[#E2E8F0]">
               <div>
                 <div className="text-xs font-bold text-[#0F172A]">
                   Advance Installment Due Notice ({notifyDueDaysBefore} Days Prior)
@@ -544,11 +544,11 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
                 max="7"
                 value={notifyDueDaysBefore}
                 onChange={(e) => setNotifyDueDaysBefore(Number(e.target.value))}
-                className="w-16 h-8 text-center bg-white border border-[#CBD5E1] rounded-[4px] font-mono font-bold text-[#0F172A]"
+                className="w-16 h-8 text-center bg-white border border-[#E2E8F0] rounded-[4px] font-mono font-bold text-[#0F172A]"
               />
             </div>
 
-            <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-[6px] border border-[#CBD5E1]">
+            <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-[6px] border border-[#E2E8F0]">
               <div>
                 <div className="text-xs font-bold text-[#0F172A]">
                   Immediate Delinquency Alert on Day 1
@@ -565,7 +565,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
               />
             </div>
 
-            <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-[6px] border border-[#CBD5E1]">
+            <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-[6px] border border-[#E2E8F0]">
               <div>
                 <div className="text-xs font-bold text-[#0F172A]">
                   Digital Receipt Delivery on Collection
@@ -588,34 +588,34 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
       {/* Tab 5: Engine & Maintenance */}
       {activeTab === 'maintenance' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-[8px] border border-[#CBD5E1] p-5 space-y-4">
-            <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2 pb-2 border-b border-[#CBD5E1]">
+          <div className="bg-white rounded-[8px] border border-[#E2E8F0] p-5 space-y-4">
+            <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2 pb-2 border-b border-[#E2E8F0]">
               <Server className="w-4 h-4 text-[#2563EB]" />
               Runtime Telemetry &amp; Services
             </h3>
 
             <div className="space-y-2.5 text-xs">
-              <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-[6px] border border-[#CBD5E1]">
+              <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-[6px] border border-[#E2E8F0]">
                 <span className="font-semibold text-[#64748B]">API Engine:</span>
                 <span className="font-mono text-[#0F172A]">Node.js v20.x • Express • TypeScript</span>
               </div>
-              <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-[6px] border border-[#CBD5E1]">
+              <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-[6px] border border-[#E2E8F0]">
                 <span className="font-semibold text-[#64748B]">Database:</span>
                 <span className="font-mono text-[#0F172A]">Prisma ORM • PostgreSQL 16 Alpine</span>
               </div>
-              <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-[6px] border border-[#CBD5E1]">
+              <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-[6px] border border-[#E2E8F0]">
                 <span className="font-semibold text-[#64748B]">Overdue Daemon:</span>
                 <span className="font-mono text-[#16A34A] font-bold">Active: "1 0 * * *" (Daily 00:01)</span>
               </div>
-              <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-[6px] border border-[#CBD5E1]">
+              <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-[6px] border border-[#E2E8F0]">
                 <span className="font-semibold text-[#64748B]">System Timezone:</span>
                 <span className="font-mono text-[#0F172A]">Indochina Time (ICT, UTC+7)</span>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-[8px] border border-[#CBD5E1] p-5 space-y-4">
-            <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2 pb-2 border-b border-[#CBD5E1]">
+          <div className="bg-white rounded-[8px] border border-[#E2E8F0] p-5 space-y-4">
+            <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2 pb-2 border-b border-[#E2E8F0]">
               <Database className="w-4 h-4 text-[#16A34A]" />
               Administrative Operations
             </h3>
@@ -624,7 +624,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
               <button
                 type="button"
                 onClick={() => onShowToast?.('Client session tokens and caches invalidated successfully', 'info')}
-                className="w-full py-2.5 px-3 rounded-[6px] border border-[#CBD5E1] bg-white hover:bg-slate-50 text-[#0F172A] font-semibold transition cursor-pointer text-left flex items-center justify-between"
+                className="w-full py-2.5 px-3 rounded-[6px] border border-[#E2E8F0] bg-white hover:bg-slate-50 text-[#0F172A] font-semibold transition cursor-pointer text-left flex items-center justify-between"
               >
                 <span>Flush Client Session Cache</span>
                 <span className="text-[11px] text-[#64748B]">Run &rarr;</span>
@@ -633,7 +633,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
               <button
                 type="button"
                 onClick={() => onShowToast?.('Core Banking Ledger check: zero cent imbalance detected', 'success')}
-                className="w-full py-2.5 px-3 rounded-[6px] border border-[#CBD5E1] bg-white hover:bg-slate-50 text-[#0F172A] font-semibold transition cursor-pointer text-left flex items-center justify-between"
+                className="w-full py-2.5 px-3 rounded-[6px] border border-[#E2E8F0] bg-white hover:bg-slate-50 text-[#0F172A] font-semibold transition cursor-pointer text-left flex items-center justify-between"
               >
                 <span>Run Ledger Reconcile Verification</span>
                 <span className="text-[11px] text-[#16A34A] font-bold">Verify &rarr;</span>

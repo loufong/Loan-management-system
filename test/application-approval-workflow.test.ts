@@ -153,10 +153,8 @@ async function runApplicationApprovalWorkflowTests() {
 
   // Mock prisma.user.findUnique for hermetic testing
   const mockUsers: Record<string, any> = {
-    '11111111-1111-1111-1111-111111111111': { id: '11111111-1111-1111-1111-111111111111', username: 'borrower_user', email: 'borrower@test.com', role: UserRole.BORROWER, status: 'ACTIVE', fullName: 'Test Borrower' },
-    '22222222-2222-2222-2222-222222222222': { id: '22222222-2222-2222-2222-222222222222', username: 'loan_officer_user', email: 'loanofficer@test.com', role: UserRole.LOAN_OFFICER, status: 'ACTIVE', fullName: 'Test Loan Officer' },
-    '44444444-4444-4444-4444-444444444444': { id: '44444444-4444-4444-4444-444444444444', username: 'manager_user', email: 'manager@test.com', role: UserRole.MANAGER, status: 'ACTIVE', fullName: 'Test Manager' },
-    '66666666-6666-6666-6666-666666666666': { id: '66666666-6666-6666-6666-666666666666', username: 'cashier_user', email: 'cashier@test.com', role: UserRole.CASHIER, status: 'ACTIVE', fullName: 'Test Cashier' }
+    '11111111-1111-1111-1111-111111111111': { id: '11111111-1111-1111-1111-111111111111', username: 'client_user', email: 'user@test.com', role: UserRole.USER, status: 'ACTIVE', fullName: 'Test User' },
+    '44444444-4444-4444-4444-444444444444': { id: '44444444-4444-4444-4444-444444444444', username: 'admin_user', email: 'admin@test.com', role: UserRole.ADMIN, status: 'ACTIVE', fullName: 'Test Admin' }
   };
 
   prisma.user.findUnique = (async ({ where }: any) => {
@@ -168,98 +166,75 @@ async function runApplicationApprovalWorkflowTests() {
   }
 
   // Create JWT tokens for testing each role
-  const borrowerToken = generateTestToken({
+  const userToken = generateTestToken({
     id: '11111111-1111-1111-1111-111111111111',
-    username: 'borrower_user',
-    email: 'borrower@test.com',
-    role: UserRole.BORROWER
+    username: 'client_user',
+    email: 'user@test.com',
+    role: UserRole.USER
   });
 
-  const loanOfficerToken = generateTestToken({
-    id: '22222222-2222-2222-2222-222222222222',
-    username: 'loan_officer_user',
-    email: 'loanofficer@test.com',
-    role: UserRole.LOAN_OFFICER
-  });
-
-  const managerToken = generateTestToken({
+  const adminToken = generateTestToken({
     id: '44444444-4444-4444-4444-444444444444',
-    username: 'manager_user',
-    email: 'manager@test.com',
-    role: UserRole.MANAGER
-  });
-
-  const cashierToken = generateTestToken({
-    id: '66666666-6666-6666-6666-666666666666',
-    username: 'cashier_user',
-    email: 'cashier@test.com',
-    role: UserRole.CASHIER
+    username: 'admin_user',
+    email: 'admin@test.com',
+    role: UserRole.ADMIN
   });
 
   // A. POST /api/applications - RBAC guards:
-  // Allowed: BORROWER, LOAN_OFFICER, MANAGER. Forbidden: CASHIER
-  const cashierPostApp = await request(app, 'POST', '/api/applications', {}, {
-    Authorization: `Bearer ${cashierToken}`
-  });
-  assert.strictEqual(cashierPostApp.status, 403, 'Cashier must be forbidden from submitting application');
-  assert.strictEqual(cashierPostApp.body.error.code, 'FORBIDDEN');
-  console.log('✅ POST /api/applications RBAC: CASHIER is rejected with 403 FORBIDDEN');
+  // USER and ADMIN are allowed to submit applications
+  const unauthPostApp = await request(app, 'POST', '/api/applications', {});
+  assert.strictEqual(unauthPostApp.status, 401, 'Unauthenticated request must be rejected');
+  console.log('✅ POST /api/applications RBAC: Unauthenticated is rejected with 401');
 
   // Input validation: Empty body produces 400 VALIDATION_ERROR
   const invalidAppPost = await request(app, 'POST', '/api/applications', {}, {
-    Authorization: `Bearer ${managerToken}`
+    Authorization: `Bearer ${adminToken}`
   });
   assert.strictEqual(invalidAppPost.status, 400);
   assert.strictEqual(invalidAppPost.body.error.code, 'VALIDATION_ERROR');
   console.log('✅ POST /api/applications: Input validation returns 400 VALIDATION_ERROR');
 
   // B. POST /api/applications/:id/review - RBAC guards:
-  // Allowed: LOAN_OFFICER, MANAGER. Forbidden: BORROWER, CASHIER
-  const borrowerReview = await request(app, 'POST', '/api/applications/some-id/review', {}, {
-    Authorization: `Bearer ${borrowerToken}`
+  // Allowed: ADMIN. Forbidden: USER
+  const userReview = await request(app, 'POST', '/api/applications/some-id/review', {}, {
+    Authorization: `Bearer ${userToken}`
   });
-  assert.strictEqual(borrowerReview.status, 403, 'Borrower cannot review applications');
-  console.log('✅ POST /api/applications/:id/review RBAC: BORROWER rejected with 403');
-
-  const cashierReview = await request(app, 'POST', '/api/applications/some-id/review', {}, {
-    Authorization: `Bearer ${cashierToken}`
-  });
-  assert.strictEqual(cashierReview.status, 403, 'Cashier cannot review applications');
-  console.log('✅ POST /api/applications/:id/review RBAC: CASHIER rejected with 403');
+  assert.strictEqual(userReview.status, 403, 'Regular USER cannot review applications');
+  console.log('✅ POST /api/applications/:id/review RBAC: USER rejected with 403 FORBIDDEN');
 
   // Review schema validation
   const invalidReview = await request(app, 'POST', '/api/applications/some-id/review', {}, {
-    Authorization: `Bearer ${loanOfficerToken}`
+    Authorization: `Bearer ${adminToken}`
   });
   assert.strictEqual(invalidReview.status, 400);
   assert.strictEqual(invalidReview.body.error.code, 'VALIDATION_ERROR');
   console.log('✅ POST /api/applications/:id/review: Payload validation returns 400 VALIDATION_ERROR');
 
   // C. POST /api/applications/:id/approve - RBAC guards:
-  // Allowed: MANAGER, ADMIN. Forbidden: LOAN_OFFICER, CREDIT_OFFICER, BORROWER
-  const loanOfficerApprove = await request(app, 'POST', '/api/applications/some-id/approve', {
+  // Allowed: ADMIN. Forbidden: USER
+  const userApprove = await request(app, 'POST', '/api/applications/some-id/approve', {
     approvedAmount: 5000,
     approvedTerm: 12,
     approvedInterestRate: 12.0
   }, {
-    Authorization: `Bearer ${loanOfficerToken}`
+    Authorization: `Bearer ${userToken}`
   });
-  assert.strictEqual(loanOfficerApprove.status, 403, 'Loan officer cannot approve loans');
-  console.log('✅ POST /api/applications/:id/approve RBAC: LOAN_OFFICER rejected with 403');
+  assert.strictEqual(userApprove.status, 403, 'User cannot approve loans');
+  console.log('✅ POST /api/applications/:id/approve RBAC: USER rejected with 403 FORBIDDEN');
 
   // D. POST /api/applications/:id/reject - RBAC guards:
-  // Allowed: MANAGER, ADMIN. Forbidden: LOAN_OFFICER
-  const loanOfficerReject = await request(app, 'POST', '/api/applications/some-id/reject', {
+  // Allowed: ADMIN. Forbidden: USER
+  const userReject = await request(app, 'POST', '/api/applications/some-id/reject', {
     rejectionReason: 'Not eligible'
   }, {
-    Authorization: `Bearer ${loanOfficerToken}`
+    Authorization: `Bearer ${userToken}`
   });
-  assert.strictEqual(loanOfficerReject.status, 403, 'Loan officer cannot reject loans');
-  console.log('✅ POST /api/applications/:id/reject RBAC: LOAN_OFFICER rejected with 403');
+  assert.strictEqual(userReject.status, 403, 'User cannot reject loans');
+  console.log('✅ POST /api/applications/:id/reject RBAC: USER rejected with 403 FORBIDDEN');
 
   // Rejection requires rejectionReason
   const emptyReasonReject = await request(app, 'POST', '/api/applications/some-id/reject', {}, {
-    Authorization: `Bearer ${managerToken}`
+    Authorization: `Bearer ${adminToken}`
   });
   assert.strictEqual(emptyReasonReject.status, 400, 'Rejection reason is required');
   assert.strictEqual(emptyReasonReject.body.error.code, 'VALIDATION_ERROR');

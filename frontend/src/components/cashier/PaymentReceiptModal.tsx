@@ -21,10 +21,10 @@ export const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({
         {/* Pixel-perfect 380px Thermal POS Banking Slip */}
         <div
           id="printable-slip"
-          className="w-[380px] bg-white text-[#0F172A] p-6 rounded-[8px] shadow-xl border border-[#CBD5E1] font-mono text-xs space-y-3 print:border-none print:shadow-none print:p-0 print:w-full select-text"
+          className="w-[380px] bg-white text-[#0F172A] p-6 rounded-[8px] shadow-xl border border-[#E2E8F0] font-mono text-xs space-y-3 print:border-none print:shadow-none print:p-0 print:w-full select-text"
         >
           {/* Header */}
-          <div className="text-center pb-3 border-b border-dashed border-[#CBD5E1] space-y-1">
+          <div className="text-center pb-3 border-b border-dashed border-[#E2E8F0] space-y-1">
             <h2 className="font-extrabold text-base uppercase tracking-wider font-sans text-[#0F172A]">
               APEX LMS
             </h2>
@@ -37,7 +37,7 @@ export const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({
           </div>
 
           {/* Receipt Number & Metadata */}
-          <div className="space-y-1 text-[11px] py-1 border-b border-dashed border-[#CBD5E1]">
+          <div className="space-y-1 text-[11px] py-1 border-b border-dashed border-[#E2E8F0]">
             <div className="flex justify-between">
               <span className="text-[#64748B]">Receipt No:</span>
               <span className="font-bold text-[#0F172A]">{receipt.receiptNo}</span>
@@ -61,7 +61,7 @@ export const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({
           </div>
 
           {/* Borrower & Loan Details */}
-          <div className="space-y-1 text-[11px] py-1 border-b border-dashed border-[#CBD5E1]">
+          <div className="space-y-1 text-[11px] py-1 border-b border-dashed border-[#E2E8F0]">
             <div className="flex justify-between">
               <span className="text-[#64748B]">Borrower:</span>
               <span className="font-bold text-[#0F172A]">{receipt.borrowerName}</span>
@@ -83,7 +83,7 @@ export const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({
           </div>
 
           {/* Payment Breakdown */}
-          <div className="space-y-1.5 py-1 border-b border-dashed border-[#CBD5E1] text-[11px]">
+          <div className="space-y-1.5 py-1 border-b border-dashed border-[#E2E8F0] text-[11px]">
             <div className="flex justify-between">
               <span className="text-[#64748B]">Principal Component:</span>
               <span>${receipt.principalAllocatedUSD.toFixed(2)}</span>
@@ -98,7 +98,7 @@ export const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({
                 <span>${receipt.lateFeeAllocatedUSD.toFixed(2)}</span>
               </div>
             )}
-            <div className="flex justify-between pt-1 border-t border-[#CBD5E1] text-xs font-bold text-[#0F172A]">
+            <div className="flex justify-between pt-1 border-t border-[#E2E8F0] text-xs font-bold text-[#0F172A]">
               <span>TOTAL RECEIVED (USD):</span>
               <span className="text-sm">${receipt.amountPaidUSD.toFixed(2)}</span>
             </div>
@@ -125,14 +125,14 @@ export const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({
           </div>
 
           {/* Cashier Signature Line */}
-          <div className="pt-4 pb-2 border-t border-dashed border-[#CBD5E1]">
+          <div className="pt-4 pb-2 border-t border-dashed border-[#E2E8F0]">
             <div className="flex justify-between items-end text-[10px] text-[#64748B] pt-5">
               <div className="text-center">
-                <div className="w-24 border-b border-[#CBD5E1] mb-1" />
+                <div className="w-24 border-b border-[#E2E8F0] mb-1" />
                 <span>Customer Signature</span>
               </div>
               <div className="text-center">
-                <div className="w-24 border-b border-[#CBD5E1] mb-1" />
+                <div className="w-24 border-b border-[#E2E8F0] mb-1" />
                 <span>Cashier Signature</span>
               </div>
             </div>
@@ -149,7 +149,7 @@ export const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({
         <div className="flex items-center gap-2 mt-4 print:hidden w-[380px]">
           <button
             onClick={handlePrint}
-            className="flex-1 py-2 rounded-[6px] bg-[#0F172A] hover:bg-[#1E293B] text-white font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+            className="flex-1 py-2 rounded-[6px] bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-none"
           >
             <Printer className="w-4 h-4" />
             <span>Print Receipt</span>
@@ -157,7 +157,7 @@ export const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({
 
           <button
             onClick={handlePrint}
-            className="px-4 py-2 rounded-[6px] bg-white hover:bg-slate-50 border border-[#CBD5E1] text-[#0F172A] font-semibold text-xs transition-colors flex items-center gap-1 cursor-pointer"
+            className="px-4 py-2 rounded-[6px] bg-white hover:bg-slate-50 border border-[#E2E8F0] text-[#0F172A] font-semibold text-xs transition-colors flex items-center gap-1 cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" />
             <span>PDF</span>
@@ -165,7 +165,7 @@ export const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({
 
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-[6px] bg-white hover:bg-slate-50 border border-[#CBD5E1] text-[#64748B] hover:text-[#0F172A] font-semibold text-xs transition-colors cursor-pointer"
+            className="px-4 py-2 rounded-[6px] bg-white hover:bg-slate-50 border border-[#E2E8F0] text-[#64748B] hover:text-[#0F172A] font-semibold text-xs transition-colors cursor-pointer"
           >
             Close
           </button>

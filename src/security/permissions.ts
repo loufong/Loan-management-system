@@ -39,56 +39,6 @@ export enum Permission {
 
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   [UserRole.ADMIN]: Object.values(Permission),
-  [UserRole.MANAGER]: Object.values(Permission),
-
-  [UserRole.CREDIT_OFFICER]: [
-    Permission.BORROWER_READ_ALL,
-    Permission.BORROWER_CREATE,
-    Permission.BORROWER_UPDATE,
-    Permission.APPLICATION_READ_ALL,
-    Permission.APPLICATION_CREATE_ANY,
-    Permission.APPLICATION_REVIEW,
-    Permission.DOCUMENT_UPLOAD,
-    Permission.DOCUMENT_VERIFY,
-    Permission.DOCUMENT_READ,
-    Permission.LOAN_READ_ALL,
-    Permission.DASHBOARD_VIEW
-  ],
-
-  [UserRole.LOAN_OFFICER]: [
-    Permission.BORROWER_READ_ALL,
-    Permission.BORROWER_CREATE,
-    Permission.BORROWER_UPDATE,
-    Permission.APPLICATION_READ_ALL,
-    Permission.APPLICATION_CREATE_ANY,
-    Permission.APPLICATION_REVIEW,
-    Permission.DOCUMENT_UPLOAD,
-    Permission.DOCUMENT_VERIFY,
-    Permission.DOCUMENT_READ,
-    Permission.LOAN_READ_ALL,
-    Permission.DASHBOARD_VIEW
-  ],
-
-  [UserRole.CASHIER]: [
-    Permission.BORROWER_READ_ALL,
-    Permission.LOAN_READ_ALL,
-    Permission.LOAN_DISBURSE,
-    Permission.PAYMENT_COLLECT,
-    Permission.PAYMENT_READ_ALL,
-    Permission.DOCUMENT_READ,
-    Permission.DASHBOARD_VIEW
-  ],
-
-  [UserRole.BORROWER]: [
-    Permission.BORROWER_READ,
-    Permission.APPLICATION_READ_OWN,
-    Permission.APPLICATION_CREATE_OWN,
-    Permission.LOAN_READ_OWN,
-    Permission.PAYMENT_READ_OWN,
-    Permission.DOCUMENT_UPLOAD,
-    Permission.DOCUMENT_READ
-  ],
-
   [UserRole.USER]: [
     Permission.BORROWER_READ,
     Permission.APPLICATION_READ_OWN,
@@ -111,12 +61,5 @@ export function roleHasPermission(role: UserRole, permission: Permission): boole
 
 export function isStaffRole(role: UserRole | string | undefined | null): boolean {
   if (!role) return false;
-  const r = String(role).toUpperCase();
-  return (
-    r === 'ADMIN' ||
-    r === 'MANAGER' ||
-    r === 'LOAN_OFFICER' ||
-    r === 'CREDIT_OFFICER' ||
-    r === 'CASHIER'
-  );
+  return String(role).toUpperCase() === 'ADMIN';
 }

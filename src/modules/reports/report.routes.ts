@@ -8,9 +8,9 @@ export const reportRouter = Router();
 
 reportRouter.use(authenticate);
 
-// Staff access only
+// Staff access only (ADMIN)
 reportRouter.use(
-  authorize(UserRole.MANAGER, UserRole.LOAN_OFFICER, UserRole.CREDIT_OFFICER, UserRole.CASHIER)
+  authorize(UserRole.ADMIN)
 );
 
 // 1. KPI Summary

@@ -25,10 +25,10 @@ export const RepaymentScheduleTable: React.FC<RepaymentScheduleTableProps> = ({
     currentUserRole === 'ADMIN';
 
   return (
-    <div className="bg-white border border-[#CBD5E1] rounded-[6px] overflow-hidden">
+    <div className="bg-white border border-[#E2E8F0] rounded-[6px] overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-left text-[13px]">
-          <thead className="bg-[#F8FAFC] border-b border-[#CBD5E1]">
+          <thead className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
             <tr className="text-[12px] font-semibold uppercase tracking-wider text-[#64748B]">
               <th className="py-3 px-4">Installment #</th>
               <th className="py-3 px-4">Due Date</th>
@@ -41,7 +41,7 @@ export const RepaymentScheduleTable: React.FC<RepaymentScheduleTableProps> = ({
               <th className="py-3 px-4 text-right">Action</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#CBD5E1]">
+          <tbody className="divide-y divide-[#E2E8F0]">
             {schedules.map((s, idx) => {
               const isOverdue = s.status === 'OVERDUE';
               const isPaid = s.status === 'PAID';
@@ -138,7 +138,7 @@ export const RepaymentScheduleTable: React.FC<RepaymentScheduleTableProps> = ({
                         UNPAID
                       </span>
                     ) : (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-medium bg-slate-50 text-[#64748B] border border-[#CBD5E1]">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-medium bg-slate-50 text-[#64748B] border border-[#E2E8F0]">
                         UPCOMING
                       </span>
                     )}
@@ -160,7 +160,7 @@ export const RepaymentScheduleTable: React.FC<RepaymentScheduleTableProps> = ({
                       {s.amountPaidUSD > 0 && (
                         <button
                           onClick={() => onViewReceipt?.(s.installmentNo)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium rounded-[6px] bg-white border border-[#CBD5E1] hover:bg-slate-50 text-[#0F172A] transition-colors"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium rounded-[6px] bg-white border border-[#E2E8F0] hover:bg-slate-50 text-[#0F172A] transition-colors"
                         >
                           <Download className="w-3 h-3" />
                           <span>Receipt</span>

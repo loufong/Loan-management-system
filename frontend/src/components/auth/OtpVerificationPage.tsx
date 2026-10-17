@@ -133,7 +133,7 @@ export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white p-8 border border-[#CBD5E1] rounded-[8px] space-y-6">
+        <div className="bg-white p-8 border border-[#E2E8F0] rounded-[8px] space-y-6">
           
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
@@ -183,7 +183,7 @@ export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
                     value={digit}
                     onChange={(e) => handleDigitChange(idx, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(idx, e)}
-                    className="w-12 h-12 text-center text-lg font-bold font-mono bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                    className="w-12 h-12 text-center text-lg font-bold font-mono bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
                   />
                 ))}
               </div>
@@ -192,7 +192,7 @@ export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
             <button
               type="submit"
               disabled={isLoading || !isCodeComplete}
-              className="w-full h-[44px] bg-[#0F172A] hover:bg-[#1E293B] disabled:opacity-50 text-white font-medium text-[14px] rounded-[6px] transition-colors flex items-center justify-center gap-2"
+              className="w-full h-[40px] bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white font-medium text-[14px] rounded-[6px] transition-colors flex items-center justify-center gap-2 shadow-none cursor-pointer"
             >
               {isLoading ? (
                 <>
@@ -200,7 +200,7 @@ export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
                   <span>Verifying...</span>
                 </>
               ) : (
-                <span>Verify Code</span>
+                <span>Verify</span>
               )}
             </button>
           </form>
@@ -228,7 +228,7 @@ export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
             <span>{attemptsRemaining} attempts left</span>
           </div>
 
-          <div className="pt-4 border-t border-[#CBD5E1] text-center">
+          <div className="pt-4 border-t border-[#E2E8F0] text-center">
             <button
               type="button"
               onClick={onNavigateBack}

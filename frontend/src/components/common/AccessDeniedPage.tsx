@@ -27,7 +27,7 @@ export const AccessDeniedPage: React.FC<AccessDeniedPageProps> = ({
         </div>
 
         {/* Access Denied Card */}
-        <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-6 sm:p-8 space-y-6 shadow-sm text-center">
+        <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-6 sm:p-8 space-y-6 shadow-sm text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-rose-50 border border-rose-200 text-rose-600 mx-auto">
             <ShieldAlert className="w-8 h-8" />
           </div>
@@ -58,7 +58,7 @@ export const AccessDeniedPage: React.FC<AccessDeniedPageProps> = ({
               <button
                 type="button"
                 onClick={onLogout}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-[6px] bg-white hover:bg-slate-50 border border-[#CBD5E1] text-[#64748B] hover:text-[#0F172A] text-xs font-medium transition-colors cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-[6px] bg-white hover:bg-slate-50 border border-[#E2E8F0] text-[#64748B] hover:text-[#0F172A] text-xs font-medium transition-colors cursor-pointer"
               >
                 <LogOut className="w-4 h-4 text-rose-500" />
                 <span>Sign Out</span>

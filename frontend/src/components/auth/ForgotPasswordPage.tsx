@@ -52,7 +52,7 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white p-8 border border-[#CBD5E1] rounded-[8px] space-y-6">
+        <div className="bg-white p-8 border border-[#E2E8F0] rounded-[8px] space-y-6">
           
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
@@ -90,7 +90,7 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
-                  className="w-full h-[44px] px-3.5 pl-10 bg-white border border-[#CBD5E1] rounded-[6px] text-[14px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                  className="w-full h-[40px] px-3.5 pl-10 bg-white border border-[#E2E8F0] rounded-[6px] text-[14px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
                 />
                 <Mail className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
@@ -99,7 +99,7 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full h-[44px] bg-[#0F172A] hover:bg-[#1E293B] disabled:opacity-50 text-white font-medium text-[14px] rounded-[6px] transition-colors flex items-center justify-center gap-2"
+              className="w-full h-[40px] bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white font-medium text-[14px] rounded-[6px] transition-colors flex items-center justify-center gap-2 shadow-none cursor-pointer"
             >
               {isLoading ? (
                 <>
@@ -112,7 +112,7 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
             </button>
           </form>
 
-          <div className="pt-4 border-t border-[#CBD5E1] text-center">
+          <div className="pt-4 border-t border-[#E2E8F0] text-center">
             <button
               type="button"
               onClick={onNavigateToLogin}

@@ -147,7 +147,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
   return (
     <div className="space-y-6 font-sans">
       {/* 1. Top Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-[#CBD5E1]">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-[#E2E8F0]">
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
@@ -168,7 +168,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
         {/* Left Column (5 Cols): Autocomplete Search & Snapshot Card */}
         <div className="lg:col-span-5 space-y-4">
           {/* Quick Autocomplete Search */}
-          <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-4 space-y-3">
+          <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-4 space-y-3">
             <label className="block text-xs font-bold text-[#0F172A] uppercase tracking-wider">
               Quick Account Lookup
             </label>
@@ -179,13 +179,13 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by Loan #, Borrower Name, or Phone..."
-                className="w-full h-10 pl-9 pr-3 text-xs bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB]"
+                className="w-full h-10 pl-9 pr-3 text-xs bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB]"
               />
             </div>
 
             {/* Autocomplete Dropdown List */}
             {matchingLoans.length > 0 && (
-              <div className="border border-[#CBD5E1] rounded-[6px] overflow-hidden divide-y divide-[#CBD5E1] max-h-48 overflow-y-auto bg-white shadow-md">
+              <div className="border border-[#E2E8F0] rounded-[6px] overflow-hidden divide-y divide-[#E2E8F0] max-h-48 overflow-y-auto bg-white shadow-md">
                 {matchingLoans.map((l) => (
                   <button
                     key={l.id}
@@ -209,8 +209,8 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
 
           {/* Account Snapshot Card */}
           {selectedLoan ? (
-            <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-5 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-[#CBD5E1]">
+            <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-5 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
                 <span className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
                   Target Loan Snapshot
                 </span>
@@ -244,7 +244,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
 
               {/* Financial Balances */}
               <div className="grid grid-cols-2 gap-3 pt-2">
-                <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
+                <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px]">
                   <span className="text-[11px] font-semibold uppercase text-[#64748B] block">
                     Outstanding Balance
                   </span>
@@ -256,7 +256,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
                   <span className="text-[11px] text-[#64748B]">Active book total</span>
                 </div>
 
-                <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px]">
+                <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px]">
                   <span className="text-[11px] font-semibold uppercase text-[#64748B] block">
                     Overdue Amount
                   </span>
@@ -273,7 +273,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
                 </div>
               </div>
 
-              <div className="text-xs text-[#64748B] space-y-1 pt-2 border-t border-[#CBD5E1] font-mono">
+              <div className="text-xs text-[#64748B] space-y-1 pt-2 border-t border-[#E2E8F0] font-mono">
                 <div className="flex justify-between">
                   <span>Regular Installment:</span>
                   <MoneyText amount={selectedLoan.nextPaymentDueAmountUSD} currency={currency} className="font-semibold text-[#0F172A]" />
@@ -285,7 +285,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
               </div>
             </div>
           ) : (
-            <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-8 text-center text-xs text-[#64748B]">
+            <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-8 text-center text-xs text-[#64748B]">
               No loan selected. Use lookup above.
             </div>
           )}
@@ -295,9 +295,9 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
         <div className="lg:col-span-7">
           <form
             onSubmit={handleConfirmAndPrint}
-            className="bg-white border border-[#CBD5E1] rounded-[8px] p-6 space-y-5"
+            className="bg-white border border-[#E2E8F0] rounded-[8px] p-6 space-y-5"
           >
-            <div className="pb-3 border-b border-[#CBD5E1]">
+            <div className="pb-3 border-b border-[#E2E8F0]">
               <h2 className="text-base font-bold text-[#0F172A]">
                 Payment Collection &amp; Settlement
               </h2>
@@ -325,7 +325,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
                 required
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(Number(e.target.value))}
-                className="w-full h-11 px-3.5 bg-white border border-[#CBD5E1] rounded-[6px] font-mono text-base font-bold text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                className="w-full h-11 px-3.5 bg-white border border-[#E2E8F0] rounded-[6px] font-mono text-base font-bold text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
               />
 
               {/* 1-Click Presets */}
@@ -333,7 +333,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
                 <button
                   type="button"
                   onClick={() => handlePreset('EXACT')}
-                  className="p-2 text-xs rounded-[6px] border border-[#CBD5E1] hover:border-[#2563EB] bg-slate-50 hover:bg-blue-50/50 text-[#0F172A] transition-colors text-center cursor-pointer"
+                  className="p-2 text-xs rounded-[6px] border border-[#E2E8F0] hover:border-[#2563EB] bg-slate-50 hover:bg-blue-50/50 text-[#0F172A] transition-colors text-center cursor-pointer"
                 >
                   <span className="block text-[11px] text-[#64748B]">Exact Installment</span>
                   <span className="font-mono font-bold text-[#0F172A]">
@@ -344,7 +344,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
                 <button
                   type="button"
                   onClick={() => handlePreset('TWO_INSTALLMENTS')}
-                  className="p-2 text-xs rounded-[6px] border border-[#CBD5E1] hover:border-[#2563EB] bg-slate-50 hover:bg-blue-50/50 text-[#0F172A] transition-colors text-center cursor-pointer"
+                  className="p-2 text-xs rounded-[6px] border border-[#E2E8F0] hover:border-[#2563EB] bg-slate-50 hover:bg-blue-50/50 text-[#0F172A] transition-colors text-center cursor-pointer"
                 >
                   <span className="block text-[11px] text-[#64748B]">Pay 2 Installments</span>
                   <span className="font-mono font-bold text-[#0F172A]">
@@ -355,7 +355,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
                 <button
                   type="button"
                   onClick={() => handlePreset('PAYOFF')}
-                  className="p-2 text-xs rounded-[6px] border border-[#CBD5E1] hover:border-[#2563EB] bg-slate-50 hover:bg-blue-50/50 text-[#0F172A] transition-colors text-center cursor-pointer"
+                  className="p-2 text-xs rounded-[6px] border border-[#E2E8F0] hover:border-[#2563EB] bg-slate-50 hover:bg-blue-50/50 text-[#0F172A] transition-colors text-center cursor-pointer"
                 >
                   <span className="block text-[11px] text-[#64748B]">Full Payoff</span>
                   <span className="font-mono font-bold text-[#2563EB]">
@@ -387,7 +387,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
                       className={`p-3 rounded-[6px] border cursor-pointer transition-all flex flex-col justify-between space-y-2 ${
                         isSelected
                           ? 'border-[#2563EB] bg-blue-50/60 text-[#0F172A]'
-                          : 'border-[#CBD5E1] hover:border-slate-400 bg-white text-[#0F172A]'
+                          : 'border-[#E2E8F0] hover:border-slate-400 bg-white text-[#0F172A]'
                       }`}
                     >
                       <div className="flex items-center justify-between">
@@ -416,7 +416,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
                   value={transactionRef}
                   onChange={(e) => setTransactionRef(e.target.value)}
                   placeholder="e.g. KHQR-20260922-8812"
-                  className="w-full h-10 px-3 bg-white border border-[#CBD5E1] rounded-[6px] font-mono text-xs text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                  className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-[6px] font-mono text-xs text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
@@ -429,20 +429,20 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="e.g. Regular monthly installment"
-                  className="w-full h-10 px-3 bg-white border border-[#CBD5E1] rounded-[6px] text-xs text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                  className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-[6px] text-xs text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
             </div>
 
             {/* Confirm & Print Receipt action */}
-            <div className="pt-3 border-t border-[#CBD5E1] flex items-center justify-between">
+            <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-between">
               <span className="text-xs text-[#64748B] font-mono">
                 Operator: <strong className="text-[#0F172A]">{cashierName}</strong>
               </span>
 
               <button
                 type="submit"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[6px] bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold transition-colors cursor-pointer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[6px] bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold transition-colors cursor-pointer shadow-none"
               >
                 <Printer className="w-4 h-4" />
                 <span>Confirm &amp; Print Receipt</span>
@@ -453,8 +453,8 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
       </div>
 
       {/* Point 19: PAYMENT MANAGEMENT (Transactions Ledger) */}
-      <div className="bg-white border border-[#CBD5E1] rounded-[8px] overflow-hidden">
-        <div className="p-4 sm:p-5 border-b border-[#CBD5E1] flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div className="bg-white border border-[#E2E8F0] rounded-[8px] overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-[#E2E8F0] flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div>
             <h3 className="text-base font-bold text-[#0F172A]">
               Payment History &amp; Collections Ledger
@@ -473,7 +473,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
                 value={ledgerSearch}
                 onChange={(e) => setLedgerSearch(e.target.value)}
                 placeholder="Search Receipt, Loan, Borrower..."
-                className="w-full h-8 pl-8 pr-2.5 text-xs bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB]"
+                className="w-full h-8 pl-8 pr-2.5 text-xs bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB]"
               />
             </div>
 
@@ -481,7 +481,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
             <select
               value={ledgerMethodFilter}
               onChange={(e) => setLedgerMethodFilter(e.target.value)}
-              className="h-8 px-2 text-xs bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+              className="h-8 px-2 text-xs bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
             >
               <option value="ALL">All Methods</option>
               <option value="Cash">Cash</option>
@@ -495,7 +495,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
               type="date"
               value={ledgerDateFilter}
               onChange={(e) => setLedgerDateFilter(e.target.value)}
-              className="h-8 px-2 text-xs bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+              className="h-8 px-2 text-xs bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
             />
           </div>
         </div>
@@ -556,7 +556,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
                     <td className="text-right">
                       <button
                         onClick={() => setShowReceiptModal(rec)}
-                        className="px-2.5 py-1 text-xs font-semibold text-[#0F172A] bg-white hover:bg-slate-50 border border-[#CBD5E1] rounded-[6px] transition-colors inline-flex items-center gap-1 cursor-pointer"
+                        className="px-2.5 py-1 text-xs font-semibold text-[#0F172A] bg-white hover:bg-slate-50 border border-[#E2E8F0] rounded-[6px] transition-colors inline-flex items-center gap-1 cursor-pointer"
                       >
                         <Printer className="w-3 h-3" />
                         <span>Slip</span>

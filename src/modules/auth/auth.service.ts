@@ -16,11 +16,18 @@ import { PendingRegistrationService } from './pending-registration.service';
 import { UserCreationService } from './user-creation.service';
 import { EmailService } from '../../services/email.service';
 
+const logger = {
+  error: (...args: any[]) => console.error('[AUTH_ERROR]', ...args),
+  info: (...args: any[]) => console.log('[AUTH_INFO]', ...args),
+};
+
 export interface LoginDto {
   usernameOrEmail: string;
   password: string;
   rememberMe?: boolean;
   ipAddress?: string;
+  deviceName?: string;
+  userAgent?: string;
 }
 
 export interface RegisterUserDto {
@@ -120,226 +127,6 @@ export class AuthService {
     this.failedLoginAttempts.delete(key);
   }
 
-  // Pre-seeded accounts for offline evaluation (Strictly ONE ADMIN, all others USER)
-  private static seedUsers: Map<string, InMemoryUser> = new Map([
-    [
-      'admin@loansystem.edu',
-      {
-        id: 'user-admin-0001',
-        username: 'admin',
-        email: 'admin@loansystem.edu',
-        passwordHash: bcrypt.hashSync('Password123!', 10),
-        fullName: 'Dr. Alexander Wright',
-        phone: '+1-555-0100',
-        role: UserRole.ADMIN,
-        status: UserStatus.ACTIVE,
-        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-        lastLogin: new Date(Date.now() - 1000 * 60 * 15),
-        emailVerifiedAt: new Date(),
-        createdAt: new Date('2025-01-01T08:00:00Z'),
-        updatedAt: new Date(),
-      },
-    ],
-    [
-      'admin@loansystem.edu',
-      {
-        id: 'user-admin-0001',
-        username: 'admin',
-        email: 'admin@loansystem.edu',
-        passwordHash: bcrypt.hashSync('Password123!', 10),
-        fullName: 'Dr. Alexander Wright',
-        phone: '+1-555-0100',
-        role: UserRole.ADMIN,
-        status: UserStatus.ACTIVE,
-        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-        lastLogin: new Date(Date.now() - 1000 * 60 * 15),
-        emailVerifiedAt: new Date(),
-        createdAt: new Date('2025-01-01T08:00:00Z'),
-        updatedAt: new Date(),
-      },
-    ],
-    [
-      'admin@apex.local',
-      {
-        id: 'user-admin-0001',
-        username: 'admin',
-        email: 'admin@apex.local',
-        passwordHash: bcrypt.hashSync('Password123!', 10),
-        fullName: 'Dr. Alexander Wright',
-        phone: '+1-555-0100',
-        role: UserRole.ADMIN,
-        status: UserStatus.ACTIVE,
-        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-        lastLogin: new Date(Date.now() - 1000 * 60 * 15),
-        emailVerifiedAt: new Date(),
-        createdAt: new Date('2025-01-01T08:00:00Z'),
-        updatedAt: new Date(),
-      },
-    ],
-    [
-      'admin@example.com',
-      {
-        id: 'user-admin-0001',
-        username: 'admin',
-        email: 'admin@loansystem.edu',
-        passwordHash: bcrypt.hashSync('Password123!', 10),
-        fullName: 'Dr. Alexander Wright',
-        phone: '+1-555-0100',
-        role: UserRole.ADMIN,
-        status: UserStatus.ACTIVE,
-        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-        lastLogin: new Date(Date.now() - 1000 * 60 * 15),
-        emailVerifiedAt: new Date(),
-        createdAt: new Date('2025-01-01T08:00:00Z'),
-        updatedAt: new Date(),
-      },
-    ],
-    [
-      'user@example.com',
-      {
-        id: 'user-user-0002',
-        username: 'user',
-        email: 'user@example.com',
-        passwordHash: bcrypt.hashSync('Password123!', 10),
-        fullName: 'Standard User',
-        phone: '+855 12 999 888',
-        role: UserRole.USER,
-        status: UserStatus.ACTIVE,
-        avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-        lastLogin: new Date(Date.now() - 1000 * 60 * 60),
-        emailVerifiedAt: new Date(),
-        createdAt: new Date('2025-01-10T08:00:00Z'),
-        updatedAt: new Date(),
-      },
-    ],
-    [
-      'inactive@example.com',
-      {
-        id: 'user-inactive-0003',
-        username: 'inactive',
-        email: 'inactive@example.com',
-        passwordHash: bcrypt.hashSync('Password123!', 10),
-        fullName: 'Inactive User',
-        phone: '+855 12 111 222',
-        role: UserRole.USER,
-        status: UserStatus.INACTIVE,
-        avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-        lastLogin: null,
-        emailVerifiedAt: new Date(),
-        createdAt: new Date('2025-01-10T08:00:00Z'),
-        updatedAt: new Date(),
-      },
-    ],
-    [
-      'suspended@example.com',
-      {
-        id: 'user-suspended-0004',
-        username: 'suspended',
-        email: 'suspended@example.com',
-        passwordHash: bcrypt.hashSync('Password123!', 10),
-        fullName: 'Suspended User',
-        phone: '+855 12 333 444',
-        role: UserRole.USER,
-        status: UserStatus.SUSPENDED,
-        avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-        lastLogin: null,
-        emailVerifiedAt: new Date(),
-        createdAt: new Date('2025-01-10T08:00:00Z'),
-        updatedAt: new Date(),
-      },
-    ],
-    [
-      'manager@apex.local',
-      {
-        id: 'user-manager-0001',
-        username: 'manager',
-        email: 'manager@apex.local',
-        passwordHash: bcrypt.hashSync('Password123!', 10),
-        fullName: 'Executive Branch Manager',
-        phone: '+855 12 345 678',
-        role: UserRole.MANAGER,
-        status: UserStatus.ACTIVE,
-        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-        lastLogin: new Date(Date.now() - 1000 * 60 * 15),
-        emailVerifiedAt: new Date(),
-        createdAt: new Date('2025-01-15T08:00:00Z'),
-        updatedAt: new Date(),
-      },
-    ],
-    [
-      'officer@apex.local',
-      {
-        id: 'user-officer-0002',
-        username: 'officer',
-        email: 'officer@apex.local',
-        passwordHash: bcrypt.hashSync('Password123!', 10),
-        fullName: 'Senior Underwriting Officer',
-        phone: '+855 12 888 999',
-        role: UserRole.LOAN_OFFICER,
-        status: UserStatus.ACTIVE,
-        avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-        lastLogin: new Date(Date.now() - 1000 * 60 * 45),
-        emailVerifiedAt: new Date(),
-        createdAt: new Date('2025-02-01T09:30:00Z'),
-        updatedAt: new Date(),
-      },
-    ],
-    [
-      'credit@apex.local',
-      {
-        id: 'user-credit-0005',
-        username: 'credit',
-        email: 'credit@apex.local',
-        passwordHash: bcrypt.hashSync('Password123!', 10),
-        fullName: 'Senior Credit & Risk Officer',
-        phone: '+855 12 777 666',
-        role: UserRole.CREDIT_OFFICER,
-        status: UserStatus.ACTIVE,
-        avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-        lastLogin: new Date(Date.now() - 1000 * 60 * 30),
-        emailVerifiedAt: new Date(),
-        createdAt: new Date('2025-02-15T09:30:00Z'),
-        updatedAt: new Date(),
-      },
-    ],
-    [
-      'cashier@apex.local',
-      {
-        id: 'user-cashier-0003',
-        username: 'cashier',
-        email: 'cashier@apex.local',
-        passwordHash: bcrypt.hashSync('Password123!', 10),
-        fullName: 'Head Teller & Cashier',
-        phone: '+855 16 555 777',
-        role: UserRole.CASHIER,
-        status: UserStatus.ACTIVE,
-        avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-        lastLogin: new Date(Date.now() - 1000 * 60 * 5),
-        emailVerifiedAt: new Date(),
-        createdAt: new Date('2025-03-10T10:15:00Z'),
-        updatedAt: new Date(),
-      },
-    ],
-    [
-      'borrower@apex.local',
-      {
-        id: 'user-borrower-0004',
-        username: 'borrower',
-        email: 'borrower@apex.local',
-        passwordHash: bcrypt.hashSync('Password123!', 10),
-        fullName: 'Sokha Chan',
-        phone: '+855 92 612 045',
-        role: UserRole.BORROWER,
-        status: UserStatus.ACTIVE,
-        avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
-        lastLogin: new Date(Date.now() - 1000 * 60 * 60 * 2),
-        emailVerifiedAt: new Date(),
-        createdAt: new Date('2025-06-20T14:20:00Z'),
-        updatedAt: new Date(),
-      },
-    ],
-  ]);
-
   /**
    * Generates a secure random 64-char refresh token and hashes it for DB storage
    */
@@ -374,7 +161,7 @@ export class AuthService {
   }
 
   /**
-   * Helper to find permanent active user in DB or in-memory fallback
+   * Helper to find permanent active user in PostgreSQL
    */
   private static async findActiveUserByEmailOrUsername(identifier: string): Promise<InMemoryUser | null> {
     const clean = identifier.toLowerCase().trim();
@@ -406,25 +193,8 @@ export class AuthService {
           updatedAt: dbUser.updatedAt,
         };
       }
-    } catch {
-      // Prisma offline, check in-memory fallbacks
-    }
-
-    // Check memory users created via UserCreationService
-    for (const u of UserCreationService.memoryUsers.values()) {
-      if (u.username.toLowerCase() === clean || u.email.toLowerCase() === clean) {
-        return {
-          ...u,
-          updatedAt: new Date(),
-        };
-      }
-    }
-
-    // Check seed users
-    for (const u of this.seedUsers.values()) {
-      if (u.username.toLowerCase() === clean || u.email.toLowerCase() === clean) {
-        return u;
-      }
+    } catch (err) {
+      console.error('Error fetching user from database:', err);
     }
 
     return null;
@@ -455,7 +225,7 @@ export class AuthService {
           passwordHash: bcrypt.hashSync(crypto.randomBytes(16).toString('hex'), 10),
           avatarUrl: defaultAvatar,
           lastLogin: now,
-          role: data.role || UserRole.BORROWER,
+          role: data.role || UserRole.USER,
           status: UserStatus.ACTIVE,
           emailVerifiedAt: now,
           userSetting: {
@@ -478,32 +248,9 @@ export class AuthService {
       });
 
       return user;
-    } catch {
-      // Memory fallback for offline mode
-      const existing = await this.findActiveUserByEmailOrUsername(cleanEmail);
-      if (existing) {
-        existing.lastLogin = now;
-        return existing;
-      }
-
-      const memUser: InMemoryUser = {
-        id: crypto.randomUUID(),
-        username: cleanUsername,
-        email: cleanEmail,
-        passwordHash: '',
-        fullName: data.fullName,
-        role: data.role || UserRole.BORROWER,
-        status: UserStatus.ACTIVE,
-        avatarUrl: defaultAvatar,
-        lastLogin: now,
-        createdAt: now,
-        updatedAt: now,
-      };
-      UserCreationService.memoryUsers.set(cleanEmail, {
-        ...memUser,
-        emailVerifiedAt: now,
-      });
-      return memUser;
+    } catch (err) {
+      logger.error('Failed to upsert user on auth:', err);
+      throw { statusCode: 500, message: 'Database error creating or updating user session', code: 'DB_UPSERT_FAILED' };
     }
   }
 
@@ -985,10 +732,14 @@ export class AuthService {
           userId: user.id,
           expiresAt,
           isRevoked: false,
+          deviceName: dto.deviceName || null,
+          userAgent: dto.userAgent || null,
+          ipAddress: dto.ipAddress || null,
+          lastUsedAt: now,
         },
       });
-    } catch {
-      // Prisma offline fallback
+    } catch (err) {
+      logger.error('Failed to create refresh token session in database:', err);
     }
 
     const permissions = getPermissionsForRole(user.role);
@@ -1064,11 +815,24 @@ export class AuthService {
         throw { statusCode: 401, message: 'Refresh token expired. Please log in again.', code: 'REFRESH_TOKEN_EXPIRED' };
       }
 
+      const now = new Date();
       const newRefresh = this.generateRefreshToken();
       await prisma.$transaction([
-        prisma.refreshToken.update({ where: { id: storedToken.id }, data: { isRevoked: true } }),
+        prisma.refreshToken.update({
+          where: { id: storedToken.id },
+          data: { isRevoked: true, revokedAt: now },
+        }),
         prisma.refreshToken.create({
-          data: { tokenHash: newRefresh.tokenHash, userId: storedToken.user.id, expiresAt: newRefresh.expiresAt, isRevoked: false },
+          data: {
+            tokenHash: newRefresh.tokenHash,
+            userId: storedToken.user.id,
+            expiresAt: newRefresh.expiresAt,
+            isRevoked: false,
+            deviceName: storedToken.deviceName,
+            userAgent: storedToken.userAgent,
+            ipAddress: ipAddress || storedToken.ipAddress,
+            lastUsedAt: now,
+          },
         }),
       ]);
 
@@ -1095,15 +859,25 @@ export class AuthService {
    * 8. Logout
    */
   static async logout(rawRefreshToken: string | undefined, userId: string, ipAddress?: string) {
+    const now = new Date();
     if (rawRefreshToken) {
       const tokenHash = crypto.createHash('sha256').update(rawRefreshToken).digest('hex');
       try {
         await prisma.refreshToken.updateMany({
           where: { tokenHash, userId },
-          data: { isRevoked: true },
+          data: { isRevoked: true, revokedAt: now },
         });
-      } catch {
-        // Fallback
+      } catch (err) {
+        logger.error('Failed to revoke refresh token:', err);
+      }
+    } else if (userId) {
+      try {
+        await prisma.refreshToken.updateMany({
+          where: { userId, isRevoked: false },
+          data: { isRevoked: true, revokedAt: now },
+        });
+      } catch (err) {
+        logger.error('Failed to revoke user sessions:', err);
       }
     }
 
@@ -1113,7 +887,7 @@ export class AuthService {
         action: 'USER_LOGOUT',
         entityName: 'User',
         entityId: userId,
-        details: { logoutTime: new Date() },
+        details: { logoutTime: now },
         ipAddress,
       });
     } catch {
@@ -1131,20 +905,7 @@ export class AuthService {
       throw { statusCode: 400, message: 'Passwords do not match.', code: 'PASSWORD_MISMATCH' };
     }
 
-    let user: any = null;
-    try {
-      user = await prisma.user.findUnique({ where: { id: userId } });
-    } catch {
-      // offline fallback
-    }
-
-    if (!user) {
-      user = Array.from(UserCreationService.memoryUsers.values()).find((u) => u.id === userId);
-    }
-    if (!user) {
-      user = Array.from(this.seedUsers.values()).find((u) => u.id === userId);
-    }
-
+    const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       throw { statusCode: 404, message: 'User not found', code: 'USER_NOT_FOUND' };
     }
@@ -1159,15 +920,12 @@ export class AuthService {
     }
 
     const newHash = await bcrypt.hash(dto.newPassword, 10);
+    const now = new Date();
 
-    try {
-      await prisma.$transaction([
-        prisma.user.update({ where: { id: userId }, data: { passwordHash: newHash } }),
-        prisma.refreshToken.updateMany({ where: { userId, isRevoked: false }, data: { isRevoked: true } }),
-      ]);
-    } catch {
-      user.passwordHash = newHash;
-    }
+    await prisma.$transaction([
+      prisma.user.update({ where: { id: userId }, data: { passwordHash: newHash } }),
+      prisma.refreshToken.updateMany({ where: { userId, isRevoked: false }, data: { isRevoked: true, revokedAt: now } }),
+    ]);
 
     try {
       await recordAuditLog({
@@ -1186,7 +944,7 @@ export class AuthService {
     await EmailService.sendPasswordChangedEmail({
       toEmail: user.email,
       recipientName: user.fullName || user.username,
-      firstName: user.firstName,
+      firstName: user.fullName ? user.fullName.split(' ')[0] : user.username,
     });
 
     return { success: true, message: 'Password updated successfully. Please log in again with your new password.' };
@@ -1232,110 +990,61 @@ export class AuthService {
         lastName: updated.fullName && updated.fullName.includes(' ') ? updated.fullName.split(' ').slice(1).join(' ') : '',
         emailVerified: updated.emailVerifiedAt !== null,
       };
-    } catch {
-      const memUser = Array.from(UserCreationService.memoryUsers.values()).find((u) => u.id === userId);
-      if (memUser) {
-        if (dto.fullName) memUser.fullName = dto.fullName;
-        else if (dto.firstName || dto.lastName) {
-          memUser.fullName = `${dto.firstName || ''} ${dto.lastName || ''}`.trim();
-        }
-        if (dto.phone) memUser.phone = dto.phone;
-        return {
-          ...memUser,
-          firstName: memUser.fullName ? memUser.fullName.split(' ')[0] : memUser.username,
-          lastName: memUser.fullName && memUser.fullName.includes(' ') ? memUser.fullName.split(' ').slice(1).join(' ') : '',
-          emailVerified: memUser.emailVerifiedAt !== null,
-        };
+    } catch (err: any) {
+      if (err?.code === 'P2025') {
+        throw { statusCode: 404, message: 'User not found', code: 'USER_NOT_FOUND' };
       }
-      throw { statusCode: 404, message: 'User not found' };
+      throw err;
     }
   }
 
   static async getProfile(userId: string) {
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
-    try {
-      let user: any = null;
-      if (isUuid) {
-        user = await prisma.user.findUnique({
-          where: { id: userId },
+    if (!isUuid) {
+      throw { statusCode: 404, message: 'User not found', code: 'USER_NOT_FOUND' };
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        fullName: true,
+        phone: true,
+        position: true,
+        department: true,
+        avatarUrl: true,
+        lastLogin: true,
+        role: true,
+        status: true,
+        emailVerifiedAt: true,
+        createdAt: true,
+        userSetting: true,
+        borrowers: {
           select: {
             id: true,
-            username: true,
-            email: true,
-            fullName: true,
-            phone: true,
-            position: true,
-            department: true,
-            avatarUrl: true,
-            lastLogin: true,
-            role: true,
+            borrowerId: true,
+            monthlyIncome: true,
+            occupation: true,
             status: true,
-            emailVerifiedAt: true,
-            createdAt: true,
-            userSetting: true,
-            borrowers: {
-              select: {
-                id: true,
-                borrowerId: true,
-                monthlyIncome: true,
-                occupation: true,
-                status: true,
-              },
-            },
           },
-        });
-      }
-
-      if (user) {
-        return {
-          ...user,
-          firstName: user.fullName ? user.fullName.split(' ')[0] : user.username,
-          lastName: user.fullName && user.fullName.includes(' ') ? user.fullName.split(' ').slice(1).join(' ') : '',
-          emailVerified: user.emailVerifiedAt !== null,
-          avatarUrl: user.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.username)}`,
-          permissions: getPermissionsForRole(user.role),
-        };
-      }
-    } catch {
-      // Memory fallback
-    }
-
-    const memUser = Array.from(UserCreationService.memoryUsers.values()).find((u) => u.id === userId);
-    if (memUser) {
-      return {
-        ...memUser,
-        firstName: memUser.fullName ? memUser.fullName.split(' ')[0] : memUser.username,
-        lastName: memUser.fullName && memUser.fullName.includes(' ') ? memUser.fullName.split(' ').slice(1).join(' ') : '',
-        emailVerified: memUser.emailVerifiedAt !== null,
-        avatarUrl: memUser.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(memUser.username)}`,
-        userSetting: {
-          theme: 'light',
-          currency: 'USD',
-          branch: 'Phnom Penh Main Branch',
-          notificationsEnabled: true,
         },
-        permissions: getPermissionsForRole(memUser.role),
-      };
+      },
+    });
+
+    if (!user) {
+      throw { statusCode: 404, message: 'User not found', code: 'USER_NOT_FOUND' };
     }
 
-    const seed = Array.from(this.seedUsers.values()).find((u) => u.id === userId);
-    if (seed) {
-      return {
-        ...seed,
-        firstName: seed.fullName ? seed.fullName.split(' ')[0] : seed.username,
-        lastName: seed.fullName && seed.fullName.includes(' ') ? seed.fullName.split(' ').slice(1).join(' ') : '',
-        emailVerified: seed.emailVerifiedAt !== null,
-        userSetting: {
-          theme: 'light',
-          currency: 'USD',
-          branch: 'Phnom Penh Main Branch',
-          notificationsEnabled: true,
-        },
-        permissions: getPermissionsForRole(seed.role),
-      };
-    }
-
-    throw { statusCode: 404, message: 'User not found', code: 'USER_NOT_FOUND' };
+    return {
+      ...user,
+      firstName: user.fullName ? user.fullName.split(' ')[0] : user.username,
+      lastName: user.fullName && user.fullName.includes(' ') ? user.fullName.split(' ').slice(1).join(' ') : '',
+      emailVerified: user.emailVerifiedAt !== null,
+      avatarUrl: user.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.username)}`,
+      permissions: getPermissionsForRole(user.role),
+    };
   }
 
   /**
@@ -1343,7 +1052,7 @@ export class AuthService {
    */
   static async registerBorrower(dto: RegisterBorrowerDto) {
     const currentYear = new Date().getFullYear();
-    const count = await prisma.borrower.count().catch(() => 0);
+    const count = await prisma.borrower.count();
     const formattedCode = `BOR-${currentYear}-${String(count + 1).padStart(4, '0')}`;
     const passwordHash = await bcrypt.hash(dto.password, 10);
 
@@ -1355,8 +1064,9 @@ export class AuthService {
           passwordHash,
           fullName: dto.fullName,
           phone: dto.phone,
-          role: UserRole.BORROWER,
+          role: UserRole.USER,
           status: UserStatus.ACTIVE,
+          emailVerifiedAt: new Date(),
         },
       });
 
@@ -1378,24 +1088,6 @@ export class AuthService {
       });
 
       return { user, borrower };
-    }).catch(async () => {
-      // Fallback in-memory
-      const user = {
-        id: crypto.randomUUID(),
-        username: dto.username,
-        email: dto.email,
-        fullName: dto.fullName,
-        phone: dto.phone,
-        role: UserRole.BORROWER,
-        status: UserStatus.ACTIVE,
-      };
-      const borrower = {
-        id: crypto.randomUUID(),
-        borrowerId: formattedCode,
-        fullName: dto.fullName,
-        status: UserStatus.ACTIVE,
-      };
-      return { user, borrower };
     });
 
     const accessToken = this.generateAccessToken(result.user as any);
@@ -1411,9 +1103,9 @@ export class AuthService {
         email: result.user.email,
         fullName: result.user.fullName,
         role: result.user.role,
-        permissions: getPermissionsForRole(UserRole.BORROWER),
+        permissions: getPermissionsForRole(UserRole.USER),
       },
-      borrower: (result as any).borrower,
+      borrower: result.borrower,
     };
   }
 }

@@ -39,13 +39,19 @@ export class PaymentController {
     try {
       const validated = recordPaymentSchema.parse(req.body);
       const ipAddress = (req.headers['x-forwarded-for'] as string) || req.ip;
+      const idempotencyKey = (
+        req.headers['idempotency-key'] ||
+        req.headers['x-idempotency-key'] ||
+        req.body.idempotencyKey
+      ) as string | undefined;
       const amount = (validated.paymentAmount !== undefined ? validated.paymentAmount : validated.amount)!;
       const result = await PaymentService.recordPayment({
         ...validated,
         amount,
         paymentAmount: amount,
         receivedById: req.user!.id,
-        ipAddress
+        ipAddress,
+        idempotencyKey
       });
       sendSuccess(res, result, 'Payment recorded and loan schedule reconciled successfully', 201);
     } catch (err) {

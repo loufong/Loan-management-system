@@ -1,11 +1,13 @@
 import assert from 'assert';
 import http from 'http';
+import bcrypt from 'bcryptjs';
 import { createApp } from '../src/app';
 import { AuthService } from '../src/modules/auth/auth.service';
 import { UserService } from '../src/modules/users/user.service';
 import { createToken } from '../src/middlewares/auth.middleware';
 import { UserRole, UserStatus } from '@prisma/client';
 import { prisma } from '../src/config/prisma';
+import { ensureDatabaseConnected } from '../src/config/db-keeper';
 
 // Fast mocks for offline/unit test execution
 prisma.auditLog.create = (async () => ({})) as any;
@@ -68,6 +70,7 @@ function request(method: string, url: string, body?: any, headers: Record<string
 }
 
 async function runTests() {
+  await ensureDatabaseConnected();
   // -------------------------------------------------------------------------
   // Pre-seed test tokens
   // -------------------------------------------------------------------------
@@ -112,7 +115,7 @@ async function runTests() {
   // =========================================================================
   console.log('--- TEST 2: Normal User logs in -> User Dashboard ---');
   const userLogin = await AuthService.login({
-    usernameOrEmail: 'user@example.com',
+    usernameOrEmail: 'johnathan.doe@student.edu',
     password: 'Password123!'
   });
   assert.strictEqual(userLogin.user.role, 'user', 'Normal user role must be normalized to user');
@@ -253,6 +256,35 @@ async function runTests() {
   // Case 11: Disabled/inactive user -> cannot login
   // =========================================================================
   console.log('--- TEST 11: Disabled/inactive user -> cannot login ---');
+  const testHash = await bcrypt.hash('Password123!', 10);
+  await prisma.user.upsert({
+    where: { email: 'inactive@example.com' },
+    update: { status: UserStatus.INACTIVE, emailVerifiedAt: new Date(), passwordHash: testHash },
+    create: {
+      username: 'inactive_user',
+      email: 'inactive@example.com',
+      passwordHash: testHash,
+      fullName: 'Inactive User',
+      role: UserRole.USER,
+      status: UserStatus.INACTIVE,
+      emailVerifiedAt: new Date()
+    }
+  });
+
+  await prisma.user.upsert({
+    where: { email: 'suspended@example.com' },
+    update: { status: UserStatus.SUSPENDED, emailVerifiedAt: new Date(), passwordHash: testHash },
+    create: {
+      username: 'suspended_user',
+      email: 'suspended@example.com',
+      passwordHash: testHash,
+      fullName: 'Suspended User',
+      role: UserRole.USER,
+      status: UserStatus.SUSPENDED,
+      emailVerifiedAt: new Date()
+    }
+  });
+
   let inactiveBlocked = false;
   try {
     await AuthService.login({
@@ -313,13 +345,13 @@ async function runTests() {
   // =========================================================================
   console.log('--- TEST 13: Refreshing the page preserves the correct authenticated session ---');
   const resAdminMe = await request('GET', '/api/auth/me', undefined, {
-    Authorization: `Bearer ${adminToken}`
+    Authorization: `Bearer ${adminLogin.accessToken}`
   });
   assert.strictEqual(resAdminMe.status, 200);
   assert.strictEqual((resAdminMe.body as any).data.role, UserRole.ADMIN);
 
   const resUserMe = await request('GET', '/api/auth/me', undefined, {
-    Authorization: `Bearer ${userAToken}`
+    Authorization: `Bearer ${userLogin.accessToken}`
   });
   assert.strictEqual(resUserMe.status, 200);
   assert.strictEqual((resUserMe.body as any).data.role, UserRole.USER);
@@ -350,6 +382,7 @@ async function runTests() {
   console.log('✅ Direct URL navigation verified: unauthenticated -> /login, normal user -> /user/dashboard?denied=true\n');
 
   console.log('🎉 ALL 14 TWO-TIER AUTHENTICATION & AUTHORIZATION TESTS PASSED PERFECTLY!\n');
+  process.exit(0);
 }
 
 runTests().catch((err) => {

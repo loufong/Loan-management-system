@@ -144,11 +144,11 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
   return (
     <div className="space-y-6">
       {/* 1. Header Toolbar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white p-4 rounded-[8px] border border-[#CBD5E1]">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white p-4 rounded-[8px] border border-[#E2E8F0]">
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
-            className="p-1.5 rounded-[6px] bg-white border border-[#CBD5E1] text-[#0F172A] hover:bg-slate-50 transition-colors"
+            className="p-1.5 rounded-[6px] bg-white border border-[#E2E8F0] text-[#0F172A] hover:bg-slate-50 transition-colors"
             title="Return to Credit Reviews"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -187,8 +187,8 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
         {/* LEFT PANE (55% width) — Applicant Dossier */}
         <div className="w-full lg:w-[55%] space-y-4">
           {/* Card 0: Loan Request Summary */}
-          <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-4 space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-[#CBD5E1]">
+          <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-4 space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
               <span className="text-xs font-semibold uppercase tracking-wider text-[#0F172A] flex items-center gap-1.5">
                 <FileText className="w-4 h-4 text-[#2563EB]" />
                 <span>Loan Facility Request Summary</span>
@@ -199,7 +199,7 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
-              <div className="p-2.5 rounded-[6px] bg-slate-50 border border-[#CBD5E1] font-mono">
+              <div className="p-2.5 rounded-[6px] bg-slate-50 border border-[#E2E8F0] font-mono">
                 <span className="text-[10px] text-[#64748B] block uppercase">Requested Amount</span>
                 <MoneyText
                   amount={application.requestedAmountUSD}
@@ -207,13 +207,13 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
                   className="font-bold text-[#0F172A] text-xs mt-0.5 block"
                 />
               </div>
-              <div className="p-2.5 rounded-[6px] bg-slate-50 border border-[#CBD5E1] font-mono">
+              <div className="p-2.5 rounded-[6px] bg-slate-50 border border-[#E2E8F0] font-mono">
                 <span className="text-[10px] text-[#64748B] block uppercase">Requested Tenure</span>
                 <span className="font-bold text-[#0F172A] text-xs mt-0.5 block">
                   {application.requestedTermMonths} Months
                 </span>
               </div>
-              <div className="p-2.5 rounded-[6px] bg-slate-50 border border-[#CBD5E1] font-mono">
+              <div className="p-2.5 rounded-[6px] bg-slate-50 border border-[#E2E8F0] font-mono">
                 <span className="text-[10px] text-[#64748B] block uppercase">Calculated DTI</span>
                 <span className={`font-bold text-xs mt-0.5 block ${isDtiWarning ? 'text-[#D97706]' : 'text-[#16A34A]'}`}>
                   {application.dtiRatio}%
@@ -221,7 +221,7 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
               </div>
             </div>
 
-            <div className="text-xs bg-slate-50 p-2.5 rounded-[6px] border border-[#CBD5E1]">
+            <div className="text-xs bg-slate-50 p-2.5 rounded-[6px] border border-[#E2E8F0]">
               <span className="font-semibold text-[#0F172A] block text-[11px]">Declared Credit Purpose:</span>
               <p className="text-[#64748B] italic mt-0.5">
                 "{application.purpose || 'Working Capital & Inventory Expansion'}"
@@ -230,10 +230,10 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
           </div>
 
           {/* Card 1: Borrower Profile & Employment */}
-          <div className="bg-white border border-[#CBD5E1] rounded-[8px] overflow-hidden">
+          <div className="bg-white border border-[#E2E8F0] rounded-[8px] overflow-hidden">
             <button
               onClick={() => setEmploymentOpen(!employmentOpen)}
-              className="w-full flex items-center justify-between p-3.5 text-left font-semibold text-xs text-[#0F172A] bg-slate-50 border-b border-[#CBD5E1] hover:bg-slate-100 transition-colors"
+              className="w-full flex items-center justify-between p-3.5 text-left font-semibold text-xs text-[#0F172A] bg-slate-50 border-b border-[#E2E8F0] hover:bg-slate-100 transition-colors"
             >
               <div className="flex items-center gap-2">
                 <Building className="w-4 h-4 text-[#2563EB]" />
@@ -269,10 +269,10 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
           </div>
 
           {/* Card 2: Income & Cashflow */}
-          <div className="bg-white border border-[#CBD5E1] rounded-[8px] overflow-hidden">
+          <div className="bg-white border border-[#E2E8F0] rounded-[8px] overflow-hidden">
             <button
               onClick={() => setIncomeOpen(!incomeOpen)}
-              className="w-full flex items-center justify-between p-3.5 text-left font-semibold text-xs text-[#0F172A] bg-slate-50 border-b border-[#CBD5E1] hover:bg-slate-100 transition-colors"
+              className="w-full flex items-center justify-between p-3.5 text-left font-semibold text-xs text-[#0F172A] bg-slate-50 border-b border-[#E2E8F0] hover:bg-slate-100 transition-colors"
             >
               <div className="flex items-center gap-2">
                 <DollarSign className="w-4 h-4 text-[#16A34A]" />
@@ -283,7 +283,7 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
 
             {incomeOpen && (
               <div className="p-4 space-y-2 text-xs">
-                <div className="divide-y divide-[#CBD5E1]">
+                <div className="divide-y divide-[#E2E8F0]">
                   <div className="py-1.5 flex justify-between">
                     <span className="text-[#64748B]">Base Monthly Salary</span>
                     <MoneyText amount={1450.0} currency="USD" className="font-semibold text-[#0F172A]" />
@@ -306,8 +306,8 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
           </div>
 
           {/* Card 3: Document Inspector */}
-          <div className="bg-white border border-[#CBD5E1] rounded-[8px] overflow-hidden">
-            <div className="p-3 bg-slate-50 border-b border-[#CBD5E1] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="bg-white border border-[#E2E8F0] rounded-[8px] overflow-hidden">
+            <div className="p-3 bg-slate-50 border-b border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <FileText className="w-4 h-4 text-[#2563EB]" />
                 <span className="font-semibold text-xs text-[#0F172A]">
@@ -334,7 +334,7 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
                     className={`px-2 py-0.5 text-xs rounded-[4px] font-semibold transition-colors border ${
                       activeEvidenceDoc === tab.id
                         ? 'bg-[#0F172A] text-white border-[#0F172A]'
-                        : 'bg-white text-[#64748B] border-[#CBD5E1] hover:bg-slate-100'
+                        : 'bg-white text-[#64748B] border-[#E2E8F0] hover:bg-slate-100'
                     }`}
                   >
                     {tab.label}
@@ -344,7 +344,7 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
             </div>
 
             {/* Controls Toolbar */}
-            <div className="px-3 py-1.5 bg-slate-50 border-b border-[#CBD5E1] flex items-center justify-between text-xs text-[#64748B]">
+            <div className="px-3 py-1.5 bg-slate-50 border-b border-[#E2E8F0] flex items-center justify-between text-xs text-[#64748B]">
               <span className="font-mono text-[10px]">
                 Zoom: {Math.round(docZoom * 100)}% • Rotation: {docRotation}°
               </span>
@@ -353,7 +353,7 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
                 <button
                   type="button"
                   onClick={() => setDocZoom((z) => Math.min(z + 0.25, 2.5))}
-                  className="p-1 rounded-[4px] bg-white border border-[#CBD5E1] hover:bg-slate-100 text-[#0F172A] transition-colors"
+                  className="p-1 rounded-[4px] bg-white border border-[#E2E8F0] hover:bg-slate-100 text-[#0F172A] transition-colors"
                   title="Zoom In"
                 >
                   <ZoomIn className="w-3.5 h-3.5" />
@@ -361,7 +361,7 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
                 <button
                   type="button"
                   onClick={() => setDocZoom((z) => Math.max(z - 0.25, 0.5))}
-                  className="p-1 rounded-[4px] bg-white border border-[#CBD5E1] hover:bg-slate-100 text-[#0F172A] transition-colors"
+                  className="p-1 rounded-[4px] bg-white border border-[#E2E8F0] hover:bg-slate-100 text-[#0F172A] transition-colors"
                   title="Zoom Out"
                 >
                   <ZoomOut className="w-3.5 h-3.5" />
@@ -369,7 +369,7 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
                 <button
                   type="button"
                   onClick={() => setDocRotation((r) => (r + 90) % 360)}
-                  className="p-1 rounded-[4px] bg-white border border-[#CBD5E1] hover:bg-slate-100 text-[#0F172A] transition-colors"
+                  className="p-1 rounded-[4px] bg-white border border-[#E2E8F0] hover:bg-slate-100 text-[#0F172A] transition-colors"
                   title="Rotate 90°"
                 >
                   <RotateCw className="w-3.5 h-3.5" />
@@ -380,7 +380,7 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
                     setDocZoom(1);
                     setDocRotation(0);
                   }}
-                  className="p-1 rounded-[4px] bg-white border border-[#CBD5E1] hover:bg-slate-100 text-[#0F172A] transition-colors"
+                  className="p-1 rounded-[4px] bg-white border border-[#E2E8F0] hover:bg-slate-100 text-[#0F172A] transition-colors"
                   title="Reset View"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
@@ -390,7 +390,7 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
 
             {/* Preview Surface */}
             <div className="p-3">
-              <div className="h-64 bg-slate-100 rounded-[6px] border border-[#CBD5E1] overflow-hidden relative flex items-center justify-center">
+              <div className="h-64 bg-slate-100 rounded-[6px] border border-[#E2E8F0] overflow-hidden relative flex items-center justify-center">
                 <div
                   style={{
                     transform: `scale(${docZoom}) rotate(${docRotation}deg)`,
@@ -421,10 +421,10 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
           </div>
 
           {/* Card 4: Historical Repayment Track Record */}
-          <div className="bg-white border border-[#CBD5E1] rounded-[8px] overflow-hidden">
+          <div className="bg-white border border-[#E2E8F0] rounded-[8px] overflow-hidden">
             <button
               onClick={() => setTrackRecordOpen(!trackRecordOpen)}
-              className="w-full flex items-center justify-between p-3.5 text-left font-semibold text-xs text-[#0F172A] bg-slate-50 border-b border-[#CBD5E1] hover:bg-slate-100 transition-colors"
+              className="w-full flex items-center justify-between p-3.5 text-left font-semibold text-xs text-[#0F172A] bg-slate-50 border-b border-[#E2E8F0] hover:bg-slate-100 transition-colors"
             >
               <div className="flex items-center gap-2">
                 <History className="w-4 h-4 text-[#2563EB]" />
@@ -440,19 +440,19 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
                     <span className="text-[10px] text-[#16A34A] font-bold block uppercase">On-Time Rate</span>
                     <span className="text-sm font-bold text-[#16A34A] font-mono">100.0%</span>
                   </div>
-                  <div className="p-2 bg-slate-50 rounded-[4px] border border-[#CBD5E1]">
+                  <div className="p-2 bg-slate-50 rounded-[4px] border border-[#E2E8F0]">
                     <span className="text-[10px] text-[#64748B] font-bold block uppercase">Delinquency</span>
                     <span className="text-sm font-bold text-[#0F172A] font-mono">0 DPD</span>
                   </div>
-                  <div className="p-2 bg-slate-100 rounded-[4px] border border-[#CBD5E1]">
+                  <div className="p-2 bg-slate-100 rounded-[4px] border border-[#E2E8F0]">
                     <span className="text-[10px] text-[#0F172A] font-bold block uppercase">Bureau Tier</span>
                     <span className="text-sm font-bold text-[#0F172A] font-mono">Prime A1</span>
                   </div>
                 </div>
 
-                <div className="border border-[#CBD5E1] rounded-[6px] overflow-hidden">
+                <div className="border border-[#E2E8F0] rounded-[6px] overflow-hidden">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 text-[10px] font-semibold uppercase text-[#64748B] border-b border-[#CBD5E1]">
+                    <thead className="bg-slate-50 text-[10px] font-semibold uppercase text-[#64748B] border-b border-[#E2E8F0]">
                       <tr>
                         <th className="py-2 px-3">Prior Facility</th>
                         <th className="py-2 px-3">Amount</th>
@@ -460,7 +460,7 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
                         <th className="py-2 px-3">Status</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#CBD5E1] text-[11px]">
+                    <tbody className="divide-y divide-[#E2E8F0] text-[11px]">
                       <tr>
                         <td className="py-2 px-3 font-mono font-semibold text-[#0F172A]">LN-2025-0019</td>
                         <td className="py-2 px-3 font-mono">$5,000.00</td>
@@ -488,8 +488,8 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
         {/* RIGHT PANE (45% width) — Underwriting & Decision Workbench */}
         <div className="w-full lg:w-[45%] space-y-4">
           {/* Card 1: Automated Credit Scorecard */}
-          <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-4 space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-[#CBD5E1]">
+          <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-4 space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
               <span className="text-xs font-semibold uppercase tracking-wider text-[#0F172A] flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-[#2563EB]" />
                 <span>Automated Credit Scorecard</span>
@@ -509,7 +509,7 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
             </div>
 
             {/* DTI Gauge */}
-            <div className="p-3 rounded-[6px] bg-slate-50 border border-[#CBD5E1] space-y-2">
+            <div className="p-3 rounded-[6px] bg-slate-50 border border-[#E2E8F0] space-y-2">
               <div className="flex items-baseline justify-between">
                 <div>
                   <span className="text-[10px] uppercase tracking-wider text-[#64748B] font-semibold block">
@@ -553,7 +553,7 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
               {ruleChecks.map((rule) => (
                 <div
                   key={rule.id}
-                  className="flex items-start gap-2 p-2 rounded-[6px] bg-slate-50 border border-[#CBD5E1] text-xs"
+                  className="flex items-start gap-2 p-2 rounded-[6px] bg-slate-50 border border-[#E2E8F0] text-xs"
                 >
                   {rule.passed ? (
                     <CheckCircle2 className="w-3.5 h-3.5 text-[#16A34A] shrink-0 mt-0.5" />
@@ -572,7 +572,7 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
           {/* Card 2: Officer Recommendation Form */}
           <form
             onSubmit={handleOfficerSubmit}
-            className="bg-white border border-[#CBD5E1] rounded-[8px] p-4 space-y-3"
+            className="bg-white border border-[#E2E8F0] rounded-[8px] p-4 space-y-3"
           >
             <div>
               <h3 className="text-xs font-bold text-[#0F172A]">
@@ -613,7 +613,7 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
                   className={`flex items-start gap-2.5 p-2.5 rounded-[6px] border cursor-pointer transition-colors ${
                     recommendation === opt.value
                       ? 'border-[#0F172A] bg-slate-50'
-                      : 'border-[#CBD5E1] hover:bg-slate-50'
+                      : 'border-[#E2E8F0] hover:bg-slate-50'
                   }`}
                 >
                   <input
@@ -642,7 +642,7 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
                 value={reviewNotes}
                 onChange={(e) => setReviewNotes(e.target.value)}
                 placeholder="Enter detailed credit rationale, mitigating strengths, or required conditions..."
-                className="w-full p-2.5 text-xs bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                className="w-full p-2.5 text-xs bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
               />
             </div>
 
@@ -751,7 +751,7 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
       {/* Confirmation Modal: Approve Loan */}
       {showApproveConfirmModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50">
-          <div className="bg-white rounded-[8px] max-w-md w-full p-5 border border-[#CBD5E1] shadow-md space-y-3">
+          <div className="bg-white rounded-[8px] max-w-md w-full p-5 border border-[#E2E8F0] shadow-md space-y-3">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-[4px] bg-emerald-50 text-[#16A34A] border border-emerald-200 flex items-center justify-center">
                 <CheckCircle2 className="w-4 h-4" />
@@ -762,7 +762,7 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
               </div>
             </div>
 
-            <div className="p-3 rounded-[6px] bg-slate-50 border border-[#CBD5E1] space-y-1.5 text-xs font-mono">
+            <div className="p-3 rounded-[6px] bg-slate-50 border border-[#E2E8F0] space-y-1.5 text-xs font-mono">
               <div className="flex justify-between">
                 <span className="text-[#64748B]">Applicant:</span>
                 <span className="font-bold text-[#0F172A]">{application.borrowerName}</span>
@@ -777,11 +777,11 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#CBD5E1]">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#E2E8F0]">
               <button
                 type="button"
                 onClick={() => setShowApproveConfirmModal(false)}
-                className="px-3.5 py-1.5 text-xs font-semibold rounded-[6px] bg-white border border-[#CBD5E1] hover:bg-slate-50 text-[#0F172A] transition-colors"
+                className="px-3.5 py-1.5 text-xs font-semibold rounded-[6px] bg-white border border-[#E2E8F0] hover:bg-slate-50 text-[#0F172A] transition-colors"
               >
                 Cancel
               </button>
@@ -801,7 +801,7 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
       {/* Mandatory Rejection Reason Modal */}
       {showRejectReasonModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50">
-          <div className="bg-white rounded-[8px] max-w-md w-full p-5 border border-[#CBD5E1] shadow-md space-y-3">
+          <div className="bg-white rounded-[8px] max-w-md w-full p-5 border border-[#E2E8F0] shadow-md space-y-3">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-[4px] bg-red-50 text-[#DC2626] border border-red-200 flex items-center justify-center">
                 <XCircle className="w-4 h-4" />
@@ -818,7 +818,7 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
                 <select
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
-                  className="w-full px-2.5 h-9 bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] font-medium focus:outline-none focus:border-[#2563EB]"
+                  className="w-full px-2.5 h-9 bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] font-medium focus:outline-none focus:border-[#2563EB]"
                 >
                   <option value="HIGH_DTI">Excessive Debt-to-Income Ratio (&gt; 40%)</option>
                   <option value="INSUFFICIENT_INCOME">Stated Inflows Below Product Qualification Floor</option>
@@ -837,16 +837,16 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
                   value={rejectionNotes}
                   onChange={(e) => setRejectionNotes(e.target.value)}
                   placeholder="Document specific committee findings and risk mitigation failures..."
-                  className="w-full p-2.5 bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                  className="w-full p-2.5 bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#CBD5E1]">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#E2E8F0]">
               <button
                 type="button"
                 onClick={() => setShowRejectReasonModal(false)}
-                className="px-3.5 py-1.5 text-xs font-semibold rounded-[6px] bg-white border border-[#CBD5E1] hover:bg-slate-50 text-[#0F172A] transition-colors"
+                className="px-3.5 py-1.5 text-xs font-semibold rounded-[6px] bg-white border border-[#E2E8F0] hover:bg-slate-50 text-[#0F172A] transition-colors"
               >
                 Cancel
               </button>

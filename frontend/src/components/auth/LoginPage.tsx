@@ -87,9 +87,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         </div>
 
         {/* Clean Login Card */}
-        <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-6 sm:p-8 space-y-5">
+        <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-6 sm:p-8 space-y-5">
           {/* Form Header */}
-          <div className="border-b border-[#CBD5E1] pb-3">
+          <div className="border-b border-[#E2E8F0] pb-3">
             <h2 className="text-lg font-bold text-[#0F172A]">
               Welcome back
             </h2>
@@ -97,7 +97,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               Sign in to continue to your loan management account.
             </p>
           </div>
-
 
           {/* Success Notice Banner */}
           {successNotice && (
@@ -116,7 +115,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           )}
 
           {/* Quick Demo Credentials 1-Click Fill */}
-          <div className="bg-[#F8FAFC] border border-[#CBD5E1] rounded-[6px] p-3 text-xs space-y-2">
+          <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-[6px] p-3 text-xs space-y-2">
             <div className="flex items-center justify-between text-[#0F172A] font-semibold">
               <span>Select Account (1-Click Fill):</span>
               <span className="text-[11px] font-normal text-[#64748B]">Password: Password123!</span>
@@ -129,7 +128,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   setPassword('Password123!');
                   setError(null);
                 }}
-                className="p-2 bg-white border border-[#CBD5E1] hover:border-[#2563EB] hover:bg-blue-50/40 rounded-[5px] text-left transition-all cursor-pointer flex flex-col"
+                className="p-2 bg-white border border-[#E2E8F0] hover:border-[#2563EB] hover:bg-blue-50/40 rounded-[5px] text-left transition-all cursor-pointer flex flex-col"
               >
                 <span className="font-bold text-[11px] text-[#2563EB]">Administrator</span>
                 <span className="text-[10px] text-[#64748B] truncate">admin@loansystem.edu</span>
@@ -142,7 +141,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   setPassword('Password123!');
                   setError(null);
                 }}
-                className="p-2 bg-white border border-[#CBD5E1] hover:border-[#059669] hover:bg-emerald-50/40 rounded-[5px] text-left transition-all cursor-pointer flex flex-col"
+                className="p-2 bg-white border border-[#E2E8F0] hover:border-[#059669] hover:bg-emerald-50/40 rounded-[5px] text-left transition-all cursor-pointer flex flex-col"
               >
                 <span className="font-bold text-[11px] text-[#059669]">Client User (Borrower)</span>
                 <span className="text-[10px] text-[#64748B] truncate">johnathan.doe@student.edu</span>
@@ -165,7 +164,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   placeholder="Enter email or username"
                   autoComplete="username"
                   required
-                  className="w-full h-11 px-3.5 pl-10 rounded-[6px] bg-white border border-[#CBD5E1] text-[#0F172A] text-sm focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#64748B]"
+                  className="w-full h-11 px-3.5 pl-10 rounded-[6px] bg-white border border-[#E2E8F0] text-[#0F172A] text-sm focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#64748B]"
                 />
                 <User className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
@@ -184,7 +183,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   placeholder="Enter password"
                   autoComplete="current-password"
                   required
-                  className="w-full h-11 px-3.5 pl-10 pr-10 rounded-[6px] bg-white border border-[#CBD5E1] text-[#0F172A] text-sm focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#64748B]"
+                  className="w-full h-11 px-3.5 pl-10 pr-10 rounded-[6px] bg-white border border-[#E2E8F0] text-[#0F172A] text-sm focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#64748B]"
                 />
                 <Lock className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <button
@@ -205,7 +204,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded-[4px] border-[#CBD5E1] text-[#2563EB] focus:ring-0 cursor-pointer"
+                  className="w-4 h-4 rounded-[4px] border-[#E2E8F0] text-[#2563EB] focus:ring-0 cursor-pointer"
                 />
                 <span className="text-xs text-[#0F172A] font-medium">Remember me</span>
               </label>
@@ -223,7 +222,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full h-11 bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold tracking-wider rounded-[6px] transition-colors flex items-center justify-center gap-2 mt-2 disabled:opacity-50 cursor-pointer shadow-none"
+              className="w-full h-11 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold tracking-wider rounded-[6px] transition-colors flex items-center justify-center gap-2 mt-2 disabled:opacity-50 cursor-pointer shadow-none"
             >
               {isLoading ? (
                 <>
@@ -249,7 +248,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           </div>
 
           {/* Security notice */}
-          <div className="pt-3 border-t border-[#CBD5E1] flex items-center justify-center gap-1.5 text-[11px] text-[#64748B]">
+          <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-center gap-1.5 text-[11px] text-[#64748B]">
             <ShieldCheck className="w-4 h-4 text-[#16A34A] shrink-0" />
             <span>Secure 256-bit TLS connection. Authorized access only.</span>
           </div>

@@ -315,7 +315,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
   return (
     <div className="space-y-6">
       {/* 1. Header Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-[8px] border border-[#CBD5E1]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-[8px] border border-[#E2E8F0]">
         <button
           onClick={onCancel}
           className="inline-flex items-center gap-2 text-xs font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors"
@@ -328,7 +328,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
           <span className="text-xs font-mono text-[#64748B]">
             Origination Workflow • Step {currentStep} of 4
           </span>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[4px] text-xs font-semibold bg-slate-100 text-[#0F172A] border border-[#CBD5E1] font-mono">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[4px] text-xs font-semibold bg-slate-100 text-[#0F172A] border border-[#E2E8F0] font-mono">
             <ShieldCheck className="w-3.5 h-3.5 text-[#2563EB]" />
             Active Underwriting
           </span>
@@ -336,7 +336,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
       </div>
 
       {/* Stepper Progress Bar */}
-      <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-4">
+      <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-4">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {STEP_DEFINITIONS.map((step) => {
             const isCompleted = currentStep > step.id;
@@ -358,7 +358,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                         ? 'bg-[#16A34A] text-white'
                         : isCurrent
                         ? 'bg-[#0F172A] text-white'
-                        : 'bg-slate-100 text-[#64748B] border border-[#CBD5E1]'
+                        : 'bg-slate-100 text-[#64748B] border border-[#E2E8F0]'
                     }`}
                   >
                     {isCompleted ? (
@@ -405,7 +405,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
       </div>
 
       {/* 2. Step View Content Surfaces */}
-      <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-5 sm:p-6">
+      <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-5 sm:p-6">
         {/* ================================================================ */}
         {/* STEP 1: BORROWER & PRODUCT SELECTION                             */}
         {/* ================================================================ */}
@@ -445,7 +445,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                     }}
                     onFocus={() => setIsBorrowerDropdownOpen(true)}
                     placeholder="Search borrower by name, ID (e.g. BOR-2026-0001), phone, or national ID..."
-                    className="w-full pl-9 pr-8 h-10 text-xs bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] placeholder-[#64748B] focus:outline-none focus:border-[#2563EB]"
+                    className="w-full pl-9 pr-8 h-10 text-xs bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] placeholder-[#64748B] focus:outline-none focus:border-[#2563EB]"
                   />
                   {borrowerSearch && (
                     <button
@@ -464,7 +464,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                       className="fixed inset-0 z-20"
                       onClick={() => setIsBorrowerDropdownOpen(false)}
                     />
-                    <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-[#CBD5E1] rounded-[6px] max-h-56 overflow-y-auto z-30 divide-y divide-[#CBD5E1] shadow-md">
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-[#E2E8F0] rounded-[6px] max-h-56 overflow-y-auto z-30 divide-y divide-[#E2E8F0] shadow-md">
                       {filteredBorrowers.length === 0 ? (
                         <div className="p-3 text-center text-xs text-[#64748B]">
                           No borrowers found matching "{borrowerSearch}".
@@ -486,7 +486,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                               }`}
                             >
                               <div className="flex items-center gap-2.5">
-                                <div className="w-7 h-7 rounded-[4px] bg-slate-100 text-[#0F172A] border border-[#CBD5E1] font-bold flex items-center justify-center text-xs shrink-0">
+                                <div className="w-7 h-7 rounded-[4px] bg-slate-100 text-[#0F172A] border border-[#E2E8F0] font-bold flex items-center justify-center text-xs shrink-0">
                                   {b.fullName.slice(0, 2).toUpperCase()}
                                 </div>
                                 <div>
@@ -510,8 +510,8 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
 
               {/* Selected Borrower Snapshot Card */}
               {selectedBorrower && (
-                <div className="p-4 rounded-[8px] bg-slate-50 border border-[#CBD5E1]">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#CBD5E1]">
+                <div className="p-4 rounded-[8px] bg-slate-50 border border-[#E2E8F0]">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E2E8F0]">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-[6px] bg-[#0F172A] text-white font-bold text-sm flex items-center justify-center shrink-0">
                         {selectedBorrower.fullName.slice(0, 2).toUpperCase()}
@@ -544,25 +544,25 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
 
                   {/* Metadata Grid */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-3 text-xs">
-                    <div className="p-2 rounded-[6px] bg-white border border-[#CBD5E1]">
+                    <div className="p-2 rounded-[6px] bg-white border border-[#E2E8F0]">
                       <span className="text-[10px] text-[#64748B] block uppercase">Sector</span>
                       <span className="font-semibold text-[#0F172A] truncate block mt-0.5">
                         {selectedBorrower.occupation || 'Private Sector Enterprise'}
                       </span>
                     </div>
-                    <div className="p-2 rounded-[6px] bg-white border border-[#CBD5E1]">
+                    <div className="p-2 rounded-[6px] bg-white border border-[#E2E8F0]">
                       <span className="text-[10px] text-[#64748B] block uppercase">Active Loans</span>
                       <span className="font-semibold text-[#0F172A] font-mono block mt-0.5">
                         {selectedBorrower.activeLoansCount} Facility
                       </span>
                     </div>
-                    <div className="p-2 rounded-[6px] bg-white border border-[#CBD5E1]">
+                    <div className="p-2 rounded-[6px] bg-white border border-[#E2E8F0]">
                       <span className="text-[10px] text-[#64748B] block uppercase">Outstanding</span>
                       <span className="font-semibold text-[#0F172A] font-mono block mt-0.5">
                         <MoneyText amount={selectedBorrower.totalOutstandingUSD} currency={calcCurrency} />
                       </span>
                     </div>
-                    <div className="p-2 rounded-[6px] bg-white border border-[#CBD5E1]">
+                    <div className="p-2 rounded-[6px] bg-white border border-[#E2E8F0]">
                       <span className="text-[10px] text-[#64748B] block uppercase">DTI Baseline</span>
                       <span className="font-semibold text-[#16A34A] font-mono block mt-0.5">
                         {selectedBorrower.dtiRatio}% (Safe)
@@ -574,7 +574,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
             </div>
 
             {/* 1B. Visual Radio Cards for Loan Products */}
-            <div className="space-y-3 pt-4 border-t border-[#CBD5E1]">
+            <div className="space-y-3 pt-4 border-t border-[#E2E8F0]">
               <div className="flex items-center justify-between">
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-wider text-[#0F172A] flex items-center gap-1.5">
@@ -600,21 +600,21 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                       className={`p-3.5 rounded-[8px] border cursor-pointer transition-colors flex flex-col justify-between relative ${
                         isSelected
                           ? 'border-[#0F172A] bg-slate-50'
-                          : 'border-[#CBD5E1] bg-white hover:bg-slate-50'
+                          : 'border-[#E2E8F0] bg-white hover:bg-slate-50'
                       }`}
                     >
                       <div>
                         <div className="flex items-center justify-between mb-2">
-                          <div className="w-8 h-8 rounded-[4px] bg-slate-100 border border-[#CBD5E1] flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-[4px] bg-slate-100 border border-[#E2E8F0] flex items-center justify-center">
                             {getProductCategoryIcon(prod.category)}
                           </div>
-                          <span className="font-mono font-bold text-xs px-2 py-0.5 rounded-[4px] bg-slate-100 text-[#0F172A] border border-[#CBD5E1]">
+                          <span className="font-mono font-bold text-xs px-2 py-0.5 rounded-[4px] bg-slate-100 text-[#0F172A] border border-[#E2E8F0]">
                             {prod.interestRate}% p.a.
                           </span>
                         </div>
 
                         <div className="flex items-center gap-1.5 mb-1">
-                          <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.2 rounded-[4px] bg-slate-100 text-[#64748B] border border-[#CBD5E1]">
+                          <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.2 rounded-[4px] bg-slate-100 text-[#64748B] border border-[#E2E8F0]">
                             {prod.category}
                           </span>
                           <span className="text-[11px] text-[#64748B] font-mono">
@@ -630,7 +630,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                         </p>
                       </div>
 
-                      <div className="mt-3 pt-2.5 border-t border-[#CBD5E1] space-y-1 text-[11px] font-mono">
+                      <div className="mt-3 pt-2.5 border-t border-[#E2E8F0] space-y-1 text-[11px] font-mono">
                         <div className="flex justify-between text-[#64748B]">
                           <span>Principal Limit:</span>
                           <span className="font-bold text-[#0F172A]">
@@ -663,7 +663,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
         {/* ================================================================ */}
         {currentStep === 2 && (
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#CBD5E1]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E2E8F0]">
               <div>
                 <h2 className="text-base font-bold text-[#0F172A]">
                   Step 2: Loan Terms & Live Underwriting Calculator
@@ -674,13 +674,13 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
               </div>
 
               {/* Dual Currency Selector */}
-              <div className="inline-flex items-center p-0.5 bg-slate-100 border border-[#CBD5E1] rounded-[6px]">
+              <div className="inline-flex items-center p-0.5 bg-slate-100 border border-[#E2E8F0] rounded-[6px]">
                 <button
                   type="button"
                   onClick={() => setCalcCurrency('USD')}
                   className={`px-3 py-1 text-xs font-mono font-bold rounded-[4px] transition-colors ${
                     calcCurrency === 'USD'
-                      ? 'bg-white text-[#0F172A] border border-[#CBD5E1]'
+                      ? 'bg-white text-[#0F172A] border border-[#E2E8F0]'
                       : 'text-[#64748B] hover:text-[#0F172A]'
                   }`}
                 >
@@ -691,7 +691,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                   onClick={() => setCalcCurrency('KHR')}
                   className={`px-3 py-1 text-xs font-mono font-bold rounded-[4px] transition-colors ${
                     calcCurrency === 'KHR'
-                      ? 'bg-white text-[#0F172A] border border-[#CBD5E1]'
+                      ? 'bg-white text-[#0F172A] border border-[#E2E8F0]'
                       : 'text-[#64748B] hover:text-[#0F172A]'
                   }`}
                 >
@@ -705,7 +705,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
               {/* Left Form Controls (7 Cols) */}
               <div className="lg:col-span-7 space-y-4">
                 {/* Active Facility Header */}
-                <div className="p-3 rounded-[6px] bg-slate-50 border border-[#CBD5E1] flex items-center justify-between text-xs">
+                <div className="p-3 rounded-[6px] bg-slate-50 border border-[#E2E8F0] flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-[#64748B]">Active Facility:</span>
                     <span className="font-bold text-[#0F172A]">{selectedProduct?.name}</span>
@@ -716,7 +716,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                 </div>
 
                 {/* 1. Principal Amount */}
-                <div className="p-4 rounded-[8px] bg-white border border-[#CBD5E1] space-y-3">
+                <div className="p-4 rounded-[8px] bg-white border border-[#E2E8F0] space-y-3">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <label className="text-xs font-semibold uppercase tracking-wider text-[#0F172A] flex items-center gap-1.5">
                       <DollarSign className="w-4 h-4 text-[#2563EB]" />
@@ -730,7 +730,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                         step={100}
                         value={requestedAmount}
                         onChange={(e) => setRequestedAmount(Number(e.target.value))}
-                        className="w-28 px-2.5 h-8 text-xs font-bold font-mono text-right bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                        className="w-28 px-2.5 h-8 text-xs font-bold font-mono text-right bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
                       />
                       <span className="text-xs font-mono font-bold text-[#64748B]">
                         {calcCurrency}
@@ -762,7 +762,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                             key={ratio}
                             type="button"
                             onClick={() => setRequestedAmount(targetVal)}
-                            className="px-2 py-0.5 rounded-[4px] bg-slate-100 hover:bg-slate-200 text-[#0F172A] text-[10px] font-semibold border border-[#CBD5E1]"
+                            className="px-2 py-0.5 rounded-[4px] bg-slate-100 hover:bg-slate-200 text-[#0F172A] text-[10px] font-semibold border border-[#E2E8F0]"
                           >
                             {ratio * 100}%
                           </button>
@@ -774,7 +774,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                 </div>
 
                 {/* 2. Tenure */}
-                <div className="p-4 rounded-[8px] bg-white border border-[#CBD5E1] space-y-3">
+                <div className="p-4 rounded-[8px] bg-white border border-[#E2E8F0] space-y-3">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <label className="text-xs font-semibold uppercase tracking-wider text-[#0F172A] flex items-center gap-1.5">
                       <Calendar className="w-4 h-4 text-[#2563EB]" />
@@ -788,7 +788,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                         step={1}
                         value={requestedTerm}
                         onChange={(e) => setRequestedTerm(Number(e.target.value))}
-                        className="w-20 px-2.5 h-8 text-xs font-bold font-mono text-right bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                        className="w-20 px-2.5 h-8 text-xs font-bold font-mono text-right bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
                       />
                       <span className="text-xs font-semibold text-[#64748B]">Months</span>
                     </div>
@@ -817,7 +817,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                           className={`px-2 py-0.5 rounded-[4px] text-[10px] font-semibold border ${
                             requestedTerm === m
                               ? 'bg-[#0F172A] text-white border-[#0F172A]'
-                              : 'bg-slate-100 text-[#0F172A] border-[#CBD5E1] hover:bg-slate-200'
+                              : 'bg-slate-100 text-[#0F172A] border-[#E2E8F0] hover:bg-slate-200'
                           }`}
                         >
                           {m}m
@@ -829,7 +829,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                 </div>
 
                 {/* 3. Repayment Frequency */}
-                <div className="p-4 rounded-[8px] bg-white border border-[#CBD5E1] space-y-2.5">
+                <div className="p-4 rounded-[8px] bg-white border border-[#E2E8F0] space-y-2.5">
                   <label className="text-xs font-semibold uppercase tracking-wider text-[#0F172A] flex items-center gap-1.5">
                     <Clock className="w-4 h-4 text-[#2563EB]" />
                     <span>Repayment Schedule Frequency</span>
@@ -846,7 +846,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                           className={`p-2.5 rounded-[6px] border text-center transition-colors ${
                             isSelected
                               ? 'border-[#0F172A] bg-slate-100 text-[#0F172A]'
-                              : 'border-[#CBD5E1] hover:border-slate-400 bg-white text-[#64748B]'
+                              : 'border-[#E2E8F0] hover:border-slate-400 bg-white text-[#64748B]'
                           }`}
                         >
                           <span className="text-xs block capitalize font-semibold">
@@ -871,7 +871,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                     value={purpose}
                     onChange={(e) => setPurpose(e.target.value)}
                     placeholder="e.g. Commercial Inventory & Working Capital Expansion"
-                    className="w-full px-3 h-10 text-xs bg-white border border-[#CBD5E1] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                    className="w-full px-3 h-10 text-xs bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
               </div>
@@ -1017,8 +1017,8 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
             {/* Repayment Schedule Modal */}
             {showScheduleModal && (
               <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50">
-                <div className="bg-white rounded-[8px] max-w-3xl w-full p-5 border border-[#CBD5E1] shadow-md max-h-[85vh] flex flex-col">
-                  <div className="flex items-center justify-between pb-3 border-b border-[#CBD5E1]">
+                <div className="bg-white rounded-[8px] max-w-3xl w-full p-5 border border-[#E2E8F0] shadow-md max-h-[85vh] flex flex-col">
+                  <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
                     <div>
                       <h3 className="text-sm font-bold text-[#0F172A]">
                         Amortization Schedule Preview
@@ -1035,9 +1035,9 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                     </button>
                   </div>
 
-                  <div className="overflow-y-auto flex-1 my-3 border border-[#CBD5E1] rounded-[6px]">
+                  <div className="overflow-y-auto flex-1 my-3 border border-[#E2E8F0] rounded-[6px]">
                     <table className="w-full text-left text-xs">
-                      <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-wider text-[#64748B] sticky top-0 border-b border-[#CBD5E1]">
+                      <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-wider text-[#64748B] sticky top-0 border-b border-[#E2E8F0]">
                         <tr>
                           <th className="py-2 px-3">#</th>
                           <th className="py-2 px-3">Due Date</th>
@@ -1047,7 +1047,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                           <th className="py-2 px-3 text-right">Remaining Balance</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-[#CBD5E1]">
+                      <tbody className="divide-y divide-[#E2E8F0]">
                         {amortizationSchedule.map((row) => (
                           <tr key={row.installmentNo} className="hover:bg-slate-50">
                             <td className="py-2 px-3 font-mono font-bold text-[#0F172A]">
@@ -1074,7 +1074,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                     </table>
                   </div>
 
-                  <div className="flex items-center justify-between pt-2.5 border-t border-[#CBD5E1] text-xs">
+                  <div className="flex items-center justify-between pt-2.5 border-t border-[#E2E8F0] text-xs">
                     <div className="font-mono text-[#64748B]">
                       Total Repayment: <MoneyText amount={calc.totalRepayment} currency={calcCurrency} className="font-bold text-[#0F172A]" />
                     </div>
@@ -1123,10 +1123,10 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                 className={`p-5 rounded-[8px] border-2 border-dashed text-center space-y-2 cursor-pointer transition-colors ${
                   dragOverZone === 'NATIONAL_ID'
                     ? 'border-[#2563EB] bg-blue-50/50'
-                    : 'border-[#CBD5E1] bg-slate-50 hover:bg-slate-100'
+                    : 'border-[#E2E8F0] bg-slate-50 hover:bg-slate-100'
                 }`}
               >
-                <div className="w-10 h-10 rounded-[6px] bg-slate-100 border border-[#CBD5E1] text-[#0F172A] flex items-center justify-center mx-auto">
+                <div className="w-10 h-10 rounded-[6px] bg-slate-100 border border-[#E2E8F0] text-[#0F172A] flex items-center justify-center mx-auto">
                   <User className="w-5 h-5" />
                 </div>
                 <div>
@@ -1137,7 +1137,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                     Valid government identity document
                   </p>
                 </div>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] bg-white border border-[#CBD5E1] text-[10px] font-semibold text-[#0F172A]">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] bg-white border border-[#E2E8F0] text-[10px] font-semibold text-[#0F172A]">
                   <Upload className="w-3 h-3 text-[#2563EB]" />
                   <span>Drop PDF or Browse</span>
                 </div>
@@ -1159,10 +1159,10 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                 className={`p-5 rounded-[8px] border-2 border-dashed text-center space-y-2 cursor-pointer transition-colors ${
                   dragOverZone === 'INCOME_PROOF'
                     ? 'border-[#2563EB] bg-blue-50/50'
-                    : 'border-[#CBD5E1] bg-slate-50 hover:bg-slate-100'
+                    : 'border-[#E2E8F0] bg-slate-50 hover:bg-slate-100'
                 }`}
               >
-                <div className="w-10 h-10 rounded-[6px] bg-slate-100 border border-[#CBD5E1] text-[#0F172A] flex items-center justify-center mx-auto">
+                <div className="w-10 h-10 rounded-[6px] bg-slate-100 border border-[#E2E8F0] text-[#0F172A] flex items-center justify-center mx-auto">
                   <FileCheck className="w-5 h-5" />
                 </div>
                 <div>
@@ -1173,7 +1173,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                     Bank statements or salary slips
                   </p>
                 </div>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] bg-white border border-[#CBD5E1] text-[10px] font-semibold text-[#0F172A]">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] bg-white border border-[#E2E8F0] text-[10px] font-semibold text-[#0F172A]">
                   <Upload className="w-3 h-3 text-[#2563EB]" />
                   <span>Drop PDF or Browse</span>
                 </div>
@@ -1195,10 +1195,10 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                 className={`p-5 rounded-[8px] border-2 border-dashed text-center space-y-2 cursor-pointer transition-colors ${
                   dragOverZone === 'COLLATERAL'
                     ? 'border-[#2563EB] bg-blue-50/50'
-                    : 'border-[#CBD5E1] bg-slate-50 hover:bg-slate-100'
+                    : 'border-[#E2E8F0] bg-slate-50 hover:bg-slate-100'
                 }`}
               >
-                <div className="w-10 h-10 rounded-[6px] bg-slate-100 border border-[#CBD5E1] text-[#0F172A] flex items-center justify-center mx-auto">
+                <div className="w-10 h-10 rounded-[6px] bg-slate-100 border border-[#E2E8F0] text-[#0F172A] flex items-center justify-center mx-auto">
                   <ShieldCheck className="w-5 h-5" />
                 </div>
                 <div>
@@ -1209,7 +1209,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                     Title deed or signed guarantor doc
                   </p>
                 </div>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] bg-white border border-[#CBD5E1] text-[10px] font-semibold text-[#0F172A]">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] bg-white border border-[#E2E8F0] text-[10px] font-semibold text-[#0F172A]">
                   <Upload className="w-3 h-3 text-[#2563EB]" />
                   <span>Drop PDF or Browse</span>
                 </div>
@@ -1228,18 +1228,18 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
               </div>
 
               {uploadedDocs.length === 0 ? (
-                <div className="p-6 text-center border border-dashed border-[#CBD5E1] rounded-[8px] bg-slate-50 text-xs text-[#64748B]">
+                <div className="p-6 text-center border border-dashed border-[#E2E8F0] rounded-[8px] bg-slate-50 text-xs text-[#64748B]">
                   No documents attached yet. Click or drag files into the upload zones above.
                 </div>
               ) : (
-                <div className="divide-y divide-[#CBD5E1] border border-[#CBD5E1] rounded-[8px] overflow-hidden">
+                <div className="divide-y divide-[#E2E8F0] border border-[#E2E8F0] rounded-[8px] overflow-hidden">
                   {uploadedDocs.map((doc) => (
                     <div
                       key={doc.id}
                       className="flex items-center justify-between p-3 bg-white hover:bg-slate-50 text-xs transition-colors"
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-[4px] bg-slate-100 text-[#0F172A] border border-[#CBD5E1] flex items-center justify-center shrink-0">
+                        <div className="w-8 h-8 rounded-[4px] bg-slate-100 text-[#0F172A] border border-[#E2E8F0] flex items-center justify-center shrink-0">
                           <FileText className="w-4 h-4" />
                         </div>
                         <div className="min-w-0">
@@ -1284,8 +1284,8 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
             {/* Document Preview Modal */}
             {previewDoc && (
               <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50">
-                <div className="bg-white rounded-[8px] max-w-lg w-full p-5 border border-[#CBD5E1] shadow-md space-y-3">
-                  <div className="flex items-center justify-between pb-2.5 border-b border-[#CBD5E1]">
+                <div className="bg-white rounded-[8px] max-w-lg w-full p-5 border border-[#E2E8F0] shadow-md space-y-3">
+                  <div className="flex items-center justify-between pb-2.5 border-b border-[#E2E8F0]">
                     <div className="flex items-center gap-2">
                       <FileText className="w-4 h-4 text-[#2563EB]" />
                       <div>
@@ -1301,7 +1301,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                     </button>
                   </div>
 
-                  <div className="h-52 rounded-[6px] bg-slate-50 border border-[#CBD5E1] flex flex-col items-center justify-center text-[#64748B] text-xs p-5 text-center space-y-2">
+                  <div className="h-52 rounded-[6px] bg-slate-50 border border-[#E2E8F0] flex flex-col items-center justify-center text-[#64748B] text-xs p-5 text-center space-y-2">
                     <FileCheck className="w-10 h-10 text-[#2563EB]" />
                     <p className="font-semibold text-[#0F172A]">Digital Document Verified</p>
                     <p className="text-[11px] text-[#64748B] max-w-xs">
@@ -1312,7 +1312,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                   <div className="flex justify-end pt-2">
                     <button
                       onClick={() => setPreviewDoc(null)}
-                      className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 font-semibold text-xs text-[#0F172A] rounded-[6px] border border-[#CBD5E1] transition-colors"
+                      className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 font-semibold text-xs text-[#0F172A] rounded-[6px] border border-[#E2E8F0] transition-colors"
                     >
                       Close Preview
                     </button>
@@ -1340,8 +1340,8 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
             {/* 4-Section Review Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
               {/* 1. Borrower Summary */}
-              <div className="p-4 rounded-[8px] bg-slate-50 border border-[#CBD5E1] space-y-2.5">
-                <div className="flex items-center justify-between pb-2 border-b border-[#CBD5E1]">
+              <div className="p-4 rounded-[8px] bg-slate-50 border border-[#E2E8F0] space-y-2.5">
+                <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
                   <span className="font-semibold uppercase tracking-wider text-[#0F172A] text-[11px] flex items-center gap-1.5">
                     <User className="w-3.5 h-3.5 text-[#2563EB]" />
                     <span>Borrower Profile</span>
@@ -1369,8 +1369,8 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
               </div>
 
               {/* 2. Facility & Terms Summary */}
-              <div className="p-4 rounded-[8px] bg-slate-50 border border-[#CBD5E1] space-y-2.5">
-                <div className="flex items-center justify-between pb-2 border-b border-[#CBD5E1]">
+              <div className="p-4 rounded-[8px] bg-slate-50 border border-[#E2E8F0] space-y-2.5">
+                <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
                   <span className="font-semibold uppercase tracking-wider text-[#0F172A] text-[11px] flex items-center gap-1.5">
                     <Briefcase className="w-3.5 h-3.5 text-[#2563EB]" />
                     <span>Facility & Terms</span>
@@ -1398,8 +1398,8 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
               </div>
 
               {/* 3. Financial Calculation Totals */}
-              <div className="p-4 rounded-[8px] bg-slate-50 border border-[#CBD5E1] space-y-2.5">
-                <div className="flex items-center justify-between pb-2 border-b border-[#CBD5E1]">
+              <div className="p-4 rounded-[8px] bg-slate-50 border border-[#E2E8F0] space-y-2.5">
+                <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
                   <span className="font-semibold uppercase tracking-wider text-[#0F172A] text-[11px] flex items-center gap-1.5">
                     <DollarSign className="w-3.5 h-3.5 text-[#2563EB]" />
                     <span>Calculation Summary</span>
@@ -1417,7 +1417,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                     <span className="text-[#64748B]">Total Interest:</span>
                     <MoneyText amount={calc.totalInterest} currency={calcCurrency} className="font-bold text-[#16A34A]" />
                   </div>
-                  <div className="flex justify-between pt-1 border-t border-[#CBD5E1]">
+                  <div className="flex justify-between pt-1 border-t border-[#E2E8F0]">
                     <span className="text-[#0F172A] font-semibold">Total Repayment:</span>
                     <MoneyText amount={calc.totalRepayment} currency={calcCurrency} className="font-bold text-[#0F172A]" />
                   </div>
@@ -1429,8 +1429,8 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
               </div>
 
               {/* 4. Risk Appraisal */}
-              <div className="p-4 rounded-[8px] bg-slate-50 border border-[#CBD5E1] space-y-2.5">
-                <div className="flex items-center justify-between pb-2 border-b border-[#CBD5E1]">
+              <div className="p-4 rounded-[8px] bg-slate-50 border border-[#E2E8F0] space-y-2.5">
+                <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
                   <span className="font-semibold uppercase tracking-wider text-[#0F172A] text-[11px] flex items-center gap-1.5">
                     <ShieldCheck className="w-3.5 h-3.5 text-[#2563EB]" />
                     <span>Risk Assessment</span>
@@ -1463,13 +1463,13 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
             </div>
 
             {/* Purpose Notes */}
-            <div className="p-3 rounded-[6px] bg-slate-50 border border-[#CBD5E1] text-xs">
+            <div className="p-3 rounded-[6px] bg-slate-50 border border-[#E2E8F0] text-xs">
               <span className="font-semibold text-[#0F172A] block mb-0.5">Stated Loan Purpose:</span>
               <p className="text-[#64748B] italic">"{purpose}"</p>
             </div>
 
             {/* Compliance Notice */}
-            <div className="p-3 rounded-[6px] bg-slate-50 border border-[#CBD5E1] flex items-start gap-2.5 text-xs">
+            <div className="p-3 rounded-[6px] bg-slate-50 border border-[#E2E8F0] flex items-start gap-2.5 text-xs">
               <ShieldCheck className="w-4 h-4 text-[#2563EB] shrink-0 mt-0.5" />
               <div>
                 <span className="font-semibold text-[#0F172A] block">
@@ -1485,13 +1485,13 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
         )}
 
         {/* Wizard Footer Navigation Controls */}
-        <div className="flex items-center justify-between pt-5 mt-6 border-t border-[#CBD5E1]">
+        <div className="flex items-center justify-between pt-5 mt-6 border-t border-[#E2E8F0]">
           <div>
             {currentStep > 1 ? (
               <button
                 type="button"
                 onClick={() => setCurrentStep((prev) => (prev - 1) as any)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-[#0F172A] bg-white hover:bg-slate-50 border border-[#CBD5E1] rounded-[6px] transition-colors"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-[#0F172A] bg-white hover:bg-slate-50 border border-[#E2E8F0] rounded-[6px] transition-colors"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Previous Step</span>
@@ -1513,7 +1513,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                 <button
                   type="button"
                   onClick={() => handleFinalSubmit(true)}
-                  className="px-3.5 py-2 text-xs font-semibold text-[#0F172A] bg-white hover:bg-slate-50 border border-[#CBD5E1] rounded-[6px] transition-colors"
+                  className="px-3.5 py-2 text-xs font-semibold text-[#0F172A] bg-white hover:bg-slate-50 border border-[#E2E8F0] rounded-[6px] transition-colors"
                 >
                   Save as Draft
                 </button>
@@ -1543,9 +1543,9 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
       {/* 3. Official Submission Confirmation Modal */}
       {showConfirmationModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50">
-          <div className="bg-white rounded-[8px] max-w-lg w-full p-5 border border-[#CBD5E1] shadow-md space-y-4">
+          <div className="bg-white rounded-[8px] max-w-lg w-full p-5 border border-[#E2E8F0] shadow-md space-y-4">
             <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-[6px] bg-slate-100 border border-[#CBD5E1] text-[#0F172A] flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 rounded-[6px] bg-slate-100 border border-[#E2E8F0] text-[#0F172A] flex items-center justify-center shrink-0">
                 <ShieldCheck className="w-5 h-5 text-[#2563EB]" />
               </div>
               <div className="min-w-0">
@@ -1559,7 +1559,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
             </div>
 
             {/* Quick Summary Box */}
-            <div className="p-3 rounded-[6px] bg-slate-50 border border-[#CBD5E1] space-y-2 text-xs">
+            <div className="p-3 rounded-[6px] bg-slate-50 border border-[#E2E8F0] space-y-2 text-xs">
               <div className="flex justify-between">
                 <span className="text-[#64748B]">Applicant Borrower:</span>
                 <span className="font-semibold text-[#0F172A]">{selectedBorrower?.fullName}</span>
@@ -1590,7 +1590,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                 type="checkbox"
                 checked={confirmAgreed}
                 onChange={(e) => setConfirmAgreed(e.target.checked)}
-                className="mt-0.5 w-4 h-4 rounded-[4px] border-[#CBD5E1] text-[#0F172A] focus:ring-0"
+                className="mt-0.5 w-4 h-4 rounded-[4px] border-[#E2E8F0] text-[#0F172A] focus:ring-0"
               />
               <span className="text-[11px] text-[#64748B] leading-relaxed">
                 I certify that all applicant details, supporting KYC credentials, and stated income proofs have been preliminarily validated in accordance with National Bank of Cambodia compliance guidelines.
@@ -1598,12 +1598,12 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
             </label>
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#CBD5E1]">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#E2E8F0]">
               <button
                 type="button"
                 onClick={() => setShowConfirmationModal(false)}
                 disabled={isSubmitting}
-                className="px-3.5 py-2 text-xs font-semibold text-[#0F172A] hover:bg-slate-100 rounded-[6px] border border-[#CBD5E1] transition-colors"
+                className="px-3.5 py-2 text-xs font-semibold text-[#0F172A] hover:bg-slate-100 rounded-[6px] border border-[#E2E8F0] transition-colors"
               >
                 Back to Review
               </button>

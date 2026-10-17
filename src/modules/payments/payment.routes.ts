@@ -11,10 +11,10 @@ paymentRouter.use(authenticate);
 // 1. List payments with search by receipt #, date range, payment method
 paymentRouter.get('/', PaymentController.list);
 
-// 2. Record payment & execute waterfall reconciliation (CASHIER, MANAGER)
+// 2. Record payment & execute waterfall reconciliation (ADMIN)
 paymentRouter.post(
   '/',
-  authorize(UserRole.CASHIER, UserRole.MANAGER),
+  authorize(UserRole.ADMIN),
   PaymentController.record
 );
 

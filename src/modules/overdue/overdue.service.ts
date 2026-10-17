@@ -62,10 +62,10 @@ export class OverdueService {
 
     const processedLoans: any[] = [];
 
-    // Query collection staff to notify
+    // Query admin staff to notify
     const staffToNotify = await prisma.user.findMany({
       where: {
-        role: { in: [UserRole.LOAN_OFFICER, UserRole.CASHIER, UserRole.MANAGER] },
+        role: UserRole.ADMIN,
         status: 'ACTIVE'
       },
       select: { id: true, role: true }

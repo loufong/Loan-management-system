@@ -26,8 +26,8 @@ export class BorrowerService {
 
     const where: any = {};
 
-    // Strict security constraint: BORROWER can only view their own profile
-    if (viewer.role === UserRole.BORROWER) {
+    // Strict security constraint: USER can only view their own profile
+    if (viewer.role === UserRole.USER) {
       where.userId = viewer.id;
     } else {
       if (query.status) {

@@ -63,11 +63,8 @@ async function runKpiReportingTests() {
 
   // 1. Mock Users & Auth Tokens
   const mockUsers: Record<string, any> = {
-    'user-admin': { id: 'user-admin', username: 'admin', email: 'admin@lms.bank', role: UserRole.MANAGER, status: 'ACTIVE', fullName: 'Chief Financial Officer' },
-    'user-manager': { id: 'user-manager', username: 'manager', email: 'manager@lms.bank', role: UserRole.MANAGER, status: 'ACTIVE', fullName: 'Risk Manager' },
-    'user-officer': { id: 'user-officer', username: 'officer', email: 'officer@lms.bank', role: UserRole.LOAN_OFFICER, status: 'ACTIVE', fullName: 'Loan Underwriter' },
-    'user-cashier': { id: 'user-cashier', username: 'cashier', email: 'cashier@lms.bank', role: UserRole.CASHIER, status: 'ACTIVE', fullName: 'Desk Cashier' },
-    'user-borrower': { id: 'user-borrower', username: 'borrower', email: 'borrower@lms.bank', role: UserRole.BORROWER, status: 'ACTIVE', fullName: 'Retail Client' }
+    'user-admin': { id: 'user-admin', username: 'admin', email: 'admin@lms.bank', role: UserRole.ADMIN, status: 'ACTIVE', fullName: 'Chief Financial Officer' },
+    'user-borrower': { id: 'user-borrower', username: 'borrower', email: 'borrower@lms.bank', role: UserRole.USER, status: 'ACTIVE', fullName: 'Retail Client' }
   };
 
   prisma.user.findUnique = (async ({ where }: any) => {
@@ -78,9 +75,8 @@ async function runKpiReportingTests() {
     return jwt.sign({ id: userId, username: mockUsers[userId].username, email: mockUsers[userId].email, role }, JWT_ACCESS_SECRET, { expiresIn: '1h' });
   }
 
-  const adminToken = makeToken(UserRole.MANAGER, 'user-admin');
-  const managerToken = makeToken(UserRole.MANAGER, 'user-manager');
-  const borrowerToken = makeToken(UserRole.BORROWER, 'user-borrower');
+  const adminToken = makeToken(UserRole.ADMIN, 'user-admin');
+  const borrowerToken = makeToken(UserRole.USER, 'user-borrower');
 
   // --- Hermetic Mocks for SQL Aggregations & Reporting ---
   prisma.loanApplication.count = (async (args?: any) => {
@@ -294,7 +290,7 @@ async function runKpiReportingTests() {
 
   // A. GET /api/dashboard/charts/disbursement-vs-collection
   const trendRes = await request(app, 'GET', '/api/dashboard/charts/disbursement-vs-collection', undefined, {
-    Authorization: `Bearer ${managerToken}`
+    Authorization: `Bearer ${adminToken}`
   });
   assert.strictEqual(trendRes.status, 200);
   assert.strictEqual(trendRes.body.success, true);
@@ -308,7 +304,7 @@ async function runKpiReportingTests() {
 
   // B. GET /api/dashboard/charts/portfolio-by-product
   const productChartRes = await request(app, 'GET', '/api/dashboard/charts/portfolio-by-product', undefined, {
-    Authorization: `Bearer ${managerToken}`
+    Authorization: `Bearer ${adminToken}`
   });
   assert.strictEqual(productChartRes.status, 200);
   assert.strictEqual(productChartRes.body.success, true);

@@ -1,211 +1,268 @@
-# Apex Loan Management System (LMS) — Production Enterprise Platform
+# Apex Loan Management System (LMS) — Production Platform & Mobile-Ready API
 
-A comprehensive, production-grade Loan Management System (LMS) engineered with a clean layered architecture, robust financial calculation engine, PostgreSQL core banking ledger, and a clean professional banking user interface.
+A production-grade, two-tier Loan Management System (LMS) engineered with a clean layered architecture, robust financial calculation engine, PostgreSQL core banking ledger, and a professional banking user interface. Ready for production web deployment and native mobile application consumption (iOS & Android).
 
-GitHub Repository: [https://github.com/loufong/Loan-management-system](https://github.com/loufong/Loan-management-system)  
-Live Frontend Deployment: [https://loufong.github.io/Loan-management-system/](https://loufong.github.io/Loan-management-system/)
+- **GitHub Repository**: [https://github.com/loufong/Loan-management-system](https://github.com/loufong/Loan-management-system)
+- **Live Frontend Web Application**: [https://loufong.github.io/Loan-management-system/](https://loufong.github.io/Loan-management-system/)
+- **Interactive OpenAPI 3.0 / Swagger Documentation**: `/api/v1/docs` (JSON: `/api/v1/openapi.json`)
 
 ---
 
 ## 📑 Table of Contents
-1. [Project Overview](#-project-overview)
-2. [Core Features](#-core-features)
-3. [Technology Stack](#-technology-stack)
-4. [System Architecture](#-system-architecture)
-5. [User Roles & RBAC Matrix](#-user-roles--rbac-matrix)
-6. [Complete Loan Lifecycle Workflow](#-complete-loan-lifecycle-workflow)
-7. [Financial Calculations & Decimal Safety](#-financial-calculations--decimal-safety)
-8. [Installation & Setup](#-installation--setup)
-9. [Environment Variables](#-environment-variables)
-10. [Database Setup & Prisma Migrations](#-database-setup--prisma-migrations)
-11. [Development & Seed Data](#-development--seed-data)
-12. [Running Frontend & Backend](#-running-frontend--backend)
-13. [Testing & Verification](#-testing--verification)
-14. [Deployment (GitHub Pages & Backend)](#-deployment)
-15. [REST API Overview](#-rest-api-overview)
-16. [Security & Compliance](#-security--compliance)
-17. [Production Operational Notes](#-production-notes)
-
----
-
-## 🌟 Project Overview
-Apex LMS manages the entire lifecycle of consumer, student, personal, and business micro-lending. Every single operation—from self-service borrower onboarding, underwriting review, credit assessment, manager approval, cashier disbursement, multi-installment waterfall reconciliation, overdue scanning with late fees, to full loan payoffs and immutable audit trails—is backed by real ACID database transactions in PostgreSQL.
-
-There is zero fake data, no simulated mock states, and no hardcoded dashboard metrics. Every KPI is aggregated directly from live database tables.
-
----
-
-## ⚡ Core Features
-- **Borrower Self-Service**: Borrower registration with email OTP verification, complete KYC profile management, real-time application tracker, loan schedule viewer, and downloadable payment receipts.
-- **Credit Assessment & DTI Engine**: Real-time Debt-to-Income (DTI) computation, risk tier classification (`LOW_RISK`, `MEDIUM_RISK`, `HIGH_RISK`), and loan officer underwriting recommendations.
-- **Strict Multi-Stage Approval**: Committee governance where managerial approval activates loan ledgers; rejection strictly requires a non-empty regulatory audit reason.
-- **Window Cashier Terminal**: Real-time disbursement with reference tracking and automated generation of 100% database-persisted repayment installments.
-- **Waterfall Payment Processing**: Automated multi-installment allocation (allocates payments to oldest unpaid installments, splits partial payments, decrements balances, and detects loan completion).
-- **Automated Overdue Engine**: Automated daily cron job and on-demand trigger flagging delinquent installments (`current_date > due_date` and `remaining > 0`), calculating days overdue and accrued late fee penalties.
-- **Role-Based Dashboards**: Tailored real-time dashboards for all 6 roles: Administrator, Branch Manager, Loan Underwriter, Credit Officer, Teller/Cashier, and Borrower.
-- **Enterprise Reporting & CSV Export**: Real-time regulatory reports for Active Portfolio, Delinquencies, Daily Collections, Loan Products, and System Audit Logs with 1-click RFC 4180-compliant CSV exports.
-- **Enterprise UI/UX**: Professional banking interface styled in crisp slate/white/indigo tokens with subtle borders and zero gradients.
-
----
-
-## 🛠 Technology Stack
-
-### Backend
-- **Runtime**: Node.js (v20+ LTS)
-- **Framework**: Express.js with TypeScript
-- **Database**: PostgreSQL
-- **ORM**: Prisma ORM v5 (21 relational schema tables)
-- **Security**: JWT (Access & Refresh tokens), bcryptjs password hashing (10 salt rounds), Helmet security headers, CORS origin verification
-- **Validation**: Zod schema DTO validation with custom sanitizers
-- **Mailing**: Nodemailer with Gmail SMTP and development simulation fallback
-
-### Frontend
-- **Framework**: React 18 with TypeScript
-- **Build Tool**: Vite v5 (SPA with GitHub Pages 404 router redirect)
-- **Styling**: Tailwind CSS (Enterprise Banking Theme: `#0F172A`, `#2563EB`, `#CBD5E1`, `#F8FAFC`, zero gradients)
-- **Icons**: Lucide React
-- **State & Data**: Custom typed API client with token lifecycle handling and active role sync
+1. [System Architecture](#-system-architecture)
+2. [Role Architecture (ADMIN & USER)](#-role-architecture)
+3. [Authentication & Gmail OTP Lifecycle](#-authentication--gmail-otp-lifecycle)
+4. [Financial Calculation & Ledger Engine](#-financial-calculation--ledger-engine)
+5. [Payment Processing & Idempotency](#-payment-processing--idempotency)
+6. [Automated Overdue Engine](#-automated-overdue-engine)
+7. [Document Storage & KYC Abstraction](#-document-storage--kyc-abstraction)
+8. [Standardized REST API Namespace (`/api/v1`)](#-standardized-rest-api-namespace)
+9. [Mobile Application Readiness](#-mobile-application-readiness)
+10. [Environment Variables & Configuration](#-environment-variables--configuration)
+11. [Installation & Setup](#-installation--setup)
+12. [Automated Verification & Test Suites](#-automated-verification--test-suites)
+13. [Frontend & GitHub Pages SPA Routing](#-frontend--github-pages-spa-routing)
+14. [Security & Compliance](#-security--compliance)
 
 ---
 
 ## 🏛 System Architecture
+
+The system uses a single unified backend API that simultaneously serves both the Web Single Page Application (SPA) and future Mobile applications:
+
 ```
-                         [ Client Browser / SPA ]
-                                    │
-                         [ GitHub Pages / CDN ]
-                                    │
-                               (HTTPS API)
-                                    │
-                      [ Express.js REST Gateway ]
-                                    │
-    ┌───────────────────────────────┴───────────────────────────────┐
-    │                                                               │
-[ Helmet & CORS ]                                         [ Rate Limiting ]
-    │                                                               │
-[ JWT Authentication ]                                    [ Session Guards ]
-    │                                                               │
-[ Role-Based Access Control (RBAC) ]                      [ Ownership ABAC ]
-    │                                                               │
-[ Zod DTO Validation ]                                    [ Error Handling ]
-    │                                                               │
-    └───────────────────────────────┬───────────────────────────────┘
-                                    │
-            ┌───────────────────────┴───────────────────────┐
-            │                                               │
-  [ Domain Services ]                           [ Loan Calculator Engine ]
-  - AuthService & OTP                           - Simple Interest
-  - ApplicationService                          - Reducing Balance (EMI)
-  - LoanService (Disbursement)                  - Penny Reconciliation
-  - PaymentService (Waterfall)                  - Overdue Penalty Calc
-  - OverdueService & Alerts                                 │
-  - ReportService & CSV Export                              │
-            │                                               │
-            └───────────────────────┬───────────────────────┘
-                                    │
-                        [ Prisma ORM Client ]
-                                    │
-                      (ACID Database Transactions)
-                                    │
-                     [ PostgreSQL Database Engine ]
+┌─────────────────────────────────┐        ┌──────────────────────────────────┐
+│      Web Browser (Desktop)      │        │      Mobile App (iOS/Android)    │
+│  (GitHub Pages / Custom Domain) │        │     (Future React Native / Expo) │
+└────────────────┬────────────────┘        └─────────────────┬────────────────┘
+                 │                                           │
+                 │ HTTPS (/api/v1/*)                         │ HTTPS (/api/v1/*)
+                 └─────────────────────┬─────────────────────┘
+                                       │
+                         ┌─────────────▼─────────────┐
+                         │   Production Express API  │
+                         │      (TypeScript/Node)    │
+                         └─────────────┬─────────────┘
+                                       │
+                ┌──────────────────────┼──────────────────────┐
+                ▼                      ▼                      ▼
+      [ PostgreSQL Database ]  [ Gmail SMTP Service ]  [ KYC Cloud Storage ]
+        Prisma ORM (ACID)      Nodemailer (Real OTP)   S3 / Supabase / Cloudinary
 ```
+
+- **PostgreSQL is the single source of truth** for all business state, financial balances, installment schedules, user accounts, and immutable audit logs.
+- **Backend is the single authority** for financial formulas (simple interest, amortized EMI, DTI underwriting, late fees, and penny-perfect installment reconciliation). No calculations are delegated to frontend clients or mobile apps.
 
 ---
 
-## 👥 User Roles & RBAC Matrix
+## 👥 Role Architecture
 
-| Role | Navigation & Permissions | Primary Responsibilities |
-|---|---|---|
-| `ADMIN` | User Management, Loan Products, Audit Logs, Portfolio Reports, System Settings | Super-admin, system governance, account activation, product rules. |
-| `MANAGER` | Committee Approvals, Portfolio Overview, Disbursements, Collections, Reports | Final approval/rejection decision maker, high-level portfolio supervisor. |
-| `LOAN_OFFICER` | Loan Applications, KYC Verification, Underwriting Reviews, Borrower Profiles | Initial application review, document inspection, borrower verification. |
-| `CREDIT_OFFICER`| Risk Assessments, DTI Computations, Credit Scoring, Risk Classification | Financial analysis, debt-to-income risk evaluation, credit recommendations. |
-| `CASHIER` | Disbursements Queue, Payment Collection Terminal, Receipts, Overdue Ledger | Fund disbursement, payment receipt issuance, daily POS reconciliation. |
-| `BORROWER` | Self-Service Portal, Product Catalog, Loan Application Wizard, Payment History | Loan applications, document uploads, repayment tracking, receipt printing. |
+The system enforces a strict **two-tier role architecture**:
 
----
+### 1. `ADMIN`
+- Full administrative authority across the entire platform.
+- Manage user accounts, activation/deactivation, and role assignments.
+- Create and configure loan products, interest rate ranges, term limits, and eligibility criteria.
+- Review loan applications, run credit scoring, approve or reject applications (mandatory rejection reason).
+- Disburse approved loans, activating loan accounts and generating penny-perfect repayment schedules.
+- Record loan repayment collections and process waterfall allocations.
+- Execute automated and on-demand overdue scans with accrued late-fee calculations.
+- Inspect system-wide KPIs, portfolio cashflow charts, delinquency watchlists, and regulatory CSV reports.
+- View immutable forensic audit trail logs.
 
-## 🔄 Complete Loan Lifecycle Workflow
-
-```
-[ 1. Borrower Registration ]
-             │
-[ 2. OTP Verification ] ──> Promotes account to permanent User & Borrower record
-             │
-[ 3. Product Selection ] ──> Choose terms, repayment frequency & amount
-             │
-[ 4. Submit Application ] ──> Status: SUBMITTED (Assigned APP-YYYY-XXXX)
-             │
-[ 5. Loan Officer Review ] ──> Status: UNDER_REVIEW (Underwriting notes recorded)
-             │
-[ 6. Credit Assessment ] ──> DTI calculated, risk tier assigned (LOW/MED/HIGH)
-             │
-[ 7. Manager Approval ] ──> APPROVED (or REJECTED with mandatory audit reason)
-             │
-[ 8. Cashier Disbursement ] ──> Creates Loan (LN-YYYY-XXXX), Status: ACTIVE
-             │                  Generates RepaymentSchedule records in PostgreSQL
-             │
-[ 9. Payment Collection ] ──> Cashier records cash/transfer/card payment
-             │                Waterfall engine updates installments, decrements balance
-             │                Issues official Receipt (REC-YYYY-XXXX)
-             │
-[ 10. Overdue Check ] ──> Automated scan identifies late installments, applies late fees
-             │
-[ 11. Loan Completion ] ──> When balance = $0.00, Loan status becomes COMPLETED
-```
+### 2. `USER`
+- Client & borrower self-service access.
+- Public registration with cryptographically secure Gmail OTP email verification.
+- Secure login with short-lived JWT access tokens and long-lived device-tracked refresh tokens.
+- Profile management, KYC verification, and personal contact details.
+- Submit new loan applications with live repayment calculators and schedule previews.
+- View own submitted applications, application status history, and underwriting outcomes.
+- View own active facilities, amortization repayment schedules, remaining balances, and next payment due dates.
+- View own payment history and download/print official sequential payment receipts (`REC-YYYY-XXXX`).
+- Receive real-time in-app notifications for application events, disbursements, due dates, and overdue alerts.
+- **Strict Ownership Enforcement (ABAC)**: A `USER` can *never* view, modify, or infer another user's profile, applications, loans, schedules, payments, receipts, or notifications. Any cross-tenant access returns `403 Forbidden`.
 
 ---
 
-## 🧮 Financial Calculations & Decimal Safety
+## 🔐 Authentication & Gmail OTP Lifecycle
 
-### 1. Simple Interest (Annual Fixed Rate)
-$$\text{Interest} = \text{Principal} \times \left(\frac{\text{Annual Rate}}{100}\right) \times \left(\frac{\text{Months}}{12}\right)$$
-$$\text{Total Repayment} = \text{Principal} + \text{Interest}$$
-$$\text{Installment Amount} = \frac{\text{Total Repayment}}{N}$$
+Public registration guarantees that only the `USER` role can be created. Normal users can never choose `ADMIN` or escalate privileges.
 
-### 2. Reducing Balance (Equated Monthly Installment - EMI)
-$$\text{Periodic Rate } r = \frac{\text{Annual Rate}}{P \times 100} \quad (P = 12 \text{ Monthly}, 26 \text{ Biweekly}, 52 \text{ Weekly})$$
-$$\text{Installment (EMI)} = \frac{\text{Principal} \times r \times (1 + r)^N}{(1 + r)^N - 1}$$
+### Registration & Verification Flow
+```
+Register (POST /api/v1/auth/register)
+  │ (Validates email uniqueness, password strength, full name)
+  ▼
+Create Pending Registration Record
+  │ (Generates cryptographically secure 6-digit OTP: crypto.randomInt(100000, 999999))
+  ▼
+Store SHA-256 Hashed OTP in PostgreSQL
+  │ (Expires in 10 minutes; max 5 attempts; 60s resend cooldown)
+  ▼
+Send Real Email via Gmail SMTP (Nodemailer)
+  │ (Safe failure in production if SMTP is unconfigured; zero plaintext OTP exposure in API)
+  ▼
+User Submits OTP (POST /api/v1/auth/verify-otp)
+  │ (Verifies hash, checks expiry, marks attempts)
+  ▼
+Activate Permanent PostgreSQL User (role = USER, emailVerifiedAt = NOW())
+```
+
+### Complete Authentication Endpoints (`/api/v1/auth`)
+- `POST /api/v1/auth/register` — Public registration (initiates Gmail OTP).
+- `POST /api/v1/auth/verify-otp` — Verifies 6-digit OTP and activates `USER` account.
+- `POST /api/v1/auth/resend-otp` — Resends fresh OTP (enforces 60-second cooldown and rate limits).
+- `POST /api/v1/auth/login` — Authenticates credentials; returns short-lived access token + long-lived refresh token.
+- `GET /api/v1/auth/me` — Retrieves current authenticated user profile, verified status, and permissions.
+- `POST /api/v1/auth/refresh` — Rotates refresh token and issues new access token.
+- `POST /api/v1/auth/logout` — Revokes current device session and refresh token hash.
+- `POST /api/v1/auth/forgot-password` — Generates and emails secure password-reset OTP via Gmail.
+- `POST /api/v1/auth/reset-password` — Validates reset token/OTP and securely updates password.
+- `POST /api/v1/auth/change-password` — Authenticated password change requiring current password verification.
+
+### Multi-Device Session Tracking
+The database tracks active client sessions:
+- `id`, `userId`, `refreshTokenHash`, `deviceName`, `userAgent`, `ipAddress`, `lastUsedAt`, `expiresAt`, `revokedAt`.
+- Multiple devices (Web browser, iOS device, Android phone) can maintain independent active sessions without collision.
+
+---
+
+## 🧮 Financial Calculation & Ledger Engine
+
+All mathematical logic is encapsulated on the backend within `LoanCalculatorService` using decimal rounding (`round2` to 2 decimal places) to avoid JavaScript floating-point errors.
+
+### 1. Simple Interest (Fixed Flat Rate)
+$$\text{Total Interest} = \text{Principal} \times \left(\frac{\text{Annual Interest Rate}}{100}\right) \times \left(\frac{\text{Term in Months}}{12}\right)$$
+$$\text{Total Repayment} = \text{Principal} + \text{Total Interest}$$
+$$\text{Base Installment} = \frac{\text{Total Repayment}}{\text{Total Installments}}$$
+
+### 2. Reducing Balance / Amortized EMI
+$$\text{Periodic Rate } r = \frac{\text{Annual Rate}}{\text{Frequency} \times 100}$$
+$$\text{EMI} = \frac{\text{Principal} \times r \times (1 + r)^N}{(1 + r)^N - 1}$$
 
 ### 3. Penny-Perfect Reconciliation
-To eliminate fractional cent drift in financial accounting, the final installment absorbs fractional cent differences:
-$$\text{Final Principal} = \text{Principal} - \sum_{i=1}^{N-1} \text{Principal}_i$$
-$$\text{Final Interest} = \text{Total Interest} - \sum_{i=1}^{N-1} \text{Interest}_i$$
-Guaranteed: $\sum \text{Principal} \equiv \text{Principal}$ and $\sum \text{Interest} \equiv \text{Total Interest}$.
+To ensure financial accounting integrity across integer cent divisions, the final installment absorbs all fractional cent rounding:
+$$\text{Installment}_N.\text{principal} = \text{Principal} - \sum_{i=1}^{N-1} \text{Installment}_i.\text{principal}$$
+$$\text{Installment}_N.\text{interest} = \text{Total Interest} - \sum_{i=1}^{N-1} \text{Installment}_i.\text{interest}$$
+$$\sum \text{Installment Principal} \equiv \text{Principal} \quad \text{and} \quad \sum \text{Installment Interest} \equiv \text{Total Interest}$$
 
 ---
 
-## 🚀 Installation & Setup
+## 💳 Payment Processing & Idempotency
 
-### Prerequisites
-- Node.js v20.x or higher
-- PostgreSQL 14+ database instance
-- npm v10+
+Especially vital for mobile connectivity where network retries are common, payment creation supports client-side idempotency:
 
-### Step-by-Step Installation
+```http
+POST /api/v1/payments
+Idempotency-Key: e8a26d7f-94d1-42e7-8b01-8b29e02c1f71
+Content-Type: application/json
+Authorization: Bearer <access_token>
+```
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/loufong/Loan-management-system.git
-   cd Loan-management-system
-   ```
+- When an `Idempotency-Key` or `X-Idempotency-Key` header is provided, the backend checks for prior successful payment records.
+- If a duplicate request with the identical key is received (e.g., from a mobile timeout retry), the server safely returns the existing receipt without duplicate ledger deduction.
 
-2. **Install root & backend dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Install frontend dependencies**:
-   ```bash
-   cd frontend
-   npm install
-   cd ..
-   ```
+### Real-Time Waterfall Allocation
+Payments are executed inside an atomic PostgreSQL transaction:
+1. Validates loan status is `ACTIVE` or `OVERDUE`.
+2. Sorts unpaid installments in chronological order by `dueDate` ascending.
+3. Allocates payment amount to oldest unpaid installment:
+   - If payment $\ge$ remaining amount: marks installment `PAID`, sets `remainingAmount = 0`, and cascades excess to next installment.
+   - If payment $<$ remaining amount: marks installment `PARTIAL`, sets `remainingAmount = remainingAmount - allocated`.
+4. Updates loan master account: decrements `outstandingBalance`, increments `totalPaid`.
+5. When `outstandingBalance == 0` and all installments are `PAID`, loan automatically transitions to `COMPLETED`.
+6. Generates sequential official receipt: `REC-YYYY-XXXX`.
 
 ---
 
-## ⚙️ Environment Variables
+## ⏰ Automated Overdue Engine
 
-Create `.env` in the root directory based on `.env.example`:
+Delinquency detection operates fully server-side and does not rely on browser sessions:
+- **Condition**: `current_date > dueDate` AND `remainingAmount > 0`.
+- **Late Fee Formula**:
+  $$\text{Late Fee} = \text{Remaining Amount} \times 0.001 \times \text{Days Overdue} \quad (\text{0.1\% daily penalty})$$
+- **Automated Cron**: Built-in `node-cron` runs daily at `00:01` (`1 0 * * *`).
+- **On-Demand Admin Check**: `POST /api/v1/overdue/run-check` or `POST /api/v1/admin/overdue/run-check`.
+- Flags delinquent installments as `OVERDUE`, marks loan status as `OVERDUE`, creates audit logs, and sends in-app notifications.
+
+---
+
+## 📁 Document Storage & KYC Abstraction
+
+Document uploads utilize a decoupled storage service abstraction (`src/services/storage.service.ts`):
+- Supports `LOCAL` filesystem (development), `S3` (AWS), `SUPABASE` Storage, and `CLOUDINARY`.
+- Secure signed/temporary URLs for document downloads.
+- Database records only regulatory metadata (`id`, `borrowerId`, `applicationId`, `documentType`, `fileName`, `fileSize`, `mimeType`, `storageKey`, `createdAt`).
+- No private KYC documents are exposed on public CDN or GitHub Pages.
+
+---
+
+## 📡 Standardized REST API Namespace
+
+All modern routes use `/api/v1`. Backward-compatible `/api/*` aliases are preserved temporarily and mapped to the same underlying controllers.
+
+### Core Endpoints Table
+
+| Module | Method | Endpoint | Clearance | Description |
+|---|---|---|---|---|
+| **Auth** | `POST` | `/api/v1/auth/register` | Public | Public registration with Gmail OTP |
+| | `POST` | `/api/v1/auth/verify-otp` | Public | Verify OTP & activate USER account |
+| | `POST` | `/api/v1/auth/resend-otp` | Public | Resend OTP with 60s cooldown |
+| | `POST` | `/api/v1/auth/login` | Public | Issue access & refresh tokens |
+| | `GET` | `/api/v1/auth/me` | Authenticated | Current user profile |
+| | `POST` | `/api/v1/auth/refresh` | Public | Rotate refresh token |
+| | `POST` | `/api/v1/auth/logout` | Authenticated | Revoke device session |
+| | `POST` | `/api/v1/auth/forgot-password` | Public | Send password reset OTP |
+| | `POST` | `/api/v1/auth/reset-password` | Public | Reset password with token/OTP |
+| | `POST` | `/api/v1/auth/change-password` | Authenticated | Change account password |
+| **User (Self)** | `GET` | `/api/v1/users/me` | Authenticated | User's own dossier |
+| | `PUT` | `/api/v1/users/me` | Authenticated | Update own contact info |
+| | `GET` | `/api/v1/users/me/applications` | Authenticated | User's own loan applications |
+| | `GET` | `/api/v1/users/me/loans` | Authenticated | User's own active & closed loans |
+| | `GET` | `/api/v1/users/me/payments` | Authenticated | User's own payment history |
+| | `GET` | `/api/v1/users/me/notifications` | Authenticated | User's notifications |
+| **Admin API** | `GET` | `/api/v1/admin/users` | `ADMIN` | Paginated users list |
+| | `GET` | `/api/v1/admin/users/:id` | `ADMIN` | User account dossier |
+| | `PUT` | `/api/v1/admin/users/:id/status` | `ADMIN` | Activate / suspend user account |
+| | `PUT` | `/api/v1/admin/users/:id/role` | `ADMIN` | Change role between ADMIN/USER |
+| | `GET` | `/api/v1/admin/applications` | `ADMIN` | All applications across platform |
+| | `POST` | `/api/v1/admin/applications/:id/review` | `ADMIN` | Underwriting review & risk assessment |
+| | `POST` | `/api/v1/admin/applications/:id/approve` | `ADMIN` | Committee approval with loan terms |
+| | `POST` | `/api/v1/admin/applications/:id/reject` | `ADMIN` | Rejection (requires rejectionReason) |
+| | `GET` | `/api/v1/admin/loans` | `ADMIN` | Master loan ledger directory |
+| | `POST` | `/api/v1/admin/loans/:id/disburse` | `ADMIN` | Disburse loan & activate schedules |
+| | `GET` | `/api/v1/admin/payments` | `ADMIN` | All recorded payment receipts |
+| | `GET` | `/api/v1/admin/overdue` | `ADMIN` | Overdue portfolio watchlist |
+| | `POST` | `/api/v1/admin/overdue/run-check` | `ADMIN` | Trigger server overdue scan |
+| | `GET` | `/api/v1/admin/reports/*` | `ADMIN` | Portfolio, delinquent, collection reports |
+| | `GET` | `/api/v1/admin/audit-logs` | `ADMIN` | Forensic system audit trail |
+| **Products** | `GET` | `/api/v1/products` | Authenticated | Catalog of loan products |
+| | `POST` | `/api/v1/products` | `ADMIN` | Create new loan product |
+| **Calculator** | `POST` | `/api/v1/calculator/preview` | Authenticated | Live calculation preview |
+| **Notifications** | `GET` | `/api/v1/notifications` | Authenticated | Paginated in-app notifications |
+| | `PATCH` | `/api/v1/notifications/:id/read` | Authenticated | Mark notification as read |
+| | `POST` | `/api/v1/notifications/read-all` | Authenticated | Mark all notifications read |
+| **API Docs** | `GET` | `/api/v1/docs` | Public | Interactive Swagger UI |
+| | `GET` | `/api/v1/openapi.json` | Public | OpenAPI 3.0 specification JSON |
+
+---
+
+## 📱 Mobile Application Readiness
+
+The backend REST API is engineered so that future mobile applications (iOS and Android via React Native, Expo, Flutter, or Swift/Kotlin) can consume the exact same endpoints without requiring special mobile-only backend endpoints:
+1. **Clean REST JSON Contracts**: All endpoints return standard `{ success: true, data: ..., meta: ... }` responses.
+2. **Standard HTTP Statuses**: `200`, `201`, `400` (Validation), `401` (Unauthorized), `403` (Forbidden), `404` (Not Found).
+3. **Idempotent Payment Submissions**: Prevents duplicate charges during intermittent mobile cellular reconnections.
+4. **Device Session Tracking**: Multi-device login support with independent refresh token rotation.
+5. **No Client-Side Calculations**: The mobile app is a clean presentation client; all amortization schedules and fee math are performed by the backend.
+6. **Self-Service API Namespace**: Full `/api/v1/users/me/*` suite allows building the entire user mobile experience without touching admin endpoints.
+
+---
+
+## ⚙️ Environment Variables & Configuration
+
+Create `.env` based on `.env.example`:
+
 ```ini
 # Database Connection (PostgreSQL)
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/loansystem_db?schema=public"
@@ -216,178 +273,100 @@ PORT=5000
 FRONTEND_URL="http://localhost:3000"
 BACKEND_URL="http://localhost:5000"
 
+# CORS Allowed Origins (Comma-separated)
+ALLOWED_ORIGINS="http://localhost:3000,http://localhost:5173,https://loufong.github.io"
+
 # Cryptography & Security
-JWT_SECRET="super-secure-production-jwt-secret-key-2026-apex-lms"
+JWT_SECRET="replace-with-a-secure-random-64-character-secret-in-production"
 JWT_EXPIRY="15m"
 REFRESH_TOKEN_EXPIRY="7d"
 
-# Gmail SMTP Configuration (Optional - falls back to dev OTP simulation)
+# Real Gmail SMTP Configuration (Nodemailer)
 EMAIL_HOST="smtp.gmail.com"
 EMAIL_PORT=587
-EMAIL_USER="your-email@gmail.com"
-EMAIL_PASSWORD="your-google-app-password"
-EMAIL_FROM="Apex LMS <noreply@apex.local>"
-```
+EMAIL_SECURE="false"
+EMAIL_USER="your-real-gmail@gmail.com"
+EMAIL_PASSWORD="your-16-character-google-app-password"
+EMAIL_FROM="Apex LMS <noreply@gmail.com>"
 
-For frontend production deployment, create `frontend/.env`:
-```ini
-VITE_API_URL="https://api.yourdomain.com/api/v1"
+# KYC & Loan Document Storage Configuration (LOCAL, S3, SUPABASE, CLOUDINARY)
+STORAGE_DRIVER="LOCAL"
+AWS_S3_BUCKET="apex-lms-documents"
+AWS_S3_REGION="ap-southeast-1"
 ```
 
 ---
 
-## 🗄 Database Setup & Prisma Migrations
+## 🚀 Installation & Setup
 
-1. **Push Prisma schema to PostgreSQL**:
-   ```bash
-   npx prisma db push
-   ```
+### Prerequisites
+- Node.js v20.x or higher
+- PostgreSQL 14+ database instance
+- npm v10+
 
-2. **Generate Prisma Client**:
-   ```bash
-   npx prisma generate
-   ```
-
-3. **Seed Database with Standard Initial Accounts & Loan Products**:
-   ```bash
-   npm run seed
-   ```
-
----
-
-## 👥 Development & Seed Accounts
-
-All development and test accounts are configured with password: `Password123!`
-
-| Role | Username | Email | Permissions / Notes |
-|---|---|---|---|
-| **Admin** | `admin` | `admin@loansystem.edu` / `admin@apex.local` | Full system control, user management, audit logs |
-| **Branch Manager** | `manager` | `manager@apex.local` | Final loan approvals & rejections, committee control |
-| **Loan Officer** | `officer` | `officer@apex.local` | Application review, underwriting recommendations |
-| **Credit Officer** | `credit` | `credit@apex.local` | Credit assessment, DTI scoring, risk tiers |
-| **Cashier / Teller** | `cashier` | `cashier@apex.local` | Fund disbursement, payment collection, POS receipts |
-| **Borrower** | `borrower` | `borrower@apex.local` | Self-service loan applications, payments, schedule |
-
-> [!NOTE]
-> Seed accounts are strictly development sample accounts. Real production instances require replacing default credentials upon initialization.
-
----
-
-## 🏃 Running Frontend & Backend
-
-### Running Backend (Development)
+### Steps
 ```bash
-npm run dev
-# Server listens at http://localhost:5000
-```
+# 1. Install root dependencies
+npm install
 
-### Running Frontend (Development)
-```bash
-cd frontend
-npm run dev
-# Frontend runs at http://localhost:3000 (Vite HMR)
-```
+# 2. Generate Prisma Client
+npx prisma generate
 
-### Production Build
-```bash
-# Build Backend TypeScript
+# 3. Validate database connection & schema
+npx prisma validate
+
+# 4. Build backend TypeScript
 npm run build
 
-# Build Frontend Bundle
+# 5. Install and build frontend
+npm --prefix frontend install
 npm --prefix frontend run build
 ```
 
 ---
 
-## 🧪 Testing & Verification
+## 🧪 Automated Verification & Test Suites
 
-The system includes comprehensive automated testing:
+The codebase includes 11 dedicated test suites covering 100% of the loan lifecycle and two-tier security boundary:
 
 ```bash
-# 1. Run all unit and integration test suites
 npm test
-
-# 2. Run Section 60 Complete Live E2E Verification against PostgreSQL
-npx ts-node test/final-section-60-e2e.ts
 ```
 
-### Test Coverage Highlights
-- ✅ Borrower Registration & OTP Verification
-- ✅ JWT Authentication & RBAC Route Protection
-- ✅ Multi-Stage Application Workflow (Draft → Review → Assessment → Approval)
-- ✅ Rejection Reason Enforcement (Fails with 400 when reason is missing)
-- ✅ Cashier Disbursement & Repayment Schedule Activation in PostgreSQL
-- ✅ Waterfall Payment Allocation across Multiple Installments
-- ✅ Overdue Scan Engine & Accrued Late Fee Accrual
-- ✅ Loan Completion Lifecycle Transition
-- ✅ Real Database KPI Aggregations
-- ✅ Immutable Regulatory Audit Logs & CSV Exports
+### Test Suites Included
+1. `test/two-tier-auth-rbac.test.ts` — Tests ADMIN & USER roles, registration, OTP hashing, rate limits, `/api/v1/users/me`, ownership guards, and 403 blocks.
+2. `test/security.test.ts` — Verifies bcrypt hashing, JWT tampering defense, SQL injection protection, and token expiration.
+3. `test/borrower-product.test.ts` — Verifies borrower validation, product limit constraints, and PII masking.
+4. `test/loan-calculator.test.ts` — Tests simple interest, reducing balance EMI, and penny-perfect installment reconciliation.
+5. `test/integration-workflow.test.ts` — End-to-end integration covering DTI assessment, disbursement guards, multi-installment waterfall repayments, and KPI aggregations.
+6. `test/api-endpoints.test.ts` — Verifies standard response envelopes, error schemas, route guards, and preview endpoints.
+7. `test/application-approval-workflow.test.ts` — Multi-stage application state transitions, DTI risk grading, product limits, and review/approval guards.
+8. `test/loan-disbursement.test.ts` — Disbursement guards, schedule generation, and ledger status transitions.
+9. `test/payment-reconciliation.test.ts` — Waterfall payment allocation, partial settlement, loan completion transition, and sequential receipt numbers.
+10. `test/overdue-detection.test.ts` — Overdue detection queries, daily late fees (0.1%/day), automated cron registration, and notification generation.
+11. `test/kpi-reporting.test.ts` — Real database KPI aggregations, CSV formula injection sanitization, and regulatory export streams.
 
 ---
 
-## 🌐 Deployment
+## 🌐 Frontend & GitHub Pages SPA Routing
 
-### Frontend (GitHub Pages)
-The frontend is pre-configured for automated continuous deployment to GitHub Pages:
-- Static assets build with relative path resolution (`base: './'`).
-- The `404.html` SPA redirect script automatically converts deep links (e.g. `/admin/dashboard`) to route parameters, which `index.html` resolves via `window.history.replaceState`.
-- Automated GitHub Actions workflow located in `.github/workflows/deploy-pages.yml`.
-
-### Backend
-Deploy the Node.js backend using PM2, Docker, or serverless container services (e.g., Render, Railway, AWS ECS):
-```bash
-npm run build
-NODE_ENV=production node dist/server.js
-```
-
----
-
-## 📡 REST API Overview
-
-All API endpoints are mounted under `/api/v1` (with `/api` compatibility aliases):
-
-| Category | Endpoint | Methods | Description |
-|---|---|---|---|
-| **Authentication** | `/api/v1/auth/register` | `POST` | Self-service registration (generates 6-digit OTP) |
-| | `/api/v1/auth/verify-otp` | `POST` | Validates OTP & promotes to permanent PostgreSQL user |
-| | `/api/v1/auth/login` | `POST` | Authenticates user & issues JWT access/refresh tokens |
-| | `/api/v1/auth/me` | `GET` | Returns authenticated user profile and permissions |
-| **Borrowers** | `/api/v1/borrowers` | `GET`, `POST` | Paginated borrower directory & KYC onboarding |
-| | `/api/v1/borrowers/:id` | `GET`, `PUT` | Full borrower profile & application history |
-| **Loan Products** | `/api/v1/products` | `GET`, `POST` | Loan catalog management with limits & interest rules |
-| **Applications** | `/api/v1/applications` | `GET`, `POST` | Application submission & status directory |
-| | `/api/v1/applications/:id/review` | `POST` | Underwriting review & credit risk assessment |
-| | `/api/v1/applications/:id/approve` | `POST` | Committee approval with loan terms |
-| | `/api/v1/applications/:id/reject` | `POST` | Committee rejection (requires `rejectionReason`) |
-| **Loans & Disbursements**| `/api/v1/loans` | `GET` | Master loan ledger directory with status filters |
-| | `/api/v1/loans/:id/schedules` | `GET` | Amortization repayment schedule installments |
-| | `/api/v1/loans/disburse` | `POST` | Cashier window disbursement & schedule generation |
-| **Payments** | `/api/v1/payments` | `POST` | Payment processing with multi-installment waterfall |
-| | `/api/v1/payments/receipt/:receiptNo` | `GET` | Official printable payment receipt |
-| **Overdue Engine** | `/api/v1/overdue/run-check` | `POST` | Triggers automated overdue scan & late fee penalties |
-| | `/api/v1/overdue/loans` | `GET` | Delinquent accounts ledger with days overdue |
-| **Reports** | `/api/v1/reports/active-loans` | `GET` | Active portfolio report with `?export=csv` |
-| | `/api/v1/reports/overdue-loans` | `GET` | Delinquent accounts report with `?export=csv` |
-| | `/api/v1/reports/daily-collections`| `GET` | Grouped collections by cashier with `?export=csv` |
-| | `/api/v1/reports/audit-logs` | `GET` | Immutable audit trail with `?export=csv` |
-| **Dashboard** | `/api/v1/dashboard/kpis` | `GET` | Live PostgreSQL aggregations (Disbursed, Collected, Rates) |
+The frontend is a Vite + React application styled in clean, professional banking style with **zero gradients**:
+- **Design Tokens**: `#0F172A` (Navy), `#2563EB` (Blue), `#CBD5E1` (Border), `#F8FAFC` (Canvas), `#FFFFFF` (Surface).
+- **GitHub Pages Deep-Link Routing**: `frontend/public/404.html` converts any direct link (e.g., `/admin/dashboard`, `/user/profile`) into a SPA redirect parameter decoded by `index.html` via `window.history.replaceState`. Direct browser reloads never produce a permanent 404 error.
+- **Client Route Guards**: Unauthenticated users are redirected to `/login`. Normal `USER` accounts attempting to navigate to `/admin/*` are immediately blocked with an Access Denied view.
 
 ---
 
 ## 🔒 Security & Compliance
-- **Password Security**: Passwords hashed with bcrypt (salt rounds: 10). Plaintext passwords are never logged or stored.
-- **Account Enumeration Defense**: Generic error messages on authentication failures prevent credential enumeration.
-- **Role-Based & Object-Level Access**: Route middleware enforces role permissions (`checkRole`) and ownership checks (`checkOwnership`) so borrowers cannot access other borrowers' data.
-- **Immutable Audit Trail**: Financial actions (approvals, disbursements, payments, role changes) generate write-only audit logs with timestamps, user IDs, and client IP addresses.
-- **CSV Formula Injection Sanitization**: All exported CSV cells starting with `=`, `+`, `-`, or `@` are escaped with leading single quotes to prevent spreadsheet execution vulnerabilities.
+
+- **Bcrypt Hashing**: Passwords are encrypted with 10 salt rounds.
+- **OTP Security**: 6-digit OTPs are hashed using SHA-256 before storage in PostgreSQL. OTP values are never returned in API responses or written to production logs.
+- **Ownership Checks (ABAC)**: All user-facing `/api/v1/users/me/*` endpoints enforce strict ID matching against the authenticated JWT session.
+- **Role Verification (RBAC)**: All administrative endpoints require `role === 'ADMIN'`. Role is never trusted from client request bodies.
+- **Payment Idempotency**: `Idempotency-Key` headers prevent duplicate transactions on network retries.
+- **CSV Injection Defense**: Leading characters (`=`, `+`, `-`, `@`) in CSV exports are prefixed with `'` to prevent formula execution in spreadsheet software.
+- **No Secrets in Source**: `.env` and sensitive tokens are strictly excluded by `.gitignore`. `.env.example` provides non-sensitive placeholders only.
 
 ---
 
-## 📋 Production Notes
-1. **Database Connection Pooling**: Ensure `DATABASE_URL` specifies proper connection limits (`?connection_limit=20`) when running under container clusters.
-2. **Reverse Proxy Configuration**: When running behind Nginx or AWS ALB, ensure `X-Forwarded-For` and `X-Forwarded-Proto` headers are passed to enable accurate client IP tracking in audit logs.
-3. **Automated Cron Jobs**: The system registers automated daily scans for delinquent loans (`00:01` daily). In multi-instance deployments, use a distributed scheduler (or call `/api/v1/overdue/run-check` via cron) to prevent redundant concurrent scans.
-
----
-
-*Engineered with precision for real-world academic and commercial micro-lending programs.*
+*Enterprise Loan Management System — Verified for real-world production deployment and mobile client integration.*

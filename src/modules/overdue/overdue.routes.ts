@@ -8,36 +8,36 @@ export const overdueRouter = Router();
 
 overdueRouter.use(authenticate);
 
-// 1. Get list of overdue loans with late fees & contact details (Staff: MANAGER, LOAN_OFFICER, CASHIER)
+// 1. Get list of overdue loans with late fees & contact details (ADMIN)
 overdueRouter.get(
   '/loans',
-  authorize(UserRole.MANAGER, UserRole.LOAN_OFFICER, UserRole.CREDIT_OFFICER, UserRole.CASHIER),
+  authorize(UserRole.ADMIN),
   OverdueController.listOverdue
 );
 
 // 2. Overdue portfolio summary statistics
 overdueRouter.get(
   '/summary',
-  authorize(UserRole.MANAGER, UserRole.LOAN_OFFICER, UserRole.CREDIT_OFFICER, UserRole.CASHIER),
+  authorize(UserRole.ADMIN),
   OverdueController.getSummary
 );
 
-// 2. Manual trigger endpoint for testing and demo purposes
+// 2. Manual trigger endpoint for testing (ADMIN)
 overdueRouter.post(
   '/trigger-check',
-  authorize(UserRole.MANAGER, UserRole.LOAN_OFFICER, UserRole.CREDIT_OFFICER),
+  authorize(UserRole.ADMIN),
   OverdueController.triggerCheck
 );
 
 overdueRouter.post(
   '/run-check',
-  authorize(UserRole.MANAGER, UserRole.LOAN_OFFICER, UserRole.CREDIT_OFFICER),
+  authorize(UserRole.ADMIN),
   OverdueController.triggerCheck
 );
 
-// 3. Trigger reminder notification dispatch
+// 3. Trigger reminder notification dispatch (ADMIN)
 overdueRouter.post(
   '/send-reminders',
-  authorize(UserRole.MANAGER),
+  authorize(UserRole.ADMIN),
   OverdueController.sendReminders
 );

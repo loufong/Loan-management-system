@@ -12,6 +12,7 @@ notificationRouter.get('/', NotificationController.list);
 // 2. PATCH /api/notifications/:id/read: Marks notification as read
 notificationRouter.patch('/:id/read', NotificationController.markAsRead);
 notificationRouter.put('/:id/read', NotificationController.markAsRead);
+notificationRouter.post('/:id/read', NotificationController.markAsRead);
 
 // 3. Optional convenience: Mark all as read
 notificationRouter.patch('/read-all', NotificationController.markAllAsRead);

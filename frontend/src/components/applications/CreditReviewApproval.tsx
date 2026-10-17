@@ -76,34 +76,64 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
     <div className="space-y-6">
       
       {/* Header & Status Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-[#E2E8F0]">
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
-            className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
+            className="p-1.5 rounded-[6px] bg-slate-100 hover:bg-slate-200 text-[#0F172A] transition"
           >
             &larr;
           </button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold text-slate-900 font-mono">{application.applicationNo}</h1>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                application.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                application.status === 'UNDER_REVIEW' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' :
-                application.status === 'REJECTED' ? 'bg-rose-50 text-rose-700 border border-rose-200' :
-                'bg-amber-50 text-amber-700 border border-amber-200'
+              <h1 className="text-lg font-bold text-[#0F172A] font-mono">{application.applicationNo}</h1>
+              <span className={`px-2 py-0.5 rounded-[4px] text-[10px] font-bold ${
+                application.status === 'APPROVED' ? 'bg-emerald-50 text-[#16A34A] border border-emerald-200' :
+                application.status === 'UNDER_REVIEW' ? 'bg-blue-50 text-[#2563EB] border border-blue-200' :
+                application.status === 'REJECTED' ? 'bg-rose-50 text-[#DC2626] border border-rose-200' :
+                'bg-amber-50 text-[#D97706] border border-amber-200'
               }`}>
                 {application.status}
               </span>
             </div>
-            <p className="text-xs text-slate-500">Applicant: <strong className="text-slate-800">{application.borrowerName}</strong> &bull; Submitted on {application.createdAt}</p>
+            <p className="text-xs text-[#64748B]">Applicant: <strong className="text-[#0F172A]">{application.borrowerName}</strong> &bull; Submitted on {application.createdAt}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 text-xs font-mono">
-          <span className="text-slate-400">Requested:</span>
-          <span className="text-base font-extrabold text-indigo-700">{formatMoney(application.requestedAmountUSD)}</span>
+          <span className="text-[#64748B]">Requested:</span>
+          <span className="text-base font-extrabold text-[#2563EB]">{formatMoney(application.requestedAmountUSD)}</span>
         </div>
+      </div>
+
+      {/* Progress Step Indicator (Section 13) */}
+      <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-4">
+        <div className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-2">Application Progress</div>
+        {application.status === 'REJECTED' ? (
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="font-semibold text-[#16A34A]">✓ Submitted</span>
+            <span className="text-slate-400">&rarr;</span>
+            <span className="font-semibold text-[#16A34A]">✓ Under Review</span>
+            <span className="text-slate-400">&rarr;</span>
+            <span className="font-semibold text-[#DC2626]">● Rejected</span>
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="font-semibold text-[#16A34A]">✓ Submitted</span>
+            <span className="text-slate-400">&rarr;</span>
+            <span className={`font-semibold ${application.status === 'UNDER_REVIEW' ? 'text-[#2563EB]' : 'text-[#16A34A]'}`}>
+              {application.status === 'UNDER_REVIEW' ? '● Under Review' : '✓ Under Review'}
+            </span>
+            <span className="text-slate-400">&rarr;</span>
+            <span className={`font-semibold ${application.status === 'APPROVED' ? 'text-[#16A34A]' : 'text-[#64748B]'}`}>
+              {application.status === 'APPROVED' ? '● Approved' : '○ Approved'}
+            </span>
+            <span className="text-slate-400">&rarr;</span>
+            <span className={`font-semibold ${(application.status as any) === 'DISBURSED' ? 'text-[#16A34A]' : 'text-[#64748B]'}`}>
+              {(application.status as any) === 'DISBURSED' ? '● Disbursed' : '○ Disbursed'}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Split-Pane Underwriting Layout: 55% Left / 45% Right */}

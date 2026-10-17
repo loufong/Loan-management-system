@@ -117,11 +117,11 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
         </div>
 
         {/* Clean Register Card */}
-        <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-6 sm:p-8 space-y-5">
+        <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-6 sm:p-8 space-y-5">
           {/* Form Header */}
-          <div className="border-b border-[#CBD5E1] pb-3">
+          <div className="border-b border-[#E2E8F0] pb-3">
             <h2 className="text-lg font-bold text-[#0F172A]">
-              Create an account
+              Create Account
             </h2>
             <p className="text-xs text-[#64748B] mt-0.5">
               Enter your details to register for borrower self-service.
@@ -148,7 +148,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                     onChange={(e) => setFirstName(e.target.value)}
                     placeholder="e.g. Sokha"
                     required
-                    className="w-full h-[44px] px-3.5 pl-10 rounded-[6px] bg-white border border-[#CBD5E1] text-[#0F172A] text-[14px] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#64748B]"
+                    className="w-full h-[44px] px-3.5 pl-10 rounded-[6px] bg-white border border-[#E2E8F0] text-[#0F172A] text-[14px] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#64748B]"
                   />
                   <User className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
@@ -165,7 +165,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                     onChange={(e) => setLastName(e.target.value)}
                     placeholder="e.g. Chan"
                     required
-                    className="w-full h-[44px] px-3.5 pl-10 rounded-[6px] bg-white border border-[#CBD5E1] text-[#0F172A] text-[14px] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#64748B]"
+                    className="w-full h-[44px] px-3.5 pl-10 rounded-[6px] bg-white border border-[#E2E8F0] text-[#0F172A] text-[14px] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#64748B]"
                   />
                   <User className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
@@ -184,7 +184,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="e.g. s.chan"
                     required
-                    className="w-full h-[44px] px-3.5 pl-10 rounded-[6px] bg-white border border-[#CBD5E1] text-[#0F172A] text-[14px] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#64748B]"
+                    className="w-full h-[44px] px-3.5 pl-10 rounded-[6px] bg-white border border-[#E2E8F0] text-[#0F172A] text-[14px] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#64748B]"
                   />
                   <User className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
@@ -204,7 +204,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@gmail.com"
                     required
-                    className="w-full h-[44px] px-3.5 pl-10 rounded-[6px] bg-white border border-[#CBD5E1] text-[#0F172A] text-[14px] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#64748B]"
+                    className="w-full h-[44px] px-3.5 pl-10 rounded-[6px] bg-white border border-[#E2E8F0] text-[#0F172A] text-[14px] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#64748B]"
                   />
                   <Mail className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
@@ -222,7 +222,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="e.g. +855 12 345 678"
                   required
-                  className="w-full h-[44px] px-3.5 pl-10 rounded-[6px] bg-white border border-[#CBD5E1] text-[#0F172A] text-[14px] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#64748B]"
+                  className="w-full h-[44px] px-3.5 pl-10 rounded-[6px] bg-white border border-[#E2E8F0] text-[#0F172A] text-[14px] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#64748B]"
                 />
                 <Phone className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
@@ -241,7 +241,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Create password"
                     required
-                    className="w-full h-[44px] px-3.5 pl-10 pr-10 rounded-[6px] bg-white border border-[#CBD5E1] text-[#0F172A] text-[14px] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#64748B]"
+                    className="w-full h-[44px] px-3.5 pl-10 pr-10 rounded-[6px] bg-white border border-[#E2E8F0] text-[#0F172A] text-[14px] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#64748B]"
                   />
                   <Lock className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <button
@@ -265,7 +265,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Repeat password"
                     required
-                    className="w-full h-[44px] px-3.5 pl-10 pr-10 rounded-[6px] bg-white border border-[#CBD5E1] text-[#0F172A] text-[14px] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#64748B]"
+                    className="w-full h-[44px] px-3.5 pl-10 pr-10 rounded-[6px] bg-white border border-[#E2E8F0] text-[#0F172A] text-[14px] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#64748B]"
                   />
                   <Lock className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <button
@@ -280,7 +280,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
             </div>
 
             {/* Password Requirement Badges */}
-            <div className="p-3 bg-slate-50 border border-[#CBD5E1] rounded-[6px] text-xs space-y-1.5">
+            <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px] text-xs space-y-1.5">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
                 Password Requirements
               </p>
@@ -303,15 +303,15 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full h-[44px] bg-[#0F172A] hover:bg-[#1E293B] text-white text-[14px] font-semibold tracking-wider rounded-[6px] transition-colors flex items-center justify-center gap-2 mt-2 disabled:opacity-50 cursor-pointer shadow-none"
+              className="w-full h-[40px] bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-[14px] font-medium rounded-[6px] transition-colors flex items-center justify-center gap-2 mt-2 disabled:opacity-50 cursor-pointer shadow-none"
             >
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin text-white" />
-                  <span>CREATING ACCOUNT...</span>
+                  <span>Creating Account...</span>
                 </>
               ) : (
-                <span>REGISTER ACCOUNT</span>
+                <span>Create Account</span>
               )}
             </button>
           </form>
@@ -327,7 +327,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
             </button>
           </div>
 
-          <div className="pt-4 border-t border-[#CBD5E1] flex items-center justify-center gap-1.5 text-[12px] text-[#64748B]">
+          <div className="pt-4 border-t border-[#E2E8F0] flex items-center justify-center gap-1.5 text-[12px] text-[#64748B]">
             <ShieldCheck className="w-4 h-4 text-[#16A34A] shrink-0" />
             <span>Encrypted with TLS 256-bit security standard.</span>
           </div>

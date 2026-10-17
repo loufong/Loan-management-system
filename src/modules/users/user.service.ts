@@ -527,34 +527,24 @@ export class UserService {
     return {
       roles: [
         {
-          key: UserRole.MANAGER,
-          name: 'Admin / Branch Manager',
+          key: UserRole.ADMIN,
+          name: 'System Administrator',
           category: 'Executive & Governance',
           description:
-            'Full administrative authority over the system, loan approvals, credit underwriting, borrower oversight, product catalogs, financial reporting, and user administration.',
+            'Full administrative authority over the system, user management, loan products, loan approvals, disbursements, payment recording, overdue engine, and system reports.',
           badgeColor: 'blue',
-          permissionsCount: ROLE_PERMISSIONS[UserRole.MANAGER]?.length || 0,
-          permissions: ROLE_PERMISSIONS[UserRole.MANAGER] || []
+          permissionsCount: ROLE_PERMISSIONS[UserRole.ADMIN]?.length || 0,
+          permissions: ROLE_PERMISSIONS[UserRole.ADMIN] || []
         },
         {
-          key: UserRole.CASHIER,
-          name: 'Desk Cashier & Bursar',
-          category: 'Treasury & Operations',
-          description:
-            'Treasury operations, disbursement execution, payment receipt processing, multi-installment waterfall reconciliation, and overdue watchlist monitoring.',
-          badgeColor: 'emerald',
-          permissionsCount: ROLE_PERMISSIONS[UserRole.CASHIER]?.length || 0,
-          permissions: ROLE_PERMISSIONS[UserRole.CASHIER] || []
-        },
-        {
-          key: UserRole.BORROWER,
-          name: 'Academic Borrower',
+          key: UserRole.USER,
+          name: 'Standard User / Client',
           category: 'Self-Service Client',
           description:
-            'Self-service student/staff portal to submit loan applications, monitor approval progression, review amortization schedules, and track digital receipts.',
+            'Self-service user portal to submit loan applications, monitor approval progression, review amortization schedules, make payments, and track digital receipts.',
           badgeColor: 'amber',
-          permissionsCount: ROLE_PERMISSIONS[UserRole.BORROWER]?.length || 0,
-          permissions: ROLE_PERMISSIONS[UserRole.BORROWER] || []
+          permissionsCount: ROLE_PERMISSIONS[UserRole.USER]?.length || 0,
+          permissions: ROLE_PERMISSIONS[UserRole.USER] || []
         }
       ],
       allPermissions: Object.values(Permission)

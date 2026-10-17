@@ -17,7 +17,9 @@ import { overdueRouter } from './modules/overdue/overdue.routes';
 import { reportRouter } from './modules/reports/report.routes';
 import { notificationRouter } from './modules/notifications/notification.routes';
 import { userRouter } from './modules/users/user.routes';
+import { adminRouter } from './modules/admin/admin.routes';
 import { demoRouter } from './modules/demo/demo.routes';
+import { openApiSpec, renderDocs } from './modules/docs/openapi';
 import { authenticate, verifyToken } from './middlewares/auth.middleware';
 import { checkRole } from './middlewares/rbac.middleware';
 import { sendError, sendSuccess } from './utils/response';
@@ -32,11 +34,34 @@ export function createApp(): Application {
       crossOriginEmbedderPolicy: false
     })
   );
+  // Dynamic Production CORS (supports GitHub Pages, Local dev, and Mobile clients)
+  const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+    : [
+        'http://localhost:5173',
+        'http://localhost:3000',
+        'http://127.0.0.1:5173',
+        'https://loufong.github.io'
+      ];
+
   app.use(
     cors({
-      origin: '*', // Adjust to specific frontend domain in production
+      origin: (origin, callback) => {
+        // Permit requests with no origin (such as mobile apps, Postman, curl) or allowed origins
+        if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          // Permissive in development, strict check in production
+          if (process.env.NODE_ENV === 'production') {
+            callback(new Error(`CORS blocked for origin: ${origin}`));
+          } else {
+            callback(null, true);
+          }
+        }
+      },
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization']
+      allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-Idempotency-Key', 'X-Device-Name'],
+      credentials: true
     })
   );
   app.use(morgan('dev'));
@@ -69,6 +94,12 @@ export function createApp(): Application {
       timestamp: new Date().toISOString(),
       uptimeSeconds: process.uptime()
     });
+  });
+
+  // OpenAPI Documentation (Phase 24)
+  app.get(['/api/v1/docs', '/api/docs'], renderDocs);
+  app.get(['/api/v1/openapi.json', '/api/openapi.json'], (req: Request, res: Response) => {
+    res.json(openApiSpec);
   });
 
   // =========================================================================
@@ -136,19 +167,8 @@ export function createApp(): Application {
     }
   });
 
-  // Dedicated Admin API endpoints (/api/admin, /api/v1/admin)
-  app.use(
-    ['/api/admin', '/api/v1/admin'],
-    authenticate,
-    checkRole('ADMIN'),
-    (req: Request, res: Response) => {
-      sendSuccess(res, {
-        service: 'Administrative Core API',
-        status: 'AUTHORIZED',
-        adminUser: (req as any).user?.email
-      });
-    }
-  );
+  // Dedicated Admin API endpoints (/api/admin, /api/v1/admin) (Phase 10)
+  app.use(['/api/admin', '/api/v1/admin'], adminRouter);
 
   // 1. Authentication & RBAC
   app.use(['/api/auth', '/api/v1/auth'], authRouter);

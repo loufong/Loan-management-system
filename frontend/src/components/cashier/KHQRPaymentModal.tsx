@@ -35,9 +35,9 @@ export const KHQRPaymentModal: React.FC<KHQRPaymentModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 font-sans">
-      <div className="bg-white max-w-sm w-full rounded-[8px] p-6 space-y-4 shadow-xl text-center border border-[#CBD5E1]">
+      <div className="bg-white max-w-sm w-full rounded-[8px] p-6 space-y-4 shadow-xl text-center border border-[#E2E8F0]">
         {/* Header with KHQR Ribbon */}
-        <div className="flex items-center justify-between pb-3 border-b border-[#CBD5E1]">
+        <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
           <div className="flex items-center gap-2">
             <span className="w-8 h-8 rounded-[4px] bg-[#DC2626] text-white font-black text-xs flex items-center justify-center tracking-tighter">
               KHQR
@@ -66,7 +66,7 @@ export const KHQRPaymentModal: React.FC<KHQRPaymentModalProps> = ({
         </div>
 
         {/* KHQR Card Container */}
-        <div className="bg-slate-50 p-4 rounded-[6px] border border-[#CBD5E1] flex flex-col items-center justify-center space-y-3">
+        <div className="bg-slate-50 p-4 rounded-[6px] border border-[#E2E8F0] flex flex-col items-center justify-center space-y-3">
           {/* KHQR Header */}
           <div className="w-full bg-[#DC2626] text-white py-1.5 px-3 rounded-[4px] font-bold text-xs flex items-center justify-between">
             <span className="font-mono tracking-wider">KHQR</span>
@@ -74,7 +74,7 @@ export const KHQRPaymentModal: React.FC<KHQRPaymentModalProps> = ({
           </div>
 
           {/* QR Matrix */}
-          <div className="w-48 h-48 bg-white border border-[#CBD5E1] p-2.5 rounded-[6px] flex items-center justify-center relative">
+          <div className="w-48 h-48 bg-white border border-[#E2E8F0] p-2.5 rounded-[6px] flex items-center justify-center relative">
             <div className="w-full h-full bg-[#0F172A] flex flex-col justify-between p-2 rounded-[4px]">
               <div className="flex justify-between">
                 <div className="w-10 h-10 bg-white border-4 border-[#0F172A] rounded-[2px]" />

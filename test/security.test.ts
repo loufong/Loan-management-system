@@ -35,49 +35,44 @@ const sampleBorrower = {
   address: '742 University Ave, Cambridge, MA'
 };
 
-// Manager should see raw unmasked PII
-const adminView = sanitizeBorrowerPII(sampleBorrower, UserRole.MANAGER, false);
-if (adminView.idNumber !== 'STU-ID-8849201') throw new Error('Manager should see unmasked ID');
-console.log('✅ Manager sees raw unmasked PII');
+// Admin should see raw unmasked PII
+const adminView = sanitizeBorrowerPII(sampleBorrower, UserRole.ADMIN, false);
+if (adminView.idNumber !== 'STU-ID-8849201') throw new Error('Admin should see unmasked ID');
+console.log('✅ Admin sees raw unmasked PII');
 
-// Cashier should see masked PII
-const cashierView = sanitizeBorrowerPII(sampleBorrower, UserRole.CASHIER, false);
-if (cashierView.idNumber !== '***-**-9201') throw new Error('Cashier should see masked ID');
-if (cashierView.phone !== '***-***-0201') throw new Error('Cashier should see masked phone');
-console.log('✅ Cashier sees masked PII:', cashierView.idNumber, cashierView.phone);
+// Non-owner USER should see masked PII
+const nonOwnerView = sanitizeBorrowerPII(sampleBorrower, UserRole.USER, false);
+if (nonOwnerView.idNumber !== '***-**-9201') throw new Error('Non-owner USER should see masked ID');
+if (nonOwnerView.phone !== '***-***-0201') throw new Error('Non-owner USER should see masked phone');
+console.log('✅ Non-owner USER sees masked PII:', nonOwnerView.idNumber, nonOwnerView.phone);
 
-// Borrower viewing their own profile should see unmasked PII (isOwner = true)
-const ownerView = sanitizeBorrowerPII(sampleBorrower, UserRole.BORROWER, true);
+// User viewing their own profile should see unmasked PII (isOwner = true)
+const ownerView = sanitizeBorrowerPII(sampleBorrower, UserRole.USER, true);
 if (ownerView.idNumber !== 'STU-ID-8849201') throw new Error('Owner should see unmasked ID');
-console.log('✅ Borrower viewing own profile sees unmasked PII');
+console.log('✅ User viewing own profile sees unmasked PII');
 
 // Test 3: Permission Matrix
 console.log('\n--- TEST 3: Role-to-Permission Matrix ---');
-const borrowerPerms = getPermissionsForRole(UserRole.BORROWER);
-console.log('Borrower permissions count:', borrowerPerms.length);
-if (borrowerPerms.includes(Permission.APPLICATION_APPROVE)) {
-  throw new Error('Borrower should NOT have approval permission');
+const userPerms = getPermissionsForRole(UserRole.USER);
+console.log('USER permissions count:', userPerms.length);
+if (userPerms.includes(Permission.APPLICATION_APPROVE)) {
+  throw new Error('USER should NOT have approval permission');
 }
-if (!borrowerPerms.includes(Permission.APPLICATION_CREATE_OWN)) {
-  throw new Error('Borrower should have APPLICATION_CREATE_OWN');
-}
-
-const managerPerms = getPermissionsForRole(UserRole.MANAGER);
-if (!managerPerms.includes(Permission.APPLICATION_APPROVE)) {
-  throw new Error('Manager should have APPLICATION_APPROVE');
+if (!userPerms.includes(Permission.APPLICATION_CREATE_OWN)) {
+  throw new Error('USER should have APPLICATION_CREATE_OWN');
 }
 
-const cashierPerms = getPermissionsForRole(UserRole.CASHIER);
-if (!cashierPerms.includes(Permission.PAYMENT_COLLECT)) {
-  throw new Error('Cashier should have PAYMENT_COLLECT');
+const adminPerms = getPermissionsForRole(UserRole.ADMIN);
+if (!adminPerms.includes(Permission.APPLICATION_APPROVE)) {
+  throw new Error('ADMIN should have APPLICATION_APPROVE');
 }
-if (!cashierPerms.includes(Permission.LOAN_DISBURSE)) {
-  throw new Error('Cashier should have LOAN_DISBURSE');
+if (!adminPerms.includes(Permission.PAYMENT_COLLECT)) {
+  throw new Error('ADMIN should have PAYMENT_COLLECT');
 }
-if (cashierPerms.includes(Permission.APPLICATION_APPROVE)) {
-  throw new Error('Cashier should NOT have APPLICATION_APPROVE');
+if (!adminPerms.includes(Permission.LOAN_DISBURSE)) {
+  throw new Error('ADMIN should have LOAN_DISBURSE');
 }
-console.log('✅ Permissions matrix verified for all roles!');
+console.log('✅ Permissions matrix verified for ADMIN and USER roles!');
 
 // Test 4: Express App Initialization
 console.log('\n--- TEST 4: Express App Initialization ---');

@@ -36,10 +36,10 @@ export const QRCodePaymentModal: React.FC<QRCodePaymentModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50">
-      <div className="bg-white max-w-sm w-full rounded-[8px] p-5 space-y-3.5 shadow-md text-center border border-[#CBD5E1]">
+      <div className="bg-white max-w-sm w-full rounded-[8px] p-5 space-y-3.5 shadow-md text-center border border-[#E2E8F0]">
         
         {/* Header with KHQR & EMVCo Badge */}
-        <div className="flex items-center justify-between pb-2.5 border-b border-[#CBD5E1]">
+        <div className="flex items-center justify-between pb-2.5 border-b border-[#E2E8F0]">
           <div className="flex items-center gap-2">
             <span className="w-6 h-6 rounded-[4px] bg-[#DC2626] text-white font-extrabold text-[10px] flex items-center justify-center tracking-tighter">
               KHQR
@@ -65,7 +65,7 @@ export const QRCodePaymentModal: React.FC<QRCodePaymentModalProps> = ({
         </div>
 
         {/* Dynamic High-Contrast KHQR Code Card */}
-        <div className="p-3.5 flex flex-col items-center justify-center space-y-2.5 border border-[#CBD5E1] rounded-[6px] bg-slate-50">
+        <div className="p-3.5 flex flex-col items-center justify-center space-y-2.5 border border-[#E2E8F0] rounded-[6px] bg-slate-50">
           {/* Header Ribbon */}
           <div className="w-full bg-[#DC2626] text-white py-1 px-2.5 rounded-[4px] font-bold text-xs flex items-center justify-between">
             <span className="font-mono tracking-wider text-[11px]">KHQR</span>

@@ -11,28 +11,28 @@ dashboardRouter.use(authenticate);
 // 1. Executive KPIs with SQL Aggregations & Formulas
 dashboardRouter.get(
   '/kpis',
-  authorize(UserRole.MANAGER, UserRole.LOAN_OFFICER, UserRole.CREDIT_OFFICER, UserRole.CASHIER),
+  authorize(UserRole.ADMIN),
   DashboardController.getKpis
 );
 
 // 2. Analytics Trend: 6-Month Disbursement vs Collection
 dashboardRouter.get(
   '/charts/disbursement-vs-collection',
-  authorize(UserRole.MANAGER, UserRole.LOAN_OFFICER, UserRole.CREDIT_OFFICER, UserRole.CASHIER),
+  authorize(UserRole.ADMIN),
   DashboardController.getDisbursementVsCollection
 );
 
 // 3. Analytics Trend: Portfolio Value Breakdown by Product
 dashboardRouter.get(
   '/charts/portfolio-by-product',
-  authorize(UserRole.MANAGER, UserRole.LOAN_OFFICER, UserRole.CREDIT_OFFICER, UserRole.CASHIER),
+  authorize(UserRole.ADMIN),
   DashboardController.getPortfolioByProduct
 );
 
 // 4. Comprehensive Portfolio Metrics Overview
 dashboardRouter.get(
   '/metrics',
-  authorize(UserRole.MANAGER, UserRole.LOAN_OFFICER, UserRole.CREDIT_OFFICER, UserRole.CASHIER),
+  authorize(UserRole.ADMIN),
   DashboardController.getMetrics
 );
 

@@ -45,7 +45,7 @@ export const CashierDashboard: React.FC<CashierDashboardProps> = ({
   return (
     <div className="space-y-6 font-sans">
       {/* 1. Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#CBD5E1]">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
             Cashier &amp; Treasury Operations Terminal
@@ -77,7 +77,7 @@ export const CashierDashboard: React.FC<CashierDashboardProps> = ({
         {/* Pending Disbursements */}
         <div
           onClick={() => onNavigate('disbursements')}
-          className="bg-white border border-[#CBD5E1] rounded-[8px] p-5 cursor-pointer hover:border-[#2563EB] transition-colors"
+          className="bg-white border border-[#E2E8F0] rounded-[8px] p-5 cursor-pointer hover:border-[#2563EB] transition-colors"
         >
           <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] block">
             PENDING DISBURSEMENTS
@@ -94,7 +94,7 @@ export const CashierDashboard: React.FC<CashierDashboardProps> = ({
         {/* Today's Payments */}
         <div
           onClick={() => onNavigate('cashier')}
-          className="bg-white border border-[#CBD5E1] rounded-[8px] p-5 cursor-pointer hover:border-[#2563EB] transition-colors"
+          className="bg-white border border-[#E2E8F0] rounded-[8px] p-5 cursor-pointer hover:border-[#2563EB] transition-colors"
         >
           <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] block">
             TODAY'S COLLECTIONS
@@ -111,7 +111,7 @@ export const CashierDashboard: React.FC<CashierDashboardProps> = ({
         {/* Total Collected */}
         <div
           onClick={() => onNavigate('reports')}
-          className="bg-white border border-[#CBD5E1] rounded-[8px] p-5 cursor-pointer hover:border-[#2563EB] transition-colors"
+          className="bg-white border border-[#E2E8F0] rounded-[8px] p-5 cursor-pointer hover:border-[#2563EB] transition-colors"
         >
           <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] block">
             CUMULATIVE RECOVERED
@@ -128,7 +128,7 @@ export const CashierDashboard: React.FC<CashierDashboardProps> = ({
         {/* Overdue Accounts */}
         <div
           onClick={() => onNavigate('overdue')}
-          className="bg-white border border-[#CBD5E1] rounded-[8px] p-5 cursor-pointer hover:border-[#2563EB] transition-colors"
+          className="bg-white border border-[#E2E8F0] rounded-[8px] p-5 cursor-pointer hover:border-[#2563EB] transition-colors"
         >
           <span className="text-[11px] font-bold uppercase tracking-wider text-red-600 block">
             DELINQUENT OVERDUE
@@ -144,8 +144,8 @@ export const CashierDashboard: React.FC<CashierDashboardProps> = ({
       </div>
 
       {/* 3. Recent Transactions Ledger */}
-      <div className="bg-white border border-[#CBD5E1] rounded-[8px] overflow-hidden">
-        <div className="p-4 border-b border-[#CBD5E1] flex items-center justify-between">
+      <div className="bg-white border border-[#E2E8F0] rounded-[8px] overflow-hidden">
+        <div className="p-4 border-b border-[#E2E8F0] flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Receipt className="w-4 h-4 text-[#2563EB]" />
             <h3 className="text-xs font-bold uppercase tracking-wider text-[#0F172A]">

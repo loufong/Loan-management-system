@@ -35,11 +35,6 @@ export const isStaticHost =
 export function normalizeUserRole(role?: string): UserRole {
   const r = (role || '').toUpperCase();
   if (r === 'ADMIN' || r === 'ADMINISTRATOR') return 'ADMIN';
-  if (r === 'MANAGER') return 'MANAGER';
-  if (r === 'LOAN_OFFICER') return 'LOAN_OFFICER';
-  if (r === 'CREDIT_OFFICER') return 'CREDIT_OFFICER';
-  if (r === 'CASHIER') return 'CASHIER';
-  if (r === 'BORROWER') return 'BORROWER';
   return 'USER';
 }
 

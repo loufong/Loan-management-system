@@ -6,29 +6,9 @@ import { prisma } from './config/prisma';
 import { initOverdueCronJob, stopOverdueCronJob } from './modules/overdue/overdue.cron';
 import { initRegistrationCleanupCron, stopRegistrationCleanupCron } from './modules/auth/registration-cleanup.cron';
 
-const PORT = parseInt(process.env.PORT || '5000', 10);
+import { ensureDatabaseConnected, stopWslKeeper } from './config/db-keeper';
 
-async function ensureDatabaseConnected() {
-  try {
-    await prisma.$queryRaw`SELECT 1`;
-    console.log('✅ Connected to PostgreSQL Database.');
-  } catch (err: any) {
-    if (process.platform === 'win32') {
-      try {
-        console.log('⚠️ Database not ready. Ensuring WSL PostgreSQL service is running...');
-        const { execSync } = require('child_process');
-        execSync('wsl -d Ubuntu -u root service postgresql start', { stdio: 'ignore' });
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        await prisma.$queryRaw`SELECT 1`;
-        console.log('✅ Connected to PostgreSQL Database via WSL.');
-        return;
-      } catch {
-        // Fall through
-      }
-    }
-    throw err;
-  }
-}
+const PORT = parseInt(process.env.PORT || '5000', 10);
 
 async function bootstrap() {
   await ensureDatabaseConnected();
@@ -57,6 +37,7 @@ async function bootstrap() {
     console.log(`\n🛑 Received ${signal}. Starting graceful shutdown...`);
     stopOverdueCronJob();
     stopRegistrationCleanupCron();
+    stopWslKeeper();
     server.close(async () => {
       console.log('🔒 Closed HTTP Server.');
       await prisma.$disconnect();
@@ -67,6 +48,9 @@ async function bootstrap() {
 
   process.on('SIGINT', () => handleShutdown('SIGINT'));
   process.on('SIGTERM', () => handleShutdown('SIGTERM'));
+  process.on('exit', () => {
+    stopWslKeeper();
+  });
 }
 
 bootstrap().catch((err) => {

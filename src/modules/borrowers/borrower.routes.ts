@@ -14,24 +14,24 @@ borrowerRouter.get('/', BorrowerController.list);
 // 2. Get Borrower Details (Full profile with loans & payment history; ownership enforced)
 borrowerRouter.get('/:id', BorrowerController.getById);
 
-// 3. Onboard New Borrower (Staff: MANAGER, LOAN_OFFICER, or Borrower self-onboarding)
+// 3. Onboard New Borrower (ADMIN or USER self-onboarding)
 borrowerRouter.post(
   '/',
-  authorize(UserRole.MANAGER, UserRole.LOAN_OFFICER, UserRole.BORROWER, UserRole.USER),
+  authorize(UserRole.ADMIN, UserRole.USER),
   BorrowerController.create
 );
 
-// 4. Update Borrower Details (Staff: MANAGER, LOAN_OFFICER or Owner)
+// 4. Update Borrower Details (ADMIN or Owner)
 borrowerRouter.put('/:id', BorrowerController.update);
 
-// 5. Deactivate / Delete Borrower (Staff: MANAGER)
+// 5. Deactivate / Delete Borrower (ADMIN)
 borrowerRouter.delete(
   '/:id',
-  authorize(UserRole.MANAGER),
+  authorize(UserRole.ADMIN),
   BorrowerController.deactivate
 );
 borrowerRouter.patch(
   '/:id/deactivate',
-  authorize(UserRole.MANAGER),
+  authorize(UserRole.ADMIN),
   BorrowerController.deactivate
 );

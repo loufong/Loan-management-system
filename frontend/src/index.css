@@ -29,41 +29,44 @@
 
 @layer components {
   /* ========================================================================= */
-  /* APEX LMS ENTERPRISE DESIGN SYSTEM (ZERO GRADIENTS, STRICT BANKING PALETTE) */
-  /* Primary Navy: #0F172A | Secondary Blue: #2563EB | Border: #CBD5E1         */
-  /* Background: #F8FAFC | Surface: #FFFFFF | Text: #0F172A / #64748B          */
-  /* Radius: 6px buttons/inputs/tables, 8px cards/modals                       */
+  /* APEX LMS CLEAN BANKING DESIGN SYSTEM (ZERO GRADIENTS, CRISP SOLID PALETTE) */
+  /* Primary: #2563EB | Background: #F8FAFC | Surface: #FFFFFF | Border: #E2E8F0 */
+  /* Text: #0F172A | Secondary: #64748B | Success: #16A34A | Danger: #DC2626   */
   /* ========================================================================= */
 
-  /* 1. Surfaces & Data Cards (8px Radius, 1px solid #CBD5E1 Border, Flat White) */
+  /* 1. Surfaces & Data Cards (8px Radius, 1px solid #E2E8F0 Border, Flat White) */
   .card, .data-card, .banking-card {
-    @apply bg-white border border-[#CBD5E1] rounded-[8px] p-5 shadow-none;
+    @apply bg-white border border-[#E2E8F0] rounded-[8px] p-5 shadow-none;
   }
   
   .surface-subtle {
-    @apply bg-[#F8FAFC] border border-[#CBD5E1] rounded-[8px] p-4;
+    @apply bg-[#F8FAFC] border border-[#E2E8F0] rounded-[8px] p-4;
   }
 
   /* 2. Standardized Buttons (6px Radius, 14px font, crisp borders, no gradients) */
   .btn-primary {
-    @apply bg-[#0F172A] text-white hover:bg-[#1E293B] active:bg-[#020617] transition-colors px-4 py-2.5 rounded-[6px] text-[14px] font-medium inline-flex items-center justify-center gap-2 border border-transparent disabled:opacity-50 disabled:pointer-events-none;
+    @apply bg-[#2563EB] text-white hover:bg-[#1D4ED8] active:bg-[#1E40AF] transition-colors px-4 py-2 rounded-[6px] text-[14px] font-medium inline-flex items-center justify-center gap-2 border border-transparent disabled:opacity-50 disabled:pointer-events-none;
   }
 
   .btn-blue {
-    @apply bg-[#2563EB] text-white hover:bg-[#1D4ED8] active:bg-[#1E40AF] transition-colors px-4 py-2.5 rounded-[6px] text-[14px] font-medium inline-flex items-center justify-center gap-2 border border-transparent disabled:opacity-50 disabled:pointer-events-none;
+    @apply bg-[#2563EB] text-white hover:bg-[#1D4ED8] active:bg-[#1E40AF] transition-colors px-4 py-2 rounded-[6px] text-[14px] font-medium inline-flex items-center justify-center gap-2 border border-transparent disabled:opacity-50 disabled:pointer-events-none;
   }
 
   .btn-secondary {
-    @apply bg-white text-[#0F172A] border border-[#CBD5E1] hover:bg-[#F8FAFC] active:bg-slate-100 transition-colors px-4 py-2.5 rounded-[6px] text-[14px] font-medium inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none;
+    @apply bg-white text-[#0F172A] border border-[#E2E8F0] hover:bg-[#F8FAFC] active:bg-slate-100 transition-colors px-4 py-2 rounded-[6px] text-[14px] font-medium inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:pointer-events-none;
   }
 
   .btn-danger {
-    @apply bg-[#DC2626] text-white hover:bg-[#B91C1C] active:bg-[#991B1B] transition-colors px-4 py-2.5 rounded-[6px] text-[14px] font-medium inline-flex items-center justify-center gap-2 border border-transparent disabled:opacity-50 disabled:pointer-events-none;
+    @apply bg-[#DC2626] text-white hover:bg-[#B91C1C] active:bg-[#991B1B] transition-colors px-4 py-2 rounded-[6px] text-[14px] font-medium inline-flex items-center justify-center gap-2 border border-transparent disabled:opacity-50 disabled:pointer-events-none;
   }
 
-  /* 3. Form Inputs & Controls (6px Radius, 44px Height, 1px solid #CBD5E1 Border) */
+  .btn-success {
+    @apply bg-[#16A34A] text-white hover:bg-[#15803D] active:bg-[#166534] transition-colors px-4 py-2 rounded-[6px] text-[14px] font-medium inline-flex items-center justify-center gap-2 border border-transparent disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  /* 3. Form Inputs & Controls (6px Radius, 40px Height, 1px solid #E2E8F0 Border) */
   .form-control, .input-standard {
-    @apply bg-white border border-[#CBD5E1] focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] rounded-[6px] px-3.5 py-2 text-[14px] text-[#0F172A] placeholder:text-[#64748B] outline-none transition-colors h-[44px];
+    @apply bg-white border border-[#E2E8F0] focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] rounded-[6px] px-3.5 py-2 text-[14px] text-[#0F172A] placeholder:text-[#64748B] outline-none transition-colors h-[40px];
   }
 
   .form-label {
@@ -91,18 +94,18 @@
     @apply bg-blue-50 text-[#2563EB] border-blue-200;
   }
   .badge-neutral {
-    @apply bg-slate-50 text-[#64748B] border-[#CBD5E1];
+    @apply bg-slate-50 text-[#64748B] border-[#E2E8F0];
   }
 
-  /* 5. Enterprise Tables (6px Radius, Crisp #CBD5E1 Borders, Compact Rows) */
+  /* 5. Enterprise Tables (6px Radius, Crisp #E2E8F0 Borders, Compact Rows) */
   .table-enterprise {
-    @apply w-full text-left text-[13px] text-[#0F172A] border border-[#CBD5E1] rounded-[6px] overflow-hidden bg-white;
+    @apply w-full text-left text-[13px] text-[#0F172A] border border-[#E2E8F0] rounded-[6px] overflow-hidden bg-white;
   }
   .table-enterprise th {
-    @apply bg-[#F8FAFC] border-b border-[#CBD5E1] px-4 py-3 text-[12px] font-semibold text-[#64748B] uppercase tracking-wider;
+    @apply bg-[#F8FAFC] border-b border-[#E2E8F0] px-4 py-3 text-[12px] font-semibold text-[#64748B] uppercase tracking-wider;
   }
   .table-enterprise td {
-    @apply border-b border-[#CBD5E1] px-4 py-3 text-[#0F172A];
+    @apply border-b border-[#E2E8F0] px-4 py-3 text-[#0F172A];
   }
   .table-enterprise tr:last-child td {
     @apply border-b-0;
@@ -118,7 +121,7 @@
   background: #F8FAFC;
 }
 ::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
+  background: #E2E8F0;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {

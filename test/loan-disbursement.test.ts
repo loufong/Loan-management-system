@@ -62,11 +62,8 @@ async function runLoanDisbursementTests() {
 
   // 1. Mock Users & JWT Helper
   const mockUsers: Record<string, any> = {
-    'user-cashier': { id: 'user-cashier', username: 'cashier1', email: 'cashier@lms.bank', role: UserRole.CASHIER, status: 'ACTIVE', fullName: 'Alice Cashier' },
-    'user-admin': { id: 'user-admin', username: 'admin1', email: 'admin@lms.bank', role: UserRole.MANAGER, status: 'ACTIVE', fullName: 'Bob Admin' },
-    'user-officer': { id: 'user-officer', username: 'officer1', email: 'officer@lms.bank', role: UserRole.LOAN_OFFICER, status: 'ACTIVE', fullName: 'Charlie Officer' },
-    'user-manager': { id: 'user-manager', username: 'manager1', email: 'manager@lms.bank', role: UserRole.MANAGER, status: 'ACTIVE', fullName: 'David Manager' },
-    'user-borrower': { id: 'user-borrower', username: 'borrower1', email: 'borrower@lms.bank', role: UserRole.BORROWER, status: 'ACTIVE', fullName: 'Eva Borrower' }
+    'user-admin': { id: 'user-admin', username: 'admin1', email: 'admin@lms.bank', role: UserRole.ADMIN, status: 'ACTIVE', fullName: 'Bob Admin' },
+    'user-borrower': { id: 'user-borrower', username: 'borrower1', email: 'borrower@lms.bank', role: UserRole.USER, status: 'ACTIVE', fullName: 'Eva Borrower' }
   };
 
   prisma.user.findUnique = (async ({ where }: any) => {
@@ -77,19 +74,15 @@ async function runLoanDisbursementTests() {
     return jwt.sign({ id: userId, username: mockUsers[userId].username, email: mockUsers[userId].email, role }, JWT_ACCESS_SECRET, { expiresIn: '1h' });
   }
 
-  const cashierToken = makeToken(UserRole.CASHIER, 'user-cashier');
-  const adminToken = makeToken(UserRole.MANAGER, 'user-admin');
-  const officerToken = makeToken(UserRole.LOAN_OFFICER, 'user-officer');
-  const managerToken = makeToken(UserRole.MANAGER, 'user-manager');
-  const borrowerToken = makeToken(UserRole.BORROWER, 'user-borrower');
+  const adminToken = makeToken(UserRole.ADMIN, 'user-admin');
+  const borrowerToken = makeToken(UserRole.USER, 'user-borrower');
 
   // --- TEST 1: Business Rule 2 - RBAC Authorization Guard ---
   console.log('--- 1. Verification of Role-Based Access Control (RBAC) on POST /api/loans/:applicationId/disburse ---');
-  // Allowed: CASHIER, MANAGER. Forbidden: BORROWER, LOAN_OFFICER
+  // Allowed: ADMIN. Forbidden: USER
 
   const rolesToTestForbidden = [
-    { role: 'BORROWER', token: borrowerToken },
-    { role: 'LOAN_OFFICER', token: officerToken }
+    { role: 'USER', token: borrowerToken }
   ];
 
   for (const { role, token } of rolesToTestForbidden) {
@@ -110,7 +103,7 @@ async function runLoanDisbursementTests() {
   const missingRefRes = await request(app, 'POST', '/api/loans/APP-TEST-0001/disburse', {
     paymentMethod: 'BANK_TRANSFER'
   }, {
-    Authorization: `Bearer ${cashierToken}`
+    Authorization: `Bearer ${adminToken}`
   });
   assert.strictEqual(missingRefRes.status, 400);
   assert.strictEqual(missingRefRes.body.error.code, 'VALIDATION_ERROR');
@@ -121,7 +114,7 @@ async function runLoanDisbursementTests() {
     paymentMethod: 'BITCOIN',
     referenceNo: 'TRX-BNK-982341'
   }, {
-    Authorization: `Bearer ${cashierToken}`
+    Authorization: `Bearer ${adminToken}`
   });
   assert.strictEqual(invalidMethodRes.status, 400);
   assert.strictEqual(invalidMethodRes.body.error.code, 'VALIDATION_ERROR');

@@ -81,13 +81,13 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] flex flex-col lg:hidden shadow-lg border-r border-slate-800"
+              className="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] flex flex-col lg:hidden shadow-lg border-r border-[#E2E8F0] bg-white"
             >
               <div className="absolute top-3.5 right-3 z-50">
                 <button
                   onClick={() => setMobileDrawerOpen(false)}
                   aria-label="Close Navigation Drawer"
-                  className="p-1.5 rounded-[6px] text-slate-400 hover:text-white hover:bg-slate-800 transition focus:outline-none"
+                  className="p-1.5 rounded-[6px] text-[#64748B] hover:text-[#0F172A] hover:bg-slate-100 transition focus:outline-none"
                 >
                   <X className="w-5 h-5" />
                 </button>

@@ -23,6 +23,7 @@ export interface RecordPaymentDto {
   receivedById: string;
   notes?: string;
   ipAddress?: string;
+  idempotencyKey?: string;
 }
 
 export class PaymentService {
@@ -44,6 +45,23 @@ export class PaymentService {
     );
     if (paymentAmount <= 0) {
       throw { statusCode: 400, message: 'Payment amount must be greater than 0', code: 'INVALID_AMOUNT' };
+    }
+
+    // Check idempotency key if provided by client (e.g. mobile retries)
+    if (dto.idempotencyKey) {
+      const existingPayment = await prisma.payment.findUnique({
+        where: { idempotencyKey: dto.idempotencyKey },
+        include: { loan: true }
+      });
+      if (existingPayment) {
+        return {
+          payment: existingPayment,
+          loan: existingPayment.loan,
+          allocations: [],
+          replayed: true,
+          message: 'Payment request processed previously and replayed idempotently.'
+        };
+      }
     }
 
     // Check duplicate reference number
@@ -105,7 +123,8 @@ export class PaymentService {
           referenceNo: dto.referenceNo,
           receivedBy: dto.receivedById,
           status: PaymentStatus.PAID,
-          notes: dto.notes || null
+          notes: dto.notes || null,
+          idempotencyKey: dto.idempotencyKey || null
         }
       });
 

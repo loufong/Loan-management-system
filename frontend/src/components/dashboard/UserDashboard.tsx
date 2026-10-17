@@ -114,7 +114,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
   return (
     <div className="space-y-6 font-sans">
       {/* 1. Welcome Message & Quick Apply Banner */}
-      <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[4px] bg-blue-50 border border-blue-200 text-[#2563EB] text-[11px] font-semibold mb-2">
             <ShieldCheck className="w-3.5 h-3.5" />
@@ -130,7 +130,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => (onOpenApplyLoan ? onOpenApplyLoan() : onNavigate('new-application'))}
-            className="px-4 py-2.5 bg-[#0F172A] hover:bg-[#1E293B] text-white rounded-[6px] text-xs font-semibold flex items-center gap-1.5 transition-colors"
+            className="px-4 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-[6px] text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-none cursor-pointer"
           >
             <FilePlus className="w-4 h-4" />
             <span>Apply for Loan</span>
@@ -143,7 +143,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
         {/* Metric 1: Active Loans */}
         <div
           onClick={() => onNavigate('loans')}
-          className="bg-white border border-[#CBD5E1] hover:border-[#2563EB] rounded-[8px] p-5 transition-colors cursor-pointer group"
+          className="bg-white border border-[#E2E8F0] hover:border-[#2563EB] rounded-[8px] p-5 transition-colors cursor-pointer group"
         >
           <div className="flex items-center justify-between">
             <div className="p-2 rounded-[6px] bg-blue-50 border border-blue-100 text-[#2563EB]">
@@ -163,7 +163,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
         {/* Metric 2: Pending Applications */}
         <div
           onClick={() => onNavigate('applications')}
-          className="bg-white border border-[#CBD5E1] hover:border-[#2563EB] rounded-[8px] p-5 transition-colors cursor-pointer group"
+          className="bg-white border border-[#E2E8F0] hover:border-[#2563EB] rounded-[8px] p-5 transition-colors cursor-pointer group"
         >
           <div className="flex items-center justify-between">
             <div className="p-2 rounded-[6px] bg-amber-50 border border-amber-100 text-[#D97706]">
@@ -183,7 +183,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
         {/* Metric 3: Approved Loans */}
         <div
           onClick={() => onNavigate('applications')}
-          className="bg-white border border-[#CBD5E1] hover:border-[#2563EB] rounded-[8px] p-5 transition-colors cursor-pointer group"
+          className="bg-white border border-[#E2E8F0] hover:border-[#2563EB] rounded-[8px] p-5 transition-colors cursor-pointer group"
         >
           <div className="flex items-center justify-between">
             <div className="p-2 rounded-[6px] bg-emerald-50 border border-emerald-100 text-[#16A34A]">
@@ -203,7 +203,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
         {/* Metric 4: Outstanding Balance */}
         <div
           onClick={() => onNavigate('loans')}
-          className="bg-white border border-[#CBD5E1] hover:border-[#2563EB] rounded-[8px] p-5 transition-colors cursor-pointer group"
+          className="bg-white border border-[#E2E8F0] hover:border-[#2563EB] rounded-[8px] p-5 transition-colors cursor-pointer group"
         >
           <div className="flex items-center justify-between">
             <div className="p-2 rounded-[6px] bg-blue-50 border border-blue-100 text-[#2563EB]">
@@ -222,7 +222,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
       </div>
 
       {/* Next Payment Banner (Point 12 requirement) */}
-      <div className="bg-white border border-[#CBD5E1] rounded-[8px] p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-start sm:items-center gap-3">
           <div className="w-10 h-10 rounded-[6px] bg-blue-50 border border-blue-200 text-[#2563EB] flex items-center justify-center shrink-0">
             <Calendar className="w-5 h-5" />
@@ -253,8 +253,8 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
       </div>
 
       {/* Payment History Table (Point 12 requirement) */}
-      <div className="bg-white border border-[#CBD5E1] rounded-[8px] overflow-hidden">
-        <div className="p-4 sm:p-5 border-b border-[#CBD5E1] flex items-center justify-between">
+      <div className="bg-white border border-[#E2E8F0] rounded-[8px] overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-[#E2E8F0] flex items-center justify-between">
           <div>
             <h3 className="text-[15px] font-bold text-[#0F172A]">Payment History</h3>
             <p className="text-xs text-[#64748B] mt-0.5">Recent verified installment receipts &amp; payments</p>

@@ -44,8 +44,7 @@ export function maskEmail(email: string | null | undefined): string {
  */
 export function hasPiiClearance(viewerRole: UserRole, isOwner = false): boolean {
   if (isOwner) return true;
-  const privilegedRoles: UserRole[] = [UserRole.ADMIN, UserRole.MANAGER, UserRole.LOAN_OFFICER, UserRole.CREDIT_OFFICER];
-  return privilegedRoles.includes(viewerRole);
+  return viewerRole === UserRole.ADMIN || String(viewerRole).toUpperCase() === 'ADMIN';
 }
 
 /**

@@ -8,10 +8,10 @@ export const loanRouter = Router();
 
 loanRouter.use(authenticate);
 
-// 1. Directory of all disbursements (Staff: CASHIER, MANAGER)
+// 1. Directory of all disbursements (ADMIN)
 loanRouter.get(
   '/disbursements',
-  authorize(UserRole.MANAGER, UserRole.CASHIER),
+  authorize(UserRole.ADMIN),
   LoanController.listDisbursements
 );
 
@@ -20,19 +20,19 @@ loanRouter.get('/', LoanController.list);
 loanRouter.get('/:id', LoanController.getById);
 loanRouter.get('/:id/schedules', LoanController.getSchedules);
 
-// 3. Core Banking: Loan Disbursement & Activation (CASHIER, MANAGER)
+// 3. Core Banking: Loan Disbursement & Activation (ADMIN)
 loanRouter.post(
   '/disburse',
-  authorize(UserRole.CASHIER, UserRole.MANAGER),
+  authorize(UserRole.ADMIN),
   LoanController.disburse
 );
 loanRouter.post(
   '/:applicationId/disburse',
-  authorize(UserRole.CASHIER, UserRole.MANAGER),
+  authorize(UserRole.ADMIN),
   LoanController.disburse
 );
 loanRouter.post(
   '/:id/disburse',
-  authorize(UserRole.CASHIER, UserRole.MANAGER),
+  authorize(UserRole.ADMIN),
   LoanController.disburse
 );

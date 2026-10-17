@@ -768,7 +768,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <XAxis
                     dataKey="month"
                     tickLine={false}
-                    axisLine={{ stroke: '#CBD5E1' }}
+                    axisLine={{ stroke: '#E2E8F0' }}
                     tick={{ fontSize: 11, fill: '#64748B' }}
                   />
                   <YAxis

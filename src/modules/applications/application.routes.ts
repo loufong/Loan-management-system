@@ -12,65 +12,65 @@ applicationRouter.use(authenticate);
 applicationRouter.get('/', ApplicationController.list);
 applicationRouter.get('/:id', ApplicationController.getById);
 
-// 2. Draft Lifecycle
+// 2. Draft Lifecycle (USER, ADMIN)
 applicationRouter.post(
   '/draft',
-  authorize(UserRole.MANAGER, UserRole.LOAN_OFFICER, UserRole.BORROWER),
+  authorize(UserRole.ADMIN, UserRole.USER),
   ApplicationController.saveDraft
 );
 
 applicationRouter.put(
   '/:id/draft',
-  authorize(UserRole.MANAGER, UserRole.LOAN_OFFICER, UserRole.BORROWER),
+  authorize(UserRole.ADMIN, UserRole.USER),
   ApplicationController.updateDraft
 );
 
 // 3. Pre-submission Preview
 applicationRouter.get('/:id/preview', ApplicationController.getPreview);
 
-// 4. Submission (BORROWER, LOAN_OFFICER, MANAGER)
+// 4. Submission (USER, ADMIN)
 applicationRouter.post(
   '/',
-  authorize(UserRole.MANAGER, UserRole.LOAN_OFFICER, UserRole.BORROWER),
+  authorize(UserRole.ADMIN, UserRole.USER),
   ApplicationController.submit
 );
 
 applicationRouter.post(
   '/:id/submit',
-  authorize(UserRole.MANAGER, UserRole.LOAN_OFFICER, UserRole.BORROWER),
+  authorize(UserRole.ADMIN, UserRole.USER),
   ApplicationController.submit
 );
 
-// 5. Credit Simulation Assessment
+// 5. Credit Simulation Assessment (ADMIN)
 applicationRouter.get(
   '/:id/simulate-assessment',
-  authorize(UserRole.MANAGER, UserRole.LOAN_OFFICER, UserRole.CREDIT_OFFICER),
+  authorize(UserRole.ADMIN),
   ApplicationController.simulateAssessment
 );
 
-// 6. Underwriting Review (LOAN_OFFICER, CREDIT_OFFICER, MANAGER)
+// 6. Underwriting Review (ADMIN)
 applicationRouter.post(
   '/:id/review',
-  authorize(UserRole.LOAN_OFFICER, UserRole.CREDIT_OFFICER, UserRole.MANAGER),
+  authorize(UserRole.ADMIN),
   ApplicationController.review
 );
 
-// 7. Committee Decision (MANAGER)
+// 7. Committee Decision (ADMIN)
 applicationRouter.post(
   '/:id/approve',
-  authorize(UserRole.MANAGER),
+  authorize(UserRole.ADMIN),
   ApplicationController.approve
 );
 
 applicationRouter.post(
   '/:id/reject',
-  authorize(UserRole.MANAGER),
+  authorize(UserRole.ADMIN),
   ApplicationController.reject
 );
 
-// 8. Cancel Application (BORROWER, LOAN_OFFICER, MANAGER)
+// 8. Cancel Application (USER, ADMIN)
 applicationRouter.post(
   '/:id/cancel',
-  authorize(UserRole.MANAGER, UserRole.LOAN_OFFICER, UserRole.BORROWER),
+  authorize(UserRole.ADMIN, UserRole.USER),
   ApplicationController.cancel
 );

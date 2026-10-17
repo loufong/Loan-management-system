@@ -27,7 +27,7 @@ console.log('Seeding using DATABASE_URL:', process.env.DATABASE_URL);
 const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: process.env.DATABASE_URL || 'postgresql://postgres:postgres@172.31.55.59:5432/loansystem_db?schema=public'
+      url: process.env.DATABASE_URL || 'postgresql://postgres:postgres@127.0.0.1:5432/loansystem_db?schema=public'
     }
   }
 });
@@ -83,7 +83,7 @@ async function main() {
       phone: '+1-555-0101',
       position: 'Head of Financial Aid & Lending',
       department: 'Credit & Financial Affairs',
-      role: UserRole.MANAGER,
+      role: UserRole.ADMIN,
       status: UserStatus.ACTIVE
     }
   });
@@ -97,7 +97,7 @@ async function main() {
       phone: '+1-555-0102',
       position: 'Senior Credit Risk Analyst',
       department: 'Risk Management',
-      role: UserRole.CREDIT_OFFICER,
+      role: UserRole.ADMIN,
       status: UserStatus.ACTIVE
     }
   });
@@ -111,7 +111,7 @@ async function main() {
       phone: '+1-555-0103',
       position: 'Senior Loan Origination Officer',
       department: 'Student Financial Services',
-      role: UserRole.LOAN_OFFICER,
+      role: UserRole.ADMIN,
       status: UserStatus.ACTIVE
     }
   });
@@ -125,7 +125,7 @@ async function main() {
       phone: '+1-555-0104',
       position: 'University Bursar & Lead Cashier',
       department: 'Disbursement & Treasury',
-      role: UserRole.CASHIER,
+      role: UserRole.ADMIN,
       status: UserStatus.ACTIVE
     }
   });
@@ -139,7 +139,7 @@ async function main() {
       phone: '+1-555-0201',
       position: 'Graduate Research Assistant',
       department: 'School of Computer Science',
-      role: UserRole.BORROWER,
+      role: UserRole.USER,
       status: UserStatus.ACTIVE
     }
   });
@@ -153,7 +153,7 @@ async function main() {
       phone: '+1-555-0202',
       position: 'Undergraduate Senior',
       department: 'Faculty of Engineering',
-      role: UserRole.BORROWER,
+      role: UserRole.USER,
       status: UserStatus.ACTIVE
     }
   });
@@ -168,7 +168,7 @@ async function main() {
       phone: '+1-555-0901',
       position: 'Credit Underwriting Manager',
       department: 'Credit Committee',
-      role: UserRole.MANAGER,
+      role: UserRole.ADMIN,
       status: UserStatus.ACTIVE
     }
   });
@@ -182,7 +182,7 @@ async function main() {
       phone: '+1-555-0905',
       position: 'Credit Risk Officer',
       department: 'Credit Assessment',
-      role: UserRole.CREDIT_OFFICER,
+      role: UserRole.ADMIN,
       status: UserStatus.ACTIVE
     }
   });
@@ -196,7 +196,7 @@ async function main() {
       phone: '+1-555-0902',
       position: 'Senior Loan & DTI Officer',
       department: 'Origination & Risk',
-      role: UserRole.LOAN_OFFICER,
+      role: UserRole.ADMIN,
       status: UserStatus.ACTIVE
     }
   });
@@ -210,7 +210,7 @@ async function main() {
       phone: '+1-555-0903',
       position: 'Lead Teller & Cashier',
       department: 'Disbursement & Treasury',
-      role: UserRole.CASHIER,
+      role: UserRole.ADMIN,
       status: UserStatus.ACTIVE
     }
   });
@@ -224,7 +224,7 @@ async function main() {
       phone: '+1-555-0904',
       position: 'Graduate Research Student',
       department: 'School of Computer Science',
-      role: UserRole.BORROWER,
+      role: UserRole.USER,
       status: UserStatus.ACTIVE
     }
   });

@@ -19,22 +19,7 @@ export function checkRole(
     Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles, ...restRoles]
   ).map((r) => String(r).toUpperCase());
 
-  const expandedAllowed = new Set<string>();
-  for (const r of rawRoles) {
-    expandedAllowed.add(r);
-    if (r === 'ADMIN') {
-      expandedAllowed.add('MANAGER');
-    }
-    if (r === 'MANAGER') {
-      expandedAllowed.add('ADMIN');
-    }
-    if (r === 'USER') {
-      expandedAllowed.add('BORROWER');
-    }
-    if (r === 'BORROWER') {
-      expandedAllowed.add('USER');
-    }
-  }
+  const allowedSet = new Set<string>(rawRoles);
 
   return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
     if (!req.user) {
@@ -45,15 +30,15 @@ export function checkRole(
     const userRole = String(req.user.role).toUpperCase();
 
     // ADMIN has full administrative permissions across all operations
-    if (userRole === 'ADMIN' || userRole === 'MANAGER') {
+    if (userRole === 'ADMIN') {
       return next();
     }
 
-    if (!expandedAllowed.has(userRole)) {
+    if (!allowedSet.has(userRole)) {
       sendError(
         res,
         'FORBIDDEN',
-        'Access Denied: You do not have permission to access this page.',
+        'Access Denied: You do not have permission to access this resource.',
         403
       );
       return;
@@ -82,7 +67,7 @@ export function checkPermission(...requiredPermissions: Permission[]) {
 
     // ADMIN has all permissions
     const userRole = String(req.user.role).toUpperCase();
-    if (userRole === 'ADMIN' || userRole === 'MANAGER') {
+    if (userRole === 'ADMIN') {
       return next();
     }
 
@@ -120,7 +105,7 @@ export async function enforceBorrowerProfileOwnership(
 
   // Admin can access all borrower records
   const userRole = String(req.user.role).toUpperCase();
-  if (userRole === 'ADMIN' || userRole === 'MANAGER') {
+  if (userRole === 'ADMIN') {
     return next();
   }
 

@@ -83,6 +83,10 @@ import { OtpVerificationPage } from './components/auth/OtpVerificationPage';
 import { ForgotPasswordPage } from './components/auth/ForgotPasswordPage';
 import { SetNewPasswordPage } from './components/auth/SetNewPasswordPage';
 import { ChangePasswordPage } from './components/auth/ChangePasswordPage';
+import { NotificationsCenter } from './components/notifications/NotificationsCenter';
+import { UserProfileView } from './components/profile/UserProfileView';
+import { UserSettingsView } from './components/settings/UserSettingsView';
+import { UserRepaymentsView } from './components/loans/UserRepaymentsView';
 import { useAuth } from './context/AuthContext';
 
 type AuthView = 'login' | 'register' | 'otp_verify' | 'forgot_password' | 'set_new_password';
@@ -174,6 +178,7 @@ export const App: React.FC = () => {
     }
   }, [authUser]);
 
+  const [currentRoute, setCurrentRoute] = useState<string>(() => getNormalizedPath());
   const [activeTab, setActiveTab] = useState<string>(() => {
     const role = (authUser?.role || '').toLowerCase();
     return role === 'admin' ? 'dashboard' : 'user_dashboard';
@@ -185,6 +190,7 @@ export const App: React.FC = () => {
   useEffect(() => {
     const handleUrlSync = () => {
       const path = getNormalizedPath();
+      setCurrentRoute(path);
 
       if (!authIsAuthenticated || !authUser) {
         if (path === '/register') setAuthView('register');
@@ -200,9 +206,9 @@ export const App: React.FC = () => {
         return;
       }
 
-      const userRole = (authUser.role || 'BORROWER').toUpperCase();
-      const isBorrower = userRole === 'BORROWER' || userRole === 'USER';
-      const isStaff = !isBorrower;
+      const userRole = (authUser.role || 'USER').toUpperCase();
+      const isAdmin = userRole === 'ADMIN';
+      const isBorrower = !isAdmin;
 
       // If a borrower tries to access an admin URL directly (/admin/*), reject and return Access Denied
       if (isBorrower && (path.startsWith('/admin') || path === '/access-denied')) {
@@ -216,57 +222,70 @@ export const App: React.FC = () => {
         return;
       }
 
-      if (path === '/admin/dashboard' || (isStaff && (path === '/login' || path === '/' || path === ''))) {
+      // ADMIN ROUTES
+      if (path === '/admin/dashboard' || (isAdmin && (path === '/login' || path === '/' || path === '' || path === '/admin'))) {
         setActiveTab('dashboard');
         replaceAppRoute('/admin/dashboard');
-      } else if (path === '/user/dashboard' || (!isStaff && (path === '/login' || path === '/' || path === ''))) {
-        setActiveTab('user_dashboard');
-        replaceAppRoute('/user/dashboard');
       } else if (path === '/admin/users') {
         setActiveTab('user_management');
-      } else if (path === '/admin/borrowers') {
-        setActiveTab('borrowers');
-      } else if (path === '/admin/loan_products') {
+      } else if (path === '/admin/products' || path === '/admin/loan_products' || path === '/admin/loan-products') {
         setActiveTab('loan_products');
       } else if (path === '/admin/applications') {
         setActiveTab('applications');
-      } else if (path === '/admin/credit_reviews') {
+      } else if (path === '/admin/credit_reviews' || path === '/admin/credit-reviews') {
         setActiveTab('credit_reviews');
       } else if (path === '/admin/approvals') {
         setActiveTab('approvals');
       } else if (path === '/admin/disbursements') {
         setActiveTab('disbursements');
-      } else if (path === '/admin/payments') {
+      } else if (path === '/admin/loans') {
+        setActiveTab('loans');
+      } else if (path === '/admin/payments' || path === '/admin/cashier') {
         setActiveTab('cashier');
       } else if (path === '/admin/overdue') {
         setActiveTab('overdue');
       } else if (path === '/admin/reports') {
         setActiveTab('reports');
-      } else if (path === '/admin/audit_logs') {
+      } else if (path === '/admin/notifications') {
+        setActiveTab('notifications');
+      } else if (path === '/admin/audit-logs' || path === '/admin/audit_logs') {
         setActiveTab('audit_logs');
       } else if (path === '/admin/settings') {
         setActiveTab('system_config');
-      } else if (path === '/user/profile') {
-        setActiveTab('borrower-detail');
-      } else if (path === '/user/apply_loan') {
-        setActiveTab('new-application');
-      } else if (path === '/user/my_applications') {
+      } else if (path === '/admin/profile') {
+        setActiveTab('profile');
+      } else if (path === '/admin/borrowers') {
+        setActiveTab('borrowers');
+
+      // USER ROUTES
+      } else if (path === '/dashboard' || path === '/user/dashboard' || (!isAdmin && (path === '/login' || path === '/' || path === '' || path === '/user'))) {
+        setActiveTab('user_dashboard');
+        replaceAppRoute('/dashboard');
+      } else if (path === '/applications' || path === '/user/my_applications' || path === '/user/applications') {
         setActiveTab('applications');
-      } else if (path === '/user/my_loans') {
+      } else if (path === '/apply-loan' || path === '/user/apply_loan') {
+        setActiveTab('new-application');
+      } else if (path === '/loans' || path === '/user/my_loans' || path === '/user/loans') {
         setActiveTab('loans');
-      } else if (path === '/user/repayment_schedule') {
-        setActiveTab('loans');
-      } else if (path === '/user/payments') {
+      } else if (path === '/repayments' || path === '/user/repayment_schedule' || path === '/user/repayments') {
+        setActiveTab('repayments');
+      } else if (path === '/payments' || path === '/user/payments' || path === '/user/my_repayments') {
         setActiveTab('cashier');
+      } else if (path === '/notifications' || path === '/user/notifications') {
+        setActiveTab('notifications');
+      } else if (path === '/profile' || path === '/user/profile') {
+        setActiveTab('profile');
+      } else if (path === '/settings' || path === '/user/settings') {
+        setActiveTab('user_settings');
       } else if (path === '/settings/change-password' || path === '/change-password') {
         setActiveTab('change_password');
       } else {
-        if (isStaff) {
+        if (isAdmin) {
           setActiveTab('dashboard');
           replaceAppRoute('/admin/dashboard');
         } else {
           setActiveTab('user_dashboard');
-          replaceAppRoute('/user/dashboard');
+          replaceAppRoute('/dashboard');
         }
       }
     };
@@ -382,25 +401,27 @@ export const App: React.FC = () => {
       case 'user_dashboard':
         return [{ label: 'User Portal' }, { label: 'My Dashboard', active: true }];
       case 'borrowers':
-        return [{ label: 'Institutional Registry', onClick: () => setActiveTab('borrowers') }, { label: 'Borrowers Directory', active: true }];
+        return [{ label: 'Institutional Registry', onClick: () => handleNavSelection('/admin/borrowers') }, { label: 'Borrowers Directory', active: true }];
       case 'borrower-detail':
-        return [{ label: 'Borrowers', onClick: () => setActiveTab('borrowers') }, { label: `360° Dossier (${selectedBorrowerId})`, active: true }];
+        return [{ label: 'Borrowers', onClick: () => handleNavSelection('/admin/borrowers') }, { label: `360° Dossier (${selectedBorrowerId})`, active: true }];
       case 'applications':
-        return [{ label: 'Loan Origination', onClick: () => setActiveTab('applications') }, { label: 'Pipeline Stages', active: true }];
+        return [{ label: 'Loan Origination', onClick: () => handleNavSelection(currentUser.role === 'admin' ? '/admin/applications' : '/applications') }, { label: 'Pipeline Stages', active: true }];
       case 'new-application':
-        return [{ label: 'Applications', onClick: () => setActiveTab('applications') }, { label: 'New Loan Wizard', active: true }];
+        return [{ label: 'Applications', onClick: () => handleNavSelection('/applications') }, { label: 'New Loan Wizard', active: true }];
       case 'credit_reviews':
-        return [{ label: 'Underwriting', onClick: () => setActiveTab('credit_reviews') }, { label: 'Credit Review Queue', active: true }];
+        return [{ label: 'Underwriting', onClick: () => handleNavSelection('/admin/credit_reviews') }, { label: 'Credit Review Queue', active: true }];
       case 'risk_assessment':
-        return [{ label: 'Underwriting', onClick: () => setActiveTab('credit_reviews') }, { label: `DTI Risk Workbench (${selectedApplicationId})`, active: true }];
+        return [{ label: 'Underwriting', onClick: () => handleNavSelection('/admin/credit_reviews') }, { label: `DTI Risk Workbench (${selectedApplicationId})`, active: true }];
       case 'approvals':
         return [{ label: 'Credit Committee' }, { label: 'Executive Approvals Queue', active: true }];
       case 'disbursements':
-        return [{ label: 'Treasury & Cashier', onClick: () => setActiveTab('disbursements') }, { label: 'Disbursements Queue', active: true }];
+        return [{ label: 'Treasury & Cashier', onClick: () => handleNavSelection('/admin/disbursements') }, { label: 'Disbursements Queue', active: true }];
       case 'loans':
-        return [{ label: 'Core Banking', onClick: () => setActiveTab('loans') }, { label: 'Active Facilities Directory', active: true }];
+        return [{ label: 'Core Banking', onClick: () => handleNavSelection(currentUser.role === 'admin' ? '/admin/loans' : '/loans') }, { label: 'Active Facilities Directory', active: true }];
       case 'loan-detail':
-        return [{ label: 'Core Banking', onClick: () => setActiveTab('loans') }, { label: `Amortization Schedule (${selectedLoanId})`, active: true }];
+        return [{ label: 'Core Banking', onClick: () => handleNavSelection(currentUser.role === 'admin' ? '/admin/loans' : '/loans') }, { label: `Amortization Schedule (${selectedLoanId})`, active: true }];
+      case 'repayments':
+        return [{ label: 'Borrower Facilities' }, { label: 'Repayment Schedule', active: true }];
       case 'cashier':
         return [{ label: 'Cashier Desk' }, { label: 'Payment Collection Terminal', active: true }];
       case 'overdue':
@@ -409,12 +430,18 @@ export const App: React.FC = () => {
         return [{ label: 'Product Administration' }, { label: 'Loan Products Catalog', active: true }];
       case 'reports':
         return [{ label: 'Business Intelligence' }, { label: 'Portfolio Reports Studio', active: true }];
+      case 'notifications':
+        return [{ label: 'Communication' }, { label: 'Notification Center', active: true }];
       case 'audit_logs':
         return [{ label: 'System Governance' }, { label: 'Immutable Audit Trail', active: true }];
       case 'user_management':
         return [{ label: 'Administration' }, { label: 'User Roles & Access Control', active: true }];
       case 'system_config':
         return [{ label: 'Administration' }, { label: 'System Settings & Lending Policies', active: true }];
+      case 'profile':
+        return [{ label: 'Account' }, { label: 'User Profile', active: true }];
+      case 'user_settings':
+        return [{ label: 'Preferences' }, { label: 'Account Settings', active: true }];
       case 'change_password':
         return [{ label: 'Account Security' }, { label: 'Change Password', active: true }];
       default:
@@ -423,142 +450,76 @@ export const App: React.FC = () => {
   };
 
   // Sidebar navigation mapping & access control enforcement
-  const handleNavSelection = (navId: string) => {
-    const userRole = (currentUser.role || 'BORROWER').toUpperCase();
+  const handleNavSelection = (navTarget: string) => {
+    const userRole = (currentUser.role || 'USER').toUpperCase();
     const isAdmin = userRole === 'ADMIN';
-    const isManager = userRole === 'MANAGER';
-    const isLoanOfficer = userRole === 'LOAN_OFFICER';
-    const isCreditOfficer = userRole === 'CREDIT_OFFICER';
-    const isCashier = userRole === 'CASHIER';
-    const isBorrower = userRole === 'BORROWER' || userRole === 'USER';
-    const isStaff = !isBorrower;
+    const isBorrower = !isAdmin;
 
-    const borrowerBlockedTabs = [
-      'user_management',
-      'roles_permissions',
-      'borrowers',
-      'credit_reviews',
-      'risk_assessment',
-      'approvals',
-      'audit_logs',
-      'system_config',
-      'reports',
-      'overdue',
-      'disbursements',
-    ];
+    let targetPath = navTarget;
 
-    if (isBorrower && borrowerBlockedTabs.includes(navId)) {
+    // Normalize legacy IDs to canonical routes
+    if (navTarget === 'dashboard') targetPath = isAdmin ? '/admin/dashboard' : '/dashboard';
+    else if (navTarget === 'user_dashboard') targetPath = '/dashboard';
+    else if (navTarget === 'user_management' || navTarget === 'users') targetPath = '/admin/users';
+    else if (navTarget === 'loan_products' || navTarget === 'products') targetPath = '/admin/products';
+    else if (navTarget === 'applications') targetPath = isAdmin ? '/admin/applications' : '/applications';
+    else if (navTarget === 'my_applications') targetPath = '/applications';
+    else if (navTarget === 'new-application' || navTarget === 'apply_loan') targetPath = isAdmin ? '/admin/applications' : '/apply-loan';
+    else if (navTarget === 'credit_reviews') targetPath = '/admin/credit_reviews';
+    else if (navTarget === 'approvals') targetPath = '/admin/approvals';
+    else if (navTarget === 'disbursements') targetPath = '/admin/disbursements';
+    else if (navTarget === 'loans') targetPath = isAdmin ? '/admin/loans' : '/loans';
+    else if (navTarget === 'my_loans') targetPath = '/loans';
+    else if (navTarget === 'repayments' || navTarget === 'repayment_schedule') targetPath = '/repayments';
+    else if (navTarget === 'cashier' || navTarget === 'cashier_desk' || navTarget === 'payments' || navTarget === 'my_repayments') targetPath = isAdmin ? '/admin/payments' : '/payments';
+    else if (navTarget === 'overdue') targetPath = '/admin/overdue';
+    else if (navTarget === 'reports') targetPath = '/admin/reports';
+    else if (navTarget === 'notifications') targetPath = isAdmin ? '/admin/notifications' : '/notifications';
+    else if (navTarget === 'audit_logs' || navTarget === 'audit-logs') targetPath = '/admin/audit-logs';
+    else if (navTarget === 'system_config') targetPath = '/admin/settings';
+    else if (navTarget === 'settings') targetPath = isAdmin ? '/admin/settings' : '/settings';
+    else if (navTarget === 'user_settings') targetPath = '/settings';
+    else if (navTarget === 'profile' || navTarget === 'borrower_portal') targetPath = isAdmin ? '/admin/profile' : '/profile';
+    else if (navTarget === 'change_password') targetPath = '/settings/change-password';
+    else if (navTarget === 'borrowers') targetPath = '/admin/borrowers';
+
+    // RBAC: Reject borrower from accessing admin routes
+    if (isBorrower && targetPath.startsWith('/admin')) {
       setActiveTab('access_denied');
       replaceAppRoute('/access-denied');
+      setCurrentRoute('/access-denied');
       return;
     }
 
-    if (navId === 'user_management' && !isAdmin && !isManager) {
-      setActiveTab('access_denied');
-      replaceAppRoute('/access-denied');
-      return;
-    }
+    // Update active route and browser history
+    setCurrentRoute(targetPath);
+    pushAppRoute(targetPath);
 
-    if (navId === 'system_config' && !isAdmin) {
-      setActiveTab('access_denied');
-      replaceAppRoute('/access-denied');
-      return;
-    }
-
-    if (navId === 'approvals' && !isAdmin && !isManager) {
-      setActiveTab('access_denied');
-      replaceAppRoute('/access-denied');
-      return;
-    }
-
-    if (navId === 'disbursements' && !isAdmin && !isManager && !isCashier) {
-      setActiveTab('access_denied');
-      replaceAppRoute('/access-denied');
-      return;
-    }
-
-    if (navId === 'change_password') {
-      setActiveTab('change_password');
-      pushAppRoute('/settings/change-password');
-      return;
-    }
-
-    if (navId === 'dashboard') {
-      if (isStaff) {
-        setActiveTab('dashboard');
-        pushAppRoute('/admin/dashboard');
-      } else {
-        setActiveTab('user_dashboard');
-        pushAppRoute('/user/dashboard');
-      }
-    } else if (navId === 'user_management') {
-      setActiveTab('user_management');
-      pushAppRoute('/admin/users');
-    } else if (navId === 'borrowers') {
-      setActiveTab('borrowers');
-      pushAppRoute('/admin/borrowers');
-    } else if (navId === 'borrower_portal') {
-      setSelectedBorrowerId(currentUser.borrowerId || 'BOR-2026-0001');
-      setActiveTab('borrower-detail');
-      pushAppRoute('/user/profile');
-    } else if (navId === 'apply_loan') {
-      setActiveTab('new-application');
-      pushAppRoute('/user/apply_loan');
-    } else if (navId === 'my_applications') {
-      setActiveTab('applications');
-      pushAppRoute('/user/my_applications');
-    } else if (navId === 'my_loans') {
-      setActiveTab('loans');
-      pushAppRoute('/user/my_loans');
-    } else if (navId === 'repayment_schedule') {
-      setActiveTab('loans');
-      pushAppRoute('/user/repayment_schedule');
-    } else if (navId === 'my_repayments') {
-      setActiveTab('cashier');
-      pushAppRoute('/user/payments');
-    } else if (navId === 'applications') {
-      setActiveTab('applications');
-      pushAppRoute(isStaff ? '/admin/applications' : '/user/my_applications');
-    } else if (navId === 'loan_products') {
-      setActiveTab('loan_products');
-      pushAppRoute(isStaff ? '/admin/loan_products' : '/products');
-    } else if (navId === 'credit_reviews') {
-      setActiveTab('credit_reviews');
-      pushAppRoute('/admin/credit_reviews');
-    } else if (navId === 'risk_assessment') {
-      setActiveTab('risk_assessment');
-    } else if (navId === 'disbursements') {
-      setActiveTab('disbursements');
-      pushAppRoute('/admin/disbursements');
-    } else if (navId === 'cashier_desk' || navId === 'cashier' || navId === 'receipts') {
-      setActiveTab('cashier');
-      pushAppRoute(isStaff ? '/admin/payments' : '/user/payments');
-    } else if (navId === 'approvals') {
-      setActiveTab('approvals');
-      pushAppRoute('/admin/approvals');
-    } else if (navId === 'loans') {
-      setActiveTab('loans');
-      pushAppRoute(isStaff ? '/admin/loans' : '/user/my_loans');
-    } else if (navId === 'overdue') {
-      setActiveTab('overdue');
-      pushAppRoute('/admin/overdue');
-    } else if (navId === 'reports') {
-      setActiveTab('reports');
-      pushAppRoute('/admin/reports');
-    } else if (navId === 'audit_logs') {
-      setActiveTab('audit_logs');
-      pushAppRoute('/admin/audit_logs');
-    } else if (navId === 'system_config') {
-      setActiveTab('system_config');
-      pushAppRoute('/admin/settings');
-    } else {
-      if (isStaff) {
-        setActiveTab('dashboard');
-        pushAppRoute('/admin/dashboard');
-      } else {
-        setActiveTab('user_dashboard');
-        pushAppRoute('/user/dashboard');
-      }
+    // Map targetPath to appropriate activeTab
+    if (targetPath === '/admin/dashboard') setActiveTab('dashboard');
+    else if (targetPath === '/dashboard') setActiveTab('user_dashboard');
+    else if (targetPath === '/admin/users') setActiveTab('user_management');
+    else if (targetPath === '/admin/products' || targetPath === '/admin/loan_products' || targetPath === '/admin/loan-products') setActiveTab('loan_products');
+    else if (targetPath === '/admin/applications') setActiveTab('applications');
+    else if (targetPath === '/applications') setActiveTab('applications');
+    else if (targetPath === '/apply-loan') setActiveTab('new-application');
+    else if (targetPath === '/admin/credit_reviews' || targetPath === '/admin/credit-reviews') setActiveTab('credit_reviews');
+    else if (targetPath === '/admin/approvals') setActiveTab('approvals');
+    else if (targetPath === '/admin/disbursements') setActiveTab('disbursements');
+    else if (targetPath === '/admin/loans' || targetPath === '/loans') setActiveTab('loans');
+    else if (targetPath === '/repayments') setActiveTab('repayments');
+    else if (targetPath === '/admin/payments' || targetPath === '/payments') setActiveTab('cashier');
+    else if (targetPath === '/admin/overdue') setActiveTab('overdue');
+    else if (targetPath === '/admin/reports') setActiveTab('reports');
+    else if (targetPath === '/admin/notifications' || targetPath === '/notifications') setActiveTab('notifications');
+    else if (targetPath === '/admin/audit-logs' || targetPath === '/admin/audit_logs') setActiveTab('audit_logs');
+    else if (targetPath === '/admin/settings') setActiveTab('system_config');
+    else if (targetPath === '/settings') setActiveTab('user_settings');
+    else if (targetPath === '/admin/profile' || targetPath === '/profile') setActiveTab('profile');
+    else if (targetPath === '/settings/change-password') setActiveTab('change_password');
+    else if (targetPath === '/admin/borrowers') setActiveTab('borrowers');
+    else {
+      setActiveTab(isAdmin ? 'dashboard' : 'user_dashboard');
     }
   };
 
@@ -763,6 +724,7 @@ export const App: React.FC = () => {
     <>
       <AppLayout
         currentUser={currentUser}
+        currentPath={currentRoute}
         activeNavId={activeTab}
         onNavigate={handleNavSelection}
         onLogout={handleLogout}
@@ -1115,6 +1077,62 @@ export const App: React.FC = () => {
                 handleNavSelection(isStaff ? 'dashboard' : 'user_dashboard');
               }}
               onLogout={handleLogout}
+            />
+          )}
+
+          {/* SCREEN 14: Notifications Center */}
+          {activeTab === 'notifications' && (
+            <NotificationsCenter
+              notifications={notifications}
+              currentUserRole={activeRole}
+              onMarkRead={handleMarkNotificationRead}
+              onMarkAllRead={async () => {
+                await api.markAllNotificationsRead().catch(() => {});
+                setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+              }}
+              onNavigateToAction={(linkId, category) => {
+                if (linkId) {
+                  if (category === 'PAYMENT_DUE' || category === 'OVERDUE') {
+                    setSelectedLoanId(linkId);
+                    handleNavSelection(currentUser.role === 'admin' ? '/admin/payments' : '/payments');
+                  } else if (category === 'APPROVAL') {
+                    setSelectedApplicationId(linkId);
+                    handleNavSelection('/admin/approvals');
+                  }
+                }
+              }}
+            />
+          )}
+
+          {/* SCREEN 15: User Profile */}
+          {activeTab === 'profile' && (
+            <UserProfileView
+              currentUser={currentUser}
+              onChangePassword={() => handleNavSelection('/settings/change-password')}
+            />
+          )}
+
+          {/* SCREEN 16: Standard User Settings */}
+          {activeTab === 'user_settings' && (
+            <UserSettingsView
+              currentUser={currentUser}
+              currency={currency}
+              onToggleCurrency={(c) => setCurrency(c)}
+              onChangePassword={() => handleNavSelection('/settings/change-password')}
+              onShowToast={(msg) => alert(msg)}
+            />
+          )}
+
+          {/* SCREEN 17: User Repayment Schedule */}
+          {activeTab === 'repayments' && (
+            <UserRepaymentsView
+              loans={loans}
+              currentUser={currentUser}
+              currency={currency}
+              onOpenPaymentForLoan={(loanId) => {
+                setSelectedLoanId(loanId);
+                handleNavSelection(currentUser.role === 'admin' ? '/admin/payments' : '/payments');
+              }}
             />
           )}
         </div>

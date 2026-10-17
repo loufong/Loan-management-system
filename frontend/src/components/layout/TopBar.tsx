@@ -6,7 +6,8 @@ import {
   Menu,
   LogOut,
   KeyRound,
-  CheckCheck
+  CheckCheck,
+  User,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -186,16 +187,29 @@ export const TopBar: React.FC<TopBarProps> = ({
               </div>
 
               {onNavigate && (
-                <button
-                  onClick={() => {
-                    setProfileDropdownOpen(false);
-                    onNavigate('change_password');
-                  }}
-                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-[13px] text-[#0F172A] hover:bg-slate-50 font-normal transition text-left"
-                >
-                  <KeyRound className="w-4 h-4 text-[#64748B]" />
-                  <span>Change Password</span>
-                </button>
+                <>
+                  <button
+                    onClick={() => {
+                      setProfileDropdownOpen(false);
+                      onNavigate(isAdmin ? '/admin/profile' : '/profile');
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-[13px] text-[#0F172A] hover:bg-slate-50 font-normal transition text-left"
+                  >
+                    <User className="w-4 h-4 text-[#64748B]" />
+                    <span>My Profile</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setProfileDropdownOpen(false);
+                      onNavigate('/settings/change-password');
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-[13px] text-[#0F172A] hover:bg-slate-50 font-normal transition text-left"
+                  >
+                    <KeyRound className="w-4 h-4 text-[#64748B]" />
+                    <span>Change Password</span>
+                  </button>
+                </>
               )}
 
               {onLogout && (

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sidebar } from './Sidebar';
 import { TopBar, BreadcrumbItem } from './TopBar';
@@ -7,8 +7,9 @@ import { X } from 'lucide-react';
 
 export interface AppLayoutProps {
   currentUser: UserProfile;
-  activeNavId: string;
-  onNavigate: (navId: string) => void;
+  currentPath: string;
+  activeNavId?: string;
+  onNavigate: (pathOrNavId: string) => void;
   onLogout?: () => void;
   branchName?: string;
   breadcrumbs: BreadcrumbItem[];
@@ -24,7 +25,7 @@ export interface AppLayoutProps {
 
 export const AppLayout: React.FC<AppLayoutProps> = ({
   currentUser,
-  activeNavId,
+  currentPath,
   onNavigate,
   onLogout,
   branchName = 'Main Branch',
@@ -36,29 +37,35 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   onSearchOpen,
   notifications,
   onMarkNotificationRead,
-  children
+  children,
 }) => {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  const handleMobileNavigate = (navId: string) => {
-    onNavigate(navId);
+  // Close mobile drawer on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && mobileDrawerOpen) {
+        setMobileDrawerOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [mobileDrawerOpen]);
+
+  const handleMobileNavigate = (targetPath: string) => {
     setMobileDrawerOpen(false);
+    onNavigate(targetPath);
   };
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#F8FAFC] text-[#0F172A] font-sans antialiased selection:bg-[#2563EB] selection:text-white">
-      
-      {/* 1. Desktop Sidebar */}
+      {/* 1. Desktop Sidebar (w-64 = 256px, clean white background, solid border) */}
       <div className="hidden lg:block shrink-0 h-full">
         <Sidebar
           currentUser={currentUser}
-          activeNavId={activeNavId}
+          currentPath={currentPath}
           onNavigate={onNavigate}
           onLogout={onLogout}
-          branchName={branchName}
-          isCollapsed={isSidebarCollapsed}
-          onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
         />
       </div>
 
@@ -70,9 +77,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.15 }}
               onClick={() => setMobileDrawerOpen(false)}
-              className="fixed inset-0 z-40 bg-slate-950/60 lg:hidden"
+              className="fixed inset-0 z-40 bg-slate-950/50 lg:hidden"
               aria-hidden="true"
             />
 
@@ -81,7 +88,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] flex flex-col lg:hidden shadow-lg border-r border-[#E2E8F0] bg-white"
+              className="fixed inset-y-0 left-0 z-50 w-64 max-w-[85vw] flex flex-col lg:hidden shadow-xl border-r border-[#E2E8F0] bg-white"
             >
               <div className="absolute top-3.5 right-3 z-50">
                 <button
@@ -96,14 +103,13 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               <div className="h-full w-full">
                 <Sidebar
                   currentUser={currentUser}
-                  activeNavId={activeNavId}
+                  currentPath={currentPath}
                   onNavigate={handleMobileNavigate}
                   onLogout={() => {
                     setMobileDrawerOpen(false);
                     onLogout?.();
                   }}
-                  branchName={branchName}
-                  isCollapsed={false}
+                  onCloseMobileDrawer={() => setMobileDrawerOpen(false)}
                 />
               </div>
             </motion.div>
@@ -134,7 +140,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           </div>
         </main>
       </div>
-
     </div>
   );
 };

@@ -207,9 +207,32 @@ export function createApp(): Application {
   // 12. Live Fast-Forward Demo Trigger
   app.use(['/api/demo', '/api/demo'], demoRouter);
 
-  // SPA Route Fallback for browser client navigation
+  // SPA Route Fallback for all browser client navigation routes
   app.get(
-    ['/user', '/user/*', '/access-denied', '/login', '/register', '/forgot-password'],
+    [
+      '/admin',
+      '/admin/*',
+      '/user',
+      '/user/*',
+      '/dashboard',
+      '/applications',
+      '/applications/*',
+      '/loans',
+      '/loans/*',
+      '/repayments',
+      '/payments',
+      '/notifications',
+      '/profile',
+      '/settings',
+      '/settings/*',
+      '/access-denied',
+      '/login',
+      '/register',
+      '/forgot-password',
+      '/verify-otp',
+      '/reset-password',
+      '/change-password',
+    ],
     (req: Request, res: Response) => {
       const indexPath = path.join(publicDir, 'index.html');
       if (req.accepts('html') && fs.existsSync(indexPath)) {

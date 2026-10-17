@@ -32,6 +32,14 @@ async function bootstrap() {
     initRegistrationCleanupCron();
   });
 
+  server.on('error', (err: any) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`\n❌ Error: Port ${PORT} is already in use by another process.`);
+      console.error(`💡 Solution: Run "npm run free-port" to release the port, then rerun "npm run dev".\n`);
+      process.exit(1);
+    }
+  });
+
   // Graceful Shutdown Handlers
   const handleShutdown = async (signal: string) => {
     console.log(`\n🛑 Received ${signal}. Starting graceful shutdown...`);

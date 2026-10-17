@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { LoanAccount, PaymentReceipt, Currency, PaymentMethod } from '../../types';
+import { LoanAccount, PaymentReceipt, Currency, PaymentMethod, UserRole } from '../../types';
 import { Badge } from '../common/Badge';
 import { MoneyText } from '../common/MoneyText';
 import { PaymentReceiptModal } from './PaymentReceiptModal';
@@ -23,6 +23,7 @@ export interface CashierPaymentTerminalProps {
   receipts: PaymentReceipt[];
   currency: Currency;
   cashierName: string;
+  currentUserRole?: UserRole;
   onRecordPayment: (payment: PaymentReceipt) => void;
   initialSelectedLoanId?: string;
 }
@@ -32,6 +33,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
   receipts,
   currency,
   cashierName,
+  currentUserRole,
   onRecordPayment,
   initialSelectedLoanId
 }) => {
@@ -151,14 +153,18 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
-              Cashier Desk &amp; Payment Terminal
+              {currentUserRole === 'USER' ? 'Make a Loan Payment' : 'Cashier Desk & Payment Terminal'}
             </h1>
             <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-xs font-mono font-semibold bg-emerald-50 text-[#16A34A] border border-emerald-200">
-              Terminal Active
+              {currentUserRole === 'USER' ? 'Payment Gateway Ready' : 'Terminal Active'}
             </span>
           </div>
           <p className="text-xs text-[#64748B] mt-0.5">
-            Teller window session: <strong className="text-[#0F172A]">{cashierName}</strong> • Real-time settlement &amp; official thermal banking receipts.
+            {currentUserRole === 'USER' ? (
+              'Pay your monthly loan installment with real-time settlement and instant verified digital receipts.'
+            ) : (
+              <>Teller window session: <strong className="text-[#0F172A]">{cashierName}</strong> • Real-time settlement &amp; official thermal banking receipts.</>
+            )}
           </p>
         </div>
       </div>
@@ -170,7 +176,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
           {/* Quick Autocomplete Search */}
           <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-4 space-y-3">
             <label className="block text-xs font-bold text-[#0F172A] uppercase tracking-wider">
-              Quick Account Lookup
+              {currentUserRole === 'USER' ? 'Select Your Loan Facility' : 'Quick Account Lookup'}
             </label>
             <div className="relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none" />

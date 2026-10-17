@@ -36,10 +36,14 @@ import {
   Clock
 } from 'lucide-react';
 
+import { UserProfile, UserRole } from '../../types';
+
 export interface LoanApplicationWizardProps {
   borrowers: Borrower[];
   products: LoanProduct[];
   currency: Currency;
+  currentUser?: UserProfile;
+  currentUserRole?: UserRole;
   onCancel: () => void;
   onSubmitApplication: (app: Partial<LoanApplication>, isDraft?: boolean) => void;
 }
@@ -64,6 +68,8 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
   borrowers,
   products,
   currency: initialCurrency,
+  currentUser,
+  currentUserRole,
   onCancel,
   onSubmitApplication,
 }) => {
@@ -73,8 +79,18 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
   // --------------------------------------------------------------------------
   // STEP 1: Borrower & Product State
   // --------------------------------------------------------------------------
+  const matchingUserBorrower = currentUser
+    ? borrowers.find(
+        (b) =>
+          b.id === currentUser.borrowerId ||
+          b.borrowerId === currentUser.borrowerId ||
+          b.fullName.toLowerCase().includes((currentUser.name || '').toLowerCase()) ||
+          b.fullName.toLowerCase().includes((currentUser.fullName || '').toLowerCase())
+      )
+    : null;
+
   const [selectedBorrowerId, setSelectedBorrowerId] = useState<string>(
-    borrowers[0]?.id || ''
+    matchingUserBorrower?.id || borrowers[0]?.id || ''
   );
   const [selectedProductId, setSelectedProductId] = useState<string>(
     products[0]?.id || ''
@@ -420,158 +436,190 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
               </p>
             </div>
 
-            {/* 1A. Searchable Borrower Selector */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold uppercase tracking-wider text-[#0F172A] flex items-center gap-1.5">
-                  <User className="w-4 h-4 text-[#2563EB]" />
-                  <span>Select Borrower</span>
-                </label>
-                <span className="text-[11px] text-[#64748B] font-mono">
-                  {filteredBorrowers.length} records found
-                </span>
-              </div>
+            {/* 1A. Searchable Borrower Selector (Admin/Officer only) */}
+            {currentUserRole !== 'USER' ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-[#0F172A] flex items-center gap-1.5">
+                    <User className="w-4 h-4 text-[#2563EB]" />
+                    <span>Select Borrower</span>
+                  </label>
+                  <span className="text-[11px] text-[#64748B] font-mono">
+                    {filteredBorrowers.length} records found
+                  </span>
+                </div>
 
-              {/* Search Bar + Dropdown Trigger */}
-              <div className="relative">
+                {/* Search Bar + Dropdown Trigger */}
                 <div className="relative">
-                  <Search className="w-4 h-4 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={borrowerSearch}
-                    onChange={(e) => {
-                      setBorrowerSearch(e.target.value);
-                      setIsBorrowerDropdownOpen(true);
-                    }}
-                    onFocus={() => setIsBorrowerDropdownOpen(true)}
-                    placeholder="Search borrower by name, ID (e.g. BOR-2026-0001), phone, or national ID..."
-                    className="w-full pl-9 pr-8 h-10 text-xs bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] placeholder-[#64748B] focus:outline-none focus:border-[#2563EB]"
-                  />
-                  {borrowerSearch && (
-                    <button
-                      onClick={() => setBorrowerSearch('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#0F172A]"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
+                  <div className="relative">
+                    <Search className="w-4 h-4 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={borrowerSearch}
+                      onChange={(e) => {
+                        setBorrowerSearch(e.target.value);
+                        setIsBorrowerDropdownOpen(true);
+                      }}
+                      onFocus={() => setIsBorrowerDropdownOpen(true)}
+                      placeholder="Search borrower by name, ID (e.g. BOR-2026-0001), phone, or national ID..."
+                      className="w-full pl-9 pr-8 h-10 text-xs bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] placeholder-[#64748B] focus:outline-none focus:border-[#2563EB]"
+                    />
+                    {borrowerSearch && (
+                      <button
+                        onClick={() => setBorrowerSearch('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#0F172A]"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Dropdown Options */}
+                  {isBorrowerDropdownOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-20"
+                        onClick={() => setIsBorrowerDropdownOpen(false)}
+                      />
+                      <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-[#E2E8F0] rounded-[6px] max-h-56 overflow-y-auto z-30 divide-y divide-[#E2E8F0] shadow-md">
+                        {filteredBorrowers.length === 0 ? (
+                          <div className="p-3 text-center text-xs text-[#64748B]">
+                            No borrowers found matching "{borrowerSearch}".
+                          </div>
+                        ) : (
+                          filteredBorrowers.map((b) => {
+                            const isSelected = b.id === selectedBorrowerId;
+                            return (
+                              <div
+                                key={b.id}
+                                onClick={() => {
+                                  setSelectedBorrowerId(b.id);
+                                  setIsBorrowerDropdownOpen(false);
+                                }}
+                                className={`p-2.5 text-xs flex items-center justify-between cursor-pointer transition-colors ${
+                                  isSelected
+                                    ? 'bg-slate-100 font-semibold text-[#0F172A]'
+                                    : 'hover:bg-slate-50 text-[#0F172A]'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2.5">
+                                  <div className="w-7 h-7 rounded-[4px] bg-slate-100 text-[#0F172A] border border-[#E2E8F0] font-bold flex items-center justify-center text-xs shrink-0">
+                                    {b.fullName.slice(0, 2).toUpperCase()}
+                                  </div>
+                                  <div>
+                                    <p className="font-semibold text-[#0F172A]">{b.fullName}</p>
+                                    <p className="text-[11px] text-[#64748B] font-mono">
+                                      {b.borrowerId} • Nat ID: {b.nationalId} • ${b.monthlyIncomeUSD.toLocaleString()}/mo
+                                    </p>
+                                  </div>
+                                </div>
+                                {isSelected && (
+                                  <Check className="w-4 h-4 text-[#2563EB]" />
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </>
                   )}
                 </div>
-
-                {/* Dropdown Options */}
-                {isBorrowerDropdownOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-20"
-                      onClick={() => setIsBorrowerDropdownOpen(false)}
-                    />
-                    <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-[#E2E8F0] rounded-[6px] max-h-56 overflow-y-auto z-30 divide-y divide-[#E2E8F0] shadow-md">
-                      {filteredBorrowers.length === 0 ? (
-                        <div className="p-3 text-center text-xs text-[#64748B]">
-                          No borrowers found matching "{borrowerSearch}".
-                        </div>
-                      ) : (
-                        filteredBorrowers.map((b) => {
-                          const isSelected = b.id === selectedBorrowerId;
-                          return (
-                            <div
-                              key={b.id}
-                              onClick={() => {
-                                setSelectedBorrowerId(b.id);
-                                setIsBorrowerDropdownOpen(false);
-                              }}
-                              className={`p-2.5 text-xs flex items-center justify-between cursor-pointer transition-colors ${
-                                isSelected
-                                  ? 'bg-slate-100 font-semibold text-[#0F172A]'
-                                  : 'hover:bg-slate-50 text-[#0F172A]'
-                              }`}
-                            >
-                              <div className="flex items-center gap-2.5">
-                                <div className="w-7 h-7 rounded-[4px] bg-slate-100 text-[#0F172A] border border-[#E2E8F0] font-bold flex items-center justify-center text-xs shrink-0">
-                                  {b.fullName.slice(0, 2).toUpperCase()}
-                                </div>
-                                <div>
-                                  <p className="font-semibold text-[#0F172A]">{b.fullName}</p>
-                                  <p className="text-[11px] text-[#64748B] font-mono">
-                                    {b.borrowerId} • Nat ID: {b.nationalId} • ${b.monthlyIncomeUSD.toLocaleString()}/mo
-                                  </p>
-                                </div>
-                              </div>
-                              {isSelected && (
-                                <Check className="w-4 h-4 text-[#2563EB]" />
-                              )}
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </>
-                )}
               </div>
-
-              {/* Selected Borrower Snapshot Card */}
-              {selectedBorrower && (
-                <div className="p-4 rounded-[8px] bg-slate-50 border border-[#E2E8F0]">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E2E8F0]">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-[6px] bg-[#0F172A] text-white font-bold text-sm flex items-center justify-center shrink-0">
-                        {selectedBorrower.fullName.slice(0, 2).toUpperCase()}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-sm font-bold text-[#0F172A]">
-                            {selectedBorrower.fullName}
-                          </h3>
-                          <Badge variant="verified" size="xs">
-                            <CheckCircle2 className="w-3 h-3 mr-1 inline" />
-                            KYC Verified
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-[#64748B] font-mono mt-0.5">
-                          ID: {selectedBorrower.borrowerId} • Nat ID: {selectedBorrower.nationalId}
-                        </p>
-                      </div>
+            ) : (
+              <div className="p-4 rounded-[8px] bg-slate-50 border border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-[6px] bg-[#2563EB] text-white font-bold text-sm flex items-center justify-center shrink-0">
+                    {(selectedBorrower?.fullName || currentUser?.name || 'ME').slice(0, 2).toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-[#0F172A]">
+                        {selectedBorrower?.fullName || currentUser?.name || 'Applicant'}
+                      </h3>
+                      <Badge variant="verified" size="xs">
+                        <CheckCircle2 className="w-3 h-3 mr-1 inline" />
+                        Verified Applicant
+                      </Badge>
                     </div>
+                    <p className="text-xs text-[#64748B] font-mono mt-0.5">
+                      Borrower ID: {selectedBorrower?.borrowerId || currentUser?.borrowerId || 'BOR-2026-0001'} • {currentUser?.email || selectedBorrower?.email}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right sm:self-center">
+                  <span className="text-[11px] uppercase font-semibold text-[#64748B] block">
+                    Verified Monthly Income
+                  </span>
+                  <div className="text-base font-bold font-mono text-[#0F172A]">
+                    <MoneyText amount={selectedBorrower?.monthlyIncomeUSD || 2800} currency={calcCurrency} />
+                  </div>
+                </div>
+              </div>
+            )}
 
-                    <div className="text-right sm:self-center">
-                      <span className="text-[11px] uppercase font-semibold text-[#64748B] block">
-                        Verified Monthly Income
-                      </span>
-                      <div className="text-base font-bold font-mono text-[#0F172A]">
-                        <MoneyText amount={selectedBorrower.monthlyIncomeUSD} currency={calcCurrency} />
+            {/* Selected Borrower Snapshot Card (Staff Only) */}
+            {currentUserRole !== 'USER' && selectedBorrower && (
+              <div className="p-4 rounded-[8px] bg-slate-50 border border-[#E2E8F0]">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E2E8F0]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-[6px] bg-[#0F172A] text-white font-bold text-sm flex items-center justify-center shrink-0">
+                      {selectedBorrower.fullName.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-bold text-[#0F172A]">
+                          {selectedBorrower.fullName}
+                        </h3>
+                        <Badge variant="verified" size="xs">
+                          <CheckCircle2 className="w-3 h-3 mr-1 inline" />
+                          KYC Verified
+                        </Badge>
                       </div>
+                      <p className="text-xs text-[#64748B] font-mono mt-0.5">
+                        ID: {selectedBorrower.borrowerId} • Nat ID: {selectedBorrower.nationalId}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Metadata Grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-3 text-xs">
-                    <div className="p-2 rounded-[6px] bg-white border border-[#E2E8F0]">
-                      <span className="text-[10px] text-[#64748B] block uppercase">Sector</span>
-                      <span className="font-semibold text-[#0F172A] truncate block mt-0.5">
-                        {selectedBorrower.occupation || 'Private Sector Enterprise'}
-                      </span>
-                    </div>
-                    <div className="p-2 rounded-[6px] bg-white border border-[#E2E8F0]">
-                      <span className="text-[10px] text-[#64748B] block uppercase">Active Loans</span>
-                      <span className="font-semibold text-[#0F172A] font-mono block mt-0.5">
-                        {selectedBorrower.activeLoansCount} Facility
-                      </span>
-                    </div>
-                    <div className="p-2 rounded-[6px] bg-white border border-[#E2E8F0]">
-                      <span className="text-[10px] text-[#64748B] block uppercase">Outstanding</span>
-                      <span className="font-semibold text-[#0F172A] font-mono block mt-0.5">
-                        <MoneyText amount={selectedBorrower.totalOutstandingUSD} currency={calcCurrency} />
-                      </span>
-                    </div>
-                    <div className="p-2 rounded-[6px] bg-white border border-[#E2E8F0]">
-                      <span className="text-[10px] text-[#64748B] block uppercase">DTI Baseline</span>
-                      <span className="font-semibold text-[#16A34A] font-mono block mt-0.5">
-                        {selectedBorrower.dtiRatio}% (Safe)
-                      </span>
+                  <div className="text-right sm:self-center">
+                    <span className="text-[11px] uppercase font-semibold text-[#64748B] block">
+                      Verified Monthly Income
+                    </span>
+                    <div className="text-base font-bold font-mono text-[#0F172A]">
+                      <MoneyText amount={selectedBorrower.monthlyIncomeUSD} currency={calcCurrency} />
                     </div>
                   </div>
                 </div>
-              )}
-            </div>
+
+                {/* Metadata Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-3 text-xs">
+                  <div className="p-2 rounded-[6px] bg-white border border-[#E2E8F0]">
+                    <span className="text-[10px] text-[#64748B] block uppercase">Sector</span>
+                    <span className="font-semibold text-[#0F172A] truncate block mt-0.5">
+                      {selectedBorrower.occupation || 'Private Sector Enterprise'}
+                    </span>
+                  </div>
+                  <div className="p-2 rounded-[6px] bg-white border border-[#E2E8F0]">
+                    <span className="text-[10px] text-[#64748B] block uppercase">Active Loans</span>
+                    <span className="font-semibold text-[#0F172A] font-mono block mt-0.5">
+                      {selectedBorrower.activeLoansCount} Facility
+                    </span>
+                  </div>
+                  <div className="p-2 rounded-[6px] bg-white border border-[#E2E8F0]">
+                    <span className="text-[10px] text-[#64748B] block uppercase">Outstanding</span>
+                    <span className="font-semibold text-[#0F172A] font-mono block mt-0.5">
+                      <MoneyText amount={selectedBorrower.totalOutstandingUSD} currency={calcCurrency} />
+                    </span>
+                  </div>
+                  <div className="p-2 rounded-[6px] bg-white border border-[#E2E8F0]">
+                    <span className="text-[10px] text-[#64748B] block uppercase">DTI Baseline</span>
+                    <span className="font-semibold text-[#16A34A] font-mono block mt-0.5">
+                      {selectedBorrower.dtiRatio}% (Safe)
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* 1B. Visual Radio Cards for Loan Products */}
             <div className="space-y-3 pt-4 border-t border-[#E2E8F0]">

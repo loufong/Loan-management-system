@@ -307,7 +307,7 @@ export const App: React.FC = () => {
       replaceAppRoute('/admin/dashboard');
       setActiveTab('dashboard');
     } else {
-      replaceAppRoute('/user/dashboard');
+      replaceAppRoute('/dashboard');
       setActiveTab('user_dashboard');
     }
   };
@@ -549,6 +549,23 @@ export const App: React.FC = () => {
   const activeLoan = loans.find((l) => l.id === selectedLoanId) || loans[0];
   const activeApplication = applications.find((a) => a.id === selectedApplicationId) || applications[0];
 
+  // User-specific datasets for client borrower views
+  const isBorrowerRole = (currentUser.role || 'USER').toUpperCase() !== 'ADMIN';
+  const userFilteredLoans = loans.filter(
+    (l) => l.borrowerId === currentUser.borrowerId || l.borrowerName?.toLowerCase().includes((currentUser.name || '').toLowerCase())
+  );
+  const userDisplayLoans = (isBorrowerRole && userFilteredLoans.length > 0) ? userFilteredLoans : loans;
+
+  const userFilteredApps = applications.filter(
+    (a) => a.borrowerId === currentUser.borrowerId || a.borrowerName?.toLowerCase().includes((currentUser.name || '').toLowerCase())
+  );
+  const userDisplayApps = (isBorrowerRole && userFilteredApps.length > 0) ? userFilteredApps : applications;
+
+  const userFilteredReceipts = receipts.filter(
+    (r) => r.borrowerName?.toLowerCase().includes((currentUser.name || '').toLowerCase())
+  );
+  const userDisplayReceipts = (isBorrowerRole && userFilteredReceipts.length > 0) ? userFilteredReceipts : receipts;
+
   // Callback Handlers
   const handleRecordPayment = async (paymentInput: any) => {
     try {
@@ -572,7 +589,7 @@ export const App: React.FC = () => {
     try {
       const created = await api.submitApplication({
         ...appData,
-        borrowerId: appData.borrowerId || selectedBorrowerId || activeBorrower?.id,
+        borrowerId: appData.borrowerId || currentUser.borrowerId || selectedBorrowerId || activeBorrower?.id,
         productId: appData.productId || products[0]?.id,
         requestedAmountUSD: appData.requestedAmountUSD || 5000,
         requestedTermMonths: appData.requestedTermMonths || 12,
@@ -855,15 +872,17 @@ export const App: React.FC = () => {
           {/* SCREEN 2: Loan Applications Pipeline & Wizard */}
           {activeTab === 'applications' && (
             <ApplicationPipelineList
-              applications={applications}
+              applications={isBorrowerRole ? userDisplayApps : applications}
               currency={currency}
               currentUserRole={activeRole}
               onSelectApplication={(appId) => {
+                if (isBorrowerRole) return;
                 setSelectedApplicationId(appId);
                 setActiveTab('risk_assessment');
               }}
               onOpenNewApplication={() => setActiveTab('new-application')}
               onAssessApplication={(appId) => {
+                if (isBorrowerRole) return;
                 setSelectedApplicationId(appId);
                 setActiveTab('risk_assessment');
               }}
@@ -875,6 +894,8 @@ export const App: React.FC = () => {
               borrowers={borrowers}
               products={products}
               currency={currency}
+              currentUser={currentUser}
+              currentUserRole={activeRole}
               onCancel={() => setActiveTab('applications')}
               onSubmitApplication={handleApplicationSubmit}
             />
@@ -953,7 +974,7 @@ export const App: React.FC = () => {
           {/* SCREEN 5: Core Banking Loans & Repayment Schedule */}
           {activeTab === 'loans' && (
             <LoanList
-              loans={loans}
+              loans={isBorrowerRole ? userDisplayLoans : loans}
               currency={currency}
               currentUserRole={activeRole}
               onSelectLoan={(id) => {
@@ -987,10 +1008,11 @@ export const App: React.FC = () => {
           {/* SCREEN 6: Cashier Desk & Payment Collection Terminal */}
           {activeTab === 'cashier' && (
             <CashierPaymentTerminal
-              loans={loans}
-              receipts={receipts}
+              loans={isBorrowerRole ? userDisplayLoans : loans}
+              receipts={isBorrowerRole ? userDisplayReceipts : receipts}
               currency={currency}
               cashierName={currentUser.name}
+              currentUserRole={activeRole}
               onRecordPayment={handleRecordPayment}
               initialSelectedLoanId={selectedLoanId}
             />
@@ -1126,12 +1148,12 @@ export const App: React.FC = () => {
           {/* SCREEN 17: User Repayment Schedule */}
           {activeTab === 'repayments' && (
             <UserRepaymentsView
-              loans={loans}
+              loans={isBorrowerRole ? userDisplayLoans : loans}
               currentUser={currentUser}
               currency={currency}
               onOpenPaymentForLoan={(loanId) => {
                 setSelectedLoanId(loanId);
-                handleNavSelection(currentUser.role === 'admin' ? '/admin/payments' : '/payments');
+                handleNavSelection(isBorrowerRole ? '/payments' : '/admin/payments');
               }}
             />
           )}

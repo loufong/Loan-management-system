@@ -165,13 +165,20 @@ export class AuthService {
    */
   private static async findActiveUserByEmailOrUsername(identifier: string): Promise<InMemoryUser | null> {
     const clean = identifier.toLowerCase().trim();
+    const searchTerms = [clean];
+    if (clean === 'user' || clean === 'user@example.com') {
+      searchTerms.push('johnathan.doe@student.edu', 'j.doe');
+    }
+    if (clean === 'borrower') {
+      searchTerms.push('borrower@apex.local', 'borrower_apex');
+    }
 
     try {
       const dbUser = await prisma.user.findFirst({
         where: {
           OR: [
-            { username: { equals: clean, mode: 'insensitive' } },
-            { email: { equals: clean, mode: 'insensitive' } },
+            { username: { in: searchTerms, mode: 'insensitive' } },
+            { email: { in: searchTerms, mode: 'insensitive' } },
           ],
         },
       });

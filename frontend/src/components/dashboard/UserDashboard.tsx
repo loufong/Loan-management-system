@@ -260,8 +260,8 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
             <p className="text-xs text-[#64748B] mt-0.5">Recent verified installment receipts &amp; payments</p>
           </div>
           <button
-            onClick={() => onNavigate('loans')}
-            className="text-xs text-[#2563EB] hover:text-[#1D4ED8] font-semibold flex items-center gap-1"
+            onClick={() => onNavigate('repayments')}
+            className="text-xs text-[#2563EB] hover:text-[#1D4ED8] font-semibold flex items-center gap-1 cursor-pointer"
           >
             <span>Full Schedule</span>
             <ArrowRight className="w-3 h-3" />

@@ -41,14 +41,16 @@ export const LoanList: React.FC<LoanListProps> = ({
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
-              Active Loans Ledger
+              {currentUserRole === 'USER' ? 'My Loans' : 'Active Loans Ledger'}
             </h1>
             <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-xs font-mono font-semibold bg-slate-100 text-[#0F172A] border border-[#E2E8F0]">
               {loans.length} Facilities
             </span>
           </div>
           <p className="text-xs text-[#64748B] mt-0.5">
-            Active credit facilities, principal amortization schedules, and commercial portfolio repayment status.
+            {currentUserRole === 'USER'
+              ? 'Your active credit facilities, principal amortization schedules, and repayment records.'
+              : 'Active credit facilities, principal amortization schedules, and commercial portfolio repayment status.'}
           </p>
         </div>
       </div>

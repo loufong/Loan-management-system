@@ -10,6 +10,7 @@ import {
   User,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { useLanguage } from '../../context/LanguageContext';
 
 export interface BreadcrumbItem {
   label: string;
@@ -62,14 +63,15 @@ export const TopBar: React.FC<TopBarProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const { language, setLanguage, t } = useLanguage();
   const unreadCount = notifications.filter((n) => !n.isRead).length;
-  const currentTitle = breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].label : 'Dashboard';
+  const currentTitle = breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].label : t('nav_dashboard');
   const role = (currentUser?.role || currentRole || 'USER').toUpperCase();
   const isAdmin = role === 'ADMIN';
-  const displayRole = isAdmin ? 'Admin' : 'User';
+  const displayRole = isAdmin ? (language === 'km' ? 'អ្នកគ្រប់គ្រង (Admin)' : 'Admin') : (language === 'km' ? 'អតិថិជន (User)' : 'User');
 
   return (
-    <header className="sticky top-0 z-30 h-16 bg-white border-b border-[#E2E8F0] px-4 sm:px-6 flex items-center justify-between select-none">
+    <header className="sticky top-0 z-30 h-16 bg-white border-b border-[#E2E8F0] px-4 sm:px-6 flex items-center justify-between select-none font-sans">
       {/* 1. Left: Mobile Toggle (☰) + Title */}
       <div className="flex items-center gap-3 min-w-0">
         <button
@@ -83,24 +85,55 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         {/* Small Screen Logo fallback */}
         <span className="font-bold text-[16px] text-[#0F172A] lg:hidden truncate">
-          Apex LMS
+          {t('app_name')}
         </span>
 
         {/* Desktop Title */}
-        <h1 className="hidden lg:block text-[18px] font-bold text-[#0F172A] tracking-tight truncate">
+        <h1 className="hidden lg:block text-[17px] font-bold text-[#0F172A] tracking-tight truncate">
           {currentTitle}
         </h1>
       </div>
 
-      {/* 2. Right: Notification Bell + Profile Menu */}
-      <div className="flex items-center gap-3 shrink-0">
+      {/* 2. Right: Language Selector + Notification Bell + Profile Menu */}
+      <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+        {/* Khmer / English Language Switcher */}
+        <div className="flex items-center bg-slate-100 p-0.5 rounded-[6px] border border-[#E2E8F0] text-xs font-semibold">
+          <button
+            type="button"
+            onClick={() => setLanguage('km')}
+            className={cn(
+              'px-2 py-1 rounded-[4px] transition-colors flex items-center gap-1 cursor-pointer',
+              language === 'km'
+                ? 'bg-white text-[#2563EB] shadow-xs font-bold'
+                : 'text-[#64748B] hover:text-[#0F172A]'
+            )}
+            title="ភាសាខ្មែរ (Khmer)"
+          >
+            <span>🇰🇭</span>
+            <span className="text-[11px]">ខ្មែរ</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setLanguage('en')}
+            className={cn(
+              'px-2 py-1 rounded-[4px] transition-colors flex items-center gap-1 cursor-pointer',
+              language === 'en'
+                ? 'bg-white text-[#2563EB] shadow-xs font-bold'
+                : 'text-[#64748B] hover:text-[#0F172A]'
+            )}
+            title="English"
+          >
+            <span className="text-[11px]">EN</span>
+          </button>
+        </div>
+
         {/* Notification Bell */}
         <div className="relative" ref={notifRef}>
           <button
             onClick={() => setNotifDropdownOpen(!notifDropdownOpen)}
             type="button"
             aria-label="Notifications"
-            className="relative p-2 rounded-[6px] text-[#64748B] hover:text-[#0F172A] hover:bg-slate-50 transition border border-[#E2E8F0] focus:outline-none"
+            className="relative p-2 rounded-[6px] text-[#64748B] hover:text-[#0F172A] hover:bg-slate-50 transition border border-[#E2E8F0] focus:outline-none cursor-pointer"
           >
             <Bell className="w-4 h-4" />
             {unreadCount > 0 && (
@@ -193,10 +226,10 @@ export const TopBar: React.FC<TopBarProps> = ({
                       setProfileDropdownOpen(false);
                       onNavigate(isAdmin ? '/admin/profile' : '/profile');
                     }}
-                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-[13px] text-[#0F172A] hover:bg-slate-50 font-normal transition text-left"
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-[13px] text-[#0F172A] hover:bg-slate-50 font-normal transition text-left cursor-pointer"
                   >
                     <User className="w-4 h-4 text-[#64748B]" />
-                    <span>My Profile</span>
+                    <span>{t('nav_profile')}</span>
                   </button>
 
                   <button
@@ -204,10 +237,10 @@ export const TopBar: React.FC<TopBarProps> = ({
                       setProfileDropdownOpen(false);
                       onNavigate('/settings/change-password');
                     }}
-                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-[13px] text-[#0F172A] hover:bg-slate-50 font-normal transition text-left"
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-[13px] text-[#0F172A] hover:bg-slate-50 font-normal transition text-left cursor-pointer"
                   >
                     <KeyRound className="w-4 h-4 text-[#64748B]" />
-                    <span>Change Password</span>
+                    <span>{language === 'km' ? 'ប្តូរពាក្យសម្ងាត់' : 'Change Password'}</span>
                   </button>
                 </>
               )}
@@ -218,10 +251,10 @@ export const TopBar: React.FC<TopBarProps> = ({
                     setProfileDropdownOpen(false);
                     onLogout();
                   }}
-                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-[13px] text-[#DC2626] hover:bg-rose-50 font-normal transition text-left"
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-[13px] text-[#DC2626] hover:bg-rose-50 font-normal transition text-left cursor-pointer"
                 >
                   <LogOut className="w-4 h-4 text-[#DC2626]" />
-                  <span>Logout</span>
+                  <span>{t('nav_logout')}</span>
                 </button>
               )}
             </div>

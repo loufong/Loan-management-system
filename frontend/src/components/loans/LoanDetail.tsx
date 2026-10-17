@@ -15,6 +15,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { api } from '../../services/api';
+import { useLanguage } from '../../context/LanguageContext';
 
 export interface LoanDetailProps {
   loan: LoanAccount;
@@ -35,6 +36,7 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
   onCollectPayment,
   onViewReceipt
 }) => {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'schedules' | 'ledger'>('schedules');
   const [isSimulating, setIsSimulating] = useState(false);
   const [demoNotice, setDemoNotice] = useState<string | null>(null);
@@ -77,21 +79,21 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
       <div className="flex items-center justify-between gap-4 flex-wrap pb-2 border-b border-[#E2E8F0]">
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] border border-[#E2E8F0] bg-white text-xs font-semibold text-[#0F172A] hover:bg-slate-50 transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] border border-[#E2E8F0] bg-white text-xs font-semibold text-[#0F172A] hover:bg-slate-50 transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Back to Active Loans</span>
+          <span>{t('btn_back_loans', 'Back to Active Loans')}</span>
         </button>
 
         {!isCompleted && (
           <button
             onClick={handleSimulateOverdue}
             disabled={isSimulating}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold transition-colors cursor-pointer"
             title="Simulate past-due installment to test overdue interest and penalties"
           >
             {isSimulating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
-            <span>{isSimulating ? 'Simulating...' : 'Simulate Past Due'}</span>
+            <span>{isSimulating ? t('simulating', 'Simulating...') : t('simulate_past_due', 'Simulate Past Due')}</span>
           </button>
         )}
       </div>
@@ -118,7 +120,7 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
           <div>
             <div className="flex items-center gap-2.5">
               <span className="text-xs font-bold text-[#64748B] uppercase tracking-wider">
-                LOAN INFORMATION
+                {t('loan_information', 'LOAN INFORMATION')}
               </span>
               <Badge
                 variant={
@@ -126,7 +128,11 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
                 }
                 dot
               >
-                {loan.status}
+                {loan.status === 'ACTIVE'
+                  ? t('status_active', 'ACTIVE')
+                  : loan.status === 'OVERDUE'
+                  ? t('status_overdue', 'OVERDUE')
+                  : t('status_completed', 'COMPLETED')}
               </Badge>
             </div>
             <h1 className="text-xl font-bold font-mono text-[#0F172A] mt-1">
@@ -136,7 +142,7 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
 
           <div className="text-left sm:text-right">
             <span className="text-[11px] font-semibold text-[#64748B] uppercase block">
-              Outstanding Balance
+              {t('stat_outstanding_balance', 'Outstanding Balance')}
             </span>
             <MoneyText
               amount={loan.outstandingBalanceUSD}
@@ -149,62 +155,68 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
         {/* 11 Institutional Fields Grid (Point 15 verbatim) */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 text-xs">
           <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px]">
-            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">Loan ID</span>
+            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">{t('loan_id', 'Loan ID')}</span>
             <span className="font-mono font-bold text-[#0F172A] mt-1 block">{loan.loanNumber}</span>
           </div>
 
           <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px]">
-            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">Borrower</span>
+            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">{t('borrower', 'Borrower')}</span>
             <span className="font-bold text-[#0F172A] mt-1 block truncate">{loan.borrowerName}</span>
           </div>
 
           <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px]">
-            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">Loan Product</span>
+            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">{t('loan_product', 'Loan Product')}</span>
             <span className="font-semibold text-[#0F172A] mt-1 block truncate">{loan.productName}</span>
           </div>
 
           <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px]">
-            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">Principal</span>
+            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">{t('principal', 'Principal')}</span>
             <MoneyText amount={loan.principalUSD} currency={currency} className="font-bold text-[#0F172A] mt-1 block" />
           </div>
 
           <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px]">
-            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">Interest Rate</span>
+            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">{t('interest_rate', 'Interest Rate')}</span>
             <span className="font-mono font-bold text-[#0F172A] mt-1 block">{loan.interestRate}% p.a.</span>
           </div>
 
           <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px]">
-            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">Term</span>
-            <span className="font-bold text-[#0F172A] mt-1 block">{loan.schedules.length || 12} months</span>
+            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">{t('term', 'Term')}</span>
+            <span className="font-bold text-[#0F172A] mt-1 block">{loan.schedules.length || 12} {t('months', 'months')}</span>
           </div>
 
           <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px]">
-            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">Monthly Installment</span>
+            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">{t('monthly_installment', 'Monthly Installment')}</span>
             <MoneyText amount={loan.nextPaymentDueAmountUSD} currency={currency} className="font-bold text-[#0F172A] mt-1 block" />
           </div>
 
           <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px]">
-            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">Disbursement Date</span>
+            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">{t('disbursed_date', 'Disbursement Date')}</span>
             <span className="font-mono text-[#0F172A] mt-1 block">{loan.disbursedDate}</span>
           </div>
 
           <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px]">
-            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">Next Payment</span>
+            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">{t('next_due_date', 'Next Payment')}</span>
             <span className="font-mono text-[#0F172A] mt-1 block">{loan.nextPaymentDueDate}</span>
           </div>
 
           <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px]">
-            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">Outstanding</span>
+            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">{t('stat_outstanding_balance', 'Outstanding')}</span>
             <MoneyText amount={loan.outstandingBalanceUSD} currency={currency} className="font-bold text-[#2563EB] mt-1 block" />
           </div>
 
           <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px]">
-            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">Loan Status</span>
-            <span className="font-bold text-[#0F172A] mt-1 block">{loan.status}</span>
+            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">{t('status', 'Loan Status')}</span>
+            <span className="font-bold text-[#0F172A] mt-1 block">
+              {loan.status === 'ACTIVE'
+                ? t('status_active', 'ACTIVE')
+                : loan.status === 'OVERDUE'
+                ? t('status_overdue', 'OVERDUE')
+                : t('status_completed', 'COMPLETED')}
+            </span>
           </div>
 
           <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px]">
-            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">Maturity Date</span>
+            <span className="text-[11px] text-[#64748B] uppercase font-semibold block">{t('maturity_date', 'Maturity Date')}</span>
             <span className="font-mono text-[#0F172A] mt-1 block">{loan.maturityDate}</span>
           </div>
         </div>
@@ -213,10 +225,10 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
         <div className="pt-2 border-t border-[#E2E8F0] space-y-1.5">
           <div className="flex justify-between items-baseline text-xs">
             <span className="text-[#64748B]">
-              Principal Settled: <strong className="text-[#0F172A] font-mono tabular-nums"><MoneyText amount={loan.totalPaidUSD} currency={currency} /> / <MoneyText amount={loan.totalRepaymentUSD} currency={currency} /></strong> ({progressPercent}%)
+              {t('principal_settled', 'Principal Settled')}: <strong className="text-[#0F172A] font-mono tabular-nums"><MoneyText amount={loan.totalPaidUSD} currency={currency} /> / <MoneyText amount={loan.totalRepaymentUSD} currency={currency} /></strong> ({progressPercent}%)
             </span>
             <span className="text-[#64748B] font-mono">
-              Total Accrued Interest: <strong className="text-[#0F172A]"><MoneyText amount={loan.totalInterestUSD} currency={currency} /></strong>
+              {t('accrued_interest', 'Total Accrued Interest')}: <strong className="text-[#0F172A]"><MoneyText amount={loan.totalInterestUSD} currency={currency} /></strong>
             </span>
           </div>
 
@@ -257,17 +269,17 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
             <div>
               <p className="text-xs font-bold">
                 {isOverdue
-                  ? `Overdue Account: ${loan.daysOverdue || 38} Days Past Due`
-                  : `Next Payment Due: ${loan.nextPaymentDueDate}`}
+                  ? `${t('overdue_account_alert', 'Overdue Account:')} ${loan.daysOverdue || 38} ${t('days_past_due', 'Days Past Due')}`
+                  : `${t('next_payment_due', 'Next Payment Due')}: ${loan.nextPaymentDueDate}`}
               </p>
               <p className="text-xs text-[#64748B] mt-0.5">
-                Installment Amount Due:{' '}
+                {t('installment_amount_due', 'Installment Amount Due:')}{' '}
                 <strong className="font-mono tabular-nums text-[#0F172A] font-bold">
                   <MoneyText amount={loan.nextPaymentDueAmountUSD} currency={currency} />
                 </strong>
                 {loan.lateFeeAccruedUSD ? (
                   <span className="text-[#DC2626] font-mono ml-1.5 font-semibold">
-                    (+ <MoneyText amount={loan.lateFeeAccruedUSD} currency={currency} /> Late Fee)
+                    (+ <MoneyText amount={loan.lateFeeAccruedUSD} currency={currency} /> {t('late_fee_label', 'Late Fee')})
                   </span>
                 ) : null}
               </p>
@@ -286,7 +298,7 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
               }`}
             >
               <DollarSign className="w-3.5 h-3.5" />
-              <span>{isCashierOrAdmin ? 'Collect Payment' : 'Make Payment'}</span>
+              <span>{isCashierOrAdmin ? t('btn_collect_payment', 'Collect Payment') : t('btn_make_payment', 'Make Payment')}</span>
             </button>
           )}
         </div>
@@ -303,7 +315,7 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
           }`}
         >
           <CreditCard className="w-4 h-4" />
-          <span>Amortization Schedule ({loan.schedules.length} Installments)</span>
+          <span>{t('tab_amortization_schedule', 'Amortization Schedule')} ({loan.schedules.length} {t('installments_label', 'Installments')})</span>
         </button>
 
         <button
@@ -315,7 +327,7 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
           }`}
         >
           <History className="w-4 h-4" />
-          <span>Payment History ({receipts.length})</span>
+          <span>{t('tab_payment_history', 'Payment History')} ({receipts.length})</span>
         </button>
       </div>
 
@@ -340,20 +352,20 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
             <table className="table-enterprise">
               <thead>
                 <tr>
-                  <th>Receipt No</th>
-                  <th>Timestamp</th>
-                  <th>Payment Channel</th>
-                  <th>Reference Code</th>
-                  <th>Received By</th>
-                  <th className="text-right">Amount Settled</th>
-                  <th className="text-right">Action</th>
+                  <th>{t('col_receipt_no', 'Receipt No')}</th>
+                  <th>{t('col_date_time', 'Timestamp')}</th>
+                  <th>{t('col_method', 'Payment Channel')}</th>
+                  <th>{t('col_reference', 'Reference Code')}</th>
+                  <th>{t('col_received_by', 'Received By')}</th>
+                  <th className="text-right">{t('col_amount_settled', 'Amount Settled')}</th>
+                  <th className="text-right">{t('col_action', 'Action')}</th>
                 </tr>
               </thead>
               <tbody>
                 {receipts.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="py-12 text-center text-xs text-[#64748B]">
-                      No payment receipts generated for this loan account yet.
+                      {t('no_receipts_yet', 'No payment receipts generated for this loan account yet.')}
                     </td>
                   </tr>
                 ) : (
@@ -383,10 +395,10 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
                       <td className="text-right">
                         <button
                           onClick={() => onViewReceipt?.(rec)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-[#0F172A] bg-white hover:bg-slate-50 border border-[#E2E8F0] rounded-[6px] transition-colors"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-[#0F172A] bg-white hover:bg-slate-50 border border-[#E2E8F0] rounded-[6px] transition-colors cursor-pointer"
                         >
                           <Download className="w-3 h-3" />
-                          <span>Receipt</span>
+                          <span>{t('btn_receipt', 'Receipt')}</span>
                         </button>
                       </td>
                     </tr>

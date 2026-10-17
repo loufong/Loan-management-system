@@ -8,6 +8,7 @@ import {
 } from '../../navigation/navigation';
 import { Landmark, LogOut, LucideIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { useLanguage } from '../../context/LanguageContext';
 
 export interface SidebarProps {
   currentUser: UserProfile;
@@ -24,10 +25,59 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onLogout,
   onCloseMobileDrawer,
 }) => {
+  const { language, t } = useLanguage();
   const role = (currentUser.role || 'USER').toUpperCase();
   const isAdmin = role === 'ADMIN';
 
   const sections = isAdmin ? ADMIN_SECTIONS : USER_SECTIONS;
+
+  const getSectionTitle = (rawTitle?: string) => {
+    if (!rawTitle) return '';
+    if (rawTitle === 'LOAN MANAGEMENT') return t('sec_loan_management');
+    if (rawTitle === 'MY LOANS') return t('sec_my_loans');
+    if (rawTitle === 'MANAGEMENT') return t('sec_management');
+    if (rawTitle === 'SYSTEM') return t('sec_system');
+    if (rawTitle === 'ACCOUNT') return t('sec_account');
+    return rawTitle;
+  };
+
+  const getItemLabel = (item: NavItemConfig) => {
+    switch (item.id) {
+      case 'user_dashboard':
+      case 'admin_dashboard':
+        return t('nav_dashboard');
+      case 'user_applications':
+        return t('nav_my_applications');
+      case 'user_loans':
+        return t('nav_my_loans');
+      case 'user_repayments':
+        return t('nav_repayments');
+      case 'user_payments':
+        return t('nav_payments');
+      case 'admin_applications':
+        return t('nav_applications');
+      case 'admin_loans':
+        return t('nav_loans');
+      case 'admin_payments':
+        return t('nav_payments');
+      case 'admin_overdue':
+        return t('nav_overdue');
+      case 'admin_users':
+        return t('nav_users');
+      case 'admin_products':
+        return t('nav_products');
+      case 'admin_reports':
+        return t('nav_reports');
+      case 'admin_notifications':
+        return t('nav_notifications');
+      case 'admin_audit_logs':
+        return t('nav_audit_logs');
+      case 'admin_settings':
+        return t('nav_settings');
+      default:
+        return item.label;
+    }
+  };
 
   const handleItemClick = (item: NavItemConfig) => {
     onNavigate(item.path);
@@ -48,7 +98,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       aria-label="Application Sidebar"
-      className="w-64 h-full bg-[#FFFFFF] border-r border-[#E2E8F0] flex flex-col justify-between select-none"
+      className="w-64 h-full bg-[#FFFFFF] border-r border-[#E2E8F0] flex flex-col justify-between select-none font-sans"
     >
       {/* 1. Header: Branding & System Name */}
       <div className="flex-1 flex flex-col min-h-0">
@@ -58,10 +108,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
           <div className="flex flex-col min-w-0">
             <span className="text-[15px] font-bold text-[#0F172A] tracking-tight truncate leading-tight">
-              Apex LMS
+              {t('app_name')}
             </span>
             <span className="text-[11px] font-medium text-[#64748B] truncate leading-tight mt-0.5">
-              Loan Management
+              {t('app_subtitle')}
             </span>
           </div>
         </div>
@@ -75,7 +125,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div key={section.sectionTitle || `sec-${sIdx}`} className="space-y-1">
               {section.sectionTitle && (
                 <div className="px-3 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-[#94A3B8]">
-                  {section.sectionTitle}
+                  {getSectionTitle(section.sectionTitle)}
                 </div>
               )}
 
@@ -90,7 +140,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     onClick={() => handleItemClick(item)}
                     aria-current={active ? 'page' : undefined}
                     className={cn(
-                      'w-full flex items-center gap-3 px-3 py-2 rounded-[6px] text-[13px] transition-colors text-left font-medium',
+                      'w-full flex items-center gap-3 px-3 py-2 rounded-[6px] text-[13px] transition-colors text-left font-medium cursor-pointer',
                       active
                         ? 'bg-[#EFF6FF] text-[#2563EB]'
                         : 'text-[#475569] hover:text-[#0F172A] hover:bg-[#F8FAFC]'
@@ -102,7 +152,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         active ? 'text-[#2563EB]' : 'text-[#64748B]'
                       )}
                     />
-                    <span className="truncate">{item.label}</span>
+                    <span className="truncate">{getItemLabel(item)}</span>
                     {item.badge !== undefined && (
                       <span className="ml-auto text-[11px] px-1.5 py-0.5 rounded-[4px] bg-blue-100 text-[#2563EB] font-semibold">
                         {item.badge}
@@ -123,7 +173,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           type="button"
           onClick={handleProfileClick}
           title="View profile details"
-          className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-[6px] hover:bg-[#F8FAFC] transition text-left border border-transparent hover:border-[#E2E8F0]"
+          className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-[6px] hover:bg-[#F8FAFC] transition text-left border border-transparent hover:border-[#E2E8F0] cursor-pointer"
         >
           <div className="w-8 h-8 rounded-full bg-slate-100 text-[#0F172A] flex items-center justify-center font-bold text-xs shrink-0 border border-[#CBD5E1]">
             {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
@@ -133,7 +183,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {currentUser.name || currentUser.fullName || 'User'}
             </span>
             <span className="text-[11px] text-[#64748B] truncate leading-tight mt-0.5">
-              {isAdmin ? 'Administrator' : 'User'}
+              {isAdmin ? (language === 'km' ? 'អ្នកគ្រប់គ្រង (Admin)' : 'Administrator') : (language === 'km' ? 'អតិថិជន (Borrower)' : 'Borrower User')}
             </span>
           </div>
         </button>
@@ -142,10 +192,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <button
           type="button"
           onClick={handleLogoutClick}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-[6px] text-[13px] font-medium text-[#DC2626] hover:bg-rose-50 hover:text-red-700 transition text-left"
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-[6px] text-[13px] font-medium text-[#DC2626] hover:bg-rose-50 hover:text-red-700 transition text-left cursor-pointer"
         >
           <LogOut className="w-[18px] h-[18px] shrink-0 text-[#DC2626]" />
-          <span>Logout</span>
+          <span>{t('nav_logout')}</span>
         </button>
       </div>
     </aside>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { LoanAccount, Currency, PaymentReceipt } from '../../types';
 import { MoneyText } from '../common/MoneyText';
 import { api } from '../../services/api';
+import { useLanguage } from '../../context/LanguageContext';
 import {
   CheckCircle2,
   DollarSign,
@@ -36,6 +37,8 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const { language, t } = useLanguage();
+
   // Find target installment (default to earliest unpaid installment or matching initialInstallmentNo)
   const unpaidSchedules = (loan.schedules || []).filter(
     (s) => s.status !== 'PAID'
@@ -78,14 +81,14 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
   const validateForm = (): boolean => {
     setErrorMessage(null);
     if (!amount || isNaN(amount) || amount <= 0) {
-      setErrorMessage('Payment amount must be greater than $0.00.');
+      setErrorMessage(language === 'km' ? 'ចំនួនទឹកប្រាក់ត្រូវបង់ត្រូវតែធំជាង $0.00' : 'Payment amount must be greater than $0.00.');
       return false;
     }
     if (amount > loan.outstandingBalanceUSD + 0.01) {
       setErrorMessage(
-        `Payment amount exceeds the total remaining loan balance of $${loan.outstandingBalanceUSD.toFixed(
-          2
-        )}.`
+        language === 'km'
+          ? `ចំនួនទឹកប្រាក់បង់លើសពីសមតុល្យនៅសល់សរុប $${loan.outstandingBalanceUSD.toFixed(2)}`
+          : `Payment amount exceeds the total remaining loan balance of $${loan.outstandingBalanceUSD.toFixed(2)}.`
       );
       return false;
     }
@@ -150,7 +153,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
     } catch (err: any) {
       console.error('Borrower payment error:', err);
       setErrorMessage(
-        err?.message || 'Payment processing failed. Please verify and try again.'
+        err?.message || (language === 'km' ? 'ការបង់ប្រាក់មិនជោគជ័យ សូមផ្ទៀងផ្ទាត់ហើយព្យាយាមម្តងទៀត។' : 'Payment processing failed. Please verify and try again.')
       );
       setStep('FORM');
     } finally {
@@ -161,13 +164,13 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
   const formatMethodName = (m: string) => {
     switch (m) {
       case 'BANK_TRANSFER':
-        return 'Bank Transfer';
+        return t('method_bank_transfer');
       case 'CASH':
-        return 'Cash';
+        return t('method_cash');
       case 'CARD':
-        return 'Credit / Debit Card';
+        return t('method_card');
       case 'QR_PAYMENT':
-        return 'QR Payment (KHQR)';
+        return t('method_qr_payment');
       default:
         return m;
     }
@@ -184,10 +187,10 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
             </div>
             <div>
               <h2 className="text-sm font-bold text-[#0F172A]">
-                {step === 'SUCCESS' ? 'Payment Confirmation' : 'Make Payment'}
+                {step === 'SUCCESS' ? t('modal_confirm_title') : t('modal_payment_title')}
               </h2>
               <p className="text-[11px] font-mono text-[#64748B]">
-                Loan #{loan.loanNumber} •{' '}
+                {t('slip_loan_number')} #{loan.loanNumber} •{' '}
                 <span className="font-semibold text-[#0F172A]">{loan.productName}</span>
               </p>
             </div>
@@ -195,7 +198,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
           <button
             onClick={onClose}
             disabled={isSubmitting}
-            className="p-1 rounded-[6px] text-[#64748B] hover:text-[#0F172A] hover:bg-slate-200 transition-colors"
+            className="p-1 rounded-[6px] text-[#64748B] hover:text-[#0F172A] hover:bg-slate-200 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -208,7 +211,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-[6px] text-xs text-rose-800 flex items-start gap-2 animate-in fade-in">
               <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
               <div>
-                <span className="font-bold">Payment Error:</span> {errorMessage}
+                <span className="font-bold">{language === 'km' ? 'កំហុស:' : 'Payment Error:'}</span> {errorMessage}
               </div>
             </div>
           )}
@@ -221,7 +224,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                 <div className="flex items-center justify-between text-xs pb-2 border-b border-[#E2E8F0]">
                   <span className="text-[#64748B] font-medium flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5 text-[#2563EB]" />
-                    Installment {targetSchedule ? `#${targetSchedule.installmentNo}` : ''} Due Date
+                    {t('modal_installment_info')} {targetSchedule ? `#${targetSchedule.installmentNo}` : ''}
                   </span>
                   <span className="font-semibold font-mono text-[#0F172A]">
                     {targetSchedule?.dueDate || loan.nextPaymentDueDate || 'Next Scheduled'}
@@ -230,7 +233,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
 
                 <div className="grid grid-cols-3 gap-2 text-center text-xs">
                   <div className="p-2 bg-white rounded-[6px] border border-[#E2E8F0]">
-                    <span className="text-[11px] text-[#64748B] block">Amount Due</span>
+                    <span className="text-[11px] text-[#64748B] block">{t('amount_due')}</span>
                     <span className="font-bold font-mono text-[#0F172A] mt-0.5 block">
                       <MoneyText
                         amount={targetSchedule?.totalDueUSD || loan.nextPaymentDueAmountUSD}
@@ -240,7 +243,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                   </div>
 
                   <div className="p-2 bg-white rounded-[6px] border border-[#E2E8F0]">
-                    <span className="text-[11px] text-[#64748B] block">Already Paid</span>
+                    <span className="text-[11px] text-[#64748B] block">{t('modal_already_paid')}</span>
                     <span className="font-semibold font-mono text-emerald-600 mt-0.5 block">
                       <MoneyText
                         amount={targetSchedule?.amountPaidUSD || 0}
@@ -250,7 +253,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                   </div>
 
                   <div className="p-2 bg-white rounded-[6px] border border-[#E2E8F0]">
-                    <span className="text-[11px] text-[#64748B] block">Remaining</span>
+                    <span className="text-[11px] text-[#64748B] block">{t('modal_remaining')}</span>
                     <span className="font-bold font-mono text-[#2563EB] mt-0.5 block">
                       <MoneyText
                         amount={targetSchedule?.remainingAmountUSD || loan.nextPaymentDueAmountUSD}
@@ -261,7 +264,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                 </div>
 
                 <div className="text-[11px] text-[#64748B] flex items-center justify-between pt-1">
-                  <span>Total Loan Outstanding:</span>
+                  <span>{t('modal_total_outstanding')}</span>
                   <strong className="text-[#0F172A] font-mono">
                     <MoneyText amount={loan.outstandingBalanceUSD} currency={currency} />
                   </strong>
@@ -271,7 +274,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
               {/* Payment Amount Input (Section 5 & 24) */}
               <div>
                 <label className="block text-xs font-semibold text-[#0F172A] mb-1">
-                  Payment Amount <span className="text-rose-500">*</span>
+                  {t('modal_payment_amount')} <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-[#64748B]">
@@ -285,7 +288,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                     value={amount}
                     onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
                     required
-                    className="w-full pl-8 pr-28 py-2 text-sm font-mono font-bold border border-[#CBD5E1] rounded-[6px] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] text-[#0F172A]"
+                    className="w-full pl-8 pr-32 py-2 text-sm font-mono font-bold border border-[#CBD5E1] rounded-[6px] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] text-[#0F172A]"
                     placeholder="0.00"
                   />
                   <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -294,35 +297,35 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                       onClick={() =>
                         setAmount(targetSchedule?.remainingAmountUSD || loan.nextPaymentDueAmountUSD)
                       }
-                      className="px-2 py-1 text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-[#475569] rounded-[4px] transition"
+                      className="px-2 py-1 text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 text-[#475569] rounded-[4px] transition cursor-pointer"
                     >
-                      Installment
+                      {t('modal_btn_installment')}
                     </button>
                     <button
                       type="button"
                       onClick={() => setAmount(loan.outstandingBalanceUSD)}
-                      className="px-2 py-1 text-[11px] font-semibold bg-blue-50 hover:bg-blue-100 text-[#2563EB] rounded-[4px] transition"
+                      className="px-2 py-1 text-[11px] font-semibold bg-blue-50 hover:bg-blue-100 text-[#2563EB] rounded-[4px] transition cursor-pointer"
                     >
-                      Pay Off
+                      {t('modal_btn_payoff')}
                     </button>
                   </div>
                 </div>
                 <p className="text-[11px] text-[#64748B] mt-1">
-                  Supports partial settlement or full payoff with automatic waterfall allocation.
+                  {t('modal_waterfall_note')}
                 </p>
               </div>
 
               {/* Payment Method Selector (Section 6 & 24) */}
               <div>
                 <label className="block text-xs font-semibold text-[#0F172A] mb-1">
-                  Payment Method <span className="text-rose-500">*</span>
+                  {t('modal_payment_method')} <span className="text-rose-500">*</span>
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { id: 'BANK_TRANSFER', label: 'Bank Transfer', icon: Building },
-                    { id: 'QR_PAYMENT', label: 'QR Code / KHQR', icon: QrCode },
-                    { id: 'CARD', label: 'Debit / Card', icon: CreditCard },
-                    { id: 'CASH', label: 'Cash at Branch', icon: Banknote },
+                    { id: 'BANK_TRANSFER', label: t('method_bank_transfer'), icon: Building },
+                    { id: 'QR_PAYMENT', label: t('method_qr_payment'), icon: QrCode },
+                    { id: 'CARD', label: t('method_card'), icon: CreditCard },
+                    { id: 'CASH', label: t('method_cash'), icon: Banknote },
                   ].map((m) => {
                     const Icon = m.icon;
                     const isSelected = paymentMethod === m.id;
@@ -354,7 +357,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
               {/* Reference / Transaction Number (Section 24) */}
               <div>
                 <label className="block text-xs font-semibold text-[#0F172A] mb-1">
-                  Reference / Transaction Number
+                  {t('modal_ref_number')}
                 </label>
                 <input
                   type="text"
@@ -364,7 +367,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                   className="w-full px-3 py-2 text-xs font-mono border border-[#CBD5E1] rounded-[6px] focus:outline-none focus:border-[#2563EB] text-[#0F172A]"
                 />
                 <p className="text-[11px] text-[#64748B] mt-0.5">
-                  Unique reference generated automatically or enter bank slip code.
+                  {t('modal_ref_help')}
                 </p>
               </div>
 
@@ -375,13 +378,13 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                   onClick={onClose}
                   className="px-4 py-2 text-xs font-semibold text-[#475569] hover:bg-slate-100 rounded-[6px] transition cursor-pointer"
                 >
-                  Cancel
+                  {t('btn_cancel')}
                 </button>
                 <button
                   type="submit"
                   className="px-5 py-2 text-xs font-semibold bg-[#2563EB] hover:bg-blue-700 text-white rounded-[6px] transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                 >
-                  <span>Continue</span>
+                  <span>{t('btn_continue')}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -394,36 +397,35 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
               <div className="p-4 bg-blue-50/70 border border-blue-200 rounded-[8px] space-y-3">
                 <div className="flex items-center gap-2 text-xs font-bold text-[#1E40AF]">
                   <ShieldCheck className="w-4 h-4 text-[#2563EB]" />
-                  <span>Confirm Payment Details</span>
+                  <span>{t('modal_confirm_title')}</span>
                 </div>
                 <p className="text-xs text-[#1E3A8A]">
-                  Please review your payment information before submission. Once confirmed, the
-                  amount will be immediately processed by the backend ledger.
+                  {t('modal_confirm_desc')}
                 </p>
 
                 <div className="divide-y divide-blue-200/60 text-xs pt-1">
                   <div className="py-2 flex justify-between">
-                    <span className="text-[#64748B]">Loan Account:</span>
+                    <span className="text-[#64748B]">{t('modal_loan_account')}</span>
                     <span className="font-mono font-bold text-[#0F172A]">{loan.loanNumber}</span>
                   </div>
                   <div className="py-2 flex justify-between">
-                    <span className="text-[#64748B]">Payment Amount:</span>
+                    <span className="text-[#64748B]">{t('modal_amount_label')}</span>
                     <span className="font-mono font-bold text-base text-[#2563EB]">
                       <MoneyText amount={amount} currency={currency} />
                     </span>
                   </div>
                   <div className="py-2 flex justify-between">
-                    <span className="text-[#64748B]">Payment Method:</span>
+                    <span className="text-[#64748B]">{t('modal_method_label')}</span>
                     <span className="font-semibold text-[#0F172A]">
                       {formatMethodName(paymentMethod)}
                     </span>
                   </div>
                   <div className="py-2 flex justify-between">
-                    <span className="text-[#64748B]">Transaction Reference:</span>
+                    <span className="text-[#64748B]">{t('modal_ref_label')}</span>
                     <span className="font-mono text-[#0F172A]">{referenceNo}</span>
                   </div>
                   <div className="py-2 flex justify-between">
-                    <span className="text-[#64748B]">Estimated Balance After:</span>
+                    <span className="text-[#64748B]">{t('modal_est_balance_after')}</span>
                     <span className="font-mono font-bold text-[#0F172A]">
                       <MoneyText
                         amount={Math.max(0, loan.outstandingBalanceUSD - amount)}
@@ -437,8 +439,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-[6px] text-xs text-amber-900 flex items-center gap-2">
                 <Clock className="w-4 h-4 text-amber-600 shrink-0" />
                 <span>
-                  Payments are settled in chronological waterfall order, clearing oldest overdue
-                  installments first.
+                  {t('modal_waterfall_rule')}
                 </span>
               </div>
 
@@ -449,7 +450,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                   onClick={() => setStep('FORM')}
                   className="px-4 py-2 text-xs font-semibold text-[#475569] hover:bg-slate-100 rounded-[6px] transition cursor-pointer"
                 >
-                  Back / Edit
+                  {t('btn_edit')}
                 </button>
                 <button
                   type="button"
@@ -460,12 +461,12 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                   {isSubmitting ? (
                     <>
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Processing Payment...</span>
+                      <span>{t('modal_processing')}</span>
                     </>
                   ) : (
                     <>
                       <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>Confirm Payment</span>
+                      <span>{t('btn_confirm_payment')}</span>
                     </>
                   )}
                 </button>
@@ -481,37 +482,37 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
               </div>
 
               <div>
-                <h3 className="text-lg font-bold text-[#0F172A]">Payment Successful ✓</h3>
+                <h3 className="text-lg font-bold text-[#0F172A]">{t('modal_success_title')}</h3>
                 <p className="text-xs text-[#64748B] mt-0.5">
-                  Your payment has been successfully recorded in the PostgreSQL ledger.
+                  {t('modal_success_desc')}
                 </p>
               </div>
 
               {/* Exact Section 17 & 24 Result Box */}
               <div className="bg-slate-50 border border-[#E2E8F0] rounded-[8px] p-4 text-left space-y-2.5 max-w-sm mx-auto font-sans">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-[#64748B]">Amount Paid</span>
+                  <span className="text-[#64748B]">{t('modal_paid_amount')}</span>
                   <span className="font-mono font-bold text-sm text-[#16A34A]">
                     <MoneyText amount={paymentResult.amountPaid} currency={currency} />
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-[#64748B]">Remaining Balance</span>
+                  <span className="text-[#64748B]">{t('modal_remaining_balance')}</span>
                   <span className="font-mono font-bold text-sm text-[#2563EB]">
                     <MoneyText amount={paymentResult.remainingBalance} currency={currency} />
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-[#64748B]">Payment Reference</span>
+                  <span className="text-[#64748B]">{t('modal_ref_label')}</span>
                   <span className="font-mono font-bold text-xs text-[#0F172A]">
                     {paymentResult.reference}
                   </span>
                 </div>
 
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-[#64748B]">Receipt No</span>
+                  <span className="text-[#64748B]">{t('modal_receipt_number')}</span>
                   <span className="font-mono text-xs text-[#64748B]">
                     {paymentResult.receiptNo}
                   </span>
@@ -520,7 +521,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                 {paymentResult.isCompleted && (
                   <div className="pt-2 border-t border-[#E2E8F0] text-center">
                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[4px] bg-emerald-100 text-emerald-800 text-xs font-bold">
-                      🎉 Facility Fully Paid &amp; Completed!
+                      {t('modal_fully_completed')}
                     </span>
                   </div>
                 )}
@@ -536,7 +537,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                   className="px-5 py-2 text-xs font-semibold bg-[#2563EB] hover:bg-blue-700 text-white rounded-[6px] transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                 >
                   <Receipt className="w-3.5 h-3.5" />
-                  <span>View Official Receipt</span>
+                  <span>{t('btn_view_receipt')}</span>
                 </button>
               </div>
             </div>

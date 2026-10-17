@@ -3,6 +3,7 @@ import { LoanAccount, Currency, UserRole } from '../../types';
 import { Badge } from '../common/Badge';
 import { MoneyText } from '../common/MoneyText';
 import { Search, ArrowRight, Landmark } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 export interface LoanListProps {
   loans: LoanAccount[];
@@ -19,6 +20,7 @@ export const LoanList: React.FC<LoanListProps> = ({
   onSelectLoan,
   onOpenCashierForLoan
 }) => {
+  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'OVERDUE' | 'COMPLETED'>('ALL');
 
@@ -41,16 +43,16 @@ export const LoanList: React.FC<LoanListProps> = ({
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
-              {currentUserRole === 'USER' ? 'My Loans' : 'Active Loans Ledger'}
+              {currentUserRole === 'USER' ? t('ledger_my_loans', 'My Loans') : t('ledger_active_loans', 'Active Loans Ledger')}
             </h1>
             <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-xs font-mono font-semibold bg-slate-100 text-[#0F172A] border border-[#E2E8F0]">
-              {loans.length} Facilities
+              {loans.length} {t('facilities_count', 'Facilities')}
             </span>
           </div>
           <p className="text-xs text-[#64748B] mt-0.5">
             {currentUserRole === 'USER'
-              ? 'Your active credit facilities, principal amortization schedules, and repayment records.'
-              : 'Active credit facilities, principal amortization schedules, and commercial portfolio repayment status.'}
+              ? t('user_loans_subtitle', 'Your active credit facilities, principal amortization schedules, and repayment records.')
+              : t('admin_loans_subtitle', 'Active credit facilities, principal amortization schedules, and commercial portfolio repayment status.')}
           </p>
         </div>
       </div>
@@ -64,7 +66,7 @@ export const LoanList: React.FC<LoanListProps> = ({
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by Loan #, Borrower, Product..."
+              placeholder={t('search_loans_placeholder', 'Search by Loan #, Borrower, Product...')}
               className="w-full h-10 pl-9 pr-3.5 text-xs bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB] transition-colors"
             />
           </div>
@@ -72,10 +74,10 @@ export const LoanList: React.FC<LoanListProps> = ({
           <div className="flex items-center gap-1.5 bg-slate-100 p-0.5 rounded-[6px] border border-[#E2E8F0]">
             {(
               [
-                { key: 'ALL', label: 'All Accounts' },
-                { key: 'ACTIVE', label: 'Active' },
-                { key: 'OVERDUE', label: 'Overdue' },
-                { key: 'COMPLETED', label: 'Completed' },
+                { key: 'ALL', label: t('tab_all_accounts', 'All Accounts') },
+                { key: 'ACTIVE', label: t('tab_active', 'Active') },
+                { key: 'OVERDUE', label: t('tab_overdue', 'Overdue') },
+                { key: 'COMPLETED', label: t('tab_completed', 'Completed') },
               ] as const
             ).map((tab) => {
               const active = statusFilter === tab.key;
@@ -103,14 +105,14 @@ export const LoanList: React.FC<LoanListProps> = ({
           <table className="table-enterprise">
             <thead>
               <tr>
-                <th>Loan Number</th>
-                <th>Borrower</th>
-                <th>Product Name</th>
-                <th className="text-right">Disbursed Principal</th>
-                <th className="text-right">Outstanding Balance</th>
-                <th className="text-center">Progress</th>
-                <th className="text-center">Status</th>
-                <th className="text-right">Action</th>
+                <th>{t('col_loan_number', 'Loan Number')}</th>
+                <th>{t('col_borrower', 'Borrower')}</th>
+                <th>{t('col_product_name', 'Product Name')}</th>
+                <th className="text-right">{t('col_disbursed_principal', 'Disbursed Principal')}</th>
+                <th className="text-right">{t('col_outstanding_balance', 'Outstanding Balance')}</th>
+                <th className="text-center">{t('col_progress', 'Progress')}</th>
+                <th className="text-center">{t('col_status', 'Status')}</th>
+                <th className="text-right">{t('col_action', 'Action')}</th>
               </tr>
             </thead>
             <tbody>
@@ -119,8 +121,8 @@ export const LoanList: React.FC<LoanListProps> = ({
                   <td colSpan={8} className="py-16 text-center text-xs text-[#64748B]">
                     <div className="max-w-xs mx-auto space-y-2">
                       <Landmark className="w-8 h-8 text-slate-300 mx-auto" />
-                      <p className="font-semibold text-[#0F172A] text-sm">No loan accounts found</p>
-                      <p>Adjust your search filters to view active loans.</p>
+                      <p className="font-semibold text-[#0F172A] text-sm">{t('no_loans_found', 'No loan accounts found')}</p>
+                      <p>{t('adjust_search_filters', 'Adjust your search filters to view active loans.')}</p>
                     </div>
                   </td>
                 </tr>
@@ -152,7 +154,7 @@ export const LoanList: React.FC<LoanListProps> = ({
                               {loan.borrowerName}
                             </span>
                             <span className="text-[11px] text-[#64748B] font-mono">
-                              Matures: {loan.maturityDate}
+                              {t('matures_on', 'Matures:')} {loan.maturityDate}
                             </span>
                           </div>
                         </div>
@@ -208,7 +210,11 @@ export const LoanList: React.FC<LoanListProps> = ({
                           }
                           dot
                         >
-                          {loan.status}
+                          {loan.status === 'ACTIVE'
+                            ? t('status_active', 'ACTIVE')
+                            : loan.status === 'OVERDUE'
+                            ? t('status_overdue', 'OVERDUE')
+                            : t('status_completed', 'COMPLETED')}
                         </Badge>
                       </td>
 
@@ -219,7 +225,7 @@ export const LoanList: React.FC<LoanListProps> = ({
                             onClick={() => onSelectLoan(loan.id)}
                             className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[6px] bg-white hover:bg-slate-50 border border-[#E2E8F0] text-[#0F172A] text-xs font-semibold transition-colors cursor-pointer"
                           >
-                            <span>Schedule</span>
+                            <span>{t('btn_schedule', 'Schedule')}</span>
                             <ArrowRight className="w-3.5 h-3.5" />
                           </button>
                         </div>

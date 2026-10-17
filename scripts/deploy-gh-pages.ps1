@@ -12,14 +12,19 @@ Remove-Item $tempIndex -Force
 Remove-Item env:GIT_INDEX_FILE
 
 $parent = (git rev-parse origin/gh-pages).Trim()
-$commit = (git commit-tree $tree -p $parent -m "deploy: update gh-pages with borrower payment system").Trim()
+$commit = (git commit-tree $tree -p $parent -m "deploy: smooth loading screen and latest core banking assets").Trim()
 git update-ref refs/heads/gh-pages $commit
 Write-Host "Created gh-pages commit: $commit"
 
 Write-Host "Pushing to origin gh-pages..."
 git push origin gh-pages:gh-pages
 
-Write-Host "Pushing to tonghengkeo gh-pages..."
-git push tonghengkeo gh-pages:gh-pages
+try {
+    Write-Host "Pushing to tonghengkeo gh-pages..."
+    git push tonghengkeo gh-pages:gh-pages
+} catch {
+    Write-Warning "tonghengkeo remote push skipped: $_"
+}
 
-Write-Host "gh-pages deployment successfully pushed to both remotes!"
+Write-Host "gh-pages deployment completed successfully!"
+

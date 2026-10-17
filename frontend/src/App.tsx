@@ -179,6 +179,13 @@ export const App: React.FC = () => {
     }
   }, [authUser]);
 
+  // Ensure initial HTML splash loader is dismissed smoothly
+  useEffect(() => {
+    if (typeof (window as any).apexHideLoader === 'function') {
+      (window as any).apexHideLoader();
+    }
+  }, []);
+
   const [currentRoute, setCurrentRoute] = useState<string>(() => getNormalizedPath());
   const [activeTab, setActiveTab] = useState<string>(() => {
     const role = (authUser?.role || '').toLowerCase();

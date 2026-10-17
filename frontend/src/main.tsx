@@ -14,3 +14,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </LanguageProvider>
   </React.StrictMode>
 );
+
+// Smoothly dismiss the splash loader once the React DOM mounts
+if (typeof (window as any).apexHideLoader === 'function') {
+  (window as any).apexHideLoader();
+}
+

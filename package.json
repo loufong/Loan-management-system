@@ -17,8 +17,8 @@
     "db:push": "prisma db push",
     "db:reset": "prisma migrate reset",
     "frontend:install": "npm --prefix frontend install",
-    "frontend:dev": "npm --prefix frontend run dev",
-    "frontend:build": "npm --prefix frontend run build",
+    "frontend:build": "npm --prefix frontend run build && node scripts/sync-dist.js",
+    "deploy:gh-pages": "npm run frontend:build && powershell -ExecutionPolicy Bypass -File scripts/deploy-gh-pages.ps1",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down"
   },

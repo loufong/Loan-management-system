@@ -4,6 +4,8 @@ import { authenticate } from '../../middlewares/auth.middleware';
 import { authorize } from '../../middlewares/rbac.middleware';
 import { UserRole } from '@prisma/client';
 
+import { PaymentController } from '../payments/payment.controller';
+
 export const loanRouter = Router();
 
 loanRouter.use(authenticate);
@@ -19,6 +21,7 @@ loanRouter.get(
 loanRouter.get('/', LoanController.list);
 loanRouter.get('/:id', LoanController.getById);
 loanRouter.get('/:id/schedules', LoanController.getSchedules);
+loanRouter.get('/:id/payments', PaymentController.listByLoan);
 
 // 3. Core Banking: Loan Disbursement & Activation (ADMIN)
 loanRouter.post(

@@ -274,15 +274,19 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
             </div>
           </div>
 
-          {isCashierOrAdmin && (
+          {!isCompleted && (
             <button
               onClick={() =>
                 onCollectPayment?.(loan.id, loan.nextPaymentDueAmountUSD)
               }
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[6px] bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer"
+              className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-[6px] text-white text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer shadow-xs ${
+                isCashierOrAdmin
+                  ? 'bg-[#0F172A] hover:bg-[#1E293B]'
+                  : 'bg-[#2563EB] hover:bg-blue-700'
+              }`}
             >
               <DollarSign className="w-3.5 h-3.5" />
-              <span>Collect Payment</span>
+              <span>{isCashierOrAdmin ? 'Collect Payment' : 'Make Payment'}</span>
             </button>
           )}
         </div>

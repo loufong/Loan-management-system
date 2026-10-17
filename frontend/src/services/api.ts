@@ -1012,41 +1012,64 @@ class ApiService {
 
   public async recordPayment(payload: any): Promise<PaymentReceipt> {
     try {
+      const idempotencyKey =
+        payload.idempotencyKey ||
+        (typeof crypto !== 'undefined' && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `idemp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`);
+
       const backendPayload = {
         loanId: payload.loanId || payload.loanNumber,
-        amount: payload.amountUSD || payload.amount,
-        paymentMethod: (payload.method || payload.paymentMethod || 'CASH')
+        amount: Number(payload.amountUSD || payload.amount || payload.paymentAmount),
+        paymentMethod: (payload.method || payload.paymentMethod || 'BANK_TRANSFER')
           .toString()
           .toUpperCase()
           .replace(/\s+/g, '_'),
-        referenceNo: payload.transactionRef || payload.referenceNo || `REF-${Date.now().toString().slice(-6)}`,
-        notes: payload.notes || 'Recorded via Cashier POS Terminal',
+        referenceNo: payload.transactionRef || payload.referenceNo || `PAY-${Date.now().toString().slice(-6)}`,
+        notes: payload.notes || 'Recorded via Borrower Payment Portal',
+        idempotencyKey,
       };
 
       const res = await this.request<any>('/payments', {
         method: 'POST',
+        headers: {
+          'Idempotency-Key': idempotencyKey,
+        },
         body: JSON.stringify(backendPayload),
       });
 
       const p = res?.payment || res;
-      return {
-        receiptNo: res?.receiptNo || p?.receiptNo || `REC-${Date.now().toString().slice(-6)}`,
-        loanNumber: payload.loanNumber || p?.loan?.loanNumber || payload.loanId,
-        borrowerId: payload.borrowerId || 'BOR-2026-0001',
-        borrowerName: payload.borrowerName || 'Borrower Client',
+      const receiptNo = res?.receiptNo || p?.receiptNo || `REC-${Date.now().toString().slice(-6)}`;
+      const referenceNo = res?.reference || res?.referenceNo || p?.referenceNo || backendPayload.referenceNo;
+      const amountPaid = Number(res?.amount || backendPayload.amount);
+      const remainingBalance = res?.remainingBalance !== undefined ? Number(res.remainingBalance) : 0;
+
+      const receiptObj: PaymentReceipt = {
+        receiptNo,
+        loanNumber: payload.loanNumber || p?.loan?.loanNumber || res?.loanId || payload.loanId,
+        borrowerId: payload.borrowerId || p?.loan?.borrowerId || 'BOR-2026-0001',
+        borrowerName: payload.borrowerName || p?.loan?.borrower?.fullName || 'Borrower Client',
         installmentNo: 1,
-        amountPaidUSD: Number(backendPayload.amount),
-        amountPaidKHR: Math.round(Number(backendPayload.amount) * 4100),
+        amountPaidUSD: amountPaid,
+        amountPaidKHR: Math.round(amountPaid * 4100),
         paymentMethod: backendPayload.paymentMethod,
-        transactionRef: backendPayload.referenceNo,
-        paidAt: new Date().toLocaleString(),
-        cashierName: payload.cashierName || 'Emily Ross',
-        principalAllocatedUSD: backendPayload.amount * 0.85,
-        interestAllocatedUSD: backendPayload.amount * 0.15,
+        transactionRef: referenceNo,
+        paidAt: p?.paymentDate || new Date().toLocaleString(),
+        cashierName: p?.receivedByUser?.fullName || payload.cashierName || 'Online Portal',
+        principalAllocatedUSD: amountPaid * 0.85,
+        interestAllocatedUSD: amountPaid * 0.15,
         lateFeeAllocatedUSD: 0,
-        outstandingBalanceAfterUSD: res?.remainingBalance ?? 0,
+        outstandingBalanceAfterUSD: remainingBalance,
         notes: backendPayload.notes,
       };
+
+      // Attach backend metadata for receipt view
+      return Object.assign(receiptObj, {
+        reference: referenceNo,
+        remainingBalance,
+        isCompleted: res?.isCompleted ?? (remainingBalance <= 0),
+        settledInstallments: res?.settledInstallments || []
+      });
     } catch (err) {
       if (!isStaticHost) throw err;
       const newReceipt: PaymentReceipt = {
@@ -1060,15 +1083,37 @@ class ApiService {
         paymentMethod: payload.method || 'Dynamic QR Code',
         transactionRef: `KHQR-${Date.now().toString().slice(-8)}`,
         paidAt: new Date().toLocaleString(),
-        cashierName: payload.cashierName || 'Emily Ross',
+        cashierName: payload.cashierName || 'Online Portal',
         principalAllocatedUSD: (payload.amountUSD || 511.25) * 0.9,
         interestAllocatedUSD: (payload.amountUSD || 511.25) * 0.1,
         lateFeeAllocatedUSD: 0,
         outstandingBalanceAfterUSD: Math.max(0, 3850 - (payload.amountUSD || 511.25)),
-        notes: payload.notes || 'Recorded via Cashier POS Terminal',
+        notes: payload.notes || 'Recorded via Borrower Payment Portal',
       };
       return newReceipt;
     }
+  }
+
+  public async getMyPayments(): Promise<any[]> {
+    try {
+      const res = await this.request<any>('/users/me/payments');
+      return Array.isArray(res) ? res : res?.items || [];
+    } catch {
+      return [];
+    }
+  }
+
+  public async getLoanPayments(loanId: string): Promise<any[]> {
+    try {
+      const res = await this.request<any>(`/loans/${loanId}/payments`);
+      return Array.isArray(res) ? res : res?.items || [];
+    } catch {
+      return [];
+    }
+  }
+
+  public async getPaymentById(id: string): Promise<any> {
+    return await this.request<any>(`/payments/${id}`);
   }
 
   // --- USER MANAGEMENT (ADMIN) ---

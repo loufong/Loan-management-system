@@ -93,9 +93,12 @@ async function runPaymentReconciliationTests() {
     }, {
       Authorization: `Bearer ${token}`
     });
-    assert.strictEqual(res.status, 403, `${role} must be forbidden from recording payments`);
-    assert.strictEqual(res.body.error.code, 'FORBIDDEN');
-    console.log(`✅ Role ${role} blocked with 403 FORBIDDEN`);
+    assert.strictEqual(res.status, 403, `${role} must be forbidden from recording payments on unowned loan`);
+    assert(
+      res.body.error.code === 'FORBIDDEN' || res.body.error.code === 'FORBIDDEN_OWNERSHIP',
+      'Error code must be FORBIDDEN or FORBIDDEN_OWNERSHIP'
+    );
+    console.log(`✅ Role ${role} blocked with 403 FORBIDDEN_OWNERSHIP`);
   }
 
   // --- TEST 2: Request Body Validation (paymentAmount, method, referenceNo) ---

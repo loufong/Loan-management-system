@@ -8,7 +8,7 @@ export interface UserRepaymentsViewProps {
   loans: LoanAccount[];
   currentUser: UserProfile;
   currency: Currency;
-  onOpenPaymentForLoan: (loanId: string) => void;
+  onOpenPaymentForLoan: (loanId: string, installmentNo?: number, amount?: number) => void;
   onViewReceipt?: (receipt: any) => void;
 }
 
@@ -148,7 +148,7 @@ export const UserRepaymentsView: React.FC<UserRepaymentsViewProps> = ({
           schedules={activeLoan.schedules || []}
           currency={currency}
           currentUserRole="USER"
-          onCollectInstallment={(_no, _amt) => onOpenPaymentForLoan(activeLoan.id)}
+          onCollectInstallment={(no, amt) => onOpenPaymentForLoan(activeLoan.id, no, amt)}
         />
       </div>
     </div>

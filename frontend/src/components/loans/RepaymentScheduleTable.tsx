@@ -152,9 +152,19 @@ export const RepaymentScheduleTable: React.FC<RepaymentScheduleTableProps> = ({
                           onClick={() =>
                             onCollectInstallment?.(s.installmentNo, s.remainingAmountUSD)
                           }
-                          className="px-2.5 py-1 text-[12px] font-medium rounded-[6px] bg-[#16A34A] hover:bg-emerald-700 text-white transition-colors"
+                          className="px-2.5 py-1 text-[12px] font-medium rounded-[6px] bg-[#16A34A] hover:bg-emerald-700 text-white transition-colors cursor-pointer"
                         >
                           Collect
+                        </button>
+                      )}
+                      {!isPaid && !isCashierOrAdmin && (
+                        <button
+                          onClick={() =>
+                            onCollectInstallment?.(s.installmentNo, s.remainingAmountUSD)
+                          }
+                          className="px-2.5 py-1 text-[12px] font-medium rounded-[6px] bg-[#2563EB] hover:bg-blue-700 text-white transition-colors cursor-pointer shadow-xs"
+                        >
+                          Pay
                         </button>
                       )}
                       {s.amountPaidUSD > 0 && (

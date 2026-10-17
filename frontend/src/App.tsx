@@ -51,6 +51,7 @@ import { ApprovalsQueue } from './components/approvals/ApprovalsQueue';
 // Screen 5: Core Banking Loans & Repayment Schedule
 import { LoanList } from './components/loans/LoanList';
 import { LoanDetail } from './components/loans/LoanDetail';
+import { BorrowerPaymentModal } from './components/loans/BorrowerPaymentModal';
 
 // Screen 6: Cashier Desk & Payment Collection Terminal
 import { CashierPaymentTerminal } from './components/cashier/CashierPaymentTerminal';
@@ -338,6 +339,11 @@ export const App: React.FC = () => {
   const [searchModalOpen, setSearchModalOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeReceiptModal, setActiveReceiptModal] = useState<PaymentReceipt | null>(null);
+  const [borrowerPaymentTarget, setBorrowerPaymentTarget] = useState<{
+    loan: LoanAccount;
+    installmentNo?: number;
+    amount?: number;
+  } | null>(null);
 
   // Sync API Data on Mount and Reload
   const reloadAllData = async () => {
@@ -508,7 +514,13 @@ export const App: React.FC = () => {
     else if (targetPath === '/admin/disbursements') setActiveTab('disbursements');
     else if (targetPath === '/admin/loans' || targetPath === '/loans') setActiveTab('loans');
     else if (targetPath === '/repayments') setActiveTab('repayments');
-    else if (targetPath === '/admin/payments' || targetPath === '/payments') setActiveTab('cashier');
+    else if (targetPath === '/admin/payments' || targetPath === '/payments') {
+      if (isBorrowerRole) {
+        setActiveTab('repayments');
+      } else {
+        setActiveTab('cashier');
+      }
+    }
     else if (targetPath === '/admin/overdue') setActiveTab('overdue');
     else if (targetPath === '/admin/reports') setActiveTab('reports');
     else if (targetPath === '/admin/notifications' || targetPath === '/notifications') setActiveTab('notifications');
@@ -584,6 +596,19 @@ export const App: React.FC = () => {
     : (isBorrowerRole
         ? receipts.map((r) => ({ ...r, borrowerName: currentUser.name || currentUser.fullName || 'Johnathan Doe' }))
         : receipts);
+
+  // Helper to open payment flow appropriately for borrower (modal) or staff (cashier desk)
+  const openPaymentForBorrowerOrStaff = (loanId?: string, installmentNo?: number, amount?: number) => {
+    const target = (loanId ? loans.find((l) => l.id === loanId || l.loanNumber === loanId) : null) || activeLoan;
+    if (isBorrowerRole) {
+      if (target) {
+        setBorrowerPaymentTarget({ loan: target, installmentNo, amount });
+      }
+    } else {
+      if (target) setSelectedLoanId(target.id);
+      setActiveTab('cashier');
+    }
+  };
 
   // Callback Handlers
   const handleRecordPayment = async (paymentInput: any) => {
@@ -843,10 +868,7 @@ export const App: React.FC = () => {
               receipts={receipts}
               onNavigate={handleNavSelection}
               onOpenApplyLoan={() => setActiveTab('new-application')}
-              onOpenQuickPayment={(loanId) => {
-                if (loanId) setSelectedLoanId(loanId);
-                setActiveTab('cashier');
-              }}
+              onOpenQuickPayment={(loanId) => openPaymentForBorrowerOrStaff(loanId)}
             />
           )}
 
@@ -1000,10 +1022,7 @@ export const App: React.FC = () => {
                 setSelectedLoanId(id);
                 setActiveTab('loan-detail');
               }}
-              onOpenCashierForLoan={(id) => {
-                setSelectedLoanId(id);
-                setActiveTab('cashier');
-              }}
+              onOpenCashierForLoan={(id) => openPaymentForBorrowerOrStaff(id)}
             />
           )}
 
@@ -1016,10 +1035,7 @@ export const App: React.FC = () => {
               currency={currency}
               currentUserRole={activeRole}
               onBack={() => setActiveTab('loans')}
-              onCollectPayment={() => {
-                setSelectedLoanId(activeLoan.id);
-                setActiveTab('cashier');
-              }}
+              onCollectPayment={(_loanId, amount) => openPaymentForBorrowerOrStaff(activeLoan.id, undefined, amount)}
               onViewReceipt={(rec) => setActiveReceiptModal(rec)}
             />
           )}
@@ -1170,10 +1186,7 @@ export const App: React.FC = () => {
               loans={isBorrowerRole ? userDisplayLoans : loans}
               currentUser={currentUser}
               currency={currency}
-              onOpenPaymentForLoan={(loanId) => {
-                setSelectedLoanId(loanId);
-                handleNavSelection(isBorrowerRole ? '/payments' : '/admin/payments');
-              }}
+              onOpenPaymentForLoan={(loanId, instNo, amt) => openPaymentForBorrowerOrStaff(loanId, instNo, amt)}
             />
           )}
         </div>
@@ -1267,6 +1280,21 @@ export const App: React.FC = () => {
         <PaymentReceiptModal
           receipt={activeReceiptModal}
           onClose={() => setActiveReceiptModal(null)}
+        />
+      )}
+
+      {/* Borrower Real Payment Modal (Sections 1, 5, 17, 24) */}
+      {borrowerPaymentTarget && (
+        <BorrowerPaymentModal
+          loan={borrowerPaymentTarget.loan}
+          currency={currency}
+          initialInstallmentNo={borrowerPaymentTarget.installmentNo}
+          initialAmount={borrowerPaymentTarget.amount}
+          onClose={() => setBorrowerPaymentTarget(null)}
+          onSuccess={async (receipt) => {
+            await reloadAllData();
+            setActiveReceiptModal(receipt);
+          }}
         />
       )}
     </>

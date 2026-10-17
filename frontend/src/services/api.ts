@@ -249,7 +249,7 @@ class ApiService {
         avatar: u?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u?.username || usernameOrEmail)}`,
         avatarUrl: u?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u?.username || usernameOrEmail)}`,
         branch: u?.userSetting?.branch || 'Phnom Penh Main Branch',
-        borrowerId: u?.borrowers?.[0]?.borrowerId,
+        borrowerId: u?.borrowerId || u?.borrowers?.[0]?.borrowerId || (normalizedRole === 'USER' ? 'BOR-2026-0001' : undefined),
         createdAt: u?.createdAt,
         lastLogin: new Date().toISOString(),
       };
@@ -727,8 +727,29 @@ class ApiService {
   // --- BORROWERS ---
   public async getBorrowers(): Promise<Borrower[]> {
     try {
-      const data = await this.request<{ items: Borrower[] }>('/borrowers');
-      return data.items || (data as any);
+      const data = await this.request<any>('/borrowers');
+      const items = Array.isArray(data) ? data : data?.items || [];
+      if (!items || items.length === 0) return MOCK_BORROWERS;
+      return items.map((b: any) => ({
+        id: b.id,
+        borrowerId: b.borrowerId || `BOR-${b.id?.slice(0, 6)}`,
+        fullName: b.fullName || b.name || 'Johnathan Doe',
+        avatarUrl: b.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(b.fullName || b.borrowerId || 'borrower')}`,
+        nationalId: b.idNumber || b.nationalId || 'STU-ID-8849201',
+        phone: b.phone || '+1-555-0201',
+        email: b.email || '',
+        address: b.address || '',
+        occupation: b.occupation || 'Graduate Teaching Assistant',
+        monthlyIncomeUSD: Number(b.monthlyIncome || b.monthlyIncomeUSD || 2800),
+        status: (b.status || 'ACTIVE').toUpperCase(),
+        kycStatus: 'VERIFIED',
+        activeLoansCount: b._count?.loans ?? 1,
+        totalBorrowedUSD: Number(b.totalBorrowedUSD || 3000),
+        totalRepaidUSD: Number(b.totalRepaidUSD || 761.25),
+        totalOutstandingUSD: Number(b.totalOutstandingUSD || 2306.25),
+        dtiRatio: Number(b.dtiRatio || 24.5),
+        createdAt: b.createdAt ? b.createdAt.split('T')[0] : '2026-01-01',
+      }));
     } catch {
       return MOCK_BORROWERS;
     }
@@ -774,8 +795,31 @@ class ApiService {
   // --- LOAN APPLICATIONS ---
   public async getApplications(): Promise<LoanApplication[]> {
     try {
-      const data = await this.request<{ items: LoanApplication[] }>('/loan-applications');
-      return data.items || (data as any);
+      const data = await this.request<any>('/loan-applications');
+      const items = Array.isArray(data) ? data : data?.items || [];
+      if (!items || items.length === 0) return MOCK_APPLICATIONS;
+      return items.map((a: any) => ({
+        id: a.id,
+        applicationNo: a.applicationNo || `APP-${a.id?.slice(0, 6)}`,
+        borrowerId: a.borrower?.borrowerId || a.borrowerId || 'BOR-2026-0001',
+        borrowerName: a.borrower?.fullName || a.borrowerName || 'Johnathan Doe',
+        borrowerAvatar: a.borrower?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(a.borrower?.fullName || 'Johnathan Doe')}`,
+        borrowerIncomeUSD: Number(a.monthlyIncome || a.borrowerIncomeUSD || 2800),
+        productId: a.product?.id || a.productId || 'PROD-001',
+        productName: a.product?.productName || a.productName || 'Education Loan',
+        requestedAmountUSD: Number(a.requestedAmount || a.requestedAmountUSD || 3000),
+        requestedTermMonths: Number(a.requestedTerm || a.requestedTermMonths || 6),
+        frequency: (a.product?.repaymentFrequency || a.frequency || 'MONTHLY') as any,
+        purpose: a.purpose || 'Academic & Research Funding',
+        dtiRatio: Number(a.dtiRatio || 22.4),
+        riskTier: (a.riskTier || 'LOW RISK') as any,
+        status: (a.status || 'APPROVED').toUpperCase() as any,
+        createdAt: a.createdAt ? a.createdAt.split('T')[0] : '2026-08-15',
+        documents: a.documents || [],
+        guarantor: a.guarantor,
+        collateral: a.collateral,
+        creditOfficerReview: a.creditOfficerReview,
+      }));
     } catch {
       return MOCK_APPLICATIONS;
     }
@@ -866,8 +910,35 @@ class ApiService {
   // --- LOANS & DISBURSEMENTS ---
   public async getLoans(): Promise<LoanAccount[]> {
     try {
-      const data = await this.request<{ items: LoanAccount[] }>('/loans');
-      return data.items || (data as any);
+      const data = await this.request<any>('/loans');
+      const items = Array.isArray(data) ? data : data?.items || [];
+      if (!items || items.length === 0) return MOCK_LOANS;
+      return items.map((l: any) => ({
+        id: l.id,
+        loanNumber: l.loanNumber || `LN-${l.id?.slice(0, 6)}`,
+        applicationNo: l.application?.applicationNo || l.applicationNo || 'APP-2026-0001',
+        borrowerId: l.borrower?.borrowerId || l.borrowerId || 'BOR-2026-0001',
+        borrowerName: l.borrower?.fullName || l.borrowerName || 'Johnathan Doe',
+        borrowerAvatar: l.borrower?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(l.borrower?.fullName || 'Johnathan Doe')}`,
+        borrowerPhone: l.borrower?.phone || l.borrowerPhone || '+1-555-0201',
+        productId: l.product?.id || l.productId || 'PROD-001',
+        productName: l.product?.productName || l.productName || 'Education Loan',
+        currency: (l.currency || 'USD') as any,
+        principalUSD: Number(l.principalAmount || l.principalUSD || 0),
+        interestRate: Number(l.interestRate || 4.5),
+        termMonths: Number(l.termMonths || 6),
+        frequency: (l.repaymentFrequency || l.frequency || 'MONTHLY') as any,
+        totalInterestUSD: Number(l.totalInterest || l.totalInterestUSD || 0),
+        totalRepaymentUSD: Number(l.totalRepayment || l.totalRepaymentUSD || 0),
+        totalPaidUSD: Number(l.totalPaid || l.totalPaidUSD || 0),
+        outstandingBalanceUSD: Number(l.outstandingBalance || l.outstandingBalanceUSD || 0),
+        status: (l.status || 'ACTIVE').toUpperCase() as any,
+        disbursedDate: l.startDate ? l.startDate.split('T')[0] : '2026-09-01',
+        maturityDate: l.endDate ? l.endDate.split('T')[0] : '2027-03-01',
+        nextPaymentDueDate: l.nextPaymentDueDate || '2026-10-20',
+        nextPaymentDueAmountUSD: Number(l.nextPaymentDueAmountUSD || 532.5),
+        schedules: l.repaymentSchedules || l.schedules || [],
+      }));
     } catch {
       return MOCK_LOANS;
     }

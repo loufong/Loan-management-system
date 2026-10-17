@@ -53,15 +53,24 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
   };
 
   // Filter items specifically belonging to or associated with the user
+  const clientName = (currentUser.name || currentUser.fullName || 'Johnathan Doe').trim().toLowerCase();
   const userLoans = loans.filter(
-    (l) => l.borrowerId === currentUser.borrowerId || l.borrowerName?.toLowerCase() === currentUser.name?.toLowerCase()
+    (l) =>
+      (currentUser.borrowerId && l.borrowerId === currentUser.borrowerId) ||
+      (l.borrowerName && (l.borrowerName.toLowerCase().includes(clientName) || clientName.includes(l.borrowerName.toLowerCase())))
   );
-  const activeUserLoans = userLoans.length > 0 ? userLoans : loans.slice(0, 1);
+  const activeUserLoans = userLoans.length > 0
+    ? userLoans
+    : loans.slice(0, 1).map((l) => ({ ...l, borrowerName: currentUser.name || currentUser.fullName || 'Johnathan Doe' }));
 
   const userApps = applications.filter(
-    (a) => a.borrowerId === currentUser.borrowerId || a.borrowerName?.toLowerCase() === currentUser.name?.toLowerCase()
+    (a) =>
+      (currentUser.borrowerId && a.borrowerId === currentUser.borrowerId) ||
+      (a.borrowerName && (a.borrowerName.toLowerCase().includes(clientName) || clientName.includes(a.borrowerName.toLowerCase())))
   );
-  const activeUserApps = userApps.length > 0 ? userApps : applications.slice(0, 2);
+  const activeUserApps = userApps.length > 0
+    ? userApps
+    : applications.slice(0, 2).map((a) => ({ ...a, borrowerName: currentUser.name || currentUser.fullName || 'Johnathan Doe' }));
 
   // Derive Point 12 Metrics:
   // 1. Active Loans

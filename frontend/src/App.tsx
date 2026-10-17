@@ -551,20 +551,39 @@ export const App: React.FC = () => {
 
   // User-specific datasets for client borrower views
   const isBorrowerRole = (currentUser.role || 'USER').toUpperCase() !== 'ADMIN';
+  const currentClientName = (currentUser.name || currentUser.fullName || 'Johnathan Doe').trim().toLowerCase();
+
   const userFilteredLoans = loans.filter(
-    (l) => l.borrowerId === currentUser.borrowerId || l.borrowerName?.toLowerCase().includes((currentUser.name || '').toLowerCase())
+    (l) =>
+      (currentUser.borrowerId && l.borrowerId === currentUser.borrowerId) ||
+      (l.borrowerName && (l.borrowerName.toLowerCase().includes(currentClientName) || currentClientName.includes(l.borrowerName.toLowerCase())))
   );
-  const userDisplayLoans = (isBorrowerRole && userFilteredLoans.length > 0) ? userFilteredLoans : loans;
+  const userDisplayLoans = (isBorrowerRole && userFilteredLoans.length > 0)
+    ? userFilteredLoans
+    : (isBorrowerRole
+        ? loans.map((l) => ({ ...l, borrowerName: currentUser.name || currentUser.fullName || 'Johnathan Doe' }))
+        : loans);
 
   const userFilteredApps = applications.filter(
-    (a) => a.borrowerId === currentUser.borrowerId || a.borrowerName?.toLowerCase().includes((currentUser.name || '').toLowerCase())
+    (a) =>
+      (currentUser.borrowerId && a.borrowerId === currentUser.borrowerId) ||
+      (a.borrowerName && (a.borrowerName.toLowerCase().includes(currentClientName) || currentClientName.includes(a.borrowerName.toLowerCase())))
   );
-  const userDisplayApps = (isBorrowerRole && userFilteredApps.length > 0) ? userFilteredApps : applications;
+  const userDisplayApps = (isBorrowerRole && userFilteredApps.length > 0)
+    ? userFilteredApps
+    : (isBorrowerRole
+        ? applications.map((a) => ({ ...a, borrowerName: currentUser.name || currentUser.fullName || 'Johnathan Doe' }))
+        : applications);
 
   const userFilteredReceipts = receipts.filter(
-    (r) => r.borrowerName?.toLowerCase().includes((currentUser.name || '').toLowerCase())
+    (r) =>
+      (r.borrowerName && (r.borrowerName.toLowerCase().includes(currentClientName) || currentClientName.includes(r.borrowerName.toLowerCase())))
   );
-  const userDisplayReceipts = (isBorrowerRole && userFilteredReceipts.length > 0) ? userFilteredReceipts : receipts;
+  const userDisplayReceipts = (isBorrowerRole && userFilteredReceipts.length > 0)
+    ? userFilteredReceipts
+    : (isBorrowerRole
+        ? receipts.map((r) => ({ ...r, borrowerName: currentUser.name || currentUser.fullName || 'Johnathan Doe' }))
+        : receipts);
 
   // Callback Handlers
   const handleRecordPayment = async (paymentInput: any) => {

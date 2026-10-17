@@ -11,6 +11,23 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 
+    <!-- Dynamic Base Resolution for Localhost & GitHub Pages -->
+    <script type="text/javascript">
+      (function() {
+        var host = window.location.hostname;
+        var isLocal = host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0' || host.startsWith('192.168.');
+        var baseTag = document.createElement('base');
+        if (isLocal) {
+          baseTag.href = '/';
+        } else if (window.location.pathname.startsWith('/Loan-management-system')) {
+          baseTag.href = '/Loan-management-system/';
+        } else {
+          baseTag.href = '/';
+        }
+        document.head.prepend(baseTag);
+      })();
+    </script>
+
     <!-- GitHub Pages SPA routing decoder -->
     <script type="text/javascript">
       (function(l) {
@@ -24,8 +41,8 @@
         }
       }(window.location))
     </script>
-    <script type="module" crossorigin src="./assets/index-DzRTsKNT.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-Dd7MrJ84.css">
+    <script type="module" crossorigin src="./assets/index-r85eDt2o.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-ByEu5UC8.css">
   </head>
   <body class="bg-[#F8FAFC] text-[#0F172A] font-sans antialiased selection:bg-[#2563EB] selection:text-white">
     <div id="root"></div>

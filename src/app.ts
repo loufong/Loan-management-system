@@ -1,4 +1,4 @@
-import express, { Application, Request, Response } from 'express';
+import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -73,6 +73,20 @@ export function createApp(): Application {
     ? path.join(process.cwd(), 'public')
     : path.join(__dirname, '../public');
 
+  // Intercept any asset request (including nested sub-routes like /admin/assets/*, /loans/assets/*)
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    if (req.path.includes('/assets/')) {
+      const assetFile = req.path.split('/assets/').pop();
+      if (assetFile) {
+        const fullPath = path.join(publicDir, 'assets', assetFile);
+        if (fs.existsSync(fullPath)) {
+          return res.sendFile(fullPath);
+        }
+      }
+    }
+    next();
+  });
+
   app.use(express.static(publicDir));
 
   // Root & App Route: Return interactive SPA to browsers, JSON to API consumers
@@ -107,18 +121,31 @@ export function createApp(): Application {
   // Direct access is strictly guarded: unauthenticated -> 401 / /login,
   // normal users (USER) -> 403 Forbidden / /user/dashboard or /access-denied.
   // =========================================================================
-  app.all(['/admin', '/admin/*'], (req: Request, res: Response) => {
+  app.all(['/admin', '/admin/*'], (req: Request, res: Response, next: NextFunction) => {
+    // If this is an asset request, delegate to asset handler
+    if (req.path.includes('/assets/') || req.path.includes('.')) {
+      return next();
+    }
+
+    const isBrowserHtmlRequest =
+      req.accepts('html') &&
+      !req.xhr &&
+      !req.headers.accept?.includes('application/json');
+
+    // Browser navigation requesting HTML page: Serve SPA index.html so client-side router & auth can handle it
+    if (req.method === 'GET' && isBrowserHtmlRequest) {
+      const indexPath = path.join(publicDir, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        return res.sendFile(indexPath);
+      }
+    }
+
+    // For direct API requests or non-browser clients to /admin or /admin/*:
     const authHeader = req.headers.authorization;
     const queryToken = typeof req.query.token === 'string' ? req.query.token : undefined;
     const token = (authHeader && authHeader.startsWith('Bearer '))
       ? authHeader.split(' ')[1]
       : queryToken;
-
-    const isBrowserHtmlRequest =
-      req.accepts('html') &&
-      !req.xhr &&
-      !req.headers.accept?.includes('application/json') &&
-      !authHeader;
 
     if (!token) {
       if (isBrowserHtmlRequest) {
@@ -137,7 +164,7 @@ export function createApp(): Application {
       const userRole = String(decoded.role || '').toUpperCase();
 
       if (userRole !== 'ADMIN') {
-        if (req.accepts('html') && !req.headers.accept?.includes('application/json')) {
+        if (isBrowserHtmlRequest) {
           return res.redirect('/user/dashboard?denied=true');
         }
         return sendError(
@@ -150,7 +177,7 @@ export function createApp(): Application {
 
       // Authenticated ADMIN requesting HTML page
       const indexPath = path.join(publicDir, 'index.html');
-      if (req.accepts('html') && fs.existsSync(indexPath)) {
+      if (isBrowserHtmlRequest && fs.existsSync(indexPath)) {
         return res.sendFile(indexPath);
       }
 
@@ -160,7 +187,7 @@ export function createApp(): Application {
         route: req.originalUrl,
       });
     } catch {
-      if (req.accepts('html') && !req.headers.accept?.includes('application/json')) {
+      if (isBrowserHtmlRequest) {
         return res.redirect('/login');
       }
       return sendError(res, 'Invalid authentication token', 401, 'INVALID_TOKEN');
@@ -210,6 +237,8 @@ export function createApp(): Application {
   // SPA Route Fallback for all browser client navigation routes
   app.get(
     [
+      '/',
+      '/app',
       '/admin',
       '/admin/*',
       '/user',
@@ -217,6 +246,7 @@ export function createApp(): Application {
       '/dashboard',
       '/applications',
       '/applications/*',
+      '/apply-loan',
       '/loans',
       '/loans/*',
       '/repayments',
@@ -232,8 +262,13 @@ export function createApp(): Application {
       '/verify-otp',
       '/reset-password',
       '/change-password',
+      '*'
     ],
-    (req: Request, res: Response) => {
+    (req: Request, res: Response, next: NextFunction) => {
+      // Never intercept API routes, assets, or static files
+      if (req.path.startsWith('/api/') || req.path.includes('/assets/') || req.path.includes('.')) {
+        return next();
+      }
       const indexPath = path.join(publicDir, 'index.html');
       if (req.accepts('html') && fs.existsSync(indexPath)) {
         return res.sendFile(indexPath);

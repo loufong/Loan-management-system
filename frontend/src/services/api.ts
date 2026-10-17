@@ -256,7 +256,22 @@ class ApiService {
         user: matchedProfile,
       };
     } catch (err: any) {
-      // If error came directly from backend API (e.g. 401, 403, 422), re-throw it unless it's a 404 or connection failure
+      // Known demo credentials fallback (enables seamless 1-click preview on localhost identical to GitHub Pages)
+      const demoAccountKeys = [
+        'admin', 'admin@loansystem.edu', 'admin@example.com',
+        'manager', 'manager@apex.local',
+        'officer', 'officer@apex.local', 'loan_officer',
+        'credit', 'credit@apex.local', 'credit_officer',
+        'cashier', 'cashier@apex.local',
+        'borrower', 'borrower@apex.local',
+        'user', 'user@example.com',
+        'johnathan.doe@student.edu'
+      ];
+      if (demoAccountKeys.includes(cleanId)) {
+        return this.authenticateMock(cleanId, password);
+      }
+
+      // If error came directly from backend API for a real registered account, re-throw it unless connection failure
       if (
         err?.status &&
         (err.status === 401 || err.status === 403 || err.status === 422) &&

@@ -9,6 +9,7 @@ import {
 import { Landmark, LogOut, LucideIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../context/LanguageContext';
+import logoImg from '../../assets/logo-transparent.png';
 
 export interface SidebarProps {
   currentUser: UserProfile;
@@ -103,8 +104,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* 1. Header: Branding & System Name */}
       <div className="flex-1 flex flex-col min-h-0">
         <div className="h-16 px-5 flex items-center gap-3 border-b border-[#E2E8F0] shrink-0">
-          <div className="w-9 h-9 rounded-[6px] bg-[#2563EB] text-white flex items-center justify-center shrink-0 shadow-sm">
-            <Landmark className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-[8px] bg-slate-50 border border-slate-200/80 flex items-center justify-center shrink-0 shadow-xs overflow-hidden p-1">
+            <img src={logoImg} alt="Jam Song Vich Logo" className="w-full h-full object-contain" />
           </div>
           <div className="flex flex-col min-w-0">
             <span className="text-[15px] font-bold text-[#0F172A] tracking-tight truncate leading-tight">

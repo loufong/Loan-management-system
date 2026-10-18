@@ -1,5 +1,6 @@
 import React from 'react';
 import { ShieldAlert, ArrowLeft, LogOut, Building2 } from 'lucide-react';
+import logoImg from '../../assets/logo-transparent.png';
 
 interface AccessDeniedPageProps {
   onBackToDashboard: () => void;
@@ -15,14 +16,14 @@ export const AccessDeniedPage: React.FC<AccessDeniedPageProps> = ({
       <div className="w-full max-w-[480px]">
         {/* Brand Header */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-[8px] bg-[#0F172A] text-white mb-3">
-            <Building2 className="w-6 h-6 text-white" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-[12px] bg-slate-50 border border-slate-200/80 mb-3 p-2">
+            <img src={logoImg} alt="Jam Song Vich" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-xl font-bold tracking-tight text-[#0F172A]">
-            APEX LMS
+            Jam Song Vich
           </h1>
           <p className="text-xs font-semibold uppercase tracking-wider text-[#64748B] mt-0.5">
-            Enterprise Loan Management System
+            Loan Management System
           </p>
         </div>
 
@@ -69,7 +70,7 @@ export const AccessDeniedPage: React.FC<AccessDeniedPageProps> = ({
 
         {/* Footer */}
         <div className="text-center text-xs text-[#64748B] mt-6">
-          <p>© 2026 Apex LMS • Security & Authorization Enforced</p>
+          <p>© 2026 Jam Song Vich • Security & Authorization Enforced</p>
         </div>
       </div>
     </div>

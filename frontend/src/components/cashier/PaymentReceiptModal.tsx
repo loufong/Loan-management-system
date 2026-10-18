@@ -1,6 +1,7 @@
 import React from 'react';
 import { PaymentReceipt } from '../../types';
 import { Printer, Download, X } from 'lucide-react';
+import logoImg from '../../assets/logo-transparent.png';
 
 export interface PaymentReceiptModalProps {
   receipt: PaymentReceipt;
@@ -25,11 +26,14 @@ export const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({
         >
           {/* Header */}
           <div className="text-center pb-3 border-b border-dashed border-[#E2E8F0] space-y-1">
+            <div className="flex justify-center mb-1">
+              <img src={logoImg} alt="Jam Song Vich" className="w-10 h-10 object-contain" />
+            </div>
             <h2 className="font-extrabold text-base uppercase tracking-wider font-sans text-[#0F172A]">
-              APEX LMS
+              JAM SONG VICH
             </h2>
             <p className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider font-sans">
-              ENTERPRISE LOAN MANAGEMENT SYSTEM
+              LOAN MANAGEMENT SYSTEM
             </p>
             <div className="pt-1 font-bold text-xs tracking-widest uppercase text-[#2563EB]">
               OFFICIAL PAYMENT RECEIPT
@@ -140,7 +144,7 @@ export const PaymentReceiptModal: React.FC<PaymentReceiptModalProps> = ({
 
           {/* Footer Notice */}
           <div className="text-center pt-2 text-[10px] text-[#64748B] font-sans leading-tight">
-            <p>Thank you for banking with Apex LMS.</p>
+            <p>Thank you for banking with Jam Song Vich.</p>
             <p>Retain this voucher for administrative audit.</p>
           </div>
         </div>

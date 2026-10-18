@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../context/LanguageContext';
+import logoImg from '../../assets/logo-transparent.png';
 
 export interface BreadcrumbItem {
   label: string;
@@ -84,9 +85,12 @@ export const TopBar: React.FC<TopBarProps> = ({
         </button>
 
         {/* Small Screen Logo fallback */}
-        <span className="font-bold text-[16px] text-[#0F172A] lg:hidden truncate">
-          {t('app_name')}
-        </span>
+        <div className="flex items-center gap-2 lg:hidden min-w-0">
+          <img src={logoImg} alt="Jam Song Vich" className="w-6 h-6 object-contain shrink-0" />
+          <span className="font-bold text-[15px] text-[#0F172A] truncate">
+            {t('app_name')}
+          </span>
+        </div>
 
         {/* Desktop Title */}
         <h1 className="hidden lg:block text-[17px] font-bold text-[#0F172A] tracking-tight truncate">
@@ -102,28 +106,27 @@ export const TopBar: React.FC<TopBarProps> = ({
             type="button"
             onClick={() => setLanguage('km')}
             className={cn(
-              'px-2 py-1 rounded-[4px] transition-colors flex items-center gap-1 cursor-pointer',
+              'px-2.5 py-1 rounded-[4px] transition-colors flex items-center justify-center cursor-pointer min-w-[30px]',
               language === 'km'
                 ? 'bg-white text-[#2563EB] shadow-xs font-bold'
                 : 'text-[#64748B] hover:text-[#0F172A]'
             )}
-            title="ភាសាខ្មែរ (Khmer)"
+            title="ភាសាខ្មែរ (KH)"
           >
-            <span>🇰🇭</span>
-            <span className="text-[11px]">ខ្មែរ</span>
+            <span className="text-[11px] font-bold">KH</span>
           </button>
           <button
             type="button"
             onClick={() => setLanguage('en')}
             className={cn(
-              'px-2 py-1 rounded-[4px] transition-colors flex items-center gap-1 cursor-pointer',
+              'px-2.5 py-1 rounded-[4px] transition-colors flex items-center justify-center cursor-pointer min-w-[30px]',
               language === 'en'
                 ? 'bg-white text-[#2563EB] shadow-xs font-bold'
                 : 'text-[#64748B] hover:text-[#0F172A]'
             )}
-            title="English"
+            title="English (EN)"
           >
-            <span className="text-[11px]">EN</span>
+            <span className="text-[11px] font-bold">EN</span>
           </button>
         </div>
 

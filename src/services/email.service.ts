@@ -155,7 +155,7 @@ export class EmailService {
           <!-- Header -->
           <tr>
             <td style="background-color: #0f172a; padding: 24px 32px; text-align: left;">
-              <span style="display: inline-block; background-color: #2563eb; color: #ffffff; font-weight: bold; font-size: 13px; padding: 4px 8px; border-radius: 4px; letter-spacing: 0.5px;">APEX LMS</span>
+              <span style="display: inline-block; background-color: #2563eb; color: #ffffff; font-weight: bold; font-size: 13px; padding: 4px 8px; border-radius: 4px; letter-spacing: 0.5px;">Jam Song Vich</span>
               <h1 style="color: #ffffff; font-size: 18px; font-weight: 700; margin: 12px 0 0 0; letter-spacing: -0.2px;">${purposeTitle}</h1>
             </td>
           </tr>
@@ -311,7 +311,7 @@ Loan Management System
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width: 520px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
           <tr>
             <td style="background-color: #0f172a; padding: 20px 32px;">
-              <span style="background-color: #2563eb; color: #ffffff; font-weight: bold; font-size: 13px; padding: 4px 8px; border-radius: 4px;">APEX LMS</span>
+              <span style="background-color: #2563eb; color: #ffffff; font-weight: bold; font-size: 13px; padding: 4px 8px; border-radius: 4px;">Jam Song Vich</span>
               <h1 style="color: #ffffff; font-size: 18px; font-weight: 700; margin: 12px 0 0 0;">Password Changed</h1>
             </td>
           </tr>

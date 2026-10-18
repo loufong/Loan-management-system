@@ -9,6 +9,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { api } from '../../services/api';
+import logoImg from '../../assets/logo-transparent.png';
 
 interface SetNewPasswordPageProps {
   email: string;
@@ -77,12 +78,12 @@ export const SetNewPasswordPage: React.FC<SetNewPasswordPageProps> = ({
         <div className="bg-white p-8 border border-[#E2E8F0] rounded-[8px] space-y-6">
           
           <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-[6px] bg-[#0F172A] text-white flex items-center justify-center font-bold text-xs">
-                APX
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-[6px] bg-slate-50 border border-slate-200/80 flex items-center justify-center p-1 overflow-hidden">
+                <img src={logoImg} alt="Jam Song Vich" className="w-full h-full object-contain" />
               </div>
               <h1 className="text-lg font-bold text-[#0F172A]">
-                Apex LMS
+                Jam Song Vich
               </h1>
             </div>
             <h2 className="text-xl font-bold text-[#0F172A] pt-2">
@@ -186,7 +187,7 @@ export const SetNewPasswordPage: React.FC<SetNewPasswordPageProps> = ({
         </div>
 
         <div className="mt-6 text-center text-xs text-[#64748B]">
-          Apex Core Banking Platform • Cryptographic Credential Vault
+          Jam Song Vich Platform • Cryptographic Credential Vault
         </div>
       </div>
     </div>

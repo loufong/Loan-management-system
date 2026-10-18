@@ -13,6 +13,7 @@ import {
   Building2
 } from 'lucide-react';
 import { api } from '../../services/api';
+import logoImg from '../../assets/logo-transparent.png';
 
 interface RegisterPageProps {
   onRegisterSuccess: (email: string, devOtp?: string) => void;
@@ -105,14 +106,14 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
       <div className="sm:mx-auto sm:w-full sm:max-w-[540px]">
         {/* Institutional Branding Header */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-[8px] bg-[#0F172A] text-white mb-3 shadow-none">
-            <Building2 className="w-6 h-6 text-white" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-[12px] bg-slate-50 border border-slate-200/80 mb-3 shadow-xs p-2">
+            <img src={logoImg} alt="Jam Song Vich" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
-            APEX LMS
+            Jam Song Vich
           </h1>
           <p className="text-xs font-semibold uppercase tracking-wider text-[#64748B] mt-0.5">
-            Enterprise Loan Management System
+            Loan Management System
           </p>
         </div>
 
@@ -335,7 +336,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
 
         {/* Footer */}
         <div className="text-center text-xs text-[#64748B] space-y-0.5 mt-6">
-          <p>© 2026 Apex LMS • Academic Loan Management System</p>
+          <p>© 2026 Jam Song Vich • Loan Management System</p>
           <p className="text-[11px] text-slate-400">
             Compliant with National Bank of Cambodia Standards
           </p>

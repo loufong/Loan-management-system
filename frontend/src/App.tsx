@@ -458,7 +458,7 @@ export const App: React.FC = () => {
       case 'change_password':
         return [{ label: 'Account Security' }, { label: 'Change Password', active: true }];
       default:
-        return [{ label: 'Apex LMS Core Banking', active: true }];
+        return [{ label: 'Jam Song Vich Core Banking', active: true }];
     }
   };
 

@@ -13,7 +13,7 @@ export interface QRCodePaymentModalProps {
 
 export const QRCodePaymentModal: React.FC<QRCodePaymentModalProps> = ({
   amountUSD,
-  merchantName = 'Apex Microfinance Institution (Cambodia) PLC',
+  merchantName = 'Jam Song Vich Microfinance Institution (Cambodia) PLC',
   accountNumber = '001-8849-2019-USD',
   currency: _currency,
   onClose,

@@ -12,7 +12,7 @@ export interface KHQRPaymentModalProps {
 
 export const KHQRPaymentModal: React.FC<KHQRPaymentModalProps> = ({
   amountUSD,
-  merchantName = 'Apex Core Banking',
+  merchantName = 'Jam Song Vich Core Banking',
   accountNumber = '001-8849-2019-USD',
   currency = 'USD',
   onClose,
@@ -70,7 +70,7 @@ export const KHQRPaymentModal: React.FC<KHQRPaymentModalProps> = ({
           {/* KHQR Header */}
           <div className="w-full bg-[#DC2626] text-white py-1.5 px-3 rounded-[4px] font-bold text-xs flex items-center justify-between">
             <span className="font-mono tracking-wider">KHQR</span>
-            <span className="text-[10px] opacity-95">Apex Core Banking</span>
+            <span className="text-[10px] opacity-95">Jam Song Vich Core Banking</span>
           </div>
 
           {/* QR Matrix */}

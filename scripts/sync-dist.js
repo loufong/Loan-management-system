@@ -49,6 +49,16 @@ if (fs.existsSync(distAssetsDir)) {
   });
 }
 
+// 4. Copy logo and favicon files from frontend/dist to root and public
+['logo.png', 'logo-transparent.png', 'favicon.png'].forEach(file => {
+  const src = path.join(distDir, file);
+  if (fs.existsSync(src)) {
+    fs.copyFileSync(src, path.join(rootDir, file));
+    fs.copyFileSync(src, path.join(publicDir, file));
+    console.log(`[sync-dist] Synced ${file} -> root and public/`);
+  }
+});
+
 // 4. Ensure .nojekyll in dist, root, and public
 fs.writeFileSync(path.join(distDir, '.nojekyll'), '');
 fs.writeFileSync(path.join(rootDir, '.nojekyll'), '');

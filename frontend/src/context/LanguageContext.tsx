@@ -11,9 +11,9 @@ export interface Translations {
 
 export const TRANSLATIONS: Translations = {
   // Brand & Header
-  app_name: { km: 'Apex LMS', en: 'Apex LMS' },
+  app_name: { km: 'Jam Song Vich', en: 'Jam Song Vich' },
   app_subtitle: { km: 'ប្រព័ន្ធគ្រប់គ្រងឥណទាន', en: 'Loan Management' },
-  app_full_title: { km: 'ប្រព័ន្ធគ្រប់គ្រងឥណទានសហគ្រាស', en: 'Enterprise Loan Management System' },
+  app_full_title: { km: 'ប្រព័ន្ធគ្រប់គ្រងឥណទាន Jam Song Vich', en: 'Jam Song Vich Loan Management System' },
   
   // Navigation
   nav_dashboard: { km: 'ផ្ទាំងគ្រប់គ្រង', en: 'Dashboard' },

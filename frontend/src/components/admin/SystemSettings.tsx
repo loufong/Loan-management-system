@@ -32,8 +32,8 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   // 1. General Config
-  const [institutionName, setInstitutionName] = useState('Apex Enterprise Loan Management System');
-  const [institutionCode, setInstitutionCode] = useState('APEX-KH-PP');
+  const [institutionName, setInstitutionName] = useState('Jam Song Vich Loan Management System');
+  const [institutionCode, setInstitutionCode] = useState('JSV-KH-PP');
   const [operatingBranch, setOperatingBranch] = useState('Phnom Penh Main Campus');
   const [khrExchangeRate, setKhrExchangeRate] = useState(4100);
   const [fiscalYearStart, setFiscalYearStart] = useState('January 1st');

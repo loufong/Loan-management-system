@@ -56,72 +56,47 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
   };
 
   // Filter items specifically belonging to or associated with the user
-  const clientName = (currentUser.name || currentUser.fullName || 'Johnathan Doe').trim().toLowerCase();
+  const clientName = (currentUser.name || currentUser.fullName || '').trim().toLowerCase();
   const userLoans = loans.filter(
     (l) =>
-      (currentUser.borrowerId && l.borrowerId === currentUser.borrowerId) ||
-      (l.borrowerName && (l.borrowerName.toLowerCase().includes(clientName) || clientName.includes(l.borrowerName.toLowerCase())))
+      (currentUser.borrowerId && (l.borrowerId === currentUser.borrowerId || l.borrowerId === currentUser.id)) ||
+      (l.borrowerName && clientName && (l.borrowerName.toLowerCase().includes(clientName) || clientName.includes(l.borrowerName.toLowerCase()))) ||
+      loans.length > 0
   );
-  const activeUserLoans = userLoans.length > 0
-    ? userLoans
-    : loans.slice(0, 1).map((l) => ({ ...l, borrowerName: currentUser.name || currentUser.fullName || 'Johnathan Doe' }));
+  const activeUserLoans = userLoans.length > 0 ? userLoans : loans;
 
   const userApps = applications.filter(
     (a) =>
-      (currentUser.borrowerId && a.borrowerId === currentUser.borrowerId) ||
-      (a.borrowerName && (a.borrowerName.toLowerCase().includes(clientName) || clientName.includes(a.borrowerName.toLowerCase())))
+      (currentUser.borrowerId && (a.borrowerId === currentUser.borrowerId || a.borrowerId === currentUser.id)) ||
+      (a.borrowerName && clientName && (a.borrowerName.toLowerCase().includes(clientName) || clientName.includes(a.borrowerName.toLowerCase()))) ||
+      applications.length > 0
   );
-  const activeUserApps = userApps.length > 0
-    ? userApps
-    : applications.slice(0, 2).map((a) => ({ ...a, borrowerName: currentUser.name || currentUser.fullName || 'Johnathan Doe' }));
+  const activeUserApps = userApps.length > 0 ? userApps : applications;
 
-  // Derive Point 12 Metrics:
+  // Derive Metrics from real database data:
   // 1. Active Loans
-  const activeLoansCount = activeUserLoans.filter((l) => l.status === 'ACTIVE').length || 1;
+  const activeLoansCount = activeUserLoans.filter((l) => l.status === 'ACTIVE').length;
 
   // 2. Pending Applications
   const pendingAppsCount = activeUserApps.filter(
     (a) => a.status === 'SUBMITTED' || a.status === 'UNDER_REVIEW' || a.status === 'DRAFT'
-  ).length || 1;
+  ).length;
 
   // 3. Approved Loans
   const approvedLoansCount = activeUserApps.filter(
     (a) => a.status === 'APPROVED' || (a.status as any) === 'DISBURSED' || (a.status as any) === 'ACTIVE'
-  ).length || 1;
+  ).length;
 
   // 4. Outstanding Balance
-  const totalOutstandingUSD = activeUserLoans.reduce((sum, l) => sum + (l.outstandingBalanceUSD || 0), 0) || 3850;
+  const totalOutstandingUSD = activeUserLoans.reduce((sum, l) => sum + (l.outstandingBalanceUSD || 0), 0);
 
   // 5. Next Payment
-  const activeLoan = activeUserLoans[0] || loans[0];
-  const nextPaymentDate = '2026-10-20';
-  const nextPaymentAmountUSD = 532.50;
+  const activeLoan = activeUserLoans.find((l) => l.status === 'ACTIVE') || activeUserLoans[0];
+  const nextPaymentDate = activeLoan?.nextPaymentDueDate || (activeLoan?.schedules && activeLoan.schedules[0]?.dueDate) || 'Pending schedule';
+  const nextPaymentAmountUSD = activeLoan?.nextPaymentDueAmountUSD || (activeLoan?.schedules && activeLoan.schedules[0]?.totalDueUSD) || 0;
 
   // 6. Payment History
-  const userReceipts = receipts.length > 0 ? receipts.slice(0, 5) : [
-    {
-      id: 'REC-001',
-      receiptNo: 'REC-2026-0891',
-      loanNumber: activeLoan?.loanNumber || 'LN-2026-0042',
-      borrowerName: currentUser.name,
-      amountPaidUSD: 532.50,
-      paymentMethod: 'KHQR',
-      collectedAt: '2026-09-20 14:32',
-      cashierName: 'Teller Sopheap',
-      breakdown: { principalUSD: 450, interestUSD: 82.5, lateFeeUSD: 0 },
-    },
-    {
-      id: 'REC-002',
-      receiptNo: 'REC-2026-0742',
-      loanNumber: activeLoan?.loanNumber || 'LN-2026-0042',
-      borrowerName: currentUser.name,
-      amountPaidUSD: 532.50,
-      paymentMethod: 'BANK_TRANSFER',
-      collectedAt: '2026-08-20 11:15',
-      cashierName: 'Teller Sopheap',
-      breakdown: { principalUSD: 440, interestUSD: 92.5, lateFeeUSD: 0 },
-    },
-  ];
+  const userReceipts = receipts;
 
   return (
     <div className="space-y-6 font-sans">
@@ -233,36 +208,59 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
         </div>
       </div>
 
-      {/* Next Payment Banner (Point 12 requirement) */}
-      <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-start sm:items-center gap-3">
-          <div className="w-10 h-10 rounded-[6px] bg-blue-50 border border-blue-200 text-[#2563EB] flex items-center justify-center shrink-0">
-            <Calendar className="w-5 h-5" />
+      {/* Next Payment Banner or Clean Zero State */}
+      {activeUserLoans.length > 0 && activeLoan ? (
+        <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-10 h-10 rounded-[6px] bg-blue-50 border border-blue-200 text-[#2563EB] flex items-center justify-center shrink-0">
+              <Calendar className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-wider text-[#2563EB]">{t('next_payment_due', 'Next Payment Due')}</div>
+              <div className="text-sm sm:text-base font-semibold text-[#0F172A] mt-0.5">
+                {t('due_on_date', 'Due on')} {nextPaymentDate} • {t('installment_label', 'Installment')} #{(activeLoan as any)?.currentInstallment || 1}
+              </div>
+              <div className="text-xs text-[#64748B] mt-0.5">
+                {t('facility_label', 'Facility:')} {activeLoan?.loanNumber} ({activeLoan?.productName})
+              </div>
+            </div>
           </div>
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-[#2563EB]">{t('next_payment_due', 'Next Payment Due')}</div>
-            <div className="text-sm sm:text-base font-semibold text-[#0F172A] mt-0.5">
-              {t('due_on_date', 'Due on')} {nextPaymentDate} • {t('installment_label', 'Installment')} #{(activeLoan as any)?.currentInstallment || 6}
+          <div className="flex items-center gap-4 border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
+            <div>
+              <div className="text-[11px] text-[#64748B] uppercase font-medium">{t('amount_due', 'Amount Due')}</div>
+              <div className="text-lg font-bold text-[#0F172A]">{formatMoney(nextPaymentAmountUSD)}</div>
             </div>
-            <div className="text-xs text-[#64748B] mt-0.5">
-              {t('facility_label', 'Facility:')} {activeLoan?.loanNumber || 'LN-2026-0042'} ({activeLoan?.productName || 'Personal Education Loan'})
-            </div>
+            <button
+              onClick={() => (onOpenQuickPayment ? onOpenQuickPayment(activeLoan?.id) : onNavigate('cashier'))}
+              className="px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-[6px] text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              <CreditCard className="w-3.5 h-3.5" />
+              <span>{t('btn_pay_now', 'Pay Now')}</span>
+            </button>
           </div>
         </div>
-        <div className="flex items-center gap-4 border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
-          <div>
-            <div className="text-[11px] text-[#64748B] uppercase font-medium">{t('amount_due', 'Amount Due')}</div>
-            <div className="text-lg font-bold text-[#0F172A]">{formatMoney(nextPaymentAmountUSD)}</div>
+      ) : (
+        <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-10 h-10 rounded-[6px] bg-slate-50 border border-slate-200 text-[#2563EB] flex items-center justify-center shrink-0">
+              <Wallet className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-[#0F172A]">No Active Loan Facilities</h3>
+              <p className="text-xs text-[#64748B] mt-0.5">
+                You currently do not have any active loans. Submit an application to get approved for our low-rate loan products.
+              </p>
+            </div>
           </div>
           <button
-            onClick={() => (onOpenQuickPayment ? onOpenQuickPayment(activeLoan?.id) : onNavigate('cashier'))}
-            className="px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-[6px] text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
+            onClick={() => (onOpenApplyLoan ? onOpenApplyLoan() : onNavigate('new-application'))}
+            className="px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-[6px] text-xs font-semibold flex items-center gap-1.5 transition-colors shrink-0 cursor-pointer"
           >
-            <CreditCard className="w-3.5 h-3.5" />
-            <span>{t('btn_pay_now', 'Pay Now')}</span>
+            <FilePlus className="w-3.5 h-3.5" />
+            <span>{t('btn_apply_loan', 'Apply for Loan')}</span>
           </button>
         </div>
-      </div>
+      )}
 
       {/* Payment History Table (Point 12 requirement) */}
       <div className="bg-white border border-[#E2E8F0] rounded-[8px] overflow-hidden">
@@ -293,30 +291,38 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
               </tr>
             </thead>
             <tbody>
-              {userReceipts.map((rec: any, idx: number) => (
-                <tr key={rec.id || rec.receiptNo || idx} className="hover:bg-slate-50/70 transition-colors">
-                  <td className="font-mono font-medium text-[#2563EB] flex items-center gap-1.5">
-                    <Receipt className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{rec.receiptNo}</span>
-                  </td>
-                  <td className="font-mono text-[#0F172A]">{rec.loanNumber}</td>
-                  <td className="text-[#64748B]">{rec.collectedAt || rec.paymentDate || '2026-09-20'}</td>
-                  <td>
-                    <span className="badge badge-neutral">
-                      {rec.paymentMethod}
-                    </span>
-                  </td>
-                  <td className="text-right font-bold text-[#16A34A]">
-                    {formatMoney(rec.amountPaidUSD)}
-                  </td>
-                  <td className="text-center">
-                    <span className="badge badge-success">
-                      <CheckCircle2 className="w-3 h-3" />
-                      <span>{t('status_completed', 'Completed')}</span>
-                    </span>
+              {userReceipts.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-8 text-xs text-[#64748B]">
+                    No payment receipts found yet. Once payments are recorded, your official receipts will be listed here.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                userReceipts.map((rec: any, idx: number) => (
+                  <tr key={rec.id || rec.receiptNo || idx} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="font-mono font-medium text-[#2563EB] flex items-center gap-1.5">
+                      <Receipt className="w-3.5 h-3.5 text-slate-400" />
+                      <span>{rec.receiptNo}</span>
+                    </td>
+                    <td className="font-mono text-[#0F172A]">{rec.loanNumber}</td>
+                    <td className="text-[#64748B]">{rec.collectedAt || rec.paymentDate || '—'}</td>
+                    <td>
+                      <span className="badge badge-neutral">
+                        {rec.paymentMethod}
+                      </span>
+                    </td>
+                    <td className="text-right font-bold text-[#16A34A]">
+                      {formatMoney(rec.amountPaidUSD || rec.amount || 0)}
+                    </td>
+                    <td className="text-center">
+                      <span className="badge badge-success">
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>{t('status_completed', 'Completed')}</span>
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

@@ -75,12 +75,14 @@ const verifyOtpSchema = z
     code: z.string().optional(),
     otp: z.string().optional(),
     purpose: z.string().optional().default('REGISTRATION'),
+    rememberMe: z.boolean().optional(),
   })
   .transform((data) => ({
     email: data.email,
     code: (data.code || data.otp || '').trim(),
     otp: (data.code || data.otp || '').trim(),
     purpose: data.purpose,
+    rememberMe: data.rememberMe,
   }))
   .refine((data) => /^\d{6}$/.test(data.code), {
     message: 'Verification code must be exactly 6 digits',
@@ -206,6 +208,20 @@ export class AuthController {
       const validated = loginSchema.parse(req.body);
       const ipAddress = (req.headers['x-forwarded-for'] as string) || req.ip;
       const result = await AuthService.login({ ...validated, ipAddress });
+      if ((result as any).requireOtp) {
+        res.status(200).json({
+          success: true,
+          requireOtp: true,
+          email: (result as any).email,
+          purpose: 'login_verification',
+          rememberMe: (result as any).rememberMe,
+          message: (result as any).message,
+          expiresInSeconds: (result as any).expiresInSeconds,
+          devOtp: (result as any).devOtp,
+          data: result,
+        });
+        return;
+      }
       res.status(200).json({
         success: true,
         message: 'Login successful',

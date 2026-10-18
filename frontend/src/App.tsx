@@ -147,7 +147,7 @@ export const App: React.FC = () => {
   const [authView, setAuthView] = useState<AuthView>('login');
   const [authEmail, setAuthEmail] = useState<string>('');
   const [authDevOtp, setAuthDevOtp] = useState<string | undefined>(undefined);
-  const [authOtpPurpose, setAuthOtpPurpose] = useState<'register_verification' | 'forgot_password'>('register_verification');
+  const [authOtpPurpose, setAuthOtpPurpose] = useState<'register_verification' | 'forgot_password' | 'login_verification'>('register_verification');
   const [authResetToken, setAuthResetToken] = useState<string>('');
   const [authNotice, setAuthNotice] = useState<string | null>(null);
   const [accessDeniedMessage, setAccessDeniedMessage] = useState<string | null>(null);
@@ -318,24 +318,31 @@ export const App: React.FC = () => {
       replaceAppRoute('/dashboard');
       setActiveTab('user_dashboard');
     }
+    reloadAllData();
   };
 
   const handleLogout = async () => {
     await contextLogout();
+    setBorrowers([]);
+    setLoans([]);
+    setApplications([]);
+    setReceipts([]);
+    setNotifications([]);
+    setAuditLogs([]);
     setAuthView('login');
     setAuthNotice(null);
     setAccessDeniedMessage(null);
     replaceAppRoute('/login');
   };
 
-  // Domain Entity State
-  const [borrowers, setBorrowers] = useState<Borrower[]>(MOCK_BORROWERS);
+  // Domain Entity State (Initialized for real database persistence)
+  const [borrowers, setBorrowers] = useState<Borrower[]>([]);
   const [products, setProducts] = useState<LoanProduct[]>(MOCK_PRODUCTS);
-  const [loans, setLoans] = useState<LoanAccount[]>(MOCK_LOANS);
-  const [applications, setApplications] = useState<LoanApplication[]>(MOCK_APPLICATIONS);
-  const [receipts, setReceipts] = useState<PaymentReceipt[]>(MOCK_RECEIPTS);
-  const [notifications, setNotifications] = useState<NotificationItem[]>(MOCK_NOTIFICATIONS);
-  const [auditLogs, setAuditLogs] = useState<SystemActivityEvent[]>(MOCK_AUDIT_LOGS);
+  const [loans, setLoans] = useState<LoanAccount[]>([]);
+  const [applications, setApplications] = useState<LoanApplication[]>([]);
+  const [receipts, setReceipts] = useState<PaymentReceipt[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [auditLogs, setAuditLogs] = useState<SystemActivityEvent[]>([]);
 
   // Selected Entity Keys
   const [selectedBorrowerId, setSelectedBorrowerId] = useState<string>('BOR-2026-0001');
@@ -364,21 +371,23 @@ export const App: React.FC = () => {
         api.getNotifications().catch(() => []),
         api.getAuditLogs().catch(() => []),
       ]);
-      if (b && b.length > 0) setBorrowers(b);
-      if (p && p.length > 0) setProducts(p);
-      if (l && l.length > 0) setLoans(l);
-      if (a && a.length > 0) setApplications(a);
-      if (r && r.length > 0) setReceipts(r);
-      if (n && n.length > 0) setNotifications(n);
-      if (audits && audits.length > 0) setAuditLogs(audits);
+      if (Array.isArray(b)) setBorrowers(b);
+      if (Array.isArray(p) && p.length > 0) setProducts(p);
+      if (Array.isArray(l)) setLoans(l);
+      if (Array.isArray(a)) setApplications(a);
+      if (Array.isArray(r)) setReceipts(r);
+      if (Array.isArray(n)) setNotifications(n);
+      if (Array.isArray(audits)) setAuditLogs(audits);
     } catch (err) {
       console.warn('API hydration error:', err);
     }
   };
 
   useEffect(() => {
-    reloadAllData();
-  }, []);
+    if (authIsAuthenticated) {
+      reloadAllData();
+    }
+  }, [authIsAuthenticated, authUser?.id]);
 
   // Handle Role Switch
   const handleRoleSwitch = (_newRole: UserRole) => {
@@ -570,39 +579,34 @@ export const App: React.FC = () => {
 
   // User-specific datasets for client borrower views
   const isBorrowerRole = (currentUser.role || 'USER').toUpperCase() !== 'ADMIN';
-  const currentClientName = (currentUser.name || currentUser.fullName || 'Johnathan Doe').trim().toLowerCase();
+  const currentClientName = (currentUser.name || currentUser.fullName || '').trim().toLowerCase();
 
   const userFilteredLoans = loans.filter(
     (l) =>
-      (currentUser.borrowerId && l.borrowerId === currentUser.borrowerId) ||
-      (l.borrowerName && (l.borrowerName.toLowerCase().includes(currentClientName) || currentClientName.includes(l.borrowerName.toLowerCase())))
+      !isBorrowerRole ||
+      (currentUser.borrowerId && (l.borrowerId === currentUser.borrowerId || l.borrowerId === currentUser.id)) ||
+      (l.borrowerName && currentClientName && (l.borrowerName.toLowerCase().includes(currentClientName) || currentClientName.includes(l.borrowerName.toLowerCase()))) ||
+      loans.length > 0
   );
-  const userDisplayLoans = (isBorrowerRole && userFilteredLoans.length > 0)
-    ? userFilteredLoans
-    : (isBorrowerRole
-        ? loans.map((l) => ({ ...l, borrowerName: currentUser.name || currentUser.fullName || 'Johnathan Doe' }))
-        : loans);
+  const userDisplayLoans = isBorrowerRole ? (userFilteredLoans.length > 0 ? userFilteredLoans : loans) : loans;
 
   const userFilteredApps = applications.filter(
     (a) =>
-      (currentUser.borrowerId && a.borrowerId === currentUser.borrowerId) ||
-      (a.borrowerName && (a.borrowerName.toLowerCase().includes(currentClientName) || currentClientName.includes(a.borrowerName.toLowerCase())))
+      !isBorrowerRole ||
+      (currentUser.borrowerId && (a.borrowerId === currentUser.borrowerId || a.borrowerId === currentUser.id)) ||
+      (a.borrowerName && currentClientName && (a.borrowerName.toLowerCase().includes(currentClientName) || currentClientName.includes(a.borrowerName.toLowerCase()))) ||
+      applications.length > 0
   );
-  const userDisplayApps = (isBorrowerRole && userFilteredApps.length > 0)
-    ? userFilteredApps
-    : (isBorrowerRole
-        ? applications.map((a) => ({ ...a, borrowerName: currentUser.name || currentUser.fullName || 'Johnathan Doe' }))
-        : applications);
+  const userDisplayApps = isBorrowerRole ? (userFilteredApps.length > 0 ? userFilteredApps : applications) : applications;
 
   const userFilteredReceipts = receipts.filter(
     (r) =>
-      (r.borrowerName && (r.borrowerName.toLowerCase().includes(currentClientName) || currentClientName.includes(r.borrowerName.toLowerCase())))
+      !isBorrowerRole ||
+      (currentUser.borrowerId && (r.borrowerId === currentUser.borrowerId || r.borrowerId === currentUser.id)) ||
+      (r.borrowerName && currentClientName && (r.borrowerName.toLowerCase().includes(currentClientName) || currentClientName.includes(r.borrowerName.toLowerCase()))) ||
+      receipts.length > 0
   );
-  const userDisplayReceipts = (isBorrowerRole && userFilteredReceipts.length > 0)
-    ? userFilteredReceipts
-    : (isBorrowerRole
-        ? receipts.map((r) => ({ ...r, borrowerName: currentUser.name || currentUser.fullName || 'Johnathan Doe' }))
-        : receipts);
+  const userDisplayReceipts = isBorrowerRole ? (userFilteredReceipts.length > 0 ? userFilteredReceipts : receipts) : receipts;
 
   // Helper to open payment flow appropriately for borrower (modal) or staff (cashier desk)
   const openPaymentForBorrowerOrStaff = (loanId?: string, installmentNo?: number, amount?: number) => {
@@ -726,8 +730,15 @@ export const App: React.FC = () => {
           email={authEmail}
           purpose={authOtpPurpose}
           devOtp={authDevOtp}
-          onVerificationSuccess={(resetToken) => {
-            if (authOtpPurpose === 'register_verification') {
+          onVerificationSuccess={(resetToken, verifiedUser, verifiedToken) => {
+            if (authOtpPurpose === 'login_verification') {
+              if (verifiedUser && verifiedToken) {
+                handleLoginSuccess(verifiedUser, verifiedToken, true);
+              } else {
+                setAuthNotice('Login verified successfully. Please sign in.');
+                setAuthView('login');
+              }
+            } else if (authOtpPurpose === 'register_verification') {
               setAuthNotice('Email verified successfully! Your account is now active. Please sign in.');
               setAuthView('login');
             } else if (authOtpPurpose === 'forgot_password' && resetToken) {
@@ -736,7 +747,13 @@ export const App: React.FC = () => {
             }
           }}
           onNavigateBack={() => {
-            setAuthView(authOtpPurpose === 'register_verification' ? 'register' : 'forgot_password');
+            setAuthView(
+              authOtpPurpose === 'register_verification'
+                ? 'register'
+                : authOtpPurpose === 'login_verification'
+                ? 'login'
+                : 'forgot_password'
+            );
           }}
         />
       );
@@ -774,6 +791,12 @@ export const App: React.FC = () => {
     return (
       <LoginPage
         onLoginSuccess={handleLoginSuccess}
+        onRequireOtp={(email, devOtp) => {
+          setAuthEmail(email);
+          setAuthDevOtp(devOtp);
+          setAuthOtpPurpose('login_verification');
+          setAuthView('otp_verify');
+        }}
         onNavigateToRegister={() => {
           setAuthNotice(null);
           setAuthView('register');

@@ -9,7 +9,9 @@ export type OtpPurpose =
   | 'EMAIL_VERIFICATION'
   | 'CHANGE_EMAIL'
   | 'register_verification'
-  | 'forgot_password';
+  | 'forgot_password'
+  | 'LOGIN'
+  | 'login_verification';
 
 export interface VerifyOtpResult {
   valid: boolean;
@@ -42,6 +44,7 @@ export class OtpService {
     const upper = purpose.trim().toUpperCase();
     if (upper === 'REGISTER_VERIFICATION' || upper === 'REGISTRATION') return 'REGISTRATION';
     if (upper === 'FORGOT_PASSWORD' || upper === 'PASSWORD_RESET') return 'PASSWORD_RESET';
+    if (upper === 'LOGIN' || upper === 'LOGIN_VERIFICATION' || upper === 'LOGIN_2FA') return 'LOGIN';
     if (upper === 'EMAIL_VERIFICATION') return 'EMAIL_VERIFICATION';
     if (upper === 'CHANGE_EMAIL') return 'CHANGE_EMAIL';
     return upper;

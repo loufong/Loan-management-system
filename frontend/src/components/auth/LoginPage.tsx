@@ -16,6 +16,7 @@ import logoImg from '../../assets/logo-transparent.png';
 
 interface LoginPageProps {
   onLoginSuccess: (user: UserProfile, token: string, rememberMe: boolean) => void;
+  onRequireOtp?: (email: string, devOtp?: string) => void;
   onNavigateToRegister: () => void;
   onNavigateToForgotPassword: () => void;
   successNotice?: string | null;
@@ -24,6 +25,7 @@ interface LoginPageProps {
 
 export const LoginPage: React.FC<LoginPageProps> = ({
   onLoginSuccess,
+  onRequireOtp,
   onNavigateToRegister,
   onNavigateToForgotPassword,
   successNotice,
@@ -57,12 +59,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
     try {
       // Step 2 to Step 9 handled through auth service with exact status checks & generic invalid messages
-      const loggedInUser = await login(identifier, password, rememberMe);
+      const loginResult = await login(identifier, password, rememberMe);
+      if (loginResult?.requireOtp) {
+        if (onRequireOtp) {
+          onRequireOtp(loginResult.email || identifier, loginResult.devOtp);
+        }
+        return;
+      }
       const activeToken =
         localStorage.getItem('apex_token') ||
         sessionStorage.getItem('apex_token') ||
         'token';
-      onLoginSuccess(loggedInUser, activeToken, rememberMe);
+      onLoginSuccess(loginResult.user || loginResult, activeToken, rememberMe);
     } catch (err: any) {
       setError(err?.message || 'Invalid email/username or password.');
     } finally {

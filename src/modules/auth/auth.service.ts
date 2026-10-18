@@ -262,6 +262,51 @@ export class AuthService {
   }
 
   /**
+   * Ensures every normal user has a permanent linked Borrower dossier in PostgreSQL.
+   */
+  static async ensureBorrowerRecordForUser(user: { id: string; email: string; fullName?: string; username?: string; phone?: string | null }) {
+    try {
+      let borrower = await prisma.borrower.findFirst({
+        where: { userId: user.id },
+      });
+      if (!borrower) {
+        borrower = await prisma.borrower.findFirst({
+          where: { email: user.email },
+        });
+        if (borrower) {
+          borrower = await prisma.borrower.update({
+            where: { id: borrower.id },
+            data: { userId: user.id },
+          });
+        } else {
+          const count = await prisma.borrower.count();
+          const borrowerId = `BOR-2026-${String(count + 1).padStart(4, '0')}`;
+          borrower = await prisma.borrower.create({
+            data: {
+              borrowerId,
+              userId: user.id,
+              fullName: user.fullName || user.username || 'Client Borrower',
+              gender: 'UNSPECIFIED',
+              dob: new Date('2000-01-01'),
+              phone: user.phone || '012345678',
+              email: user.email,
+              address: 'Phnom Penh, Cambodia',
+              occupation: 'Client Borrower',
+              monthlyIncome: 1500,
+              idNumber: `ID-${user.id.slice(0, 8).toUpperCase()}`,
+              status: UserStatus.ACTIVE,
+            },
+          });
+        }
+      }
+      return borrower;
+    } catch (err) {
+      logger.error('Failed to ensure borrower record for user:', err);
+      return null;
+    }
+  }
+
+  /**
    * 1. User Registration (Pending Registration Storage Flow)
    * The pending record is NOT an active user account.
    * Real user record is created only after OTP verification.
@@ -415,6 +460,99 @@ export class AuthService {
       };
     }
 
+    // If purpose is LOGIN: Complete 2FA and issue authenticated tokens
+    if (canonicalPurpose === 'LOGIN') {
+      const user = await this.findActiveUserByEmailOrUsername(cleanEmail);
+      if (!user) {
+        throw { statusCode: 404, message: 'User not found.', code: 'USER_NOT_FOUND' };
+      }
+
+      if (user.status === UserStatus.INACTIVE) {
+        throw { statusCode: 403, message: 'Your account is currently inactive.', code: 'ACCOUNT_INACTIVE' };
+      }
+
+      if (user.status === UserStatus.SUSPENDED) {
+        throw { statusCode: 403, message: 'Your account has been suspended.', code: 'ACCOUNT_SUSPENDED' };
+      }
+
+      // Ensure linked borrower record exists
+      const borrower = await this.ensureBorrowerRecordForUser(user);
+
+      const now = new Date();
+      try {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { lastLogin: now },
+        });
+      } catch {}
+      user.lastLogin = now;
+
+      const rememberMe = (dto as any).rememberMe ?? true;
+      const expiryTime = rememberMe ? '30d' : ACCESS_TOKEN_EXPIRY;
+      const accessToken = this.generateAccessToken(user, expiryTime);
+
+      const refreshDays = rememberMe ? 30 : REFRESH_TOKEN_EXPIRY_DAYS;
+      const { rawToken, tokenHash, expiresAt } = this.generateRefreshToken(refreshDays);
+
+      try {
+        await prisma.refreshToken.create({
+          data: {
+            tokenHash,
+            userId: user.id,
+            expiresAt,
+            isRevoked: false,
+            ipAddress: dto.ipAddress || null,
+            lastUsedAt: now,
+          },
+        });
+      } catch (err) {
+        logger.error('Failed to create refresh token session on OTP login:', err);
+      }
+
+      const permissions = getPermissionsForRole(user.role);
+      const defaultAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.username)}`;
+      const normalizedRole = user.role === UserRole.ADMIN ? 'admin' : 'user';
+
+      try {
+        await recordAuditLog({
+          userId: user.id,
+          action: 'USER_LOGIN_OTP_VERIFIED',
+          entityName: 'User',
+          entityId: user.id,
+          details: { role: user.role, authMethod: 'GMAIL_OTP', email: user.email },
+          ipAddress: dto.ipAddress,
+        });
+      } catch {}
+
+      return {
+        success: true,
+        message: 'Login successful via Gmail OTP verification.',
+        token: accessToken,
+        accessToken,
+        refreshToken: rawToken,
+        user: {
+          id: user.id,
+          username: user.username,
+          name: user.fullName,
+          fullName: user.fullName,
+          email: user.email,
+          phone: user.phone || '',
+          role: normalizedRole,
+          originalRole: user.role,
+          status: user.status.toLowerCase(),
+          emailVerified: user.emailVerifiedAt !== null,
+          emailVerifiedAt: user.emailVerifiedAt,
+          avatar: user.avatarUrl || defaultAvatar,
+          avatarUrl: user.avatarUrl || defaultAvatar,
+          borrowerId: borrower?.borrowerId,
+          title: 'Client Borrower',
+          department: 'Client Services',
+          lastLogin: now,
+          permissions,
+        },
+      };
+    }
+
     // If purpose is PASSWORD_RESET, return signed reset token
     return {
       success: true,
@@ -477,6 +615,30 @@ export class AuthService {
       return {
         success: true,
         message: 'A fresh 6-digit OTP code has been dispatched to your Gmail.',
+        expiresInSeconds: otpResult.expiresInSeconds,
+        devOtp: otpResult.devOtp,
+      };
+    }
+
+    if (canonicalPurpose === 'LOGIN') {
+      const activeUser = await this.findActiveUserByEmailOrUsername(cleanEmail);
+      if (!activeUser) {
+        throw { statusCode: 404, message: 'User account not found.', code: 'USER_NOT_FOUND' };
+      }
+      const otpResult = await OtpService.createAndSendOtp({
+        email: cleanEmail,
+        recipientName: activeUser.fullName || activeUser.username,
+        purpose: 'LOGIN',
+        userId: activeUser.id,
+      });
+
+      if (!otpResult.success) {
+        throw { statusCode: 429, message: otpResult.message, code: 'RATE_LIMITED' };
+      }
+
+      return {
+        success: true,
+        message: 'A fresh 6-digit login verification code has been dispatched to your Gmail.',
         expiresInSeconds: otpResult.expiresInSeconds,
         devOtp: otpResult.devOtp,
       };
@@ -711,6 +873,30 @@ export class AuthService {
         message: 'Your account has been suspended. Please contact the administrator.',
         code: 'ACCOUNT_SUSPENDED',
       };
+    }
+
+    // For normal user (role USER), enforce Gmail OTP login verification
+    if (user.role === UserRole.USER) {
+      // Ensure linked borrower record exists in PostgreSQL
+      await this.ensureBorrowerRecordForUser(user);
+
+      const otpResult = await OtpService.createAndSendOtp({
+        email: user.email,
+        recipientName: user.fullName || user.username,
+        purpose: 'LOGIN',
+        userId: user.id,
+      });
+
+      return {
+        success: true,
+        requireOtp: true,
+        email: user.email,
+        purpose: 'login_verification',
+        rememberMe: !!dto.rememberMe,
+        message: otpResult.message || 'A 6-digit verification code has been dispatched to your Gmail.',
+        expiresInSeconds: otpResult.expiresInSeconds,
+        devOtp: otpResult.devOtp,
+      } as any;
     }
 
     // Step 8: Update last_login

@@ -8,7 +8,7 @@ export interface SendOtpEmailParams {
   recipientName?: string;
   firstName?: string;
   otpCode: string;
-  purpose: 'REGISTRATION' | 'PASSWORD_RESET' | 'EMAIL_VERIFICATION' | 'CHANGE_EMAIL' | 'register_verification' | 'forgot_password';
+  purpose: 'REGISTRATION' | 'PASSWORD_RESET' | 'EMAIL_VERIFICATION' | 'CHANGE_EMAIL' | 'register_verification' | 'forgot_password' | 'LOGIN' | 'login_verification';
 }
 
 export interface SendPasswordChangedEmailParams {
@@ -61,11 +61,12 @@ export class EmailService {
         process.env.EMAIL_USER ||
         '';
 
-      const pass =
+      const pass = (
         process.env.SMTP_PASSWORD ||
         process.env.MAIL_PASSWORD ||
         process.env.EMAIL_PASSWORD ||
-        '';
+        ''
+      ).replace(/\s+/g, '');
 
       this.transporter = nodemailer.createTransport({
         host,
@@ -128,14 +129,24 @@ export class EmailService {
 
     const displayName = firstName || (recipientName ? recipientName.split(' ')[0] : 'User');
     const isReset = purpose === 'PASSWORD_RESET' || purpose === 'forgot_password';
+    const isLogin = purpose === 'LOGIN' || purpose === 'login_verification';
 
     const subject = isReset
       ? 'Password Reset Verification Code'
+      : isLogin
+      ? 'Your Login Verification Code - Jam Song Vich LMS'
       : 'Verify Your Loan Management System Account';
 
-    const purposeTitle = isReset ? 'Password Reset Verification' : 'Verify Your Email Address';
+    const purposeTitle = isReset
+      ? 'Password Reset Verification'
+      : isLogin
+      ? 'Login Verification Code'
+      : 'Verify Your Email Address';
+
     const purposeIntro = isReset
       ? 'You requested a password reset for your Loan Management System account.'
+      : isLogin
+      ? 'You are signing in to your Loan Management System account. Use the 6-digit OTP code below to verify your login.'
       : 'Thank you for registering with Loan Management System. Please verify your email to activate your account.';
 
     const htmlContent = `

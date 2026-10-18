@@ -7,7 +7,8 @@ interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (usernameOrEmail: string, password?: string, rememberMe?: boolean) => Promise<UserProfile>;
+  login: (usernameOrEmail: string, password?: string, rememberMe?: boolean) => Promise<any>;
+  verifyLoginOtp: (email: string, otp: string, rememberMe?: boolean) => Promise<UserProfile>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<UserProfile | null>;
   switchRole: (role: UserRole) => Promise<void>;
@@ -116,10 +117,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     usernameOrEmail: string,
     password = 'Password123!',
     rememberMe = true
-  ): Promise<UserProfile> => {
+  ): Promise<any> => {
     setIsLoading(true);
     try {
       const result = await api.login(usernameOrEmail, password, rememberMe);
+      if (result.requireOtp) {
+        return result;
+      }
+      setSession(result.user, result.token, rememberMe);
+      return result.user;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const verifyLoginOtp = async (email: string, otp: string, rememberMe = true): Promise<UserProfile> => {
+    setIsLoading(true);
+    try {
+      const result = await api.verifyLoginOtp({ email, otp, rememberMe });
       setSession(result.user, result.token, rememberMe);
       return result.user;
     } finally {
@@ -183,6 +198,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isAuthenticated: !!token && !!user,
         isLoading,
         login,
+        verifyLoginOtp,
         logout,
         refreshUser,
         switchRole,

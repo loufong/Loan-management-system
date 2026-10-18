@@ -214,7 +214,7 @@ class ApiService {
     usernameOrEmail: string,
     password = 'Password123!',
     rememberMe = false
-  ): Promise<{ token: string; user: UserProfile }> {
+  ): Promise<{ token: string; user: UserProfile; requireOtp?: boolean; email?: string; devOtp?: string; message?: string }> {
     const cleanId = usernameOrEmail.trim().toLowerCase();
 
     // Step 1: Validate input
@@ -228,10 +228,22 @@ class ApiService {
     }
 
     try {
-      const res = await this.request<{ accessToken?: string; token?: string; user: any }>('/auth/login', {
+      const res = await this.request<{ accessToken?: string; token?: string; user?: any; requireOtp?: boolean; email?: string; devOtp?: string; message?: string }>('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ usernameOrEmail, password, rememberMe }),
       });
+
+      if (res.requireOtp) {
+        return {
+          token: '',
+          user: null as any,
+          requireOtp: true,
+          email: res.email || usernameOrEmail,
+          devOtp: res.devOtp,
+          message: res.message,
+        };
+      }
+
       const activeToken = res.accessToken || res.token || 'jwt-token-active';
       this.setToken(activeToken);
       const u = res.user;
@@ -249,7 +261,7 @@ class ApiService {
         avatar: u?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u?.username || usernameOrEmail)}`,
         avatarUrl: u?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u?.username || usernameOrEmail)}`,
         branch: u?.userSetting?.branch || 'Phnom Penh Main Branch',
-        borrowerId: u?.borrowerId || u?.borrowers?.[0]?.borrowerId || (normalizedRole === 'USER' ? 'BOR-2026-0001' : undefined),
+        borrowerId: u?.borrowerId || u?.borrowers?.[0]?.borrowerId,
         createdAt: u?.createdAt,
         lastLogin: new Date().toISOString(),
       };
@@ -287,6 +299,58 @@ class ApiService {
       // Offline / Network fallback (backend server down or static preview)
       return this.authenticateMock(cleanId, password);
     }
+  }
+
+  public async verifyLoginOtp(params: {
+    email: string;
+    otp: string;
+    rememberMe?: boolean;
+  }): Promise<{ token: string; user: UserProfile }> {
+    const res = await this.request<{
+      token?: string;
+      accessToken?: string;
+      refreshToken?: string;
+      user: any;
+      data?: any;
+    }>('/auth/verify-otp', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: params.email,
+        code: params.otp,
+        purpose: 'LOGIN',
+        rememberMe: params.rememberMe,
+      }),
+    });
+
+    const payload = res.data || res;
+    const activeToken = payload.accessToken || payload.token || '';
+    if (activeToken) {
+      this.setToken(activeToken);
+    }
+    const u = payload.user || payload;
+    const normalizedRole = normalizeUserRole(u?.role);
+    const matchedProfile: UserProfile = {
+      id: u?.id || 'usr-default',
+      username: u?.username || params.email,
+      name: u?.fullName || u?.name || params.email,
+      fullName: u?.fullName || u?.name || params.email,
+      email: u?.email || params.email,
+      role: normalizedRole,
+      status: (u?.status || 'active').toLowerCase() as any,
+      title: u?.position || (normalizedRole === 'ADMIN' ? 'System Administrator' : 'Client Borrower'),
+      department: u?.department || (normalizedRole === 'ADMIN' ? 'Executive Administration' : 'Client Services'),
+      avatar: u?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u?.username || params.email)}`,
+      avatarUrl: u?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u?.username || params.email)}`,
+      branch: u?.userSetting?.branch || 'Phnom Penh Main Branch',
+      borrowerId: u?.borrowerId || u?.borrowers?.[0]?.borrowerId,
+      createdAt: u?.createdAt,
+      lastLogin: new Date().toISOString(),
+    };
+
+    return {
+      token: activeToken,
+      user: matchedProfile,
+    };
   }
 
   public async getMe(): Promise<UserProfile> {
@@ -638,7 +702,7 @@ class ApiService {
 
   public async resendOtp(payload: {
     email: string;
-    purpose: 'register_verification' | 'forgot_password' | 'email_verification' | 'REGISTRATION' | 'PASSWORD_RESET';
+    purpose: 'register_verification' | 'forgot_password' | 'email_verification' | 'REGISTRATION' | 'PASSWORD_RESET' | 'LOGIN' | 'login_verification';
   }): Promise<{ success: boolean; message: string; expiresInSeconds: number; devOtp?: string }> {
     try {
       return await this.request('/auth/resend-otp', {
@@ -729,7 +793,7 @@ class ApiService {
     try {
       const data = await this.request<any>('/borrowers');
       const items = Array.isArray(data) ? data : data?.items || [];
-      if (!items || items.length === 0) return MOCK_BORROWERS;
+      if (isStaticHost && (!items || items.length === 0)) return MOCK_BORROWERS;
       return items.map((b: any) => ({
         id: b.id,
         borrowerId: b.borrowerId || `BOR-${b.id?.slice(0, 6)}`,
@@ -743,15 +807,15 @@ class ApiService {
         monthlyIncomeUSD: Number(b.monthlyIncome || b.monthlyIncomeUSD || 2800),
         status: (b.status || 'ACTIVE').toUpperCase(),
         kycStatus: 'VERIFIED',
-        activeLoansCount: b._count?.loans ?? 1,
-        totalBorrowedUSD: Number(b.totalBorrowedUSD || 3000),
-        totalRepaidUSD: Number(b.totalRepaidUSD || 761.25),
-        totalOutstandingUSD: Number(b.totalOutstandingUSD || 2306.25),
+        activeLoansCount: b._count?.loans ?? 0,
+        totalBorrowedUSD: Number(b.totalBorrowedUSD || 0),
+        totalRepaidUSD: Number(b.totalRepaidUSD || 0),
+        totalOutstandingUSD: Number(b.totalOutstandingUSD || 0),
         dtiRatio: Number(b.dtiRatio || 24.5),
         createdAt: b.createdAt ? b.createdAt.split('T')[0] : '2026-01-01',
       }));
     } catch {
-      return MOCK_BORROWERS;
+      return isStaticHost ? MOCK_BORROWERS : [];
     }
   }
 
@@ -797,31 +861,31 @@ class ApiService {
     try {
       const data = await this.request<any>('/loan-applications');
       const items = Array.isArray(data) ? data : data?.items || [];
-      if (!items || items.length === 0) return MOCK_APPLICATIONS;
+      if (isStaticHost && (!items || items.length === 0)) return MOCK_APPLICATIONS;
       return items.map((a: any) => ({
         id: a.id,
         applicationNo: a.applicationNo || `APP-${a.id?.slice(0, 6)}`,
         borrowerId: a.borrower?.borrowerId || a.borrowerId || 'BOR-2026-0001',
-        borrowerName: a.borrower?.fullName || a.borrowerName || 'Johnathan Doe',
-        borrowerAvatar: a.borrower?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(a.borrower?.fullName || 'Johnathan Doe')}`,
-        borrowerIncomeUSD: Number(a.monthlyIncome || a.borrowerIncomeUSD || 2800),
+        borrowerName: a.borrower?.fullName || a.borrowerName || 'Client Borrower',
+        borrowerAvatar: a.borrower?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(a.borrower?.fullName || 'Client')}`,
+        borrowerIncomeUSD: Number(a.monthlyIncome || a.borrowerIncomeUSD || 0),
         productId: a.product?.id || a.productId || 'PROD-001',
         productName: a.product?.productName || a.productName || 'Education Loan',
-        requestedAmountUSD: Number(a.requestedAmount || a.requestedAmountUSD || 3000),
-        requestedTermMonths: Number(a.requestedTerm || a.requestedTermMonths || 6),
+        requestedAmountUSD: Number(a.requestedAmount || a.requestedAmountUSD || 0),
+        requestedTermMonths: Number(a.requestedTerm || a.requestedTermMonths || 12),
         frequency: (a.product?.repaymentFrequency || a.frequency || 'MONTHLY') as any,
-        purpose: a.purpose || 'Academic & Research Funding',
-        dtiRatio: Number(a.dtiRatio || 22.4),
+        purpose: a.purpose || 'Education Financing',
+        dtiRatio: Number(a.dtiRatio || 20.0),
         riskTier: (a.riskTier || 'LOW RISK') as any,
-        status: (a.status || 'APPROVED').toUpperCase() as any,
-        createdAt: a.createdAt ? a.createdAt.split('T')[0] : '2026-08-15',
+        status: (a.status || 'SUBMITTED').toUpperCase() as any,
+        createdAt: a.createdAt ? a.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
         documents: a.documents || [],
         guarantor: a.guarantor,
         collateral: a.collateral,
         creditOfficerReview: a.creditOfficerReview,
       }));
     } catch {
-      return MOCK_APPLICATIONS;
+      return isStaticHost ? MOCK_APPLICATIONS : [];
     }
   }
 
@@ -831,35 +895,41 @@ class ApiService {
         borrowerId: applicationData.borrowerId,
         productId: applicationData.productId,
         requestedAmount: applicationData.requestedAmountUSD || 5000,
+        requestedTerm: applicationData.requestedTermMonths || 12,
         term: applicationData.requestedTermMonths || 12,
         repaymentFrequency: applicationData.frequency || 'MONTHLY',
         purpose: applicationData.purpose || 'Personal financing',
+        monthlyIncome: applicationData.borrowerIncomeUSD,
+        isDraft: applicationData.status === 'DRAFT',
       };
       return await this.request<LoanApplication>('/loan-applications', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
-    } catch {
-      const newApp: LoanApplication = {
-        id: `APP-2026-${Math.floor(1000 + Math.random() * 9000)}`,
-        applicationNo: `APP-2026-${Math.floor(1000 + Math.random() * 9000)}`,
-        borrowerId: applicationData.borrowerId || 'BOR-2026-0001',
-        borrowerName: applicationData.borrowerName || 'Sokha Chan',
-        borrowerAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-        borrowerIncomeUSD: 1450,
-        productId: applicationData.productId || 'PROD-001',
-        productName: applicationData.productName || 'Graduate Academic Advance',
-        requestedAmountUSD: applicationData.requestedAmountUSD || 3000,
-        requestedTermMonths: applicationData.requestedTermMonths || 12,
-        frequency: applicationData.frequency || 'MONTHLY',
-        purpose: applicationData.purpose || 'Academic Loan',
-        dtiRatio: 26.5,
-        riskTier: 'LOW RISK',
-        status: 'SUBMITTED',
-        createdAt: new Date().toISOString().split('T')[0],
-        documents: [],
-      };
-      return newApp;
+    } catch (err: any) {
+      if (isStaticHost) {
+        const newApp: LoanApplication = {
+          id: `APP-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+          applicationNo: `APP-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+          borrowerId: applicationData.borrowerId || 'BOR-2026-0001',
+          borrowerName: applicationData.borrowerName || 'Client Borrower',
+          borrowerAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+          borrowerIncomeUSD: 1450,
+          productId: applicationData.productId || 'PROD-001',
+          productName: applicationData.productName || 'Graduate Academic Advance',
+          requestedAmountUSD: applicationData.requestedAmountUSD || 3000,
+          requestedTermMonths: applicationData.requestedTermMonths || 12,
+          frequency: applicationData.frequency || 'MONTHLY',
+          purpose: applicationData.purpose || 'Academic Loan',
+          dtiRatio: 26.5,
+          riskTier: 'LOW RISK',
+          status: 'SUBMITTED',
+          createdAt: new Date().toISOString().split('T')[0],
+          documents: [],
+        };
+        return newApp;
+      }
+      throw err;
     }
   }
 
@@ -912,14 +982,14 @@ class ApiService {
     try {
       const data = await this.request<any>('/loans');
       const items = Array.isArray(data) ? data : data?.items || [];
-      if (!items || items.length === 0) return MOCK_LOANS;
+      if (isStaticHost && (!items || items.length === 0)) return MOCK_LOANS;
       return items.map((l: any) => ({
         id: l.id,
         loanNumber: l.loanNumber || `LN-${l.id?.slice(0, 6)}`,
         applicationNo: l.application?.applicationNo || l.applicationNo || 'APP-2026-0001',
         borrowerId: l.borrower?.borrowerId || l.borrowerId || 'BOR-2026-0001',
-        borrowerName: l.borrower?.fullName || l.borrowerName || 'Johnathan Doe',
-        borrowerAvatar: l.borrower?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(l.borrower?.fullName || 'Johnathan Doe')}`,
+        borrowerName: l.borrower?.fullName || l.borrowerName || 'Client Borrower',
+        borrowerAvatar: l.borrower?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(l.borrower?.fullName || 'Client')}`,
         borrowerPhone: l.borrower?.phone || l.borrowerPhone || '+1-555-0201',
         productId: l.product?.id || l.productId || 'PROD-001',
         productName: l.product?.productName || l.productName || 'Education Loan',
@@ -936,11 +1006,11 @@ class ApiService {
         disbursedDate: l.startDate ? l.startDate.split('T')[0] : '2026-09-01',
         maturityDate: l.endDate ? l.endDate.split('T')[0] : '2027-03-01',
         nextPaymentDueDate: l.nextPaymentDueDate || '2026-10-20',
-        nextPaymentDueAmountUSD: Number(l.nextPaymentDueAmountUSD || 532.5),
+        nextPaymentDueAmountUSD: Number(l.nextPaymentDueAmountUSD || 0),
         schedules: l.repaymentSchedules || l.schedules || [],
       }));
     } catch {
-      return MOCK_LOANS;
+      return isStaticHost ? MOCK_LOANS : [];
     }
   }
 
@@ -985,7 +1055,7 @@ class ApiService {
     try {
       const res = await this.request<any>('/payments');
       const items = res?.items || (Array.isArray(res) ? res : []);
-      if (!items || items.length === 0) return MOCK_RECEIPTS;
+      if (isStaticHost && (!items || items.length === 0)) return MOCK_RECEIPTS;
 
       return items.map((p: any) => ({
         receiptNo: p.receiptNo || p.referenceNo || `REC-${p.id?.slice(0, 8)}`,
@@ -1006,7 +1076,7 @@ class ApiService {
         notes: p.notes || 'Recorded via window cashier',
       }));
     } catch {
-      return MOCK_RECEIPTS;
+      return isStaticHost ? MOCK_RECEIPTS : [];
     }
   }
 

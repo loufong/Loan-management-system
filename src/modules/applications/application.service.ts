@@ -12,6 +12,10 @@ import { AuthUser } from '../../middlewares/auth.middleware';
 import { LoanCalculatorService } from '../calculator/loan-calculator.service';
 import { isStaffRole } from '../../security/permissions';
 
+function isUuid(val?: string): boolean {
+  return Boolean(val && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val));
+}
+
 export interface ApplicationInputDto {
   borrowerId: string;
   productId: string;
@@ -89,10 +93,20 @@ export class ApplicationService {
    * 1. Save Application as DRAFT
    */
   static async saveDraft(dto: ApplicationInputDto) {
-    const borrower = await prisma.borrower.findUnique({ where: { id: dto.borrowerId } });
+    const borrowerConditions: any[] = [{ borrowerId: dto.borrowerId }];
+    if (isUuid(dto.borrowerId)) {
+      borrowerConditions.push({ id: dto.borrowerId });
+    }
+    if (!isStaffRole(dto.viewer.role)) {
+      borrowerConditions.push({ userId: dto.viewer.id });
+    }
+    const borrower = await prisma.borrower.findFirst({
+      where: { OR: borrowerConditions }
+    });
     if (!borrower) {
       throw { statusCode: 404, message: 'Borrower not found', code: 'BORROWER_NOT_FOUND' };
     }
+    dto.borrowerId = borrower.id;
 
     if (!isStaffRole(dto.viewer.role) && borrower.userId !== dto.viewer.id) {
       throw {
@@ -260,10 +274,20 @@ export class ApplicationService {
       });
     } else {
       // Direct submission
-      const borrower = await prisma.borrower.findUnique({ where: { id: dto.borrowerId } });
+      const borrowerConditions: any[] = [{ borrowerId: dto.borrowerId }];
+      if (isUuid(dto.borrowerId)) {
+        borrowerConditions.push({ id: dto.borrowerId });
+      }
+      if (!isStaffRole(dto.viewer.role)) {
+        borrowerConditions.push({ userId: dto.viewer.id });
+      }
+      const borrower = await prisma.borrower.findFirst({
+        where: { OR: borrowerConditions }
+      });
       if (!borrower) {
         throw { statusCode: 404, message: 'Borrower not found', code: 'BORROWER_NOT_FOUND' };
       }
+      dto.borrowerId = borrower.id;
 
       if (!isStaffRole(dto.viewer.role) && borrower.userId !== dto.viewer.id) {
         throw {

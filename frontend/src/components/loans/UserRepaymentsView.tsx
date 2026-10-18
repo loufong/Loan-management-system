@@ -29,7 +29,7 @@ export const UserRepaymentsView: React.FC<UserRepaymentsViewProps> = ({
       l.borrowerName.toLowerCase().includes((currentUser.name || '').toLowerCase())
   );
 
-  const displayLoans = userLoans.length > 0 ? userLoans : loans;
+  const displayLoans = userLoans;
   const [selectedLoanId, setSelectedLoanId] = useState<string>(
     displayLoans[0]?.id || ''
   );

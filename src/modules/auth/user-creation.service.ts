@@ -82,7 +82,27 @@ export class UserCreationService {
           },
         });
 
-        // 2. Delete pending registration record (both in DB transaction and in-memory cache)
+        // 2. Create linked Borrower record for the newly registered normal user in DB
+        const borrowerCount = await tx.borrower.count();
+        const borrowerId = `BOR-2026-${String(borrowerCount + 1).padStart(4, '0')}`;
+        await tx.borrower.create({
+          data: {
+            borrowerId,
+            userId: user.id,
+            fullName: user.fullName,
+            gender: 'UNSPECIFIED',
+            dob: new Date('2000-01-01'),
+            phone: user.phone || '012345678',
+            email: user.email,
+            address: 'Phnom Penh, Cambodia',
+            occupation: 'Client Borrower',
+            monthlyIncome: 1500,
+            idNumber: `ID-${user.id.slice(0, 8).toUpperCase()}`,
+            status: UserStatus.ACTIVE,
+          },
+        });
+
+        // 3. Delete pending registration record (both in DB transaction and in-memory cache)
         await PendingRegistrationService.deletePendingRegistration(pendingRegistration.id, tx);
 
         // 3. Invalidate OTP if provided

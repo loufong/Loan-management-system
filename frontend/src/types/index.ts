@@ -33,6 +33,7 @@ export interface UserProfile {
   branch: string;
   borrowerId?: string;
   nationalId?: string;
+  settings?: UserSettings;
   createdAt?: string;
   lastLogin?: string;
 }

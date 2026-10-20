@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { LoanApplication, UserRole, Currency } from '../../types';
+import { useLanguage } from '../../context/LanguageContext';
 
 export interface CreditReviewApprovalProps {
   application: LoanApplication;
@@ -20,6 +21,7 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
   onSubmitReview,
   onExecutiveDecision
 }) => {
+  const { t } = useLanguage();
   // Document Inspector State
   const [activeDocTab, setActiveDocTab] = useState<'ID' | 'INCOME' | 'STATEMENT'>('ID');
   const [zoomLevel, setZoomLevel] = useState<number>(1);
@@ -93,44 +95,44 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
                 application.status === 'REJECTED' ? 'bg-rose-50 text-[#DC2626] border border-rose-200' :
                 'bg-amber-50 text-[#D97706] border border-amber-200'
               }`}>
-                {application.status}
+                {t(application.status, application.status)}
               </span>
             </div>
-            <p className="text-xs text-[#64748B]">Applicant: <strong className="text-[#0F172A]">{application.borrowerName}</strong> &bull; Submitted on {application.createdAt}</p>
+            <p className="text-xs text-[#64748B]">{t('Applicant:')} <strong className="text-[#0F172A]">{application.borrowerName}</strong> &bull; {t('Submitted on')} {application.createdAt}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 text-xs font-mono">
-          <span className="text-[#64748B]">Requested:</span>
+          <span className="text-[#64748B]">{t('Requested:')}</span>
           <span className="text-base font-extrabold text-[#2563EB]">{formatMoney(application.requestedAmountUSD)}</span>
         </div>
       </div>
 
       {/* Progress Step Indicator (Section 13) */}
       <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-4">
-        <div className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-2">Application Progress</div>
+        <div className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-2">{t('Application Progress')}</div>
         {application.status === 'REJECTED' ? (
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="font-semibold text-[#16A34A]">✓ Submitted</span>
+            <span className="font-semibold text-[#16A34A]">✓ {t('Submitted')}</span>
             <span className="text-slate-400">&rarr;</span>
-            <span className="font-semibold text-[#16A34A]">✓ Under Review</span>
+            <span className="font-semibold text-[#16A34A]">✓ {t('Under Review')}</span>
             <span className="text-slate-400">&rarr;</span>
-            <span className="font-semibold text-[#DC2626]">● Rejected</span>
+            <span className="font-semibold text-[#DC2626]">● {t('Rejected')}</span>
           </div>
         ) : (
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="font-semibold text-[#16A34A]">✓ Submitted</span>
+            <span className="font-semibold text-[#16A34A]">✓ {t('Submitted')}</span>
             <span className="text-slate-400">&rarr;</span>
             <span className={`font-semibold ${application.status === 'UNDER_REVIEW' ? 'text-[#2563EB]' : 'text-[#16A34A]'}`}>
-              {application.status === 'UNDER_REVIEW' ? '● Under Review' : '✓ Under Review'}
+              {application.status === 'UNDER_REVIEW' ? `● ${t('Under Review')}` : `✓ ${t('Under Review')}`}
             </span>
             <span className="text-slate-400">&rarr;</span>
             <span className={`font-semibold ${application.status === 'APPROVED' ? 'text-[#16A34A]' : 'text-[#64748B]'}`}>
-              {application.status === 'APPROVED' ? '● Approved' : '○ Approved'}
+              {application.status === 'APPROVED' ? `● ${t('Approved')}` : `○ ${t('Approved')}`}
             </span>
             <span className="text-slate-400">&rarr;</span>
             <span className={`font-semibold ${(application.status as any) === 'DISBURSED' ? 'text-[#16A34A]' : 'text-[#64748B]'}`}>
-              {(application.status as any) === 'DISBURSED' ? '● Disbursed' : '○ Disbursed'}
+              {(application.status as any) === 'DISBURSED' ? `● ${t('Disbursed')}` : `○ ${t('Disbursed')}`}
             </span>
           </div>
         )}

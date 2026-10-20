@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { LoanAccount, PaymentReceipt, Currency, PaymentMethod, UserRole } from '../../types';
+import { useLanguage } from '../../context/LanguageContext';
 import { Badge } from '../common/Badge';
 import { MoneyText } from '../common/MoneyText';
 import { PaymentReceiptModal } from './PaymentReceiptModal';
@@ -37,6 +38,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
   onRecordPayment,
   initialSelectedLoanId
 }) => {
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLoanId, setSelectedLoanId] = useState<string>(
     initialSelectedLoanId || loans[0]?.id || ''
@@ -153,15 +155,15 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
-              {currentUserRole === 'USER' ? 'Make a Loan Payment' : 'Cashier Desk & Payment Terminal'}
+              {currentUserRole === 'USER' ? t('Make a Loan Payment') : t('Cashier Desk & Payment Terminal')}
             </h1>
             <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-xs font-mono font-semibold bg-emerald-50 text-[#16A34A] border border-emerald-200">
-              {currentUserRole === 'USER' ? 'Payment Gateway Ready' : 'Terminal Active'}
+              {currentUserRole === 'USER' ? t('Payment Gateway Ready') : t('Terminal Active')}
             </span>
           </div>
           <p className="text-xs text-[#64748B] mt-0.5">
             {currentUserRole === 'USER' ? (
-              'Pay your monthly loan installment with real-time settlement and instant verified digital receipts.'
+              t('Pay your monthly loan installment with real-time settlement and instant verified digital receipts.', 'Pay your monthly loan installment with real-time settlement and instant verified digital receipts.')
             ) : (
               <>Teller window session: <strong className="text-[#0F172A]">{cashierName}</strong> • Real-time settlement &amp; official thermal banking receipts.</>
             )}
@@ -176,7 +178,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
           {/* Quick Autocomplete Search */}
           <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-4 space-y-3">
             <label className="block text-xs font-bold text-[#0F172A] uppercase tracking-wider">
-              {currentUserRole === 'USER' ? 'Select Your Loan Facility' : 'Quick Account Lookup'}
+              {currentUserRole === 'USER' ? t('Select Your Loan Facility') : t('Quick Account Lookup')}
             </label>
             <div className="relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none" />
@@ -305,7 +307,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
           >
             <div className="pb-3 border-b border-[#E2E8F0]">
               <h2 className="text-base font-bold text-[#0F172A]">
-                Payment Collection &amp; Settlement
+                {t('Payment Collection & Settlement')}
               </h2>
               <p className="text-xs text-[#64748B] mt-0.5">
                 Record customer installment, select payment channel, and generate verifiable receipt.
@@ -316,7 +318,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
             <div className="space-y-3">
               <div className="flex justify-between items-baseline">
                 <label className="text-xs font-semibold text-[#0F172A]">
-                  Payment Collection Amount (USD)
+                  {t('Payment Amount')} (USD)
                 </label>
                 <MoneyText
                   amount={paymentAmount}
@@ -341,7 +343,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
                   onClick={() => handlePreset('EXACT')}
                   className="p-2 text-xs rounded-[6px] border border-[#E2E8F0] hover:border-[#2563EB] bg-slate-50 hover:bg-blue-50/50 text-[#0F172A] transition-colors text-center cursor-pointer"
                 >
-                  <span className="block text-[11px] text-[#64748B]">Exact Installment</span>
+                  <span className="block text-[11px] text-[#64748B]">{t('Exact Installment')}</span>
                   <span className="font-mono font-bold text-[#0F172A]">
                     ${selectedLoan ? selectedLoan.nextPaymentDueAmountUSD.toFixed(2) : '466.67'}
                   </span>
@@ -352,7 +354,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
                   onClick={() => handlePreset('TWO_INSTALLMENTS')}
                   className="p-2 text-xs rounded-[6px] border border-[#E2E8F0] hover:border-[#2563EB] bg-slate-50 hover:bg-blue-50/50 text-[#0F172A] transition-colors text-center cursor-pointer"
                 >
-                  <span className="block text-[11px] text-[#64748B]">Pay 2 Installments</span>
+                  <span className="block text-[11px] text-[#64748B]">{t('Pay 2 Installments')}</span>
                   <span className="font-mono font-bold text-[#0F172A]">
                     ${selectedLoan ? (selectedLoan.nextPaymentDueAmountUSD * 2).toFixed(2) : '933.34'}
                   </span>
@@ -363,7 +365,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
                   onClick={() => handlePreset('PAYOFF')}
                   className="p-2 text-xs rounded-[6px] border border-[#E2E8F0] hover:border-[#2563EB] bg-slate-50 hover:bg-blue-50/50 text-[#0F172A] transition-colors text-center cursor-pointer"
                 >
-                  <span className="block text-[11px] text-[#64748B]">Full Payoff</span>
+                  <span className="block text-[11px] text-[#64748B]">{t('Full Payoff')}</span>
                   <span className="font-mono font-bold text-[#2563EB]">
                     ${selectedLoan ? selectedLoan.outstandingBalanceUSD.toFixed(2) : '5,133.33'}
                   </span>
@@ -451,7 +453,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[6px] bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold transition-colors cursor-pointer shadow-none"
               >
                 <Printer className="w-4 h-4" />
-                <span>Confirm &amp; Print Receipt</span>
+                <span>{t('Confirm & Print Receipt')}</span>
               </button>
             </div>
           </form>
@@ -463,7 +465,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
         <div className="p-4 sm:p-5 border-b border-[#E2E8F0] flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div>
             <h3 className="text-base font-bold text-[#0F172A]">
-              Payment History &amp; Collections Ledger
+              {t('Payment History & Collections Ledger')}
             </h3>
             <p className="text-xs text-[#64748B] mt-0.5">
               Verified transactional log of all installments, payment methods, and reference receipts
@@ -478,7 +480,7 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
                 type="text"
                 value={ledgerSearch}
                 onChange={(e) => setLedgerSearch(e.target.value)}
-                placeholder="Search Receipt, Loan, Borrower..."
+                placeholder={t('Search Receipt, Loan, Borrower...', 'Search Receipt, Loan, Borrower...')}
                 className="w-full h-8 pl-8 pr-2.5 text-xs bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB]"
               />
             </div>
@@ -489,10 +491,10 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
               onChange={(e) => setLedgerMethodFilter(e.target.value)}
               className="h-8 px-2 text-xs bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
             >
-              <option value="ALL">All Methods</option>
-              <option value="Cash">Cash</option>
-              <option value="Bank Transfer">Bank Transfer</option>
-              <option value="Card">Card</option>
+              <option value="ALL">{t('All Methods')}</option>
+              <option value="Cash">{t('Cash')}</option>
+              <option value="Bank Transfer">{t('Bank Transfer')}</option>
+              <option value="Card">{t('Card')}</option>
               <option value="Dynamic QR Code">KHQR / Dynamic QR</option>
             </select>
 
@@ -510,22 +512,22 @@ export const CashierPaymentTerminal: React.FC<CashierPaymentTerminalProps> = ({
           <table className="table-enterprise">
             <thead>
               <tr>
-                <th>Payment ID</th>
-                <th>Loan ID</th>
-                <th>Borrower</th>
-                <th className="text-right">Amount</th>
-                <th>Payment Date</th>
-                <th>Payment Method</th>
-                <th>Reference</th>
-                <th>Status</th>
-                <th className="text-right">Actions</th>
+                <th>{t('Payment ID')}</th>
+                <th>{t('Loan ID')}</th>
+                <th>{t('Borrower')}</th>
+                <th className="text-right">{t('Amount')}</th>
+                <th>{t('Payment Date')}</th>
+                <th>{t('Payment Method')}</th>
+                <th>{t('Reference', 'Reference')}</th>
+                <th>{t('Status')}</th>
+                <th className="text-right">{t('Actions')}</th>
               </tr>
             </thead>
             <tbody>
               {filteredReceipts.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="py-12 text-center text-xs text-[#64748B]">
-                    No payment records found matching the active filters.
+                    {t('No payments recorded yet')}
                   </td>
                 </tr>
               ) : (

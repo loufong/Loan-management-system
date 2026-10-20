@@ -246,9 +246,12 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
               <Wallet className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-[#0F172A]">No Active Loan Facilities</h3>
+              <h3 className="text-sm font-bold text-[#0F172A]">{t('No Active Loan Facilities', 'No Active Loan Facilities')}</h3>
               <p className="text-xs text-[#64748B] mt-0.5">
-                You currently do not have any active loans. Submit an application to get approved for our low-rate loan products.
+                {t(
+                  'You currently do not have any active loans. Submit an application to get approved for our low-rate loan products.',
+                  'You currently do not have any active loans. Submit an application to get approved for our low-rate loan products.'
+                )}
               </p>
             </div>
           </div>
@@ -294,7 +297,10 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
               {userReceipts.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="text-center py-8 text-xs text-[#64748B]">
-                    No payment receipts found yet. Once payments are recorded, your official receipts will be listed here.
+                    {t(
+                      'No payment receipts found yet. Once payments are recorded, your official receipts will be listed here.',
+                      'No payment receipts found yet. Once payments are recorded, your official receipts will be listed here.'
+                    )}
                   </td>
                 </tr>
               ) : (

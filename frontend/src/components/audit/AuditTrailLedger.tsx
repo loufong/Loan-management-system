@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { SystemActivityEvent, UserRole } from '../../types';
 import { Badge } from '../common/Badge';
+import { useLanguage } from '../../context/LanguageContext';
 import {
   Search,
   Code,
@@ -18,6 +19,7 @@ export const AuditTrailLedger: React.FC<AuditTrailLedgerProps> = ({
   events,
   currentUserRole
 }) => {
+  const { t } = useLanguage();
   const [selectedUserFilter, setSelectedUserFilter] = useState<string>('ALL');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('ALL');
   const [dateFilter, setDateFilter] = useState<string>('');
@@ -64,14 +66,14 @@ export const AuditTrailLedger: React.FC<AuditTrailLedgerProps> = ({
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
-              System Audit Trail &amp; Ledger
+              {t('System Audit Trail & Ledger')}
             </h1>
             <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-xs font-mono font-semibold bg-slate-100 text-[#0F172A] border border-[#E2E8F0]">
-              Cryptographically Sequenced
+              {t('Cryptographically Sequenced')}
             </span>
           </div>
           <p className="text-xs text-[#64748B] mt-0.5">
-            Forensic compliance audit trail recording all core transactions, underwriting decisions, and administrative actions.
+            {t('Forensic compliance audit trail recording all core transactions, underwriting decisions, and administrative actions.')}
           </p>
         </div>
       </div>
@@ -81,14 +83,14 @@ export const AuditTrailLedger: React.FC<AuditTrailLedgerProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
           {/* Search Query */}
           <div>
-            <label className="block font-semibold text-[#0F172A] mb-1">Search Keywords</label>
+            <label className="block font-semibold text-[#0F172A] mb-1">{t('Search Keywords')}</label>
             <div className="relative">
               <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Entity, IP, action..."
+                placeholder={t('Entity, IP, action...')}
                 className="w-full h-9 pl-8 pr-3 bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB]"
               />
             </div>
@@ -96,13 +98,13 @@ export const AuditTrailLedger: React.FC<AuditTrailLedgerProps> = ({
 
           {/* Filter by User */}
           <div>
-            <label className="block font-semibold text-[#0F172A] mb-1">Actor / Operator</label>
+            <label className="block font-semibold text-[#0F172A] mb-1">{t('Actor / Operator')}</label>
             <select
               value={selectedUserFilter}
               onChange={(e) => setSelectedUserFilter(e.target.value)}
               className="w-full h-9 px-3 bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] font-medium focus:outline-none focus:border-[#2563EB]"
             >
-              <option value="ALL">All Actors &amp; Officers</option>
+              <option value="ALL">{t('All Actors & Officers')}</option>
               {actors.map((actor) => (
                 <option key={actor} value={actor}>
                   {actor}
@@ -113,13 +115,13 @@ export const AuditTrailLedger: React.FC<AuditTrailLedgerProps> = ({
 
           {/* Filter by Action Category */}
           <div>
-            <label className="block font-semibold text-[#0F172A] mb-1">Action Category</label>
+            <label className="block font-semibold text-[#0F172A] mb-1">{t('Action Category')}</label>
             <select
               value={selectedCategoryFilter}
               onChange={(e) => setSelectedCategoryFilter(e.target.value)}
               className="w-full h-9 px-3 bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] font-medium focus:outline-none focus:border-[#2563EB]"
             >
-              <option value="ALL">All Event Categories</option>
+              <option value="ALL">{t('All Event Categories')}</option>
               <option value="LOGIN">LOGIN (Auth)</option>
               <option value="APPLICATION_SUBMITTED">APPLICATION_SUBMITTED</option>
               <option value="LOAN_APPROVED">LOAN_APPROVED</option>
@@ -131,7 +133,7 @@ export const AuditTrailLedger: React.FC<AuditTrailLedgerProps> = ({
 
           {/* Filter by Date */}
           <div>
-            <label className="block font-semibold text-[#0F172A] mb-1">Date</label>
+            <label className="block font-semibold text-[#0F172A] mb-1">{t('Date')}</label>
             <div className="flex items-center gap-1.5">
               <input
                 type="date"
@@ -144,7 +146,7 @@ export const AuditTrailLedger: React.FC<AuditTrailLedgerProps> = ({
                   onClick={() => setDateFilter('')}
                   className="text-xs text-[#64748B] hover:text-[#0F172A] px-1"
                 >
-                  Clear
+                  {t('Clear')}
                 </button>
               )}
             </div>
@@ -158,20 +160,20 @@ export const AuditTrailLedger: React.FC<AuditTrailLedgerProps> = ({
           <table className="table-enterprise">
             <thead>
               <tr>
-                <th>Timestamp</th>
-                <th>Actor / User</th>
-                <th className="text-center">Action Category</th>
-                <th>Action Detail</th>
-                <th>Entity Reference</th>
-                <th>IP Address</th>
-                <th className="text-right">Payload</th>
+                <th>{t('Timestamp')}</th>
+                <th>{t('Actor / User')}</th>
+                <th className="text-center">{t('Action Category')}</th>
+                <th>{t('Action Detail')}</th>
+                <th>{t('Entity Reference')}</th>
+                <th>{t('IP Address')}</th>
+                <th className="text-right">{t('Payload')}</th>
               </tr>
             </thead>
             <tbody className="font-mono text-xs">
               {filteredEvents.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-16 text-center text-[#64748B] font-sans">
-                    No system audit records match your filters.
+                    {t('No system audit records match your filters.')}
                   </td>
                 </tr>
               ) : (
@@ -235,7 +237,7 @@ export const AuditTrailLedger: React.FC<AuditTrailLedgerProps> = ({
                         className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-[6px] bg-white hover:bg-slate-50 border border-[#E2E8F0] text-[#0F172A] transition-colors cursor-pointer"
                       >
                         <Code className="w-3.5 h-3.5 text-[#2563EB]" />
-                        <span>Payload</span>
+                        <span>{t('Payload')}</span>
                       </button>
                     </td>
                   </tr>
@@ -254,7 +256,7 @@ export const AuditTrailLedger: React.FC<AuditTrailLedgerProps> = ({
               <div className="flex items-center gap-2">
                 <Code className="w-4 h-4 text-[#2563EB]" />
                 <h3 className="text-sm font-bold text-[#0F172A]">
-                  Audit Event Payload: {activeJsonEvent.id}
+                  {t('Audit Event Payload')}: {activeJsonEvent.id}
                 </h3>
               </div>
               <button
@@ -273,12 +275,12 @@ export const AuditTrailLedger: React.FC<AuditTrailLedgerProps> = ({
                 {copiedJson ? (
                   <>
                     <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Copied</span>
+                    <span>{t('Copied')}</span>
                   </>
                 ) : (
                   <>
                     <Copy className="w-3.5 h-3.5" />
-                    <span>Copy JSON</span>
+                    <span>{t('Copy JSON')}</span>
                   </>
                 )}
               </button>
@@ -289,12 +291,12 @@ export const AuditTrailLedger: React.FC<AuditTrailLedgerProps> = ({
             </div>
 
             <div className="flex items-center justify-between text-xs text-[#64748B] font-mono">
-              <span>Timestamp: {activeJsonEvent.timestamp}</span>
+              <span>{t('Timestamp')}: {activeJsonEvent.timestamp}</span>
               <button
                 onClick={() => setActiveJsonEvent(null)}
                 className="px-4 py-1.5 rounded-[6px] bg-white hover:bg-slate-50 border border-[#E2E8F0] text-[#0F172A] font-semibold font-sans cursor-pointer"
               >
-                Close
+                {t('Close')}
               </button>
             </div>
           </div>

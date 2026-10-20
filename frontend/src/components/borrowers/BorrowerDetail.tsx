@@ -23,6 +23,7 @@ import {
   Download
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { useLanguage } from '../../context/LanguageContext';
 
 export interface BorrowerDetailProps {
   borrower: Borrower;
@@ -45,6 +46,7 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
   onOpenCreateApplication,
   onViewReceipt
 }) => {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<
     'profile' | 'loans' | 'repayments' | 'documents' | 'audit'
   >('profile');
@@ -149,11 +151,11 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
       : 'text-[#DC2626] bg-red-50 border-red-200';
 
   const tabList = [
-    { id: 'profile', label: 'Borrower Profile & Dossier' },
-    { id: 'loans', label: `Loan History (${loans.length})` },
-    { id: 'repayments', label: `Payment History (${receipts.length})` },
-    { id: 'documents', label: `Documents (${kycDocuments.length})` },
-    { id: 'audit', label: 'Audit Trail' },
+    { id: 'profile', label: `${t('Borrower Profile')} & ${t('Dossier', 'Dossier')}` },
+    { id: 'loans', label: `${t('Active Facilities', 'Loan History')} (${loans.length})` },
+    { id: 'repayments', label: `${t('payment_history', 'Payment History')} (${receipts.length})` },
+    { id: 'documents', label: `${t('KYC & Verification', 'Documents')} (${kycDocuments.length})` },
+    { id: 'audit', label: t('Audit Trail') },
   ] as const;
 
   return (
@@ -166,7 +168,7 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
           className="inline-flex items-center gap-2 text-xs font-semibold text-[#0F172A] hover:text-[#2563EB] bg-white hover:bg-slate-50 border border-[#E2E8F0] px-3.5 py-2 rounded-[6px] transition cursor-pointer"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Back to Borrowers Directory</span>
+          <span>{t('Back to Borrowers Directory', 'Back to Borrowers Directory')}</span>
         </button>
 
         <div className="flex items-center gap-2">
@@ -177,7 +179,7 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[6px] bg-[#0F172A] hover:bg-[#1E293B] text-white text-xs font-semibold transition cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>Create Application</span>
+              <span>{t('Create Application', 'Create Application')}</span>
             </button>
           )}
         </div>

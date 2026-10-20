@@ -8,6 +8,7 @@ import {
   UserProfile,
   UserRole,
 } from '../../types';
+import { useLanguage } from '../../context/LanguageContext';
 import { Badge } from '../common/Badge';
 import { MoneyText } from '../common/MoneyText';
 import {
@@ -73,8 +74,16 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
   onCancel,
   onSubmitApplication,
 }) => {
+  const { language, t } = useLanguage();
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
   const [calcCurrency, setCalcCurrency] = useState<Currency>(initialCurrency);
+
+  const wizardSteps = [
+    { id: 1, title: t('step_product', 'Product') },
+    { id: 2, title: t('step_terms', 'Terms & Calculator') },
+    { id: 3, title: t('step_documents', 'Documents') },
+    { id: 4, title: t('step_review', 'Review') },
+  ];
 
   // --------------------------------------------------------------------------
   // STEP 1: Borrower & Product State
@@ -336,8 +345,12 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
-            <h1 className="text-base font-bold text-slate-900 leading-none">Apply for Loan</h1>
-            <p className="text-xs text-slate-500 mt-1">Complete your request in 4 simple steps</p>
+            <h1 className="text-base font-bold text-slate-900 leading-none">
+              {t('wizard_apply_title', 'Apply for Loan')}
+            </h1>
+            <p className="text-xs text-slate-500 mt-1">
+              {language === 'km' ? 'បំពេញពាក្យស្នើសុំរបស់អ្នកតាម ៤ ជំហានងាយៗ' : 'Complete your request in 4 simple steps'}
+            </p>
           </div>
         </div>
 
@@ -364,7 +377,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
             </button>
           </div>
           <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">
-            Step {currentStep} of 4
+            {language === 'km' ? `ជំហានទី ${currentStep} នៃ ៤` : `Step ${currentStep} of 4`}
           </span>
         </div>
       </div>
@@ -372,7 +385,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
       {/* 2. Stepper Progress Bar */}
       <div className="bg-white border border-slate-200 rounded-lg p-3">
         <div className="grid grid-cols-4 gap-2">
-          {STEPS.map((s) => {
+          {wizardSteps.map((s) => {
             const isCompleted = currentStep > s.id;
             const isCurrent = currentStep === s.id;
             const isClickable = s.id < currentStep;
@@ -969,7 +982,9 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                 className="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-0 cursor-pointer"
               />
               <span className="text-xs text-slate-700">
-                I confirm that all loan terms and documents provided are accurate.
+                {language === 'km'
+                  ? 'ខ្ញុំសូមបញ្ជាក់ថាលក្ខខណ្ឌកម្ចី និងឯកសារដែលបានផ្តល់ជូនទាំងអស់គឺពិតជាត្រឹមត្រូវ។'
+                  : 'I confirm that all loan terms and documents provided are accurate.'}
               </span>
             </label>
           </div>
@@ -985,7 +1000,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                 className="px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-md transition-colors inline-flex items-center gap-1.5"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Back</span>
+                <span>{t('btn_back', 'Back')}</span>
               </button>
             ) : (
               <button
@@ -993,7 +1008,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                 onClick={onCancel}
                 className="px-3.5 py-2 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors"
               >
-                Cancel
+                {t('btn_cancel', 'Cancel')}
               </button>
             )}
           </div>
@@ -1007,7 +1022,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                   disabled={isSubmitting}
                   className="px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-md transition-colors"
                 >
-                  Save Draft
+                  {t('wizard_save_draft_btn', 'Save Draft')}
                 </button>
                 <button
                   type="button"
@@ -1018,11 +1033,11 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                   {isSubmitting ? (
                     <>
                       <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>Submitting...</span>
+                      <span>{language === 'km' ? 'កំពុងដាក់ស្នើ...' : 'Submitting...'}</span>
                     </>
                   ) : (
                     <>
-                      <span>Submit Application</span>
+                      <span>{t('wizard_submit_btn', 'Submit Application')}</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </>
                   )}
@@ -1034,7 +1049,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                 onClick={() => setCurrentStep((prev) => (prev + 1) as any)}
                 className="px-4 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-md transition-colors inline-flex items-center gap-1.5 shadow-xs"
               >
-                <span>Continue</span>
+                <span>{t('btn_continue', 'Continue')}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             )}

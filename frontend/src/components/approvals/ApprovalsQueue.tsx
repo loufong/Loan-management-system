@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { LoanApplication, Currency, UserRole } from '../../types';
+import { useLanguage } from '../../context/LanguageContext';
 import { Badge } from '../common/Badge';
 import { MoneyText } from '../common/MoneyText';
 import {
@@ -30,6 +31,7 @@ export const ApprovalsQueue: React.FC<ApprovalsQueueProps> = ({
   currentUserName,
   onExecutiveDecision
 }) => {
+  const { t } = useLanguage();
   // Only show applications pending executive sign-off
   const pendingApprovals = applications.filter(
     (a) => a.status === 'UNDER_REVIEW' || (a.status === 'SUBMITTED' && a.creditOfficerReview)
@@ -96,10 +98,10 @@ export const ApprovalsQueue: React.FC<ApprovalsQueueProps> = ({
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
-              Credit Committee Approvals Queue
+              {t('Credit Committee Approvals Queue')}
             </h1>
             <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-xs font-mono font-semibold bg-emerald-50 text-[#16A34A] border border-emerald-200">
-              {pendingApprovals.length} Actionable Files
+              {pendingApprovals.length} {t('Actionable Files', 'Actionable Files')}
             </span>
           </div>
           <p className="text-xs text-[#64748B] mt-0.5">
@@ -114,13 +116,13 @@ export const ApprovalsQueue: React.FC<ApprovalsQueueProps> = ({
           <table className="table-enterprise">
             <thead>
               <tr>
-                <th>Application ID</th>
-                <th>Borrower Name</th>
-                <th className="text-right">Requested vs Recommended</th>
-                <th className="text-center">Interest Rate</th>
-                <th>Reviewer Assessment</th>
-                <th className="text-center">SLA Clock</th>
-                <th className="text-right">Committee Decision</th>
+                <th>{t('Application ID')}</th>
+                <th>{t('Borrower Name')}</th>
+                <th className="text-right">{t('Requested vs Recommended', 'Requested vs Recommended')}</th>
+                <th className="text-center">{t('Interest Rate')}</th>
+                <th>{t('Reviewer Assessment')}</th>
+                <th className="text-center">{t('SLA Clock', 'SLA Clock')}</th>
+                <th className="text-right">{t('Committee Decision')}</th>
               </tr>
             </thead>
             <tbody>
@@ -129,7 +131,7 @@ export const ApprovalsQueue: React.FC<ApprovalsQueueProps> = ({
                   <td colSpan={7} className="py-16 text-center text-xs text-[#64748B]">
                     <div className="max-w-xs mx-auto space-y-2">
                       <ShieldCheck className="w-8 h-8 text-[#16A34A] mx-auto" />
-                      <p className="font-semibold text-[#0F172A] text-sm">No applications pending approval</p>
+                      <p className="font-semibold text-[#0F172A] text-sm">{t('No applications pending approval')}</p>
                       <p>All submitted loan files have received committee resolution.</p>
                     </div>
                   </td>
@@ -196,14 +198,14 @@ export const ApprovalsQueue: React.FC<ApprovalsQueueProps> = ({
                           onClick={() => openApproveModal(app)}
                           className="px-2.5 py-1 rounded-[6px] bg-[#16A34A] hover:bg-emerald-700 text-white text-xs font-semibold transition cursor-pointer"
                         >
-                          Approve
+                          {t('Approve')}
                         </button>
                         <button
                           type="button"
                           onClick={() => openRejectModal(app)}
                           className="px-2.5 py-1 rounded-[6px] bg-[#DC2626] hover:bg-rose-700 text-white text-xs font-semibold transition cursor-pointer"
                         >
-                          Reject
+                          {t('Reject')}
                         </button>
                       </div>
                     </td>

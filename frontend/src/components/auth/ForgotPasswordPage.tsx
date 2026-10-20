@@ -8,6 +8,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { api } from '../../services/api';
+import { useLanguage } from '../../context/LanguageContext';
 import logoImg from '../../assets/logo-transparent.png';
 
 interface ForgotPasswordPageProps {
@@ -19,6 +20,7 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
   onOtpSent,
   onNavigateToLogin,
 }) => {
+  const { language, setLanguage, t } = useLanguage();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,12 +31,12 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
 
     const cleanEmail = email.trim();
     if (!cleanEmail) {
-      setError('Please provide your registered email address.');
+      setError(language === 'km' ? 'សូមបញ្ចូលអាសយដ្ឋានអ៊ីមែលដែលបានចុះឈ្មោះ។' : 'Please provide your registered email address.');
       return;
     }
 
     if (!/\S+@\S+\.\S+/.test(cleanEmail)) {
-      setError('Please enter a valid email address.');
+      setError(language === 'km' ? 'សូមបញ្ចូលអាសយដ្ឋានអ៊ីមែលត្រឹមត្រូវ។' : 'Please enter a valid email address.');
       return;
     }
 
@@ -44,7 +46,7 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
       await api.forgotPassword({ email: cleanEmail });
       onOtpSent(cleanEmail);
     } catch (err: any) {
-      setError(err?.message || 'Unable to process password reset request. Please try again.');
+      setError(err?.message || (language === 'km' ? 'មិនអាចដំណើរការសំណើសុំកំណត់ពាក្យសម្ងាត់ឡើងវិញបានទេ។ សូមព្យាយាមម្តងទៀត។' : 'Unable to process password reset request. Please try again.'));
     } finally {
       setIsLoading(false);
     }
@@ -53,22 +55,54 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        {/* Language Switcher in Header */}
+        <div className="flex justify-end mb-3">
+          <div className="flex items-center bg-white p-0.5 rounded-[6px] border border-[#E2E8F0] text-xs font-semibold shadow-xs">
+            <button
+              type="button"
+              onClick={() => setLanguage('km')}
+              className={`px-2.5 py-1 rounded-[4px] transition-colors flex items-center justify-center cursor-pointer ${
+                language === 'km'
+                  ? 'bg-[#2563EB] text-white shadow-xs font-bold'
+                  : 'text-[#64748B] hover:text-[#0F172A]'
+              }`}
+              title="ភាសាខ្មែរ (KH)"
+            >
+              <span className="text-[11px] font-bold">KH</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setLanguage('en')}
+              className={`px-2.5 py-1 rounded-[4px] transition-colors flex items-center justify-center cursor-pointer ${
+                language === 'en'
+                  ? 'bg-[#2563EB] text-white shadow-xs font-bold'
+                  : 'text-[#64748B] hover:text-[#0F172A]'
+              }`}
+              title="English (EN)"
+            >
+              <span className="text-[11px] font-bold">EN</span>
+            </button>
+          </div>
+        </div>
+
         <div className="bg-white p-8 border border-[#E2E8F0] rounded-[8px] space-y-6">
-          
           <div className="space-y-1.5">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-[6px] bg-slate-50 border border-slate-200/80 flex items-center justify-center p-1 overflow-hidden">
                 <img src={logoImg} alt="Jam Song Vich" className="w-full h-full object-contain" />
               </div>
               <h1 className="text-lg font-bold text-[#0F172A]">
-                Jam Song Vich
+                {t('app_name', 'Jam Song Vich')}
               </h1>
             </div>
             <h2 className="text-xl font-bold text-[#0F172A] pt-2">
-              Password Recovery
+              {t('Password Recovery', 'Password Recovery')}
             </h2>
             <p className="text-xs text-[#64748B]">
-              Enter your registered email address to receive a 6-digit verification code.
+              {t(
+                'Enter your registered email address to receive a 6-digit verification code.',
+                'Enter your registered email address to receive a 6-digit verification code.'
+              )}
             </p>
           </div>
 
@@ -82,7 +116,7 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-[13px] font-medium text-[#0F172A] mb-1.5">
-                Registered Email Address
+                {t('Registered Email Address', 'Registered Email Address')}
               </label>
               <div className="relative">
                 <input
@@ -105,10 +139,10 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin text-white" />
-                  <span>Sending code...</span>
+                  <span>{t('Sending code...', 'Sending code...')}</span>
                 </>
               ) : (
-                <span>Send Reset Code</span>
+                <span>{t('Send Reset Code', 'Send Reset Code')}</span>
               )}
             </button>
           </form>
@@ -117,17 +151,16 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
             <button
               type="button"
               onClick={onNavigateToLogin}
-              className="inline-flex items-center gap-1.5 text-xs text-[#2563EB] hover:text-[#1D4ED8] font-medium transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs text-[#2563EB] hover:text-[#1D4ED8] font-medium transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to sign in</span>
+              <span>{t('Back to Sign in', 'Back to Sign in')}</span>
             </button>
           </div>
-
         </div>
 
         <div className="mt-6 text-center text-xs text-[#64748B]">
-          Jam Song Vich Platform • Secure Access Gateway
+          Jam Song Vich Platform • {t('Bank-grade 256-bit encryption • Your privacy is protected', 'Secure Access Gateway')}
         </div>
       </div>
     </div>

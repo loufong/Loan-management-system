@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { UserRole, UserProfile } from '../../types';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import logoImg from '../../assets/logo-transparent.png';
 
 interface LoginPageProps {
@@ -32,6 +33,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   initialRole,
 }) => {
   const { login } = useAuth();
+  const { language, setLanguage, t } = useLanguage();
   const [usernameOrEmail, setUsernameOrEmail] = useState<string>(() => {
     return initialRole === 'admin' ? 'admin@loansystem.edu' : '';
   });
@@ -82,16 +84,46 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   return (
     <div className="min-h-screen w-full bg-[#F8FAFC] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans antialiased text-[#0F172A]">
       <div className="sm:mx-auto sm:w-full sm:max-w-[480px]">
+        {/* Language Switcher in Login Header */}
+        <div className="flex justify-end mb-3">
+          <div className="flex items-center bg-white p-0.5 rounded-[6px] border border-[#E2E8F0] text-xs font-semibold shadow-xs">
+            <button
+              type="button"
+              onClick={() => setLanguage('km')}
+              className={`px-2.5 py-1 rounded-[4px] transition-colors flex items-center justify-center cursor-pointer ${
+                language === 'km'
+                  ? 'bg-[#2563EB] text-white shadow-xs font-bold'
+                  : 'text-[#64748B] hover:text-[#0F172A]'
+              }`}
+              title="ភាសាខ្មែរ (KH)"
+            >
+              <span className="text-[11px] font-bold">KH</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setLanguage('en')}
+              className={`px-2.5 py-1 rounded-[4px] transition-colors flex items-center justify-center cursor-pointer ${
+                language === 'en'
+                  ? 'bg-[#2563EB] text-white shadow-xs font-bold'
+                  : 'text-[#64748B] hover:text-[#0F172A]'
+              }`}
+              title="English (EN)"
+            >
+              <span className="text-[11px] font-bold">EN</span>
+            </button>
+          </div>
+        </div>
+
         {/* Institutional Branding Header */}
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-[12px] bg-slate-50 border border-slate-200/80 mb-3 shadow-xs p-2">
             <img src={logoImg} alt="Jam Song Vich" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
-            Jam Song Vich
+            {t('app_name', 'Jam Song Vich')}
           </h1>
           <p className="text-xs font-semibold uppercase tracking-wider text-[#64748B] mt-0.5">
-            Loan Management System
+            {t('app_subtitle', 'Loan Management System')}
           </p>
         </div>
 
@@ -100,10 +132,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           {/* Form Header */}
           <div className="border-b border-[#E2E8F0] pb-3">
             <h2 className="text-lg font-bold text-[#0F172A]">
-              Welcome back
+              {language === 'km' ? 'សូមស្វាគមន៍' : 'Welcome back'}
             </h2>
             <p className="text-xs text-[#64748B] mt-0.5">
-              Sign in to continue to your loan management account.
+              {language === 'km'
+                ? 'ចូលទៅកាន់គណនីគ្រប់គ្រងឥណទានរបស់អ្នក។'
+                : 'Sign in to continue to your loan management account.'}
             </p>
           </div>
 
@@ -126,7 +160,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           {/* Quick Demo Credentials 1-Click Fill */}
           <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-[6px] p-3 text-xs space-y-2">
             <div className="flex items-center justify-between text-[#0F172A] font-semibold">
-              <span>Select Account (1-Click Fill):</span>
+              <span>{language === 'km' ? 'ជ្រើសរើសគណនី (ចុចម្តងចូលភ្លាម):' : 'Select Account (1-Click Fill):'}</span>
               <span className="text-[11px] font-normal text-[#64748B]">Password: Password123!</span>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -139,7 +173,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 }}
                 className="p-2 bg-white border border-[#E2E8F0] hover:border-[#2563EB] hover:bg-blue-50/40 rounded-[5px] text-left transition-all cursor-pointer flex flex-col"
               >
-                <span className="font-bold text-[11px] text-[#2563EB]">Administrator</span>
+                <span className="font-bold text-[11px] text-[#2563EB]">
+                  {language === 'km' ? 'អ្នកគ្រប់គ្រង (Admin)' : 'Administrator'}
+                </span>
                 <span className="text-[10px] text-[#64748B] truncate">admin@loansystem.edu</span>
               </button>
 
@@ -152,7 +188,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 }}
                 className="p-2 bg-white border border-[#E2E8F0] hover:border-[#059669] hover:bg-emerald-50/40 rounded-[5px] text-left transition-all cursor-pointer flex flex-col"
               >
-                <span className="font-bold text-[11px] text-[#059669]">Client User (Borrower)</span>
+                <span className="font-bold text-[11px] text-[#059669]">
+                  {language === 'km' ? 'អតិថិជន (Borrower)' : 'Client User (Borrower)'}
+                </span>
                 <span className="text-[10px] text-[#64748B] truncate">johnathan.doe@student.edu</span>
               </button>
             </div>
@@ -163,14 +201,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             {/* Field 1: Email or Username */}
             <div>
               <label className="block text-xs font-semibold text-[#0F172A] mb-1">
-                Email or Username
+                {language === 'km' ? 'ឈ្មោះអ្នកប្រើ ឬ អ៊ីមែល' : 'Email or Username'}
               </label>
               <div className="relative">
                 <input
                   type="text"
                   value={usernameOrEmail}
                   onChange={(e) => setUsernameOrEmail(e.target.value)}
-                  placeholder="Enter email or username"
+                  placeholder={language === 'km' ? 'បញ្ចូលអ៊ីមែល ឬ ឈ្មោះអ្នកប្រើ' : 'Enter email or username'}
                   autoComplete="username"
                   required
                   className="w-full h-11 px-3.5 pl-10 rounded-[6px] bg-white border border-[#E2E8F0] text-[#0F172A] text-sm focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#64748B]"
@@ -182,14 +220,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             {/* Field 2: Password with Show/Hide icon */}
             <div>
               <label className="block text-xs font-semibold text-[#0F172A] mb-1">
-                Password
+                {language === 'km' ? 'ពាក្យសម្ងាត់' : 'Password'}
               </label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter password"
+                  placeholder={language === 'km' ? 'បញ្ចូលពាក្យសម្ងាត់' : 'Enter password'}
                   autoComplete="current-password"
                   required
                   className="w-full h-11 px-3.5 pl-10 pr-10 rounded-[6px] bg-white border border-[#E2E8F0] text-[#0F172A] text-sm focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#64748B]"
@@ -215,7 +253,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="w-4 h-4 rounded-[4px] border-[#E2E8F0] text-[#2563EB] focus:ring-0 cursor-pointer"
                 />
-                <span className="text-xs text-[#0F172A] font-medium">Remember me</span>
+                <span className="text-xs text-[#0F172A] font-medium">
+                  {language === 'km' ? 'ចងចាំខ្ញុំនៅលើឧបករណ៍នេះ' : 'Remember me'}
+                </span>
               </label>
 
               <button
@@ -223,7 +263,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 onClick={onNavigateToForgotPassword}
                 className="text-xs text-[#2563EB] hover:text-[#1D4ED8] font-medium transition-colors"
               >
-                Forgot password?
+                {language === 'km' ? 'ភ្លេចពាក្យសម្ងាត់?' : 'Forgot password?'}
               </button>
             </div>
 
@@ -236,38 +276,44 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin text-white" />
-                  <span>SIGNING IN...</span>
+                  <span>{language === 'km' ? 'កំពុងចូល...' : 'SIGNING IN...'}</span>
                 </>
               ) : (
-                <span>SIGN IN</span>
+                <span>{language === 'km' ? 'ចូលប្រព័ន្ធ' : 'SIGN IN'}</span>
               )}
             </button>
           </form>
 
           {/* Don't have an account? Create account */}
           <div className="text-center text-xs text-[#64748B] pt-1">
-            <span>Don't have an account? </span>
+            <span>{language === 'km' ? 'មិនទាន់មានគណនីមែនទេ? ' : "Don't have an account? "}</span>
             <button
               type="button"
               onClick={onNavigateToRegister}
               className="text-[#2563EB] hover:text-[#1D4ED8] font-semibold transition-colors"
             >
-              Create account
+              {language === 'km' ? 'បង្កើតគណនីឥឡូវនេះ' : 'Create account'}
             </button>
           </div>
 
           {/* Security notice */}
           <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-center gap-1.5 text-[11px] text-[#64748B]">
             <ShieldCheck className="w-4 h-4 text-[#16A34A] shrink-0" />
-            <span>Secure 256-bit TLS connection. Authorized access only.</span>
+            <span>
+              {language === 'km'
+                ? 'សុវត្ថិភាពខ្ពស់ជាមួយនឹងការអ៊ិនគ្រីប 256-bit TLS។'
+                : 'Secure 256-bit TLS connection. Authorized access only.'}
+            </span>
           </div>
         </div>
 
         {/* Footer */}
         <div className="text-center text-xs text-[#64748B] space-y-0.5 mt-6">
-          <p>© 2026 Jam Song Vich • Loan Management System</p>
+          <p>© 2026 Jam Song Vich • {t('app_subtitle', 'Loan Management System')}</p>
           <p className="text-[11px] text-slate-400">
-            Compliant with National Bank of Cambodia Standards
+            {language === 'km'
+              ? 'អនុលោមតាមស្តង់ដារធនាគារជាតិនៃកម្ពុជា (NBC)'
+              : 'Compliant with National Bank of Cambodia Standards'}
           </p>
         </div>
       </div>
@@ -276,3 +322,4 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 };
 
 export default LoginPage;
+

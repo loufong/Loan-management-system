@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { UserProfile } from '../../types';
+import { useLanguage } from '../../context/LanguageContext';
 import logoImg from '../../assets/logo-transparent.png';
 
 export interface OtpVerificationPageProps {
@@ -26,6 +27,7 @@ export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
   onVerificationSuccess,
   onNavigateBack,
 }) => {
+  const { language, setLanguage, t } = useLanguage();
   const [digits, setDigits] = useState<string[]>(['', '', '', '', '', '']);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -84,7 +86,7 @@ export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
   const handleVerify = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!isCodeComplete) {
-      setError('Please enter all 6 digits of the verification code.');
+      setError(language === 'km' ? 'សូមបញ្ចូលលេខកូដផ្ទៀងផ្ទាត់ទាំង ៦ ខ្ទង់។' : 'Please enter all 6 digits of the verification code.');
       return;
     }
 
@@ -104,7 +106,7 @@ export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
       }
     } catch (err: any) {
       setAttemptsRemaining((prev) => Math.max(0, prev - 1));
-      setError(err?.message || 'Invalid verification code. Please check and try again.');
+      setError(err?.message || (language === 'km' ? 'លេខកូដផ្ទៀងផ្ទាត់មិនត្រឹមត្រូវទេ។ សូមពិនិត្យ ហើយព្យាយាមម្តងទៀត។' : 'Invalid verification code. Please check and try again.'));
     } finally {
       setIsLoading(false);
     }
@@ -119,37 +121,72 @@ export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
       const canonicalPurpose = purpose === 'login_verification' ? 'LOGIN' : purpose;
       await api.resendOtp({ email, purpose: canonicalPurpose });
       setResendCooldown(60);
-      setSuccessNotice('A fresh 6-digit verification code has been dispatched to your email.');
+      setSuccessNotice(language === 'km' ? 'លេខកូដផ្ទៀងផ្ទាត់ថ្មី ៦ ខ្ទង់ត្រូវបានផ្ញើទៅកាន់អ៊ីមែលរបស់អ្នក។' : 'A fresh 6-digit verification code has been dispatched to your email.');
     } catch (err: any) {
-      setError(err?.message || 'Failed to resend code. Please try again later.');
+      setError(err?.message || (language === 'km' ? 'មិនអាចផ្ញើលេខកូដម្តងទៀតបានទេ។ សូមព្យាយាមម្តងទៀតនៅពេលក្រោយ។' : 'Failed to resend code. Please try again later.'));
     } finally {
       setIsResending(false);
     }
   };
 
+  const getTitle = () => {
+    if (purpose === 'login_verification') {
+      return language === 'km' ? 'ការចូលគណនីពីរបីជំហាន' : 'Two-Step Sign In';
+    }
+    if (purpose === 'forgot_password') {
+      return language === 'km' ? 'កំណត់ពាក្យសម្ងាត់ឡើងវិញ' : 'Reset Your Password';
+    }
+    return language === 'km' ? 'ផ្ទៀងផ្ទាត់អ៊ីមែលរបស់អ្នក' : 'Verify Your Email';
+  };
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        {/* Language Switcher in Header */}
+        <div className="flex justify-end mb-3">
+          <div className="flex items-center bg-white p-0.5 rounded-[6px] border border-[#E2E8F0] text-xs font-semibold shadow-xs">
+            <button
+              type="button"
+              onClick={() => setLanguage('km')}
+              className={`px-2.5 py-1 rounded-[4px] transition-colors flex items-center justify-center cursor-pointer ${
+                language === 'km'
+                  ? 'bg-[#2563EB] text-white shadow-xs font-bold'
+                  : 'text-[#64748B] hover:text-[#0F172A]'
+              }`}
+              title="ភាសាខ្មែរ (KH)"
+            >
+              <span className="text-[11px] font-bold">KH</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setLanguage('en')}
+              className={`px-2.5 py-1 rounded-[4px] transition-colors flex items-center justify-center cursor-pointer ${
+                language === 'en'
+                  ? 'bg-[#2563EB] text-white shadow-xs font-bold'
+                  : 'text-[#64748B] hover:text-[#0F172A]'
+              }`}
+              title="English (EN)"
+            >
+              <span className="text-[11px] font-bold">EN</span>
+            </button>
+          </div>
+        </div>
+
         <div className="bg-white p-8 border border-[#E2E8F0] rounded-[8px] space-y-6">
-          
           <div className="space-y-1.5">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-[6px] bg-slate-50 border border-slate-200/80 flex items-center justify-center p-1 overflow-hidden">
                 <img src={logoImg} alt="Jam Song Vich" className="w-full h-full object-contain" />
               </div>
               <h1 className="text-lg font-bold text-[#0F172A]">
-                Jam Song Vich
+                {t('app_name', 'Jam Song Vich')}
               </h1>
             </div>
             <h2 className="text-xl font-bold text-[#0F172A] pt-2">
-              {purpose === 'login_verification'
-                ? 'Two-Step Sign In'
-                : purpose === 'forgot_password'
-                ? 'Reset Your Password'
-                : 'Verify Your Email'}
+              {getTitle()}
             </h2>
             <p className="text-xs text-[#64748B]">
-              We sent a 6-digit verification code to{' '}
+              {language === 'km' ? 'យើងបានផ្ញើលេខកូដផ្ទៀងផ្ទាត់ ៦ ខ្ទង់ទៅកាន់ ' : 'We sent a 6-digit verification code to '}
               <strong className="text-[#0F172A]">{email}</strong>.
             </p>
           </div>
@@ -168,17 +205,10 @@ export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
             </div>
           )}
 
-          {error && (
-            <div className="p-3 bg-rose-50 border border-rose-200 rounded-[6px] flex items-center gap-2 text-xs text-rose-700">
-              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-              <span>{error}</span>
-            </div>
-          )}
-
           <form onSubmit={handleVerify} className="space-y-5">
             <div>
               <label className="block text-[13px] font-medium text-[#0F172A] mb-2 text-center">
-                Enter 6-Digit Code
+                {language === 'km' ? 'បញ្ចូលលេខកូដ ៦ ខ្ទង់' : 'Enter 6-Digit Code'}
               </label>
 
               <div className="flex items-center justify-between gap-2">
@@ -206,10 +236,10 @@ export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin text-white" />
-                  <span>Verifying...</span>
+                  <span>{t('Verifying code...', 'Verifying...')}</span>
                 </>
               ) : (
-                <span>Verify</span>
+                <span>{t('Verify & Continue', 'Verify')}</span>
               )}
             </button>
           </form>
@@ -219,39 +249,38 @@ export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
             <span>
               {resendCooldown > 0 ? (
                 <span className="flex items-center gap-1 font-mono">
-                  <Clock className="w-3.5 h-3.5" /> Resend code in {resendCooldown} seconds
+                  <Clock className="w-3.5 h-3.5" /> {language === 'km' ? `ផ្ញើម្តងទៀតក្នុង ${resendCooldown} វិនាទី` : `Resend code in ${resendCooldown} seconds`}
                 </span>
               ) : (
                 <button
                   type="button"
                   onClick={handleResend}
                   disabled={isResending}
-                  className="text-[#2563EB] hover:text-[#1D4ED8] font-semibold flex items-center gap-1"
+                  className="text-[#2563EB] hover:text-[#1D4ED8] font-semibold flex items-center gap-1 cursor-pointer"
                 >
                   <RotateCw className="w-3.5 h-3.5" />
-                  <span>Resend code</span>
+                  <span>{t('Resend Code', 'Resend code')}</span>
                 </button>
               )}
             </span>
 
-            <span>{attemptsRemaining} attempts left</span>
+            <span>{attemptsRemaining} {language === 'km' ? 'ដងនៅសល់' : 'attempts left'}</span>
           </div>
 
           <div className="pt-4 border-t border-[#E2E8F0] text-center">
             <button
               type="button"
               onClick={onNavigateBack}
-              className="inline-flex items-center gap-1.5 text-xs text-[#2563EB] hover:text-[#1D4ED8] font-medium transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs text-[#2563EB] hover:text-[#1D4ED8] font-medium transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back</span>
+              <span>{t('btn_back', 'Back')}</span>
             </button>
           </div>
-
         </div>
 
         <div className="mt-6 text-center text-xs text-[#64748B]">
-          Jam Song Vich Platform • Multi-Factor Verification
+          Jam Song Vich Platform • {t('Security Verification', 'Multi-Factor Verification')}
         </div>
       </div>
     </div>
@@ -259,3 +288,4 @@ export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
 };
 
 export default OtpVerificationPage;
+

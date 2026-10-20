@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { LoanAccount, Currency, UserRole } from '../../types';
+import { useLanguage } from '../../context/LanguageContext';
 import { MoneyText } from '../common/MoneyText';
 import {
   Play,
@@ -25,6 +26,7 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
   currentUserRole,
   onRecordPaymentForLoan
 }) => {
+  const { t } = useLanguage();
   const [severityFilter, setSeverityFilter] = useState<
     'ALL' | 'EARLY' | 'MODERATE' | 'SEVERE'
   >('ALL');
@@ -140,10 +142,10 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
-              Overdue Watchlist &amp; Delinquency Desk
+              {t('Overdue Watchlist & Delinquency Desk')}
             </h1>
             <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-xs font-mono font-semibold bg-red-50 text-[#DC2626] border border-red-200">
-              {delinquentLoansCount} Delinquent
+              {delinquentLoansCount} {t('Delinquent')}
             </span>
           </div>
           <p className="text-xs text-[#64748B] mt-0.5">
@@ -164,7 +166,7 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
           ) : (
             <>
               <Play className="w-3 h-3 fill-current" />
-              <span>Run Daily Overdue Audit</span>
+              <span>{t('Run Daily Overdue Audit')}</span>
             </>
           )}
         </button>
@@ -185,7 +187,7 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
         {/* Card 1: Total Overdue Balance */}
         <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-5 space-y-1">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B] block">
-            Total Overdue Balance
+            {t('Total Overdue Balance', 'Total Overdue Balance')}
           </span>
           <MoneyText
             amount={totalOverdueAmount}
@@ -198,7 +200,7 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
         {/* Card 2: Total Overdue Accounts */}
         <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-5 space-y-1">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B] block">
-            Total Overdue Accounts
+            {t('Total Overdue Accounts')}
           </span>
           <span className="text-2xl font-mono tabular-nums font-bold text-[#0F172A] block">
             {delinquentLoansCount} accounts
@@ -210,7 +212,7 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
         <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-5 space-y-1">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
-              Portfolio at Risk (PAR 30+)
+              {t('Portfolio at Risk (PAR 30+)')}
             </span>
             {isParWarning ? (
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-[4px] bg-red-50 text-[#DC2626] border border-red-200">
@@ -240,10 +242,10 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
       <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-2.5">
         <div className="flex items-center gap-1.5 overflow-x-auto bg-slate-100 p-0.5 rounded-[6px] border border-[#E2E8F0]">
           {[
-            { key: 'ALL', label: 'All Delinquent' },
-            { key: 'EARLY', label: '1–15 Days (Early Watch)' },
-            { key: 'MODERATE', label: '16–30 Days (Moderate Risk)' },
-            { key: 'SEVERE', label: '30+ Days (Severe / NPL)' },
+            { key: 'ALL', label: t('All Delinquent') },
+            { key: 'EARLY', label: t('1–15 Days (Early Watch)') },
+            { key: 'MODERATE', label: t('16–30 Days (Moderate Risk)') },
+            { key: 'SEVERE', label: t('30+ Days (Severe / NPL)') },
           ].map((tab) => {
             const active = severityFilter === tab.key;
             return (
@@ -269,15 +271,15 @@ export const OverdueWatchlist: React.FC<OverdueWatchlistProps> = ({
           <table className="table-enterprise">
             <thead>
               <tr>
-                <th>Borrower Name &amp; Phone</th>
-                <th>Loan # &amp; Product</th>
-                <th className="text-center">Installment #</th>
-                <th>Due Date</th>
-                <th className="text-center">Days Overdue</th>
-                <th className="text-right">Overdue Amount</th>
-                <th className="text-right">Accrued Late Fee</th>
-                <th>Last Contacted</th>
-                <th className="text-right">Actions</th>
+                <th>{t('Borrower Name & Phone')}</th>
+                <th>{t('Loan # & Product')}</th>
+                <th className="text-center">{t('Installment #')}</th>
+                <th>{t('Due Date')}</th>
+                <th className="text-center">{t('Days Overdue')}</th>
+                <th className="text-right">{t('Overdue Amount')}</th>
+                <th className="text-right">{t('Accrued Late Fee')}</th>
+                <th>{t('Last Contacted')}</th>
+                <th className="text-right">{t('Actions')}</th>
               </tr>
             </thead>
             <tbody>

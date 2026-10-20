@@ -15,6 +15,7 @@ import {
   Edit3,
 } from 'lucide-react';
 import { api } from '../../services/api';
+import { useLanguage } from '../../context/LanguageContext';
 import logoImg from '../../assets/logo-transparent.png';
 
 interface RegisterPageProps {
@@ -26,6 +27,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
   onRegisterSuccess,
   onNavigateToLogin,
 }) => {
+  const { language, setLanguage, t } = useLanguage();
   const [fullName, setFullName] = useState('');
   const [customUsername, setCustomUsername] = useState('');
   const [isEditingUsername, setIsEditingUsername] = useState(false);
@@ -79,11 +81,11 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
 
   const strengthLabel = useMemo(() => {
     if (!password) return '';
-    if (strengthScore <= 1) return 'Weak';
-    if (strengthScore === 2) return 'Fair';
-    if (strengthScore === 3) return 'Good';
-    return 'Strong';
-  }, [password, strengthScore]);
+    if (strengthScore <= 1) return t('Weak', 'Weak');
+    if (strengthScore === 2) return t('Fair', 'Fair');
+    if (strengthScore === 3) return t('Good', 'Good');
+    return t('Strong', 'Strong');
+  }, [password, strengthScore, t]);
 
   const strengthColor = useMemo(() => {
     if (strengthScore <= 1) return 'bg-rose-500';
@@ -101,34 +103,34 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
 
     const cleanFullName = fullName.trim();
     if (!cleanFullName) {
-      setError('Please enter your full name.');
+      setError(language === 'km' ? 'សូមបញ្ចូលឈ្មោះពេញរបស់អ្នក។' : 'Please enter your full name.');
       return;
     }
 
     const cleanEmail = email.trim();
     if (!cleanEmail || !isEmailValid) {
-      setError('Please enter a valid email address (e.g. name@gmail.com, name@yahoo.com).');
+      setError(language === 'km' ? 'សូមបញ្ចូលអាសយដ្ឋានអ៊ីមែលត្រឹមត្រូវ (ឧ. name@gmail.com)។' : 'Please enter a valid email address (e.g. name@gmail.com, name@yahoo.com).');
       return;
     }
 
     const cleanPhone = phone.trim();
     if (!cleanPhone || cleanPhone.length < 8) {
-      setError('Please enter a valid phone number (at least 8 digits).');
+      setError(language === 'km' ? 'សូមបញ្ចូលលេខទូរស័ព្ទត្រឹមត្រូវ (យ៉ាងតិច ៨ ខ្ទង់)។' : 'Please enter a valid phone number (at least 8 digits).');
       return;
     }
 
     if (password.length < 8) {
-      setError('Password must be at least 8 characters long.');
+      setError(language === 'km' ? 'ពាក្យសម្ងាត់ត្រូវតែមានយ៉ាងតិច ៨ តួអក្សរ។' : 'Password must be at least 8 characters long.');
       return;
     }
 
     if (strengthScore < 3) {
-      setError('Please make your password stronger with uppercase, lowercase, numbers, and symbols.');
+      setError(language === 'km' ? 'សូមធ្វើឱ្យពាក្យសម្ងាត់កាន់តែរឹងមាំជាមួយអក្សរធំ អក្សរតូច លេខ និងនិមិត្តសញ្ញា។' : 'Please make your password stronger with uppercase, lowercase, numbers, and symbols.');
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match. Please re-enter to confirm.');
+      setError(language === 'km' ? 'ពាក្យសម្ងាត់មិនត្រូវគ្នាទេ។ សូមបញ្ចូលម្តងទៀតដើម្បីបញ្ជាក់។' : 'Passwords do not match. Please re-enter to confirm.');
       return;
     }
 
@@ -152,7 +154,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
 
       onRegisterSuccess(cleanEmail);
     } catch (err: any) {
-      setError(err?.message || 'Unable to create account. Please check your details and try again.');
+      setError(err?.message || (language === 'km' ? 'មិនអាចបង្កើតគណនីបានទេ។ សូមពិនិត្យព័ត៌មានរបស់អ្នក ហើយព្យាយាមម្តងទៀត។' : 'Unable to create account. Please check your details and try again.'));
     } finally {
       setIsLoading(false);
     }
@@ -161,16 +163,46 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
   return (
     <div className="min-h-screen w-full bg-[#F8FAFC] flex flex-col justify-center py-10 px-4 sm:px-6 lg:px-8 font-sans antialiased text-[#0F172A]">
       <div className="sm:mx-auto sm:w-full sm:max-w-[490px]">
+        {/* Language Switcher in Register Header */}
+        <div className="flex justify-end mb-3">
+          <div className="flex items-center bg-white p-0.5 rounded-[6px] border border-[#E2E8F0] text-xs font-semibold shadow-xs">
+            <button
+              type="button"
+              onClick={() => setLanguage('km')}
+              className={`px-2.5 py-1 rounded-[4px] transition-colors flex items-center justify-center cursor-pointer ${
+                language === 'km'
+                  ? 'bg-[#2563EB] text-white shadow-xs font-bold'
+                  : 'text-[#64748B] hover:text-[#0F172A]'
+              }`}
+              title="ភាសាខ្មែរ (KH)"
+            >
+              <span className="text-[11px] font-bold">KH</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setLanguage('en')}
+              className={`px-2.5 py-1 rounded-[4px] transition-colors flex items-center justify-center cursor-pointer ${
+                language === 'en'
+                  ? 'bg-[#2563EB] text-white shadow-xs font-bold'
+                  : 'text-[#64748B] hover:text-[#0F172A]'
+              }`}
+              title="English (EN)"
+            >
+              <span className="text-[11px] font-bold">EN</span>
+            </button>
+          </div>
+        </div>
+
         {/* Brand Header */}
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-[12px] bg-white border border-slate-200/80 mb-3 shadow-xs p-2">
             <img src={logoImg} alt="Jam Song Vich" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
-            Jam Song Vich
+            {t('app_name', 'Jam Song Vich')}
           </h1>
           <p className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B] mt-0.5">
-            Loan Management System
+            {t('app_subtitle', 'Loan Management System')}
           </p>
         </div>
 
@@ -179,10 +211,13 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
           {/* Form Header */}
           <div className="border-b border-[#E2E8F0] pb-3">
             <h2 className="text-lg font-bold text-[#0F172A]">
-              Create your account
+              {t('Create your account', 'Create your account')}
             </h2>
             <p className="text-xs text-[#64748B] mt-0.5 leading-relaxed">
-              Fast, simple registration. We will send a 6-digit verification code to your email.
+              {t(
+                'Fast, simple registration. We will send a 6-digit verification code to your email.',
+                'Fast, simple registration. We will send a 6-digit verification code to your email.'
+              )}
             </p>
           </div>
 
@@ -198,14 +233,14 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
             {/* 1. Full Name */}
             <div>
               <label className="block text-[13px] font-medium text-[#0F172A] mb-1.5">
-                Full Name
+                {t('Full Name', 'Full Name')}
               </label>
               <div className="relative">
                 <input
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="e.g. Sokha Chan"
+                  placeholder={language === 'km' ? 'ឧ. ចាន់ សុខា' : 'e.g. Sokha Chan'}
                   required
                   autoFocus
                   className="w-full h-[44px] px-3.5 pl-10 rounded-[6px] bg-white border border-[#E2E8F0] text-[#0F172A] text-[14px] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#94A3B8]"
@@ -217,9 +252,9 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
               <div className="mt-1.5 flex items-center justify-between text-[11px] text-[#64748B]">
                 <div className="flex items-center gap-1">
                   <Sparkles className="w-3 h-3 text-[#2563EB]" />
-                  <span>Username:</span>
+                  <span>{t('Username', 'Username')}:</span>
                   <span className="font-mono font-medium text-[#0F172A]">
-                    @{autoUsername || 'username'}
+                    @{autoUsername || (language === 'km' ? 'ឈ្មោះអ្នកប្រើ' : 'username')}
                   </span>
                 </div>
                 {!isEditingUsername ? (
@@ -229,7 +264,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                     className="text-[#2563EB] hover:text-[#1D4ED8] font-medium flex items-center gap-1 cursor-pointer"
                   >
                     <Edit3 className="w-2.5 h-2.5" />
-                    <span>Customize</span>
+                    <span>{t('Customize', 'Customize')}</span>
                   </button>
                 ) : (
                   <button
@@ -240,7 +275,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                     }}
                     className="text-[#64748B] hover:text-[#0F172A] font-medium cursor-pointer"
                   >
-                    Reset auto
+                    {t('Reset auto', 'Reset auto')}
                   </button>
                 )}
               </div>
@@ -252,11 +287,11 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                     type="text"
                     value={customUsername}
                     onChange={(e) => setCustomUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_.-]/g, ''))}
-                    placeholder="Enter custom username"
+                    placeholder={t('Enter custom username', 'Enter custom username')}
                     className="w-full h-[36px] px-3 rounded-[6px] bg-slate-50 border border-[#CBD5E1] text-[#0F172A] text-[13px] font-mono focus:outline-none focus:border-[#2563EB]"
                   />
                   <p className="text-[10px] text-[#64748B] mt-1">
-                    Letters, numbers, dots, and underscores only.
+                    {t('Letters, numbers, dots, and underscores only.', 'Letters, numbers, dots, and underscores only.')}
                   </p>
                 </div>
               )}
@@ -266,10 +301,10 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-[13px] font-medium text-[#0F172A]">
-                  Email Address
+                  {t('Email Address', 'Email Address')}
                 </label>
                 <span className="text-[10px] uppercase font-semibold tracking-wider text-[#2563EB] bg-blue-50 px-2 py-0.5 rounded-[4px] border border-blue-100">
-                  OTP sent here
+                  {t('OTP sent here', 'OTP sent here')}
                 </span>
               </div>
               <div className="relative">
@@ -291,21 +326,24 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                 )}
               </div>
               <p className="text-[11px] text-[#64748B] mt-1">
-                Enter your email (Gmail, Yahoo, Outlook, etc.) to receive your 6-digit verification code.
+                {t(
+                  'Enter your email (Gmail, Yahoo, Outlook, etc.) to receive your 6-digit verification code.',
+                  'Enter your email (Gmail, Yahoo, Outlook, etc.) to receive your 6-digit verification code.'
+                )}
               </p>
             </div>
 
             {/* 3. Phone Number */}
             <div>
               <label className="block text-[13px] font-medium text-[#0F172A] mb-1.5">
-                Phone Number
+                {t('Phone Number', 'Phone Number')}
               </label>
               <div className="relative">
                 <input
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="e.g. 012 345 678"
+                  placeholder={language === 'km' ? 'ឧ. 012 345 678' : 'e.g. 012 345 678'}
                   required
                   className="w-full h-[44px] px-3.5 pl-10 rounded-[6px] bg-white border border-[#E2E8F0] text-[#0F172A] text-[14px] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#94A3B8]"
                 />
@@ -317,11 +355,11 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-[13px] font-medium text-[#0F172A]">
-                  Password
+                  {t('Password', 'Password')}
                 </label>
                 {password && (
                   <span className="text-[11px] font-semibold text-[#64748B]">
-                    Strength: <span className={strengthScore >= 3 ? 'text-emerald-600' : strengthScore === 2 ? 'text-amber-600' : 'text-rose-600'}>{strengthLabel}</span>
+                    {t('Strength:', 'Strength:')} <span className={strengthScore >= 3 ? 'text-emerald-600' : strengthScore === 2 ? 'text-amber-600' : 'text-rose-600'}>{strengthLabel}</span>
                   </span>
                 )}
               </div>
@@ -330,7 +368,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="At least 8 characters"
+                  placeholder={t('At least 8 characters', 'At least 8 characters')}
                   required
                   className="w-full h-[44px] px-3.5 pl-10 pr-10 rounded-[6px] bg-white border border-[#E2E8F0] text-[#0F172A] text-[14px] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#94A3B8]"
                 />
@@ -355,7 +393,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                     <div className={`rounded-full transition-colors ${strengthScore >= 4 ? strengthColor : 'bg-slate-200'}`} />
                   </div>
                   <p className="text-[11px] text-[#64748B]">
-                    Use 8+ characters combining uppercase, lowercase, numbers &amp; symbols.
+                    {t('Use 8+ characters combining uppercase, lowercase, numbers & symbols.', 'Use 8+ characters combining uppercase, lowercase, numbers & symbols.')}
                   </p>
                 </div>
               )}
@@ -365,11 +403,11 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-[13px] font-medium text-[#0F172A]">
-                  Confirm Password
+                  {t('Confirm Password', 'Confirm Password')}
                 </label>
                 {confirmPassword && (
                   <span className={`text-[11px] font-semibold ${passwordsMatch ? 'text-emerald-600' : 'text-rose-600'}`}>
-                    {passwordsMatch ? '✓ Matches' : 'Does not match'}
+                    {passwordsMatch ? `✓ ${t('Matches', 'Matches')}` : t('Does not match', 'Does not match')}
                   </span>
                 )}
               </div>
@@ -378,7 +416,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Repeat your password"
+                  placeholder={t('Repeat your password', 'Repeat your password')}
                   required
                   className={`w-full h-[44px] px-3.5 pl-10 pr-10 rounded-[6px] bg-white border text-[#0F172A] text-[14px] focus:outline-none focus:ring-1 transition-colors placeholder:text-[#94A3B8] ${
                     passwordsMatch
@@ -407,11 +445,11 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin text-white" />
-                  <span>Sending verification code...</span>
+                  <span>{t('Sending verification code...', 'Sending verification code...')}</span>
                 </>
               ) : (
                 <>
-                  <span>Create Account &amp; Continue</span>
+                  <span>{t('Create Account & Continue', 'Create Account & Continue')}</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -420,28 +458,28 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
 
           {/* Already have an account */}
           <div className="text-center text-[13px] text-[#64748B] pt-2">
-            <span>Already have an account? </span>
+            <span>{t('Already have an account?', 'Already have an account?')} </span>
             <button
               type="button"
               onClick={onNavigateToLogin}
               className="text-[#2563EB] hover:text-[#1D4ED8] font-semibold transition-colors cursor-pointer"
             >
-              Sign in
+              {t('Sign in', 'Sign in')}
             </button>
           </div>
 
           {/* Trust & Security Badge */}
           <div className="pt-4 border-t border-[#E2E8F0] flex items-center justify-center gap-2 text-[12px] text-[#64748B]">
             <ShieldCheck className="w-4 h-4 text-[#16A34A] shrink-0" />
-            <span>Bank-grade 256-bit encryption • Your privacy is protected</span>
+            <span>{t('Bank-grade 256-bit encryption • Your privacy is protected', 'Bank-grade 256-bit encryption • Your privacy is protected')}</span>
           </div>
         </div>
 
         {/* Footer */}
         <div className="text-center text-xs text-[#64748B] space-y-0.5 mt-6">
-          <p>© 2026 Jam Song Vich • Loan Management System</p>
+          <p>© 2026 Jam Song Vich • {t('app_subtitle', 'Loan Management System')}</p>
           <p className="text-[11px] text-slate-400">
-            Compliant with National Bank of Cambodia Standards
+            {t('Compliant with National Bank of Cambodia Standards', 'Compliant with National Bank of Cambodia Standards')}
           </p>
         </div>
       </div>
@@ -450,3 +488,4 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
 };
 
 export default RegisterPage;
+

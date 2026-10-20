@@ -46,37 +46,39 @@ export const Sidebar: React.FC<SidebarProps> = ({
     switch (item.id) {
       case 'user_dashboard':
       case 'admin_dashboard':
-        return t('nav_dashboard');
+        return t('nav_dashboard', 'Dashboard');
       case 'user_applications':
-        return t('nav_my_applications');
+        return t('nav_my_applications', 'My Applications');
       case 'user_loans':
-        return t('nav_my_loans');
+        return t('nav_my_loans', 'My Loans');
       case 'user_repayments':
-        return t('nav_repayments');
+        return t('nav_repayments', 'Repayment Schedule');
       case 'user_payments':
-        return t('nav_payments');
-      case 'admin_applications':
-        return t('nav_applications');
-      case 'admin_loans':
-        return t('nav_loans');
-      case 'admin_payments':
-        return t('nav_payments');
-      case 'admin_overdue':
-        return t('nav_overdue');
-      case 'admin_users':
-        return t('nav_users');
-      case 'admin_products':
-        return t('nav_products');
-      case 'admin_reports':
-        return t('nav_reports');
+        return t('nav_payments', 'Payments');
+      case 'user_notifications':
       case 'admin_notifications':
-        return t('nav_notifications');
-      case 'admin_audit_logs':
-        return t('nav_audit_logs');
+        return t('nav_notifications', 'Notifications');
+      case 'user_profile':
+        return t('nav_profile', 'My Profile');
+      case 'user_settings':
       case 'admin_settings':
-        return t('nav_settings');
+        return t('nav_settings', 'Settings');
+      case 'admin_applications':
+        return t('nav_applications', 'Applications');
+      case 'admin_loans':
+        return t('nav_loans', 'Loans');
+      case 'admin_overdue':
+        return t('nav_overdue', 'Overdue');
+      case 'admin_users':
+        return t('nav_users', 'Users');
+      case 'admin_products':
+        return t('nav_products', 'Loan Products');
+      case 'admin_reports':
+        return t('nav_reports', 'Reports & Analytics');
+      case 'admin_audit_logs':
+        return t('nav_audit_logs', 'Audit Logs');
       default:
-        return item.label;
+        return t(item.label, item.label);
     }
   };
 

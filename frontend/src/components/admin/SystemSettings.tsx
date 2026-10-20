@@ -15,6 +15,7 @@ import {
   Server
 } from 'lucide-react';
 import { Currency } from '../../types';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface SystemSettingsProps {
   currency: Currency;
@@ -27,6 +28,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
   onToggleCurrency,
   onShowToast
 }) => {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'general' | 'lending' | 'security' | 'notifications' | 'maintenance'>('general');
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -93,10 +95,10 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-[#E2E8F0]">
         <div>
           <h1 className="text-2xl font-bold text-[#0F172A] tracking-tight">
-            System Settings &amp; Credit Policies
+            {t('System Settings & Credit Policies')}
           </h1>
           <p className="text-xs text-[#64748B] mt-0.5">
-            Configure core banking parameters, underwriting ceilings, automated penalty engines, and security thresholds.
+            {t('Configure core banking parameters, underwriting ceilings, automated penalty engines, and security thresholds.')}
           </p>
         </div>
 
@@ -107,7 +109,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
             className="px-3.5 py-2 text-xs font-semibold text-[#0F172A] bg-white hover:bg-slate-50 border border-[#E2E8F0] rounded-[6px] transition flex items-center gap-1.5 cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset Defaults</span>
+            <span>{t('Reset Defaults')}</span>
           </button>
 
           <button
@@ -123,7 +125,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
             ) : (
               <Save className="w-3.5 h-3.5" />
             )}
-            <span>{isSaving ? 'Saving...' : saveSuccess ? 'Saved' : 'Save Configurations'}</span>
+            <span>{isSaving ? t('Saving...') : saveSuccess ? t('Saved') : t('Save Configurations')}</span>
           </button>
         </div>
       </div>
@@ -131,11 +133,11 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
       {/* Tabs */}
       <div className="flex items-center gap-2 border-b border-[#E2E8F0] overflow-x-auto">
         {[
-          { key: 'general', label: 'General & Currency', icon: Building2 },
-          { key: 'lending', label: 'Lending & Risk Policies', icon: Percent },
-          { key: 'security', label: 'Security & Access', icon: Shield },
-          { key: 'notifications', label: 'Alerts & Dispatches', icon: Bell },
-          { key: 'maintenance', label: 'Engine & Infrastructure', icon: Database },
+          { key: 'general', label: t('General & Currency'), icon: Building2 },
+          { key: 'lending', label: t('Lending & Risk Policies'), icon: Percent },
+          { key: 'security', label: t('Security & Access'), icon: Shield },
+          { key: 'notifications', label: t('Alerts & Dispatches'), icon: Bell },
+          { key: 'maintenance', label: t('Engine & Infrastructure'), icon: Database },
         ].map((tab) => {
           const active = activeTab === tab.key;
           const Icon = tab.icon;
@@ -162,13 +164,13 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
           <div className="bg-white rounded-[8px] border border-[#E2E8F0] p-5 space-y-4">
             <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2 pb-2 border-b border-[#E2E8F0]">
               <Building2 className="w-4 h-4 text-[#2563EB]" />
-              Organization Identity
+              {t('Organization Identity')}
             </h3>
 
             <div className="space-y-3.5 text-xs">
               <div>
                 <label className="block font-semibold text-[#0F172A] mb-1">
-                  Institution Legal Name
+                  {t('Institution Legal Name')}
                 </label>
                 <input
                   type="text"
@@ -181,7 +183,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold text-[#0F172A] mb-1">
-                    Institution Code
+                    {t('Institution Code')}
                   </label>
                   <input
                     type="text"
@@ -193,7 +195,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
 
                 <div>
                   <label className="block font-semibold text-[#0F172A] mb-1">
-                    Operating Branch
+                    {t('Operating Branch')}
                   </label>
                   <input
                     type="text"
@@ -206,7 +208,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
 
               <div>
                 <label className="block font-semibold text-[#0F172A] mb-1">
-                  Fiscal Year Commencement
+                  {t('Fiscal Year Accounting Start', 'Fiscal Year Commencement')}
                 </label>
                 <select
                   value={fiscalYearStart}
@@ -224,13 +226,13 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
           <div className="bg-white rounded-[8px] border border-[#E2E8F0] p-5 space-y-4">
             <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2 pb-2 border-b border-[#E2E8F0]">
               <DollarSign className="w-4 h-4 text-[#16A34A]" />
-              Currency &amp; Exchange Rates
+              {t('Functional Currency & Exchange', 'Currency & Exchange Rates')}
             </h3>
 
             <div className="space-y-3.5 text-xs">
               <div>
                 <label className="block font-semibold text-[#0F172A] mb-1">
-                  Default Display Currency
+                  {t('Base Operating Currency', 'Default Display Currency')}
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
@@ -291,14 +293,14 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
           <div className="bg-white rounded-[8px] border border-[#E2E8F0] p-5 space-y-4">
             <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2 pb-2 border-b border-[#E2E8F0]">
               <Percent className="w-4 h-4 text-[#2563EB]" />
-              Underwriting Risk Ceilings
+              {t('Underwriting & Debt Ratios', 'Underwriting Risk Ceilings')}
             </h3>
 
             <div className="space-y-4 text-xs">
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="font-semibold text-[#0F172A]">
-                    Maximum Allowable Debt-to-Income (DTI) Ratio
+                    {t('Maximum Debt-to-Income (DTI)', 'Maximum Allowable Debt-to-Income (DTI) Ratio')}
                   </label>
                   <span className="text-xs font-bold text-[#2563EB] bg-blue-50 px-2 py-0.5 rounded-[4px] border border-blue-200 font-mono">
                     {maxDtiRatio}%
@@ -321,7 +323,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="font-semibold text-[#0F172A]">
-                    Daily Delinquency Penalty Rate (% per day)
+                    {t('Daily Late Fee Interest', 'Daily Delinquency Penalty Rate (% per day)')}
                   </label>
                   <span className="text-xs font-bold text-[#DC2626] bg-red-50 px-2 py-0.5 rounded-[4px] border border-red-200 font-mono">
                     {dailyLateFeeRate}% / day
@@ -343,7 +345,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
 
               <div>
                 <label className="block font-semibold text-[#0F172A] mb-1">
-                  Repayment Grace Period (Days)
+                  {t('Grace Period (Days)', 'Repayment Grace Period (Days)')}
                 </label>
                 <input
                   type="number"
@@ -360,14 +362,14 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
           <div className="bg-white rounded-[8px] border border-[#E2E8F0] p-5 space-y-4">
             <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2 pb-2 border-b border-[#E2E8F0]">
               <Clock className="w-4 h-4 text-[#D97706]" />
-              Automated Delinquency &amp; Approval Ceilings
+              {t('Late Penalties & Delinquency Engine', 'Automated Delinquency & Approval Ceilings')}
             </h3>
 
             <div className="space-y-4 text-xs">
               <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-[6px] border border-[#E2E8F0]">
                 <div>
                   <div className="text-xs font-bold text-[#0F172A]">
-                    Automated Daily Overdue Cron Job
+                    {t('Automated Overdue Cron Scheduler', 'Automated Daily Overdue Cron Job')}
                   </div>
                   <div className="text-[11px] text-[#64748B] mt-0.5">
                     Scans portfolio daily at 00:01, marks past-due installments, and computes late interest.
@@ -383,7 +385,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
 
               <div>
                 <label className="block font-semibold text-[#0F172A] mb-1">
-                  Dual-Authorization Approval Threshold (USD $)
+                  {t('Dual-Signature Approval Ceiling', 'Dual-Authorization Approval Threshold (USD $)')}
                 </label>
                 <div className="relative">
                   <input
@@ -400,7 +402,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
 
               <div>
                 <label className="block font-semibold text-[#0F172A] mb-1">
-                  Max Concurrent Active Loans per Borrower
+                  {t('Max Active Loans per Borrower', 'Max Concurrent Active Loans per Borrower')}
                 </label>
                 <input
                   type="number"

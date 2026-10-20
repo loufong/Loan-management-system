@@ -12,6 +12,7 @@ import {
   Building2,
 } from 'lucide-react';
 import { api } from '../../services/api';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface ChangePasswordPageProps {
   onBack: () => void;
@@ -22,6 +23,7 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
   onBack,
   onLogout,
 }) => {
+  const { language, t } = useLanguage();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -51,22 +53,22 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
     setSuccessMessage(null);
 
     if (!currentPassword) {
-      setError('Current password is required.');
+      setError(language === 'km' ? 'សូមបញ្ចូលពាក្យសម្ងាត់បច្ចុប្បន្ន។' : 'Current password is required.');
       return;
     }
 
     if (!isPasswordValid) {
-      setError('New password must fulfill all complexity requirements.');
+      setError(language === 'km' ? 'ពាក្យសម្ងាត់ថ្មីត្រូវតែបំពេញគ្រប់លក្ខខណ្ឌសុវត្ថិភាព។' : 'New password must fulfill all complexity requirements.');
       return;
     }
 
     if (!passwordsMatch) {
-      setError('New passwords do not match. Please verify.');
+      setError(language === 'km' ? 'ពាក្យសម្ងាត់ថ្មីមិនត្រូវគ្នាទេ។ សូមពិនិត្យម្តងទៀត។' : 'New passwords do not match. Please verify.');
       return;
     }
 
     if (currentPassword === newPassword) {
-      setError('New password cannot be identical to your current password.');
+      setError(language === 'km' ? 'ពាក្យសម្ងាត់ថ្មីមិនអាចដូចគ្នាជាមួយពាក្យសម្ងាត់បច្ចុប្បន្នទេ។' : 'New password cannot be identical to your current password.');
       return;
     }
 
@@ -81,13 +83,13 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
 
       setSuccessMessage(
         res.message ||
-          'Password updated successfully! A confirmation notice has been sent to your email.'
+          (language === 'km' ? 'ពាក្យសម្ងាត់ត្រូវបានធ្វើបច្ចុប្បន្នភាពដោយជោគជ័យ! ការបញ្ជាក់ត្រូវបានផ្ញើទៅកាន់អ៊ីមែលរបស់អ្នក។' : 'Password updated successfully! A confirmation notice has been sent to your email.')
       );
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err: any) {
-      setError(err?.message || 'Failed to update password. Please verify your current password.');
+      setError(err?.message || (language === 'km' ? 'មិនអាចធ្វើបច្ចុប្បន្នភាពពាក្យសម្ងាត់បានទេ។ សូមពិនិត្យពាក្យសម្ងាត់បច្ចុប្បន្នរបស់អ្នក។' : 'Failed to update password. Please verify your current password.'));
     } finally {
       setIsLoading(false);
     }
@@ -100,13 +102,13 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex items-center gap-2 text-xs font-semibold text-[#64748B] hover:text-[#0F172A] transition"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-[#64748B] hover:text-[#0F172A] transition cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to Dashboard</span>
+          <span>{t('Back', 'Back to Dashboard')}</span>
         </button>
         <span className="text-xs font-mono uppercase tracking-wider text-[#64748B]">
-          Security & Access Settings
+          {language === 'km' ? 'ការកំណត់សុវត្ថិភាព & ការចូលប្រើ' : 'Security & Access Settings'}
         </span>
       </div>
 
@@ -117,11 +119,15 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
           <div>
             <div className="inline-flex items-center gap-2 text-[#2563EB] mb-1">
               <KeyRound className="w-5 h-5 text-[#2563EB]" />
-              <span className="text-xs font-bold uppercase tracking-wider">Account Credentials</span>
+              <span className="text-xs font-bold uppercase tracking-wider">
+                {language === 'km' ? 'ព័ត៌មានសម្ងាត់គណនី' : 'Account Credentials'}
+              </span>
             </div>
-            <h1 className="text-xl font-bold text-[#0F172A]">Change Password</h1>
+            <h1 className="text-xl font-bold text-[#0F172A]">{t('Change Password', 'Change Password')}</h1>
             <p className="text-xs text-[#64748B] mt-0.5">
-              Update your account password. For security, active sessions will be refreshed.
+              {language === 'km'
+                ? 'ធ្វើបច្ចុប្បន្នភាពពាក្យសម្ងាត់គណនីរបស់អ្នក។ សម្រាប់សុវត្ថិភាព វគ្គសកម្មនឹងត្រូវបានផ្ទុកឡើងវិញ។'
+                : 'Update your account password. For security, active sessions will be refreshed.'}
             </p>
           </div>
           <div className="hidden sm:flex w-10 h-10 rounded-[6px] bg-slate-100 items-center justify-center text-slate-700">
@@ -137,7 +143,7 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
               <div className="space-y-1">
                 <span className="font-semibold block">{successMessage}</span>
                 <p className="text-emerald-700">
-                  A security confirmation email was dispatched to your email address.
+                  {language === 'km' ? 'អ៊ីមែលបញ្ជាក់សុវត្ថិភាពត្រូវបានផ្ញើទៅកាន់អាសយដ្ឋានអ៊ីមែលរបស់អ្នក។' : 'A security confirmation email was dispatched to your email address.'}
                 </p>
               </div>
             </div>
@@ -146,9 +152,9 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
                 <button
                   type="button"
                   onClick={onLogout}
-                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[4px] text-xs font-semibold transition"
+                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[4px] text-xs font-semibold transition cursor-pointer"
                 >
-                  Log In With New Password
+                  {language === 'km' ? 'ចូលគណនីជាមួយពាក្យសម្ងាត់ថ្មី' : 'Log In With New Password'}
                 </button>
               </div>
             )}
@@ -168,7 +174,7 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
           {/* Current Password Field */}
           <div>
             <label className="block text-[13px] font-semibold text-[#0F172A] mb-1.5">
-              Current Password
+              {t('Current Password', 'Current Password')}
             </label>
             <div className="relative">
               <input
@@ -176,14 +182,14 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
                 required
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="Enter current password"
+                placeholder={language === 'km' ? 'បញ្ចូលពាក្យសម្ងាត់បច្ចុប្បន្ន' : 'Enter current password'}
                 className="w-full h-[44px] px-3.5 pl-10 pr-10 bg-white border border-[#E2E8F0] rounded-[6px] text-[14px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
               />
               <Lock className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <button
                 type="button"
                 onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#0F172A] transition"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#0F172A] transition cursor-pointer"
                 aria-label="Toggle current password visibility"
               >
                 {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -194,7 +200,7 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
           {/* New Password Field */}
           <div>
             <label className="block text-[13px] font-semibold text-[#0F172A] mb-1.5">
-              New Password
+              {t('New Password', 'New Password')}
             </label>
             <div className="relative">
               <input
@@ -202,14 +208,14 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
                 required
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter new strong password"
+                placeholder={language === 'km' ? 'បញ្ចូលពាក្យសម្ងាត់ថ្មី' : 'Enter new strong password'}
                 className="w-full h-[44px] px-3.5 pl-10 pr-10 bg-white border border-[#E2E8F0] rounded-[6px] text-[14px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
               />
               <Lock className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <button
                 type="button"
                 onClick={() => setShowNewPassword(!showNewPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#0F172A] transition"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#0F172A] transition cursor-pointer"
                 aria-label="Toggle new password visibility"
               >
                 {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -220,7 +226,7 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
           {/* Confirm New Password Field */}
           <div>
             <label className="block text-[13px] font-semibold text-[#0F172A] mb-1.5">
-              Confirm New Password
+              {t('Confirm New Password', 'Confirm New Password')}
             </label>
             <div className="relative">
               <input
@@ -228,14 +234,14 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm new password"
+                placeholder={language === 'km' ? 'បញ្ជាក់ពាក្យសម្ងាត់ថ្មី' : 'Confirm new password'}
                 className="w-full h-[44px] px-3.5 pl-10 pr-10 bg-white border border-[#E2E8F0] rounded-[6px] text-[14px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
               />
               <Lock className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#0F172A] transition"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#0F172A] transition cursor-pointer"
                 aria-label="Toggle confirm password visibility"
               >
                 {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -246,32 +252,32 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
           {/* Password Security Rules Verification Checklist */}
           <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px] text-xs space-y-2">
             <span className="font-semibold text-[#0F172A] block">
-              Password Security Requirements:
+              {language === 'km' ? 'លក្ខខណ្ឌសុវត្ថិភាពពាក្យសម្ងាត់៖' : 'Password Security Requirements:'}
             </span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px]">
               <div className={`flex items-center gap-1.5 ${hasMinLength ? 'text-emerald-700 font-medium' : 'text-[#64748B]'}`}>
                 <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[10px] ${hasMinLength ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-500'}`}>✓</div>
-                <span>Minimum 8 characters</span>
+                <span>{language === 'km' ? 'យ៉ាងតិច ៨ តួអក្សរ' : 'Minimum 8 characters'}</span>
               </div>
               <div className={`flex items-center gap-1.5 ${hasUpperCase ? 'text-emerald-700 font-medium' : 'text-[#64748B]'}`}>
                 <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[10px] ${hasUpperCase ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-500'}`}>✓</div>
-                <span>At least 1 uppercase letter</span>
+                <span>{language === 'km' ? 'យ៉ាងតិច អក្សរធំ ១' : 'At least 1 uppercase letter'}</span>
               </div>
               <div className={`flex items-center gap-1.5 ${hasLowerCase ? 'text-emerald-700 font-medium' : 'text-[#64748B]'}`}>
                 <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[10px] ${hasLowerCase ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-500'}`}>✓</div>
-                <span>At least 1 lowercase letter</span>
+                <span>{language === 'km' ? 'យ៉ាងតិច អក្សរតូច ១' : 'At least 1 lowercase letter'}</span>
               </div>
               <div className={`flex items-center gap-1.5 ${hasNumber ? 'text-emerald-700 font-medium' : 'text-[#64748B]'}`}>
                 <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[10px] ${hasNumber ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-500'}`}>✓</div>
-                <span>At least 1 numeric digit</span>
+                <span>{language === 'km' ? 'យ៉ាងតិច លេខ ១ ខ្ទង់' : 'At least 1 numeric digit'}</span>
               </div>
               <div className={`flex items-center gap-1.5 ${hasSpecialChar ? 'text-emerald-700 font-medium' : 'text-[#64748B]'}`}>
                 <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[10px] ${hasSpecialChar ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-500'}`}>✓</div>
-                <span>At least 1 special symbol</span>
+                <span>{language === 'km' ? 'យ៉ាងតិច និមិត្តសញ្ញាពិសេស ១' : 'At least 1 special symbol'}</span>
               </div>
               <div className={`flex items-center gap-1.5 ${passwordsMatch ? 'text-emerald-700 font-medium' : 'text-[#64748B]'}`}>
                 <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[10px] ${passwordsMatch ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-500'}`}>✓</div>
-                <span>Passwords match</span>
+                <span>{language === 'km' ? 'ពាក្យសម្ងាត់ត្រូវគ្នា' : 'Passwords match'}</span>
               </div>
             </div>
           </div>
@@ -282,9 +288,9 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
               type="button"
               onClick={onBack}
               disabled={isLoading}
-              className="px-4 h-[44px] border border-[#E2E8F0] hover:bg-slate-50 text-[#0F172A] font-semibold text-xs rounded-[6px] transition"
+              className="px-4 h-[44px] border border-[#E2E8F0] hover:bg-slate-50 text-[#0F172A] font-semibold text-xs rounded-[6px] transition cursor-pointer"
             >
-              Cancel
+              {t('btn_cancel', 'Cancel')}
             </button>
             <button
               type="submit"
@@ -294,10 +300,10 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin text-white" />
-                  <span>Updating Password...</span>
+                  <span>{t('Updating password...', 'Updating Password...')}</span>
                 </>
               ) : (
-                <span>Update Password</span>
+                <span>{t('Update Password', 'Update Password')}</span>
               )}
             </button>
           </div>
@@ -306,3 +312,6 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
     </div>
   );
 };
+
+export default ChangePasswordPage;
+

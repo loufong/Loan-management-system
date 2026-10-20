@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { NotificationItem, UserRole } from '../../types';
 import { Bell, CheckCheck, AlertCircle, Clock, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { useLanguage } from '../../context/LanguageContext';
 
 export interface NotificationsCenterProps {
   notifications: NotificationItem[];
@@ -17,6 +18,7 @@ export const NotificationsCenter: React.FC<NotificationsCenterProps> = ({
   onMarkAllRead,
   onNavigateToAction,
 }) => {
+  const { language, t } = useLanguage();
   const [filter, setFilter] = useState<'ALL' | 'UNREAD' | 'PAYMENT_DUE' | 'OVERDUE' | 'APPROVAL'>('ALL');
 
   const filtered = notifications.filter((n) => {
@@ -35,28 +37,28 @@ export const NotificationsCenter: React.FC<NotificationsCenterProps> = ({
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-red-50 text-red-700 border border-red-200">
             <ShieldAlert className="w-3 h-3" />
-            Overdue
+            {t('nav_overdue', 'Overdue')}
           </span>
         );
       case 'PAYMENT_DUE':
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
             <Clock className="w-3 h-3" />
-            Payment Due
+            {t('Payment Due', 'Payment Due')}
           </span>
         );
       case 'APPROVAL':
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
             <CheckCircle2 className="w-3 h-3" />
-            Approval
+            {t('Approval', 'Approval')}
           </span>
         );
       default:
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-50 text-slate-700 border border-slate-200">
             <Bell className="w-3 h-3" />
-            Alert
+            {t('Alert', 'Alert')}
           </span>
         );
     }
@@ -68,15 +70,15 @@ export const NotificationsCenter: React.FC<NotificationsCenterProps> = ({
       <div className="bg-white border border-[#E2E8F0] rounded-[6px] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-[#0F172A] tracking-tight">Notification Center</h1>
+            <h1 className="text-xl font-bold text-[#0F172A] tracking-tight">{t('Notification Center', 'Notification Center')}</h1>
             {unreadCount > 0 && (
               <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-[#2563EB]">
-                {unreadCount} unread
+                {unreadCount} {t('unread', 'unread')}
               </span>
             )}
           </div>
           <p className="text-sm text-[#64748B] mt-1">
-            System notices, repayment schedules, approval alerts, and institutional dispatches.
+            {t('System notices, repayment schedules, approval alerts, and institutional dispatches.', 'System notices, repayment schedules, approval alerts, and institutional dispatches.')}
           </p>
         </div>
 
@@ -84,30 +86,28 @@ export const NotificationsCenter: React.FC<NotificationsCenterProps> = ({
           <button
             onClick={onMarkAllRead}
             type="button"
-            className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-[#2563EB] bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-[6px] transition-colors"
+            className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-[#2563EB] bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-[6px] transition-colors cursor-pointer"
           >
             <CheckCheck className="w-4 h-4" />
-            Mark all as read
+            {t('Mark all as read', 'Mark all as read')}
           </button>
         )}
       </div>
 
       {/* 2. Filter Tabs */}
       <div className="flex items-center gap-2 border-b border-[#E2E8F0] pb-2 overflow-x-auto">
-        {(
-          [
-            { key: 'ALL', label: `All (${notifications.length})` },
-            { key: 'UNREAD', label: `Unread (${unreadCount})` },
-            { key: 'PAYMENT_DUE', label: 'Payment Due' },
-            { key: 'OVERDUE', label: 'Overdue Alerts' },
-            { key: 'APPROVAL', label: 'Approvals' },
-          ] as const
-        ).map((tab) => (
+        {[
+          { key: 'ALL', label: `${t('All', 'All')} (${notifications.length})` },
+          { key: 'UNREAD', label: `${t('Unread', 'Unread')} (${unreadCount})` },
+          { key: 'PAYMENT_DUE', label: t('Payment Due', 'Payment Due') },
+          { key: 'OVERDUE', label: t('nav_overdue', 'Overdue') },
+          { key: 'APPROVAL', label: t('Approval', 'Approvals') },
+        ].map((tab) => (
           <button
             key={tab.key}
-            onClick={() => setFilter(tab.key)}
+            onClick={() => setFilter(tab.key as any)}
             className={cn(
-              'px-3.5 py-1.5 rounded-[6px] text-xs font-medium whitespace-nowrap transition-colors',
+              'px-3.5 py-1.5 rounded-[6px] text-xs font-medium whitespace-nowrap transition-colors cursor-pointer',
               filter === tab.key
                 ? 'bg-[#2563EB] text-white shadow-sm'
                 : 'text-[#64748B] hover:text-[#0F172A] hover:bg-white bg-transparent border border-transparent hover:border-[#E2E8F0]'
@@ -123,9 +123,9 @@ export const NotificationsCenter: React.FC<NotificationsCenterProps> = ({
         {filtered.length === 0 ? (
           <div className="bg-white border border-[#E2E8F0] rounded-[6px] py-12 px-4 text-center">
             <Bell className="w-10 h-10 text-[#94A3B8] mx-auto mb-3" />
-            <h3 className="text-sm font-semibold text-[#0F172A]">No notifications in this filter</h3>
+            <h3 className="text-sm font-semibold text-[#0F172A]">{t('No notifications', 'No notifications in this filter')}</h3>
             <p className="text-xs text-[#64748B] mt-1">
-              You are all caught up with your dispatches and alerts.
+              {language === 'km' ? 'អ្នកបានពិនិត្យការជូនដំណឹង និងសារទាំងអស់រួចរាល់ហើយ។' : 'You are all caught up with your dispatches and alerts.'}
             </p>
           </div>
         ) : (

@@ -66,7 +66,8 @@ export const TopBar: React.FC<TopBarProps> = ({
 
   const { language, setLanguage, t } = useLanguage();
   const unreadCount = notifications.filter((n) => !n.isRead).length;
-  const currentTitle = breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].label : t('nav_dashboard');
+  const rawTitle = breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].label : 'Dashboard';
+  const currentTitle = t(rawTitle, rawTitle);
   const role = (currentUser?.role || currentRole || 'USER').toUpperCase();
   const isAdmin = role === 'ADMIN';
   const displayRole = isAdmin ? (language === 'km' ? 'អ្នកគ្រប់គ្រង (Admin)' : 'Admin') : (language === 'km' ? 'អតិថិជន (User)' : 'User');
@@ -148,10 +149,10 @@ export const TopBar: React.FC<TopBarProps> = ({
           {notifDropdownOpen && (
             <div className="absolute right-0 mt-2 w-80 max-w-[90vw] rounded-[8px] bg-white border border-[#E2E8F0] z-50 p-3 shadow-lg">
               <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#E2E8F0]">
-                <span className="text-[13px] font-bold text-[#0F172A]">Notifications</span>
+                <span className="text-[13px] font-bold text-[#0F172A]">{t('Notifications', 'Notifications')}</span>
                 {unreadCount > 0 && (
                   <span className="text-[11px] font-medium text-[#2563EB] bg-blue-50 px-2 py-0.5 rounded-[4px]">
-                    {unreadCount} unread
+                    {unreadCount} {t('unread', 'unread')}
                   </span>
                 )}
               </div>
@@ -159,7 +160,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               <div className="max-h-64 overflow-y-auto space-y-1.5">
                 {notifications.length === 0 ? (
                   <p className="py-6 text-center text-[13px] text-[#64748B]">
-                    No notifications
+                    {t('No notifications', 'No notifications')}
                   </p>
                 ) : (
                   notifications.slice(0, 10).map((n) => (

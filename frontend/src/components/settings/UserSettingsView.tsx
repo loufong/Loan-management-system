@@ -466,7 +466,7 @@ export const UserSettingsView: React.FC<UserSettingsViewProps> = ({
                 </span>
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
                   <BadgeCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  KYC Verified
+                  {language === 'km' ? 'បានផ្ទៀងផ្ទាត់ KYC' : 'KYC Verified'}
                 </span>
               </div>
 
@@ -487,7 +487,7 @@ export const UserSettingsView: React.FC<UserSettingsViewProps> = ({
                 >
                   <Copy className="w-3.5 h-3.5 text-slate-400" />
                   ID: <span className="font-mono">{currentUser.id ? `${currentUser.id.slice(0, 8)}...` : 'N/A'}</span>
-                  {copiedId && <span className="text-emerald-600 font-medium ml-1">Copied!</span>}
+                  {copiedId && <span className="text-emerald-600 font-medium ml-1">{language === 'km' ? 'បានចម្លង!' : 'Copied!'}</span>}
                 </button>
               </div>
             </div>
@@ -501,7 +501,7 @@ export const UserSettingsView: React.FC<UserSettingsViewProps> = ({
               className="px-3.5 py-2 text-xs font-medium text-[#0F172A] bg-white border border-[#CBD5E1] hover:bg-slate-50 active:bg-slate-100 rounded-[6px] transition flex items-center gap-1.5"
             >
               <KeyRound className="w-3.5 h-3.5 text-slate-500" />
-              <span>Change Password</span>
+              <span>{t('btn_change_password', 'Change Password')}</span>
             </button>
 
             <button
@@ -513,12 +513,12 @@ export const UserSettingsView: React.FC<UserSettingsViewProps> = ({
               {isSaving ? (
                 <>
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>Saving...</span>
+                  <span>{language === 'km' ? 'កំពុងរក្សាទុក...' : 'Saving...'}</span>
                 </>
               ) : (
                 <>
                   <Save className="w-3.5 h-3.5" />
-                  <span>Save Changes</span>
+                  <span>{t('btn_save_changes', 'Save Changes')}</span>
                 </>
               )}
             </button>
@@ -529,12 +529,12 @@ export const UserSettingsView: React.FC<UserSettingsViewProps> = ({
       {/* 2. TAB NAVIGATION BAR */}
       <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-1.5 flex items-center gap-1 overflow-x-auto shadow-none">
         {[
-          { id: 'profile', label: 'Profile & Identity', icon: User },
-          { id: 'security', label: 'Security & Devices', icon: ShieldCheck },
-          { id: 'notifications', label: 'Notifications & Alerts', icon: Bell },
-          { id: 'preferences', label: 'Preferences & Language', icon: Globe },
-          { id: 'banking', label: 'Bank & Payouts', icon: CreditCard },
-          { id: 'privacy', label: 'Data & Privacy', icon: FileText },
+          { id: 'profile', label: t('tab_profile', 'Profile & Identity'), icon: User },
+          { id: 'security', label: t('tab_security', 'Security & Devices'), icon: ShieldCheck },
+          { id: 'notifications', label: t('tab_notifications', 'Notifications & Alerts'), icon: Bell },
+          { id: 'preferences', label: t('tab_preferences', 'Preferences & Language'), icon: Globe },
+          { id: 'banking', label: t('tab_banking', 'Bank & Payouts'), icon: CreditCard },
+          { id: 'privacy', label: t('tab_privacy', 'Data & Privacy'), icon: FileText },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;

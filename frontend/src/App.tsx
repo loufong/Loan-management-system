@@ -89,6 +89,7 @@ import { UserProfileView } from './components/profile/UserProfileView';
 import { UserSettingsView } from './components/settings/UserSettingsView';
 import { UserRepaymentsView } from './components/loans/UserRepaymentsView';
 import { useAuth } from './context/AuthContext';
+import { useLanguage } from './context/LanguageContext';
 
 type AuthView = 'login' | 'register' | 'otp_verify' | 'forgot_password' | 'set_new_password';
 
@@ -133,6 +134,8 @@ const replaceAppRoute = (route: string) => {
 };
 
 export const App: React.FC = () => {
+  const { t } = useLanguage();
+
   // Global Auth Context Hook
   const {
     user: authUser,
@@ -849,7 +852,7 @@ export const App: React.FC = () => {
             <div className="mb-4 mx-6 mt-4 p-3 bg-red-50 border border-red-200 rounded-[8px] flex items-center justify-between text-[#DC2626] text-xs font-semibold">
               <div className="flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 text-[#DC2626] shrink-0" />
-                <span>Access Denied: You do not have administrative authorization. Redirected to User Dashboard.</span>
+                <span>{t('Access Denied: You do not have administrative authorization. Redirected to User Dashboard.')}</span>
               </div>
               <button
                 onClick={() => setAccessDeniedMessage(null)}

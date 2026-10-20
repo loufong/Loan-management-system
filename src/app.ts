@@ -132,13 +132,7 @@ export function createApp(): Application {
       !req.xhr &&
       !req.headers.accept?.includes('application/json');
 
-    // Browser navigation requesting HTML page: Serve SPA index.html so client-side router & auth can handle it
-    if (req.method === 'GET' && isBrowserHtmlRequest) {
-      const indexPath = path.join(publicDir, 'index.html');
-      if (fs.existsSync(indexPath)) {
-        return res.sendFile(indexPath);
-      }
-    }
+
 
     // For direct API requests or non-browser clients to /admin or /admin/*:
     const authHeader = req.headers.authorization;
@@ -260,6 +254,7 @@ export function createApp(): Application {
       '/register',
       '/forgot-password',
       '/verify-otp',
+      '/verify-email',
       '/reset-password',
       '/change-password',
       '*'

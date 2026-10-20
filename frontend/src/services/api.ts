@@ -214,91 +214,55 @@ class ApiService {
     usernameOrEmail: string,
     password = 'Password123!',
     rememberMe = false
-  ): Promise<{ token: string; user: UserProfile; requireOtp?: boolean; email?: string; devOtp?: string; message?: string }> {
-    const cleanId = usernameOrEmail.trim().toLowerCase();
-
+  ): Promise<{ token: string; user: UserProfile; requireOtp?: boolean; email?: string; message?: string }> {
     // Step 1: Validate input
     if (!usernameOrEmail.trim() || !password) {
       throw new Error('Invalid email/username or password.');
     }
 
-    // On GitHub Pages without custom backend URL, authenticate directly
-    if (isStaticHost) {
-      return this.authenticateMock(cleanId, password);
-    }
+    const res = await this.request<{ accessToken?: string; token?: string; user?: any; requireOtp?: boolean; email?: string; message?: string }>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ usernameOrEmail, password, rememberMe }),
+    });
 
-    try {
-      const res = await this.request<{ accessToken?: string; token?: string; user?: any; requireOtp?: boolean; email?: string; devOtp?: string; message?: string }>('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ usernameOrEmail, password, rememberMe }),
-      });
-
-      if (res.requireOtp) {
-        return {
-          token: '',
-          user: null as any,
-          requireOtp: true,
-          email: res.email || usernameOrEmail,
-          devOtp: res.devOtp,
-          message: res.message,
-        };
-      }
-
-      const activeToken = res.accessToken || res.token || 'jwt-token-active';
-      this.setToken(activeToken);
-      const u = res.user;
-      const normalizedRole = normalizeUserRole(u?.role);
-      const matchedProfile: UserProfile = {
-        id: u?.id || 'usr-default',
-        username: u?.username || usernameOrEmail,
-        name: u?.fullName || u?.name || usernameOrEmail,
-        fullName: u?.fullName || u?.name || usernameOrEmail,
-        email: u?.email || usernameOrEmail,
-        role: normalizedRole,
-        status: (u?.status || 'active').toLowerCase() as any,
-        title: u?.position || (normalizedRole === 'ADMIN' ? 'System Administrator' : normalizedRole === 'MANAGER' ? 'Branch Manager' : normalizedRole === 'CASHIER' ? 'Head Cashier' : normalizedRole === 'LOAN_OFFICER' ? 'Loan Officer' : normalizedRole === 'CREDIT_OFFICER' ? 'Credit Analyst' : 'Client Borrower'),
-        department: u?.department || (normalizedRole === 'ADMIN' || normalizedRole === 'MANAGER' ? 'Executive Administration' : normalizedRole === 'CASHIER' ? 'Treasury & Cashier' : normalizedRole === 'LOAN_OFFICER' || normalizedRole === 'CREDIT_OFFICER' ? 'Credit & Underwriting' : 'Retail Banking'),
-        avatar: u?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u?.username || usernameOrEmail)}`,
-        avatarUrl: u?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u?.username || usernameOrEmail)}`,
-        branch: u?.userSetting?.branch || 'Phnom Penh Main Branch',
-        borrowerId: u?.borrowerId || u?.borrowers?.[0]?.borrowerId,
-        createdAt: u?.createdAt,
-        lastLogin: new Date().toISOString(),
-      };
+    if (res.requireOtp) {
       return {
-        token: activeToken,
-        user: matchedProfile,
+        token: '',
+        user: null as any,
+        requireOtp: true,
+        email: res.email || usernameOrEmail,
+        message: res.message,
       };
-    } catch (err: any) {
-      // Known demo credentials fallback (enables seamless 1-click preview on localhost identical to GitHub Pages)
-      const demoAccountKeys = [
-        'admin', 'admin@loansystem.edu', 'admin@example.com',
-        'manager', 'manager@apex.local',
-        'officer', 'officer@apex.local', 'loan_officer',
-        'credit', 'credit@apex.local', 'credit_officer',
-        'cashier', 'cashier@apex.local',
-        'borrower', 'borrower@apex.local',
-        'user', 'user@example.com',
-        'johnathan.doe@student.edu'
-      ];
-      if (demoAccountKeys.includes(cleanId)) {
-        return this.authenticateMock(cleanId, password);
-      }
-
-      // If error came directly from backend API for a real registered account, re-throw it unless connection failure
-      if (
-        err?.status &&
-        (err.status === 401 || err.status === 403 || err.status === 422) &&
-        err.message &&
-        !err.message.includes('404') &&
-        !err.message.includes('Unable to connect')
-      ) {
-        throw err;
-      }
-
-      // Offline / Network fallback (backend server down or static preview)
-      return this.authenticateMock(cleanId, password);
     }
+
+    const activeToken = res.accessToken || res.token || '';
+    if (!activeToken) {
+      throw new Error('No authentication token returned by server.');
+    }
+    this.setToken(activeToken);
+    const u = res.user;
+    const normalizedRole = normalizeUserRole(u?.role);
+    const matchedProfile: UserProfile = {
+      id: u?.id || 'usr-default',
+      username: u?.username || usernameOrEmail,
+      name: u?.fullName || u?.name || usernameOrEmail,
+      fullName: u?.fullName || u?.name || usernameOrEmail,
+      email: u?.email || usernameOrEmail,
+      role: normalizedRole,
+      status: (u?.status || 'active').toLowerCase() as any,
+      title: u?.position || (normalizedRole === 'ADMIN' ? 'System Administrator' : 'Client Borrower'),
+      department: u?.department || (normalizedRole === 'ADMIN' ? 'Executive Administration' : 'Client Services'),
+      avatar: u?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u?.username || usernameOrEmail)}`,
+      avatarUrl: u?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(u?.username || usernameOrEmail)}`,
+      branch: u?.userSetting?.branch || 'Phnom Penh Main Branch',
+      borrowerId: u?.borrowerId || u?.borrowers?.[0]?.borrowerId,
+      createdAt: u?.createdAt,
+      lastLogin: new Date().toISOString(),
+    };
+    return {
+      token: activeToken,
+      user: matchedProfile,
+    };
   }
 
   public async verifyLoginOtp(params: {
@@ -635,39 +599,17 @@ class ApiService {
     password: string;
     confirmPassword?: string;
     role?: UserRole;
-  }): Promise<{ success: boolean; message: string; email: string; devOtp?: string }> {
+  }): Promise<{ success: boolean; message: string; email: string }> {
     const formattedFullName = payload.fullName || `${payload.firstName || ''} ${payload.lastName || ''}`.trim() || payload.username;
     const bodyPayload = {
       ...payload,
       fullName: formattedFullName,
     };
 
-    if (isStaticHost) {
-      this.saveRegisteredMockUser(bodyPayload as any);
-      return {
-        success: true,
-        message: 'Account created successfully. A verification code has been sent to your Gmail.',
-        email: payload.email,
-        devOtp: '482915',
-      };
-    }
-    try {
-      return await this.request('/auth/register', {
-        method: 'POST',
-        body: JSON.stringify(bodyPayload),
-      });
-    } catch (err: any) {
-      if (err?.status) {
-        throw err;
-      }
-      this.saveRegisteredMockUser(bodyPayload as any);
-      return {
-        success: true,
-        message: 'Account created successfully. A verification code has been sent to your Gmail.',
-        email: payload.email,
-        devOtp: '482915',
-      };
-    }
+    return await this.request('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(bodyPayload),
+    });
   }
 
   public async verifyOtp(payload: {
@@ -675,68 +617,32 @@ class ApiService {
     code: string;
     purpose: 'register_verification' | 'forgot_password' | 'email_verification' | 'REGISTRATION' | 'PASSWORD_RESET';
   }): Promise<{ success: boolean; message: string; resetToken?: string }> {
-    try {
-      return await this.request('/auth/verify-otp', {
-        method: 'POST',
-        body: JSON.stringify({
-          email: payload.email,
-          code: payload.code,
-          otp: payload.code,
-          purpose: payload.purpose,
-        }),
-      });
-    } catch (err: any) {
-      if (!isStaticHost || err?.status) {
-        throw new Error(err?.message || 'Invalid verification code');
-      }
-      if (payload.code.length === 6) {
-        return {
-          success: true,
-          message: payload.purpose === 'register_verification' || payload.purpose === 'REGISTRATION' ? 'Email verified successfully. Your account is now active!' : 'OTP verified successfully.',
-          resetToken: payload.purpose === 'forgot_password' || payload.purpose === 'PASSWORD_RESET' ? `simulated-reset-token-${Date.now()}` : undefined,
-        };
-      }
-      throw new Error(err?.message || 'Invalid verification code');
-    }
+    return await this.request('/auth/verify-otp', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: payload.email,
+        code: payload.code,
+        otp: payload.code,
+        purpose: payload.purpose,
+      }),
+    });
   }
 
   public async resendOtp(payload: {
     email: string;
     purpose: 'register_verification' | 'forgot_password' | 'email_verification' | 'REGISTRATION' | 'PASSWORD_RESET' | 'LOGIN' | 'login_verification';
-  }): Promise<{ success: boolean; message: string; expiresInSeconds: number; devOtp?: string }> {
-    try {
-      return await this.request('/auth/resend-otp', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
-    } catch (err: any) {
-      if (err?.status === 429) {
-        throw err;
-      }
-      return {
-        success: true,
-        message: 'A fresh 6-digit verification code has been dispatched to your Gmail.',
-        expiresInSeconds: 300,
-        devOtp: '482915',
-      };
-    }
+  }): Promise<{ success: boolean; message: string; expiresInSeconds: number }> {
+    return await this.request('/auth/resend-otp', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
   }
 
   public async forgotPassword(payload: { email: string }): Promise<{ success: boolean; message: string }> {
-    try {
-      return await this.request('/auth/forgot-password', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
-    } catch (err: any) {
-      if (err?.status && err.status !== 404) {
-        throw err;
-      }
-      return {
-        success: true,
-        message: 'If an account exists for this email, a verification code has been sent.',
-      };
-    }
+    return await this.request('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
   }
 
   public async resetPassword(payload: {
@@ -747,20 +653,10 @@ class ApiService {
     newPassword: string;
     confirmPassword: string;
   }): Promise<{ success: boolean; message: string }> {
-    try {
-      return await this.request('/auth/reset-password', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
-    } catch (err: any) {
-      if (err?.status) {
-        throw err;
-      }
-      return {
-        success: true,
-        message: 'Your password has been successfully reset. Please log in with your new credentials.',
-      };
-    }
+    return await this.request('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
   }
 
   public async changePassword(payload: {
@@ -772,6 +668,43 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+  }
+
+  public async updateProfile(payload: {
+    fullName?: string;
+    phone?: string;
+    position?: string;
+    department?: string;
+  }): Promise<UserProfile> {
+    const res = await this.request<any>('/auth/profile', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+    const u = res.user || res;
+    let cachedUser: any = {};
+    try {
+      const raw = localStorage.getItem('apex_user') || sessionStorage.getItem('apex_user');
+      if (raw) cachedUser = JSON.parse(raw);
+    } catch {}
+
+    const updatedProfile: UserProfile = {
+      ...cachedUser,
+      id: u.id || cachedUser.id,
+      name: u.fullName || payload.fullName || cachedUser.name,
+      fullName: u.fullName || payload.fullName || cachedUser.fullName,
+      phone: u.phone !== undefined ? u.phone : (payload.phone || cachedUser.phone),
+      position: u.position || payload.position || cachedUser.position,
+      title: u.position || payload.position || cachedUser.title,
+      department: u.department || payload.department || cachedUser.department,
+    };
+
+    if (localStorage.getItem('apex_token')) {
+      localStorage.setItem('apex_user', JSON.stringify(updatedProfile));
+    } else {
+      sessionStorage.setItem('apex_user', JSON.stringify(updatedProfile));
+    }
+
+    return updatedProfile;
   }
 
   public async logout(): Promise<void> {

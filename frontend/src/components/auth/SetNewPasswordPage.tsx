@@ -6,22 +6,29 @@ import {
   Loader2,
   Check,
   Lock,
+  Mail,
+  KeyRound,
+  ArrowLeft,
   ShieldCheck
 } from 'lucide-react';
 import { api } from '../../services/api';
 import logoImg from '../../assets/logo-transparent.png';
 
 interface SetNewPasswordPageProps {
-  email: string;
-  resetToken: string;
+  email?: string;
+  resetToken?: string;
   onPasswordResetSuccess: () => void;
+  onNavigateToLogin?: () => void;
 }
 
 export const SetNewPasswordPage: React.FC<SetNewPasswordPageProps> = ({
-  email,
-  resetToken,
+  email: initialEmail = '',
+  resetToken = '',
   onPasswordResetSuccess,
+  onNavigateToLogin,
 }) => {
+  const [email, setEmail] = useState(initialEmail);
+  const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -44,6 +51,17 @@ export const SetNewPasswordPage: React.FC<SetNewPasswordPageProps> = ({
     e.preventDefault();
     setError(null);
 
+    const cleanEmail = email.trim();
+    if (!cleanEmail) {
+      setError('Please provide your registered email address.');
+      return;
+    }
+
+    if (!resetToken && (!otp || otp.trim().length !== 6)) {
+      setError('Please enter the 6-digit verification code received in your email.');
+      return;
+    }
+
     if (!isPasswordValid) {
       setError('Password does not fulfill all security requirements.');
       return;
@@ -58,8 +76,10 @@ export const SetNewPasswordPage: React.FC<SetNewPasswordPageProps> = ({
 
     try {
       await api.resetPassword({
-        email,
-        resetToken,
+        email: cleanEmail,
+        resetToken: resetToken || undefined,
+        otp: otp ? otp.trim() : undefined,
+        code: otp ? otp.trim() : undefined,
         newPassword,
         confirmPassword,
       });
@@ -80,17 +100,17 @@ export const SetNewPasswordPage: React.FC<SetNewPasswordPageProps> = ({
           <div className="space-y-1.5">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-[6px] bg-slate-50 border border-slate-200/80 flex items-center justify-center p-1 overflow-hidden">
-                <img src={logoImg} alt="Jam Song Vich" className="w-full h-full object-contain" />
+                <img src={logoImg} alt="Apex LMS" className="w-full h-full object-contain" />
               </div>
               <h1 className="text-lg font-bold text-[#0F172A]">
-                Jam Song Vich
+                Apex LMS
               </h1>
             </div>
             <h2 className="text-xl font-bold text-[#0F172A] pt-2">
-              Set New Password
+              Reset Your Password
             </h2>
             <p className="text-xs text-[#64748B]">
-              Enter a secure password for account <strong className="text-[#0F172A]">{email}</strong>.
+              Enter your reset verification code and create a new secure password.
             </p>
           </div>
 
@@ -102,6 +122,44 @@ export const SetNewPasswordPage: React.FC<SetNewPasswordPageProps> = ({
           )}
 
           <form onSubmit={handleReset} className="space-y-4">
+            <div>
+              <label className="block text-[13px] font-medium text-[#0F172A] mb-1.5">
+                Email Address
+              </label>
+              <div className="relative">
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@example.com"
+                  className="w-full h-[40px] px-3.5 pl-10 bg-white border border-[#E2E8F0] rounded-[6px] text-[14px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                />
+                <Mail className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
+
+            {!resetToken && (
+              <div>
+                <label className="block text-[13px] font-medium text-[#0F172A] mb-1.5">
+                  6-Digit Verification Code (OTP)
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    required
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                    placeholder="123456"
+                    className="w-full h-[40px] px-3.5 pl-10 font-mono tracking-widest bg-white border border-[#E2E8F0] rounded-[6px] text-[14px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                  />
+                  <KeyRound className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="block text-[13px] font-medium text-[#0F172A] mb-1.5">
                 New Password
@@ -128,7 +186,7 @@ export const SetNewPasswordPage: React.FC<SetNewPasswordPageProps> = ({
 
             <div>
               <label className="block text-[13px] font-medium text-[#0F172A] mb-1.5">
-                Confirm New Password
+                Confirm Password
               </label>
               <div className="relative">
                 <input
@@ -176,18 +234,31 @@ export const SetNewPasswordPage: React.FC<SetNewPasswordPageProps> = ({
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin text-white" />
-                  <span>Updating password...</span>
+                  <span>Resetting password...</span>
                 </>
               ) : (
-                <span>Update Password</span>
+                <span>Reset Password</span>
               )}
             </button>
           </form>
 
+          {onNavigateToLogin && (
+            <div className="pt-4 border-t border-[#E2E8F0] text-center">
+              <button
+                type="button"
+                onClick={onNavigateToLogin}
+                className="inline-flex items-center gap-1.5 text-xs text-[#2563EB] hover:text-[#1D4ED8] font-medium transition-colors"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Back to sign in</span>
+              </button>
+            </div>
+          )}
+
         </div>
 
         <div className="mt-6 text-center text-xs text-[#64748B]">
-          Jam Song Vich Platform • Cryptographic Credential Vault
+          Apex Loan Management System • Cryptographic Credential Vault
         </div>
       </div>
     </div>

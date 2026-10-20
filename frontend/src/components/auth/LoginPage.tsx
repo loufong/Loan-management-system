@@ -16,7 +16,7 @@ import logoImg from '../../assets/logo-transparent.png';
 
 interface LoginPageProps {
   onLoginSuccess: (user: UserProfile, token: string, rememberMe: boolean) => void;
-  onRequireOtp?: (email: string, devOtp?: string) => void;
+  onRequireOtp?: (email: string) => void;
   onNavigateToRegister: () => void;
   onNavigateToForgotPassword: () => void;
   successNotice?: string | null;
@@ -62,7 +62,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       const loginResult = await login(identifier, password, rememberMe);
       if (loginResult?.requireOtp) {
         if (onRequireOtp) {
-          onRequireOtp(loginResult.email || identifier, loginResult.devOtp);
+          onRequireOtp(loginResult.email || identifier);
         }
         return;
       }

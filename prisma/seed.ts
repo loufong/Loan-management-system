@@ -140,7 +140,9 @@ async function main() {
       position: 'Graduate Research Assistant',
       department: 'School of Computer Science',
       role: UserRole.USER,
-      status: UserStatus.ACTIVE
+      status: UserStatus.ACTIVE,
+      emailVerifiedAt: new Date(),
+      lastLogin: new Date('2026-10-18T00:00:00Z'),
     }
   });
 
@@ -154,7 +156,9 @@ async function main() {
       position: 'Undergraduate Senior',
       department: 'Faculty of Engineering',
       role: UserRole.USER,
-      status: UserStatus.ACTIVE
+      status: UserStatus.ACTIVE,
+      emailVerifiedAt: new Date(),
+      lastLogin: new Date('2026-10-18T00:00:00Z'),
     }
   });
 

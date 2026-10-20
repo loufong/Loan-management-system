@@ -18,7 +18,7 @@ import { api } from '../../services/api';
 import logoImg from '../../assets/logo-transparent.png';
 
 interface RegisterPageProps {
-  onRegisterSuccess: (email: string, devOtp?: string) => void;
+  onRegisterSuccess: (email: string) => void;
   onNavigateToLogin: () => void;
 }
 
@@ -107,7 +107,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
 
     const cleanEmail = email.trim();
     if (!cleanEmail || !isEmailValid) {
-      setError('Please enter a valid Gmail address (e.g. name@gmail.com).');
+      setError('Please enter a valid email address (e.g. name@gmail.com, name@yahoo.com).');
       return;
     }
 
@@ -150,7 +150,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
         confirmPassword,
       });
 
-      onRegisterSuccess(cleanEmail, res.devOtp);
+      onRegisterSuccess(cleanEmail);
     } catch (err: any) {
       setError(err?.message || 'Unable to create account. Please check your details and try again.');
     } finally {
@@ -182,7 +182,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
               Create your account
             </h2>
             <p className="text-xs text-[#64748B] mt-0.5 leading-relaxed">
-              Fast, simple registration. We will send a 6-digit verification code to your Gmail.
+              Fast, simple registration. We will send a 6-digit verification code to your email.
             </p>
           </div>
 
@@ -262,11 +262,11 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
               )}
             </div>
 
-            {/* 2. Gmail / Email Address */}
+            {/* 2. Email Address */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-[13px] font-medium text-[#0F172A]">
-                  Gmail Address
+                  Email Address
                 </label>
                 <span className="text-[10px] uppercase font-semibold tracking-wider text-[#2563EB] bg-blue-50 px-2 py-0.5 rounded-[4px] border border-blue-100">
                   OTP sent here
@@ -277,7 +277,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@gmail.com"
+                  placeholder="name@example.com"
                   required
                   className={`w-full h-[44px] px-3.5 pl-10 pr-10 rounded-[6px] bg-white border text-[#0F172A] text-[14px] focus:outline-none focus:ring-1 transition-colors placeholder:text-[#94A3B8] ${
                     isEmailValid
@@ -291,7 +291,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                 )}
               </div>
               <p className="text-[11px] text-[#64748B] mt-1">
-                Use your personal Gmail account to receive your 6-digit sign-in code.
+                Enter your email (Gmail, Yahoo, Outlook, etc.) to receive your 6-digit verification code.
               </p>
             </div>
 

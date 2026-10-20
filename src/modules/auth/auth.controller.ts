@@ -217,7 +217,6 @@ export class AuthController {
           rememberMe: (result as any).rememberMe,
           message: (result as any).message,
           expiresInSeconds: (result as any).expiresInSeconds,
-          devOtp: (result as any).devOtp,
           data: result,
         });
         return;

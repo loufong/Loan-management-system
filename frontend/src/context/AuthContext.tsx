@@ -13,6 +13,7 @@ interface AuthContextType {
   refreshUser: () => Promise<UserProfile | null>;
   switchRole: (role: UserRole) => Promise<void>;
   updateSettings: (settings: Partial<UserSettings>) => Promise<void>;
+  updateProfile: (data: { fullName?: string; phone?: string; position?: string; department?: string }) => Promise<UserProfile>;
   setSession: (user: UserProfile, token: string, rememberMe?: boolean) => void;
 }
 
@@ -178,6 +179,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return;
   };
 
+  const updateProfile = async (data: { fullName?: string; phone?: string; position?: string; department?: string }): Promise<UserProfile> => {
+    setIsLoading(true);
+    try {
+      const updated = await api.updateProfile(data);
+      setUser(updated);
+      return updated;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const updateSettings = async (settings: Partial<UserSettings>) => {
     try {
       const updated = await api.updateUserSettings(settings);
@@ -202,6 +214,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         logout,
         refreshUser,
         switchRole,
+        updateProfile,
         updateSettings,
         setSession,
       }}

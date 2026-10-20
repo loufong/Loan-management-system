@@ -22,9 +22,11 @@ export interface UserProfile {
   name: string;
   fullName?: string;
   email: string;
+  phone?: string;
   role: UserRole;
   status?: UserStatus;
   title: string;
+  position?: string;
   department: string;
   avatar: string;
   avatarUrl?: string;

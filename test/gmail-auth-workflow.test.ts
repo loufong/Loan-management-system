@@ -99,7 +99,6 @@ async function runPendingAuthTests() {
 
   // 5. OTP Verification & Atomic Transactional User Creation
   console.log('\n--- 5. Testing OTP Verification & Atomic Promotion to users Table ---');
-  const otpCode = regResult.devOtp || '482915';
 
   // Test invalid OTP
   try {
@@ -115,33 +114,38 @@ async function runPendingAuthTests() {
   }
 
   // Test valid OTP verification
-  if (regResult.devOtp) {
-    const verifyResult = await AuthService.verifyOtp({
+  const testOtpCode = '654321';
+  const knownHash = OtpService.hashOtp(testOtpCode, testEmail);
+  await prisma.otpVerification.updateMany({
+    where: { email: testEmail, purpose: 'REGISTRATION' },
+    data: { otpHash: knownHash, expiresAt: new Date(Date.now() + 10 * 60 * 1000), attempts: 0 }
+  });
+
+  const verifyResult = await AuthService.verifyOtp({
+    email: testEmail,
+    code: testOtpCode,
+    purpose: 'register_verification',
+  });
+
+  if (!verifyResult.success) throw new Error('Valid OTP verification failed');
+  console.log('✅ OTP verified successfully. Real user created transactionally!');
+
+  // Verify that pending_registrations record is now DELETED
+  const checkDeletedPending = await PendingRegistrationService.findValidByEmail(testEmail);
+  if (checkDeletedPending) throw new Error('pending_registrations record should have been deleted!');
+  console.log('✅ Confirmed pending_registrations record was deleted upon account activation.');
+
+  // Verify that the OTP cannot be reused
+  try {
+    await AuthService.verifyOtp({
       email: testEmail,
-      code: regResult.devOtp,
+      code: testOtpCode,
       purpose: 'register_verification',
     });
-
-    if (!verifyResult.success) throw new Error('Valid OTP verification failed');
-    console.log('✅ OTP verified successfully. Real user created transactionally!');
-
-    // Verify that pending_registrations record is now DELETED
-    const checkDeletedPending = await PendingRegistrationService.findValidByEmail(testEmail);
-    if (checkDeletedPending) throw new Error('pending_registrations record should have been deleted!');
-    console.log('✅ Confirmed pending_registrations record was deleted upon account activation.');
-
-    // Verify that the OTP cannot be reused
-    try {
-      await AuthService.verifyOtp({
-        email: testEmail,
-        code: regResult.devOtp,
-        purpose: 'register_verification',
-      });
-      throw new Error('Should have rejected already-used OTP');
-    } catch (err: any) {
-      if (err.code !== 'INVALID_OTP') throw err;
-      console.log('✅ OTP re-use strictly rejected (OTP invalidated).');
-    }
+    throw new Error('Should have rejected already-used OTP');
+  } catch (err: any) {
+    if (err.code !== 'INVALID_OTP') throw err;
+    console.log('✅ OTP re-use strictly rejected (OTP invalidated).');
   }
 
   // 6. User Can Now Successfully Log In

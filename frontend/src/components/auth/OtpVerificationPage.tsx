@@ -16,7 +16,6 @@ import logoImg from '../../assets/logo-transparent.png';
 export interface OtpVerificationPageProps {
   email: string;
   purpose: 'register_verification' | 'forgot_password' | 'email_verification' | 'login_verification';
-  devOtp?: string;
   onVerificationSuccess: (resetToken?: string, verifiedUser?: UserProfile, verifiedToken?: string) => void;
   onNavigateBack: () => void;
 }
@@ -24,7 +23,6 @@ export interface OtpVerificationPageProps {
 export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
   email,
   purpose,
-  devOtp,
   onVerificationSuccess,
   onNavigateBack,
 }) => {
@@ -119,13 +117,9 @@ export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
 
     try {
       const canonicalPurpose = purpose === 'login_verification' ? 'LOGIN' : purpose;
-      const res = await api.resendOtp({ email, purpose: canonicalPurpose });
+      await api.resendOtp({ email, purpose: canonicalPurpose });
       setResendCooldown(60);
-      setSuccessNotice(
-        res.devOtp
-          ? `New verification code sent! (Demo Code: ${res.devOtp})`
-          : 'A new verification code has been dispatched to your email.'
-      );
+      setSuccessNotice('A fresh 6-digit verification code has been dispatched to your email.');
     } catch (err: any) {
       setError(err?.message || 'Failed to resend code. Please try again later.');
     } finally {
@@ -155,31 +149,22 @@ export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
                 : 'Verify Your Email'}
             </h2>
             <p className="text-xs text-[#64748B]">
-              {devOtp
-                ? `Enter your 6-digit verification code to complete sign-in for `
-                : (purpose === 'login_verification'
-                    ? 'We sent a 6-digit login verification code to '
-                    : 'We sent a 6-digit verification code to ')}
+              We sent a 6-digit verification code to{' '}
               <strong className="text-[#0F172A]">{email}</strong>.
             </p>
           </div>
-
-          {devOtp && (
-            <div className="p-3 bg-amber-50 border border-amber-200 rounded-[6px] text-xs text-amber-900 space-y-1">
-              <div className="flex items-center gap-1.5 font-semibold text-amber-800">
-                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-                <span>Gmail SMTP Requires 16-character Google App Password</span>
-              </div>
-              <p className="text-[11px] text-amber-700 leading-relaxed">
-                Google blocked sending because <code className="font-mono bg-amber-100 px-1 rounded text-amber-900">MAIL_PASSWORD</code> in <code className="font-mono bg-amber-100 px-1 rounded text-amber-900">.env</code> is still a placeholder. Enter your code to continue: <strong className="font-mono font-bold text-sm text-[#0F172A] tracking-wider ml-1 bg-white px-2 py-0.5 rounded border border-amber-300">{devOtp}</strong>
-              </p>
-            </div>
-          )}
 
           {successNotice && (
             <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-[6px] flex items-center gap-2 text-xs text-emerald-800">
               <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
               <span>{successNotice}</span>
+            </div>
+          )}
+
+          {error && (
+            <div className="p-3 bg-rose-50 border border-rose-200 rounded-[6px] flex items-center gap-2 text-xs text-rose-700">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+              <span>{error}</span>
             </div>
           )}
 
@@ -234,7 +219,7 @@ export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
             <span>
               {resendCooldown > 0 ? (
                 <span className="flex items-center gap-1 font-mono">
-                  <Clock className="w-3.5 h-3.5" /> Resend in {resendCooldown}s
+                  <Clock className="w-3.5 h-3.5" /> Resend code in {resendCooldown} seconds
                 </span>
               ) : (
                 <button

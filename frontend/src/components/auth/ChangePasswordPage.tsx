@@ -81,7 +81,7 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
 
       setSuccessMessage(
         res.message ||
-          'Password updated successfully! A confirmation notice has been sent to your Gmail.'
+          'Password updated successfully! A confirmation notice has been sent to your email.'
       );
       setCurrentPassword('');
       setNewPassword('');
@@ -137,7 +137,7 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({
               <div className="space-y-1">
                 <span className="font-semibold block">{successMessage}</span>
                 <p className="text-emerald-700">
-                  A security confirmation email was dispatched to your Gmail account.
+                  A security confirmation email was dispatched to your email address.
                 </p>
               </div>
             </div>

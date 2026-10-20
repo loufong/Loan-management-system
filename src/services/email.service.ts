@@ -1,14 +1,35 @@
 import nodemailer, { Transporter } from 'nodemailer';
+import { Resend } from 'resend';
 import dotenv from 'dotenv';
 
 dotenv.config();
+
+export interface SendVerificationOtpParams {
+  toEmail: string;
+  recipientName?: string;
+  otpCode: string;
+}
+
+export interface SendPasswordResetOtpParams {
+  toEmail: string;
+  recipientName?: string;
+  otpCode: string;
+}
 
 export interface SendOtpEmailParams {
   toEmail: string;
   recipientName?: string;
   firstName?: string;
   otpCode: string;
-  purpose: 'REGISTRATION' | 'PASSWORD_RESET' | 'EMAIL_VERIFICATION' | 'CHANGE_EMAIL' | 'register_verification' | 'forgot_password' | 'LOGIN' | 'login_verification';
+  purpose:
+    | 'REGISTRATION'
+    | 'PASSWORD_RESET'
+    | 'EMAIL_VERIFICATION'
+    | 'CHANGE_EMAIL'
+    | 'register_verification'
+    | 'forgot_password'
+    | 'LOGIN'
+    | 'login_verification';
 }
 
 export interface SendPasswordChangedEmailParams {
@@ -22,49 +43,130 @@ export interface EmailSendResult {
   messageId?: string;
   error?: string;
   isSimulated?: boolean;
+  provider?: 'resend' | 'smtp';
 }
 
 export class EmailService {
   private static transporter: Transporter | null = null;
+  private static resendClient: Resend | null = null;
+
+  /**
+   * Identifies the active email provider.
+   * Priority:
+   * 1. EMAIL_PROVIDER='resend' OR presence of valid RESEND_API_KEY -> 'resend'
+   * 2. EMAIL_PROVIDER='smtp' OR configured SMTP credentials -> 'smtp'
+   * 3. 'unconfigured'
+   */
+  public static getActiveProvider(): 'resend' | 'smtp' | 'unconfigured' {
+    const providerConfig = (process.env.EMAIL_PROVIDER || '').trim().toLowerCase();
+    const resendKey = (process.env.RESEND_API_KEY || '').trim();
+
+    const isResendConfigured =
+      resendKey.length > 0 &&
+      !resendKey.includes('placeholder') &&
+      resendKey !== 're_123456789_abcdefg';
+
+    if (providerConfig === 'resend' || (isResendConfigured && providerConfig !== 'smtp')) {
+      return isResendConfigured ? 'resend' : 'unconfigured';
+    }
+
+    if (this.isSmtpConfigured()) {
+      return 'smtp';
+    }
+
+    return 'unconfigured';
+  }
+
+  /**
+   * Checks whether the system has ANY valid email provider configured.
+   */
+  public static isConfigured(): boolean {
+    return this.getActiveProvider() !== 'unconfigured';
+  }
+
+  /**
+   * Checks whether SMTP (Gmail or custom SMTP) is configured.
+   */
+  private static isSmtpConfigured(): boolean {
+    const user =
+      process.env.EMAIL_USER ||
+      process.env.SMTP_USER ||
+      process.env.MAIL_USERNAME ||
+      '';
+
+    const pass =
+      process.env.EMAIL_PASSWORD ||
+      process.env.SMTP_PASSWORD ||
+      process.env.MAIL_PASSWORD ||
+      '';
+
+    const isPlaceholder =
+      !user ||
+      !pass ||
+      user === 'yourgmail@gmail.com' ||
+      user === 'your-email@gmail.com' ||
+      user === 'your-real-gmail@gmail.com' ||
+      user === 'YOUR_REAL_GMAIL@gmail.com' ||
+      user === 'MY_REAL_GMAIL_ADDRESS' ||
+      pass === 'your_gmail_app_password' ||
+      pass === 'your-gmail-app-password' ||
+      pass === 'your-16-character-google-app-password' ||
+      pass === 'YOUR_GOOGLE_APP_PASSWORD' ||
+      pass === 'MY_GOOGLE_APP_PASSWORD' ||
+      pass.includes('placeholder');
+
+    return !isPlaceholder;
+  }
+
+  /**
+   * Initializes or returns the cached Resend client.
+   */
+  private static getResendClient(): Resend | null {
+    if (!this.resendClient) {
+      const apiKey = (process.env.RESEND_API_KEY || '').trim();
+      if (apiKey && !apiKey.includes('placeholder')) {
+        this.resendClient = new Resend(apiKey);
+      }
+    }
+    return this.resendClient;
+  }
 
   /**
    * Initializes or returns the cached Nodemailer SMTP transporter.
-   * Priority:
-   * 1. SMTP_* environment variables (e.g. SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, SMTP_PASSWORD)
-   * 2. MAIL_* environment variables (e.g. MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD)
-   * 3. EMAIL_* environment variables
    */
-  private static getTransporter(): Transporter {
+  private static getSmtpTransporter(): Transporter {
     if (!this.transporter) {
       const host =
+        process.env.EMAIL_HOST ||
         process.env.SMTP_HOST ||
         process.env.MAIL_HOST ||
-        process.env.EMAIL_HOST ||
         'smtp.gmail.com';
 
       const port = parseInt(
+        process.env.EMAIL_PORT ||
         process.env.SMTP_PORT ||
         process.env.MAIL_PORT ||
-        process.env.EMAIL_PORT ||
-        '465',
+        '587',
         10
       );
 
       const secure =
-        process.env.SMTP_SECURE === 'true' ||
-        process.env.MAIL_ENCRYPTION === 'ssl' ||
-        port === 465;
+        process.env.EMAIL_SECURE !== undefined
+          ? process.env.EMAIL_SECURE === 'true'
+          : (process.env.SMTP_SECURE === 'true' ||
+              process.env.MAIL_ENCRYPTION === 'ssl' ||
+              port === 465);
 
       const user =
+        process.env.EMAIL_USER ||
         process.env.SMTP_USER ||
         process.env.MAIL_USERNAME ||
-        process.env.EMAIL_USER ||
         '';
 
       const pass = (
+        process.env.EMAIL_PASSWORD ||
         process.env.SMTP_PASSWORD ||
         process.env.MAIL_PASSWORD ||
-        process.env.EMAIL_PASSWORD ||
         ''
       ).replace(/\s+/g, '');
 
@@ -77,7 +179,7 @@ export class EmailService {
           pass,
         },
         tls: {
-          rejectUnauthorized: false, // Prevents certificate chain rejection on local / corporate networks
+          rejectUnauthorized: false,
         },
       });
     }
@@ -86,68 +188,66 @@ export class EmailService {
   }
 
   /**
-   * Checks whether Gmail SMTP credentials are configured with real values.
+   * Resolves the "From" sender address according to RFC 5322.
    */
-  public static isConfigured(): boolean {
-    const user =
+  public static getFromAddress(provider: 'resend' | 'smtp' = 'smtp'): string {
+    const rawFrom =
+      process.env.EMAIL_FROM ||
+      process.env.MAIL_FROM ||
+      process.env.MAIL_FROM_ADDRESS ||
+      '';
+
+    const fromName =
+      process.env.EMAIL_FROM_NAME ||
+      process.env.MAIL_FROM_NAME ||
+      'Apex Loan Management System';
+
+    if (rawFrom.includes('<') && rawFrom.includes('>')) {
+      return rawFrom;
+    }
+
+    if (rawFrom) {
+      return `"${fromName}" <${rawFrom}>`;
+    }
+
+    if (provider === 'resend') {
+      return `"${fromName}" <onboarding@resend.dev>`;
+    }
+
+    const smtpUser =
+      process.env.EMAIL_USER ||
       process.env.SMTP_USER ||
       process.env.MAIL_USERNAME ||
-      process.env.EMAIL_USER ||
-      '';
+      'no-reply@apex.local';
 
-    const pass =
-      process.env.SMTP_PASSWORD ||
-      process.env.MAIL_PASSWORD ||
-      process.env.EMAIL_PASSWORD ||
-      '';
-
-    const isPlaceholder =
-      !user ||
-      !pass ||
-      user === 'yourgmail@gmail.com' ||
-      user === 'your-email@gmail.com' ||
-      pass === 'your_gmail_app_password' ||
-      pass === 'your-gmail-app-password';
-
-    return !isPlaceholder;
+    return `"${fromName}" <${smtpUser}>`;
   }
 
   /**
-   * Sends an OTP verification email using real Gmail SMTP (or development notice if credentials unconfigured).
+   * High-Level Abstraction: Send Account Registration Verification OTP
    */
-  public static async sendOtpEmail(params: SendOtpEmailParams): Promise<EmailSendResult> {
-    const { toEmail, recipientName, firstName, otpCode, purpose } = params;
+  public static async sendVerificationOTP(params: SendVerificationOtpParams): Promise<EmailSendResult> {
+    const { toEmail, recipientName, otpCode } = params;
+    const displayName = recipientName ? recipientName.split(' ')[0] : 'Valued User';
 
-    const fromAddress =
-      process.env.MAIL_FROM ||
-      process.env.MAIL_FROM_ADDRESS ||
-      process.env.SMTP_USER ||
-      process.env.MAIL_USERNAME ||
-      'noreply@apex.local';
+    const subject = 'Verify Your Apex Loan Management System Account';
 
-    const fromName = process.env.MAIL_FROM_NAME || 'Loan Management System';
+    const textContent = `
+Hello ${displayName},
 
-    const displayName = firstName || (recipientName ? recipientName.split(' ')[0] : 'User');
-    const isReset = purpose === 'PASSWORD_RESET' || purpose === 'forgot_password';
-    const isLogin = purpose === 'LOGIN' || purpose === 'login_verification';
+Thank you for registering with Apex Loan Management System.
 
-    const subject = isReset
-      ? 'Password Reset Verification Code'
-      : isLogin
-      ? 'Your Login Verification Code - Jam Song Vich LMS'
-      : 'Verify Your Loan Management System Account';
+Your verification code is:
 
-    const purposeTitle = isReset
-      ? 'Password Reset Verification'
-      : isLogin
-      ? 'Login Verification Code'
-      : 'Verify Your Email Address';
+${otpCode}
 
-    const purposeIntro = isReset
-      ? 'You requested a password reset for your Loan Management System account.'
-      : isLogin
-      ? 'You are signing in to your Loan Management System account. Use the 6-digit OTP code below to verify your login.'
-      : 'Thank you for registering with Loan Management System. Please verify your email to activate your account.';
+This code will expire in 10 minutes.
+
+If you did not create this account, please ignore this email.
+
+Regards,
+Apex Loan Management System
+    `.trim();
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -162,16 +262,12 @@ export class EmailService {
     <tr>
       <td align="center">
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width: 520px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);">
-          
-          <!-- Header -->
           <tr>
             <td style="background-color: #0f172a; padding: 24px 32px; text-align: left;">
-              <span style="display: inline-block; background-color: #2563eb; color: #ffffff; font-weight: bold; font-size: 13px; padding: 4px 8px; border-radius: 4px; letter-spacing: 0.5px;">Jam Song Vich</span>
-              <h1 style="color: #ffffff; font-size: 18px; font-weight: 700; margin: 12px 0 0 0; letter-spacing: -0.2px;">${purposeTitle}</h1>
+              <span style="display: inline-block; background-color: #2563eb; color: #ffffff; font-weight: bold; font-size: 13px; padding: 4px 8px; border-radius: 4px; letter-spacing: 0.5px;">Apex LMS</span>
+              <h1 style="color: #ffffff; font-size: 18px; font-weight: 700; margin: 12px 0 0 0; letter-spacing: -0.2px;">Verify Your Apex LMS Account</h1>
             </td>
           </tr>
-
-          <!-- Body -->
           <tr>
             <td style="padding: 32px;">
               <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 22px; color: #0f172a;">
@@ -179,10 +275,9 @@ export class EmailService {
               </p>
               
               <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 22px; color: #334155;">
-                ${purposeIntro}
+                Thank you for registering with Apex Loan Management System.
               </p>
 
-              <!-- OTP Box -->
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin: 20px 0;">
                 <tr>
                   <td align="center" style="background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 20px;">
@@ -193,26 +288,24 @@ export class EmailService {
                       ${otpCode}
                     </div>
                     <div style="font-size: 12px; color: #2563eb; font-weight: 600; margin-top: 8px;">
-                      This code expires in 5 minutes.
+                      This code will expire in 10 minutes.
                     </div>
                   </td>
                 </tr>
               </table>
 
               <p style="margin: 20px 0 0 0; font-size: 13px; line-height: 20px; color: #64748b;">
-                If you did not request this code, you can safely ignore this email.
+                If you did not create this account, please ignore this email.
               </p>
 
               <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0 16px 0;" />
 
               <p style="margin: 0; font-size: 13px; line-height: 18px; color: #475569;">
-                <strong>Loan Management System</strong><br>
-                <span style="font-size: 12px; color: #94a3b8;">Automated Notification Service</span>
+                Regards,<br>
+                <strong>Apex Loan Management System</strong>
               </p>
             </td>
           </tr>
-
-          <!-- Footer -->
           <tr>
             <td style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 14px 32px; text-align: center;">
               <p style="margin: 0; font-size: 11px; color: #94a3b8;">
@@ -220,7 +313,6 @@ export class EmailService {
               </p>
             </td>
           </tr>
-
         </table>
       </td>
     </tr>
@@ -229,82 +321,145 @@ export class EmailService {
 </html>
     `.trim();
 
-    const textContent = `
-Hello ${displayName},
-
-Your verification code is: ${otpCode}
-
-This code expires in 5 minutes.
-
-If you did not request this code, you can safely ignore this email.
-
-Loan Management System
-    `.trim();
-
-    // If SMTP credentials not provided in .env
-    if (!this.isConfigured()) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.warn(`
-⚠️  [Gmail SMTP Not Configured in .env]
-    To receive real OTP emails in your Gmail inbox:
-    1. Set SMTP_USER and SMTP_PASSWORD in your .env file
-    2. Use a Google App Password (not your normal Gmail account password)
-    3. Host: smtp.gmail.com, Port: 465 (SSL) or 587 (TLS)
-    
-    [DEV OTP SIMULATION]
-    Recipient: ${toEmail} (${displayName})
-    Purpose  : ${purpose}
-    OTP Code : >>> ${otpCode} <<< (Expires in 5 mins)
-        `);
-      }
-
-      return {
-        success: true,
-        isSimulated: true,
-        messageId: `simulated-${Date.now()}`
-      };
-    }
-
-    try {
-      const transporter = this.getTransporter();
-      const mailOptions = {
-        from: `"${fromName}" <${fromAddress}>`,
-        to: toEmail,
-        subject,
-        text: textContent,
-        html: htmlContent,
-      };
-
-      const info = await transporter.sendMail(mailOptions);
-      console.log(`📧 [Real Gmail Sent] OTP email successfully delivered to ${toEmail}. MessageId: ${info.messageId}`);
-
-      return {
-        success: true,
-        messageId: info.messageId,
-      };
-    } catch (err: any) {
-      console.error(`❌ [Gmail SMTP Error] Failed to send email to ${toEmail}:`, err?.message || err);
-      return {
-        success: false,
-        error: err?.message || 'SMTP delivery failed',
-      };
-    }
+    return this.dispatchEmail({
+      toEmail,
+      subject,
+      textContent,
+      htmlContent,
+    });
   }
 
   /**
-   * Sends confirmation email after password change.
+   * High-Level Abstraction: Send Password Reset OTP
+   */
+  public static async sendPasswordResetOTP(params: SendPasswordResetOtpParams): Promise<EmailSendResult> {
+    const { toEmail, recipientName, otpCode } = params;
+    const displayName = recipientName ? recipientName.split(' ')[0] : 'Valued User';
+
+    const subject = 'Reset Your Apex LMS Password';
+
+    const textContent = `
+Hello ${displayName},
+
+We received a request to reset your password.
+
+Your password reset code is:
+
+${otpCode}
+
+This code will expire in 10 minutes.
+
+If you did not request this password reset, please ignore this email.
+
+Regards,
+Apex Loan Management System
+    `.trim();
+
+    const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0f172a;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f8fafc; padding: 32px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width: 520px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);">
+          <tr>
+            <td style="background-color: #0f172a; padding: 24px 32px; text-align: left;">
+              <span style="display: inline-block; background-color: #2563eb; color: #ffffff; font-weight: bold; font-size: 13px; padding: 4px 8px; border-radius: 4px; letter-spacing: 0.5px;">Apex LMS</span>
+              <h1 style="color: #ffffff; font-size: 18px; font-weight: 700; margin: 12px 0 0 0; letter-spacing: -0.2px;">Reset Your Apex LMS Password</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px;">
+              <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 22px; color: #0f172a;">
+                Hello <strong>${displayName}</strong>,
+              </p>
+              
+              <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 22px; color: #334155;">
+                We received a request to reset your password.
+              </p>
+
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin: 20px 0;">
+                <tr>
+                  <td align="center" style="background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 20px;">
+                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #64748b; margin-bottom: 6px;">
+                      Your password reset code is:
+                    </div>
+                    <div style="font-family: 'Courier New', Courier, monospace; font-size: 34px; font-weight: 800; letter-spacing: 8px; color: #0f172a;">
+                      ${otpCode}
+                    </div>
+                    <div style="font-size: 12px; color: #2563eb; font-weight: 600; margin-top: 8px;">
+                      This code will expire in 10 minutes.
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 20px 0 0 0; font-size: 13px; line-height: 20px; color: #64748b;">
+                If you did not request this password reset, please ignore this email.
+              </p>
+
+              <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0 16px 0;" />
+
+              <p style="margin: 0; font-size: 13px; line-height: 18px; color: #475569;">
+                Regards,<br>
+                <strong>Apex Loan Management System</strong>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 14px 32px; text-align: center;">
+              <p style="margin: 0; font-size: 11px; color: #94a3b8;">
+                This is a secure automated message. Please do not reply directly to this email.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `.trim();
+
+    return this.dispatchEmail({
+      toEmail,
+      subject,
+      textContent,
+      htmlContent,
+    });
+  }
+
+  /**
+   * Generic OTP Email Sender (Maintains backwards compatibility for any caller)
+   */
+  public static async sendOtpEmail(params: SendOtpEmailParams): Promise<EmailSendResult> {
+    const isReset = params.purpose === 'PASSWORD_RESET' || params.purpose === 'forgot_password';
+    if (isReset) {
+      return this.sendPasswordResetOTP({
+        toEmail: params.toEmail,
+        recipientName: params.recipientName || params.firstName,
+        otpCode: params.otpCode,
+      });
+    }
+
+    return this.sendVerificationOTP({
+      toEmail: params.toEmail,
+      recipientName: params.recipientName || params.firstName,
+      otpCode: params.otpCode,
+    });
+  }
+
+  /**
+   * Sends confirmation email after successful password change.
    */
   public static async sendPasswordChangedEmail(params: SendPasswordChangedEmailParams): Promise<EmailSendResult> {
     const { toEmail, recipientName, firstName } = params;
-
-    const fromAddress =
-      process.env.MAIL_FROM ||
-      process.env.MAIL_FROM_ADDRESS ||
-      process.env.SMTP_USER ||
-      process.env.MAIL_USERNAME ||
-      'noreply@apex.local';
-
-    const fromName = process.env.MAIL_FROM_NAME || 'Loan Management System';
     const displayName = firstName || (recipientName ? recipientName.split(' ')[0] : 'User');
     const subject = 'Your Password Has Been Changed Successfully';
 
@@ -322,7 +477,7 @@ Loan Management System
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width: 520px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
           <tr>
             <td style="background-color: #0f172a; padding: 20px 32px;">
-              <span style="background-color: #2563eb; color: #ffffff; font-weight: bold; font-size: 13px; padding: 4px 8px; border-radius: 4px;">Jam Song Vich</span>
+              <span style="background-color: #2563eb; color: #ffffff; font-weight: bold; font-size: 13px; padding: 4px 8px; border-radius: 4px;">Apex LMS</span>
               <h1 style="color: #ffffff; font-size: 18px; font-weight: 700; margin: 12px 0 0 0;">Password Changed</h1>
             </td>
           </tr>
@@ -335,11 +490,12 @@ Loan Management System
                 Your password has been changed successfully. You can now use your new password to sign in.
               </p>
               <p style="margin: 20px 0 0 0; font-size: 13px; line-height: 20px; color: #dc2626; font-weight: 600;">
-                If you did not perform this action, please contact your system administrator immediately to secure your account.
+                If you did not perform this action, please contact your system administrator immediately.
               </p>
               <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0 16px 0;" />
               <p style="margin: 0; font-size: 13px; color: #475569;">
-                <strong>Loan Management System</strong>
+                Regards,<br>
+                <strong>Apex Loan Management System</strong>
               </p>
             </td>
           </tr>
@@ -354,32 +510,113 @@ Loan Management System
     const textContent = `
 Hello ${displayName},
 
-Your password has been changed successfully.
+Your password has been changed successfully. You can now sign in with your new password.
 
 If you did not perform this action, please contact your system administrator immediately.
 
-Loan Management System
+Regards,
+Apex Loan Management System
     `.trim();
 
-    if (!this.isConfigured()) {
-      return { success: true, isSimulated: true };
+    return this.dispatchEmail({
+      toEmail,
+      subject,
+      textContent,
+      htmlContent,
+    });
+  }
+
+  /**
+   * Internal Core Dispatcher: Routes email to active provider (Resend or SMTP)
+   */
+  private static async dispatchEmail(params: {
+    toEmail: string;
+    subject: string;
+    textContent: string;
+    htmlContent: string;
+  }): Promise<EmailSendResult> {
+    const { toEmail, subject, textContent, htmlContent } = params;
+    const provider = this.getActiveProvider();
+
+    if (provider === 'unconfigured') {
+      console.warn(
+        `⚠️ [Email Service Warning] No active email provider configured in .env. ` +
+        `Configure RESEND_API_KEY (Recommended) or EMAIL_USER/EMAIL_PASSWORD.`
+      );
+      return {
+        success: false,
+        isSimulated: true,
+        error: 'Email provider not configured in .env. Please set RESEND_API_KEY or SMTP credentials.',
+      };
     }
 
+    // 1. Send via Resend
+    if (provider === 'resend') {
+      try {
+        const resend = this.getResendClient();
+        if (!resend) {
+          throw new Error('Resend client failed to initialize');
+        }
+
+        const from = this.getFromAddress('resend');
+        const response = await resend.emails.send({
+          from,
+          to: [toEmail],
+          subject,
+          text: textContent,
+          html: htmlContent,
+        });
+
+        if (response.error) {
+          console.error(`❌ [Resend Error] Delivery to ${toEmail} failed:`, response.error.message);
+          return {
+            success: false,
+            error: response.error.message,
+            provider: 'resend',
+          };
+        }
+
+        console.log(`📧 [Resend Sent] Email delivered to ${toEmail}. MessageId: ${response.data?.id}`);
+        return {
+          success: true,
+          messageId: response.data?.id,
+          provider: 'resend',
+        };
+      } catch (err: any) {
+        console.error(`❌ [Resend Error] Exception sending email to ${toEmail}:`, err?.message || err);
+        return {
+          success: false,
+          error: err?.message || 'Resend delivery failed',
+          provider: 'resend',
+        };
+      }
+    }
+
+    // 2. Send via SMTP / Nodemailer
     try {
-      const transporter = this.getTransporter();
-      const mailOptions = {
-        from: `"${fromName}" <${fromAddress}>`,
+      const transporter = this.getSmtpTransporter();
+      const from = this.getFromAddress('smtp');
+      const info = await transporter.sendMail({
+        from,
         to: toEmail,
         subject,
         text: textContent,
         html: htmlContent,
-      };
+      });
 
-      const info = await transporter.sendMail(mailOptions);
-      return { success: true, messageId: info.messageId };
+      console.log(`📧 [SMTP Sent] Email delivered to ${toEmail}. MessageId: ${info.messageId}`);
+      return {
+        success: true,
+        messageId: info.messageId,
+        provider: 'smtp',
+      };
     } catch (err: any) {
-      console.error(`❌ [Gmail SMTP Error] Failed to send password changed email to ${toEmail}:`, err?.message || err);
-      return { success: false, error: err?.message };
+      console.error(`❌ [SMTP Error] Exception sending email to ${toEmail}:`, err?.message || err);
+      return {
+        success: false,
+        error: err?.message || 'SMTP delivery failed',
+        provider: 'smtp',
+      };
     }
   }
 }

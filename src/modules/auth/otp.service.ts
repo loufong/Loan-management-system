@@ -26,12 +26,12 @@ export interface SendOtpResult {
   success: boolean;
   message: string;
   expiresInSeconds: number;
-  devOtp?: string;
 }
 
 export class OtpService {
-  private static readonly OTP_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
+  private static readonly OTP_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
   private static readonly RESEND_COOLDOWN_SECONDS = 60; // 60 seconds
+  private static readonly MAX_REQUESTS_PER_10_MIN = 3;
   private static readonly MAX_ATTEMPTS = 5;
   private static readonly SALT = process.env.OTP_SALT || 'apex-lms-secure-otp-salt-2026';
   private static readonly JWT_SECRET = process.env.JWT_SECRET || 'apex-lms-jwt-secret-2026';
@@ -69,7 +69,8 @@ export class OtpService {
 
   /**
    * Creates, persists, and delivers an OTP to the user's Gmail.
-   * Enforces 60-second cooldown rate limiting and invalidates prior unverified codes.
+   * Enforces 60-second cooldown rate limiting, max 3 requests within 10 minutes,
+   * and invalidates prior unverified codes.
    */
   public static async createAndSendOtp(params: {
     email: string;
@@ -83,7 +84,31 @@ export class OtpService {
     const canonicalPurpose = this.normalizePurpose(params.purpose);
     const now = new Date();
 
-    // 1. Check Resend Rate Limit (60-second cooldown) via PostgreSQL
+    // 1. Check Rate Limit: Maximum 3 resend requests within 10 minutes
+    try {
+      const tenMinutesAgo = new Date(now.getTime() - 10 * 60 * 1000);
+      const recentCount = await prisma.otpVerification.count({
+        where: {
+          email: cleanEmail,
+          purpose: {
+            in: [canonicalPurpose, params.purpose],
+          },
+          createdAt: { gte: tenMinutesAgo },
+        },
+      });
+
+      if (recentCount >= this.MAX_REQUESTS_PER_10_MIN) {
+        return {
+          success: false,
+          message: 'Too many OTP requests. Maximum 3 requests allowed within 10 minutes. Please wait before requesting another code.',
+          expiresInSeconds: 600,
+        };
+      }
+    } catch {
+      // If DB error, proceed safely
+    }
+
+    // 2. Check Resend Rate Limit (60-second cooldown) via PostgreSQL
     try {
       const recentOtp = await prisma.otpVerification.findFirst({
         where: {
@@ -113,7 +138,7 @@ export class OtpService {
       // If DB error, proceed safely
     }
 
-    // 2. Invalidate previous active unverified OTPs for this email and purpose in DB
+    // 3. Invalidate previous active unverified OTPs for this email and purpose in DB
     try {
       await prisma.otpVerification.updateMany({
         where: {
@@ -130,12 +155,12 @@ export class OtpService {
       // Ignore cleanup error
     }
 
-    // 3. Generate 6-digit cryptographically random code and hash
+    // 4. Generate 6-digit cryptographically random code and hash
     const otpCode = this.generateCode();
     const otpHash = this.hashOtp(otpCode, cleanEmail);
     const expiresAt = new Date(now.getTime() + this.OTP_EXPIRY_MS);
 
-    // 4. Persist OTP record in PostgreSQL database
+    // 5. Persist OTP record in PostgreSQL database
     try {
       await prisma.otpVerification.create({
         data: {
@@ -154,31 +179,42 @@ export class OtpService {
       console.error('Failed to persist OTP in PostgreSQL:', err?.message || err);
     }
 
-    // 5. Deliver via Real Gmail SMTP
-    const emailResult = await EmailService.sendOtpEmail({
-      toEmail: cleanEmail,
-      recipientName: params.recipientName,
-      firstName: params.firstName,
-      otpCode,
-      purpose: canonicalPurpose as any,
-    });
+    // 6. Deliver via EmailService Abstraction (Resend or SMTP)
+    let emailResult;
+    if (canonicalPurpose === 'REGISTRATION') {
+      emailResult = await EmailService.sendVerificationOTP({
+        toEmail: cleanEmail,
+        recipientName: params.recipientName,
+        otpCode,
+      });
+    } else if (canonicalPurpose === 'PASSWORD_RESET') {
+      emailResult = await EmailService.sendPasswordResetOTP({
+        toEmail: cleanEmail,
+        recipientName: params.recipientName,
+        otpCode,
+      });
+    } else {
+      emailResult = await EmailService.sendOtpEmail({
+        toEmail: cleanEmail,
+        recipientName: params.recipientName,
+        firstName: params.firstName,
+        otpCode,
+        purpose: canonicalPurpose as any,
+      });
+    }
 
-    if (!emailResult.success && !emailResult.isSimulated) {
+    if (!emailResult.success) {
       return {
         success: false,
-        message: 'Unable to send the verification email. Please check your Gmail SMTP configuration.',
+        message: emailResult.error || 'Unable to send the verification email. Please check your email service configuration.',
         expiresInSeconds: 0,
       };
     }
 
-    // In non-production simulation, return devOtp for seamless automated testing
-    const devOtp = (process.env.NODE_ENV !== 'production' && emailResult.isSimulated) ? otpCode : undefined;
-
     return {
       success: true,
       message: 'Verification code sent successfully to your email.',
-      expiresInSeconds: 300,
-      devOtp,
+      expiresInSeconds: 600,
     };
   }
 

@@ -367,10 +367,9 @@ export class AuthService {
       success: true,
       message:
         otpResult.message ||
-        'Registration submitted. A 6-digit verification code has been dispatched to your Gmail.',
+        'Registration submitted. A 6-digit verification code has been sent to your email.',
       email: cleanEmail,
       pendingRegistrationId: pending.id,
-      devOtp: otpResult.devOtp,
     };
   }
 
@@ -526,7 +525,7 @@ export class AuthService {
 
       return {
         success: true,
-        message: 'Login successful via Gmail OTP verification.',
+        message: 'Login successful via OTP verification.',
         token: accessToken,
         accessToken,
         refreshToken: rawToken,
@@ -614,9 +613,8 @@ export class AuthService {
 
       return {
         success: true,
-        message: 'A fresh 6-digit OTP code has been dispatched to your Gmail.',
+        message: 'A fresh 6-digit OTP code has been sent to your email.',
         expiresInSeconds: otpResult.expiresInSeconds,
-        devOtp: otpResult.devOtp,
       };
     }
 
@@ -638,9 +636,8 @@ export class AuthService {
 
       return {
         success: true,
-        message: 'A fresh 6-digit login verification code has been dispatched to your Gmail.',
+        message: 'A fresh 6-digit login verification code has been sent to your email.',
         expiresInSeconds: otpResult.expiresInSeconds,
-        devOtp: otpResult.devOtp,
       };
     }
 
@@ -659,9 +656,8 @@ export class AuthService {
 
     return {
       success: true,
-      message: 'A fresh 6-digit OTP code has been dispatched to your Gmail.',
+      message: 'A fresh 6-digit OTP code has been sent to your email.',
       expiresInSeconds: otpResult.expiresInSeconds,
-      devOtp: otpResult.devOtp,
     };
   }
 
@@ -875,11 +871,40 @@ export class AuthService {
       };
     }
 
-    // For normal user (role USER), enforce Gmail OTP login verification
+    // Ensure linked borrower record exists in PostgreSQL for normal users
     if (user.role === UserRole.USER) {
-      // Ensure linked borrower record exists in PostgreSQL
       await this.ensureBorrowerRecordForUser(user);
+    }
 
+    // Check whether this user has already logged in previously ("used to login already")
+    let hasLoggedInBefore = !!user.lastLogin;
+
+    if (!hasLoggedInBefore) {
+      try {
+        const [previousSession, previousLoginLog] = await Promise.all([
+          prisma.refreshToken.findFirst({
+            where: { userId: user.id },
+            select: { id: true },
+          }),
+          prisma.auditLog.findFirst({
+            where: {
+              userId: user.id,
+              action: { in: ['USER_LOGIN', 'USER_LOGIN_OTP_VERIFIED'] },
+            },
+            select: { id: true },
+          }),
+        ]);
+        if (previousSession || previousLoginLog) {
+          hasLoggedInBefore = true;
+        }
+      } catch {
+        // Fallback / offline tolerance
+      }
+    }
+
+    // For users who have NEVER logged in before, require initial login OTP verification.
+    // For users that used to login already, they do not need to enter OTP anymore.
+    if (user.role === UserRole.USER && !hasLoggedInBefore) {
       const otpResult = await OtpService.createAndSendOtp({
         email: user.email,
         recipientName: user.fullName || user.username,
@@ -893,9 +918,10 @@ export class AuthService {
         email: user.email,
         purpose: 'login_verification',
         rememberMe: !!dto.rememberMe,
-        message: otpResult.message || 'A 6-digit verification code has been dispatched to your Gmail.',
+        message:
+          otpResult.message ||
+          'A 6-digit login verification code has been sent to your email.',
         expiresInSeconds: otpResult.expiresInSeconds,
-        devOtp: otpResult.devOtp,
       } as any;
     }
 

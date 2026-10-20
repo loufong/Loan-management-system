@@ -1,205 +1,95 @@
-# Apex LMS — Modern Authentication & Real Gmail OTP System
+# Apex LMS — Authentication & Email Service Setup Guide
 
-This document provides a comprehensive operational guide for the **Apex Loan Management System (Apex LMS)** authentication engine, featuring registration, login with session persistence, real Gmail SMTP 6-digit OTP verification, password recovery, and role-based access control (RBAC).
-
----
-
-## 1. Authentication Architecture & Security Highlights
-
-```
-   [ User Browser ]
-          │
-          ├── 1. Register Account / Forgot Password Request
-          ▼
-   [ Backend Auth Controller ] ──> Validates input (Zod), hashes passwords (bcrypt)
-          │
-          ├── 2. Generates cryptographically secure 6-digit OTP
-          ├── 3. Computes salted SHA-256 OTP hash & sets 5-minute expiry
-          ▼
-   [ Nodemailer SMTP Engine ] ──> Port 587 (STARTTLS)
-          │
-          ▼
-   [ Real Gmail SMTP Server ] (smtp.gmail.com)
-          │
-          ▼
-   [ User's Real Gmail Inbox ] ──> Receives professional HTML email with 6-digit code
-          │
-          ▼
-   [ OTP Verification Page ] ──> Auto-focus 6 inputs, 60s cooldown, max 5 attempts
-          │
-          ▼
-   [ Account Activated / Password Reset Token Issued ] ──> Direct Entry to Dashboard
-```
-
-- **Zero Gradients**: Modern, 100% solid flat banking design (`bg-slate-50`, `bg-white`, `border-slate-200`, `bg-slate-900`, `bg-blue-600`).
-- **No Plaintext Passwords**: Hashed with `bcryptjs` (10 salt rounds). Passwords never appear in API responses or logs.
-- **Real Gmail SMTP**: Uses Google App Passwords via Nodemailer over TLS (port 587).
-- **Brute-Force & Rate-Limiting Protection**:
-  - OTP expires strictly after **5 minutes**.
-  - Maximum **5 incorrect attempts** before the OTP is permanently locked.
-  - **60-second resend cooldown timer** enforced on both backend and frontend.
-  - One-time use: verified OTPs are immediately invalidated.
-- **Session Persistence**:
-  - `Remember Me` checked $\rightarrow$ 30-day session saved in `localStorage`.
-  - `Remember Me` unchecked $\rightarrow$ Browser-session only saved in `sessionStorage`.
+This document provides a comprehensive operational guide for the **Apex Loan Management System (Apex LMS)** authentication engine and email service integration.
 
 ---
 
-## 2. Setting Up Real Gmail SMTP with Google App Password
+## 1. System-Wide Email Architecture
 
 > [!IMPORTANT]
-> Google requires a **16-character App Password** when sending emails through SMTP. You **cannot** use your regular Google account password.
-
-### Step-by-Step Instructions:
-
-1. **Log in to Google**:
-   - Go to [myaccount.google.com](https://myaccount.google.com/) and sign in with the Gmail account you want to send OTP emails from.
-
-2. **Enable 2-Step Verification** (if not already enabled):
-   - Go to **Security** in the left sidebar.
-   - Under *How you sign in to Google*, click on **2-Step Verification** and follow the prompts to complete setup.
-
-3. **Generate an App Password**:
-   - In the top search bar of Google Account, type **`App passwords`** and select it (or go directly to [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)).
-   - In the **App name** field, type: `Loan Management System` (or `Apex LMS`).
-   - Click **Create**.
-   - Google will display a **16-character yellow box code** (e.g., `abcd efgh ijkl mnop`).
-
-4. **Copy the 16-Character Password**:
-   - Copy this 16-character code (you can paste it with or without spaces; our backend trims spaces automatically).
+> **Borrowers / End-Users never configure email settings!**
+> - Normal users simply type their email (Gmail, Yahoo, Outlook, Proton, etc.).
+> - Only the **System Owner** sets up the email sender credentials once in `.env`.
 
 ---
 
-## 3. Configuring the `.env` File
+## 2. Choosing Your Email Provider
 
-Open `.env` in the root folder (`e:\Loan\Loansystem\.env`) and configure the `MAIL_*` variables:
+The system supports two delivery methods configured via `EMAIL_PROVIDER`:
 
-```env
-# Database & Core
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/loansystem_db?schema=public"
-NODE_ENV="development"
-PORT=5000
-JWT_SECRET="super-secure-academic-lms-jwt-secret-key-2026"
+### Option A: Resend (Recommended for Production)
+1. Sign up at [resend.com](https://resend.com).
+2. Generate an API Key under **API Keys**.
+3. In `.env`:
+   ```env
+   EMAIL_PROVIDER="resend"
+   RESEND_API_KEY="re_your_api_key_here"
+   EMAIL_FROM="Apex Loan Management System <onboarding@resend.dev>"
+   EMAIL_FROM_NAME="Apex Loan Management System"
+   ```
 
-# Real Gmail SMTP Configuration
-MAIL_HOST=smtp.gmail.com
-MAIL_PORT=587
-MAIL_USERNAME=yourrealaccount@gmail.com
-MAIL_PASSWORD=abcdefghijklmnop
-MAIL_ENCRYPTION=tls
-MAIL_FROM_ADDRESS=yourrealaccount@gmail.com
-MAIL_FROM_NAME="Loan Management System"
-```
-
-> [!CAUTION]
-> **Protecting Your Credentials Before Pushing to GitHub**:
-> - The `.env` file is already added to `.gitignore` on line 3.
-> - Verify before committing:
->   ```bash
->   git status --ignored
->   # Ensure .env appears under "Ignored files"
->   ```
-> - Never hardcode passwords or App Passwords in source files.
+### Option B: Gmail SMTP (Google App Password)
+1. Sign in to your system Gmail at [myaccount.google.com](https://myaccount.google.com).
+2. Enable 2-Step Verification.
+3. Generate a 16-character App Password at [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords).
+4. In `.env`:
+   ```env
+   EMAIL_PROVIDER="smtp"
+   EMAIL_HOST="smtp.gmail.com"
+   EMAIL_PORT=587
+   EMAIL_SECURE="false"
+   EMAIL_USER="your-system-gmail@gmail.com"
+   EMAIL_PASSWORD="your-16-char-app-password"
+   EMAIL_FROM="Apex Loan Management System <your-system-gmail@gmail.com>"
+   ```
 
 ---
 
-## 4. Running the System
+## 3. Testing Your Email Setup in 1 Step
 
-### 1. Install Dependencies
-```bash
-# Root backend dependencies
-npm install
+Run the diagnostic tool to test your configuration and send a live test email to any inbox:
 
-# Frontend dependencies
-cd frontend
-npm install
-cd ..
-```
-
-### 2. Start Backend Server
-```bash
-# Starts Express API on port 5000
-npm run dev
-```
-
-### 3. Start Frontend App
-```bash
-# In a new terminal window:
-npm run frontend:dev
-# Opens http://localhost:3000
+```powershell
+npx ts-node scripts/verify-email.ts your_personal_email@gmail.com
 ```
 
 ---
 
-## 5. End-to-End Testing Workflows
+## 4. End-to-End User Flow
 
-### Test Workflow A: User Registration & Real Gmail OTP Verification
-1. Open [http://localhost:3000](http://localhost:3000) in your browser.
-2. Click **Create Account** at the bottom of the sign-in card.
-3. Fill in your information:
-   - **Full Name**: e.g., `David Serey`
-   - **Username**: e.g., `davidserey`
-   - **Email Address**: **Enter your real Gmail address** (e.g. `yourname@gmail.com`).
-   - **Phone**: `012345678`
-   - **Password**: `Password123!` (Observe the live green checklist meeting all 5 security criteria).
-   - **Confirm Password**: `Password123!`
-4. Click **Create Account**.
-5. Check your Gmail inbox:
-   - You will receive an email with subject: **`Your OTP Code - Loan Management System [XXXXXX]`**.
-   - The email contains a stylized 6-digit code box and security notice.
-6. Return to the browser:
-   - Enter the 6 digits into the boxes.
-   - Click **Verify OTP**.
-7. Your account is activated and you are redirected to the Login page with a green confirmation banner:
-   *"Email verified successfully! Your account is now active. Please sign in."*
+1. **Borrower Registration**:
+   - Borrower navigates to `/register` and enters their Name, Email (any provider), and Password.
+   - Backend creates record in `pending_registrations` (30m expiry).
+   - A cryptographically random 6-digit OTP is hashed, saved to `otp_verifications`, and delivered to the user's inbox.
+   - Expiry is set to **10 minutes**.
 
----
+2. **OTP Verification & Account Activation**:
+   - Borrower is redirected to `/verify-email`.
+   - Borrower enters the 6-digit OTP received in their email.
+   - Backend verifies hash, attempt count (< 5), and expiry.
+   - Upon success, the pending registration is transactionally promoted to the permanent `users` table and linked to a `borrowers` profile.
+   - User is redirected to `/login` with success banner.
 
-### Test Workflow B: Forgot Password & Password Reset
-1. On the Login page, click **Forgot Password?**.
-2. Enter your registered email address and click **Send Verification Code**.
-3. Check your Gmail inbox for the 6-digit password reset code.
-4. Enter the 6-digit code on the OTP Verification page.
-5. On the **Set New Password** screen:
-   - Enter your new compliant password.
-   - Confirm your new password.
-   - Click **Reset Password**.
-6. You are redirected to Login with the notification:
-   *"Your password has been successfully reset. Please log in with your new credentials."*
+3. **Login & Session Management**:
+   - User enters email and password on `/login`.
+   - Password verified with bcrypt.
+   - Returns JWT access token and 7-day (or 30-day with Remember Me) refresh token.
+   - User enters borrower dashboard.
+
+4. **Forgot Password & Password Reset**:
+   - User clicks **Forgot Password** on `/login` and enters their email.
+   - Backend sends a 6-digit reset OTP to the user's email.
+   - User enters OTP and new password on `/reset-password`.
+   - Password is updated and old sessions revoked.
+   - User logs in with new password.
 
 ---
 
-### Test Workflow C: 1-Click Evaluation Bar (Demo Accounts)
-If testing without an email setup, use the 4 quick-fill presets on the Login screen:
-- **Manager**: `manager@apex.local` / `Password123!`
-- **Loan Officer**: `officer@apex.local` / `Password123!`
-- **Cashier**: `cashier@apex.local` / `Password123!`
-- **Borrower**: `borrower@apex.local` / `Password123!`
+## 5. Security Guardrails
 
----
-
-## 6. Troubleshooting Gmail SMTP Errors
-
-| Error Code / Symptom | Root Cause | Solution |
-| :--- | :--- | :--- |
-| **`535-5.7.8 Username and Password not accepted` (EAUTH)** | Using normal Gmail account password instead of Google App Password, or typo in email. | 1. Enable 2-Step Verification in Google Account.<br>2. Generate a fresh 16-character App Password under `Security > App Passwords`.<br>3. Paste the 16 characters into `MAIL_PASSWORD` in `.env`. |
-| **`ETIMEDOUT` or `ECONNREFUSED`** | Firewall or ISP blocking port 465/587 or strict network proxy. | Ensure `MAIL_PORT=587` and `MAIL_HOST=smtp.gmail.com`. TLS STARTTLS is used by default. |
-| **Email going to Spam / Junk** | Brand new sender address sending to personal inbox. | Open your Spam folder in Gmail, select the message, and click **Not spam**. Future messages will land in your Primary inbox. |
-| **Dev Mode Fallback** | `MAIL_USERNAME` not yet configured in `.env`. | The system detects missing credentials, logs a clear warning in the server terminal with the exact generated OTP code, and displays it in the UI so registration testing is never blocked. |
-
----
-
-## 7. REST API Endpoints Reference
-
-All endpoints accept and return JSON with standard HTTP status codes:
-
-| Method | Endpoint | Description | Status Code |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/api/v1/auth/register` | Register new account & trigger Gmail OTP | `201 Created` |
-| `POST` | `/api/v1/auth/login` | Sign in with email/username & password | `200 OK` / `401 Unauthorized` |
-| `POST` | `/api/v1/auth/verify-otp` | Verify 6-digit OTP code for activation / reset | `200 OK` / `400 Bad Request` |
-| `POST` | `/api/v1/auth/resend-otp` | Resend 6-digit code (60-second cooldown) | `200 OK` / `429 Too Many Requests` |
-| `POST` | `/api/v1/auth/forgot-password` | Request password recovery OTP | `200 OK` |
-| `POST` | `/api/v1/auth/reset-password` | Set new password with verified reset token | `200 OK` / `400 Bad Request` |
-| `GET` | `/api/v1/auth/me` | Retrieve authenticated user profile & roles | `200 OK` / `401 Unauthorized` |
-| `POST` | `/api/v1/auth/logout` | Revoke refresh token and invalidate session | `200 OK` |
+- Passwords hashed with `bcryptjs` (10 rounds).
+- OTPs hashed with salted `SHA-256` before PostgreSQL storage.
+- Rate limits: 60-second resend cooldown, max 3 resends per 10 minutes.
+- Rate limits on login: 5 failed attempts locks for 5 minutes.
+- Public registration strictly restricted to standard user role; cannot register as administrator.
+- Zero secrets committed to Git (`.env` in `.gitignore`).

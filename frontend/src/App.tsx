@@ -92,6 +92,7 @@ import { useAuth } from './context/AuthContext';
 import { useLanguage } from './context/LanguageContext';
 
 import { PinAuthModal } from './components/auth/PinAuthModal';
+import { PinLockScreen } from './components/auth/PinLockScreen';
 import { useIdleTimer } from './hooks/useIdleTimer';
 
 type AuthView = 'login' | 'register' | 'otp_verify' | 'forgot_password' | 'set_new_password';
@@ -1368,13 +1369,14 @@ export const App: React.FC = () => {
           }}
         />
       )}
-      {/* 6-Digit PIN Quick-Access Modal for 5-minute Inactivity Lock (Login Prompt 4) */}
+      {/* 6-Digit PIN Quick-Access Screen for 5-minute Inactivity Lock (Login UI Prompt 4) */}
       {isIdleLocked && authIsAuthenticated && (
-        <PinAuthModal
-          isOpen={isIdleLocked}
+        <PinLockScreen
           user={{
-            name: currentUser.name || currentUser.fullName || 'Staff Officer',
+            fullName: currentUser.fullName || currentUser.name || 'Sophea Kem',
+            name: currentUser.name || currentUser.fullName || 'Sophea Kem',
             role: (currentUser.role || 'teller').toLowerCase(),
+            branch: currentUser.branch || 'Daun Penh',
             avatar: currentUser.avatar,
             storedPin: '123456',
           }}

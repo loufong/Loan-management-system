@@ -27,7 +27,7 @@ userRouter.get('/me/notifications', UserController.getMyNotifications);
 // ==========================================
 userRouter.get('/', checkRole(UserRole.ADMIN), UserController.list);
 userRouter.get('/:id', checkRole(UserRole.ADMIN), UserController.getById);
-userRouter.post('/', checkRole(UserRole.ADMIN), UserController.create);
+userRouter.post(['/', '/create'], checkRole(UserRole.ADMIN), UserController.create);
 userRouter.put('/:id', checkRole(UserRole.ADMIN), UserController.update);
 userRouter.patch('/:id/toggle-status', checkRole(UserRole.ADMIN), UserController.toggleStatus);
 userRouter.patch('/:id/status', checkRole(UserRole.ADMIN), UserController.setStatus);

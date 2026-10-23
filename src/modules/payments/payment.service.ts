@@ -11,6 +11,7 @@ import { recordAuditLog } from '../../utils/audit';
 import { AuthUser } from '../../middlewares/auth.middleware';
 import { LoanCalculatorService } from '../calculator/loan-calculator.service';
 import { isStaffRole } from '../../security/permissions';
+import { BakongService } from './bakong.service';
 
 const isUuid = (str: string): boolean =>
   typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
@@ -421,11 +422,11 @@ export class PaymentService {
       borrowerName: payment.loan.borrower.fullName,
       borrowerId: payment.loan.borrower.borrowerId,
       loanNumber: payment.loan.loanNumber,
-      productName: payment.loan.product.productName,
+      productName: payment.loan.product?.productName ?? 'Standard Loan Facility',
       paidAmount: Number(payment.amount),
       paymentDate: payment.paymentDate,
       paymentMethod: payment.paymentMethod,
-      cashierName: payment.receivedByUser.fullName,
+      cashierName: payment.receivedByUser?.fullName ?? 'N/A',
       notes: payment.notes,
       loanStatus: payment.loan.status,
       totalLoanAmount: totalRepayment,
@@ -533,6 +534,7 @@ export class PaymentService {
    */
   static async listPayments(filters: {
     receiptNo?: string;
+    status?: string;
     startDate?: string;
     endDate?: string;
     paymentMethod?: PaymentMethod;
@@ -545,6 +547,15 @@ export class PaymentService {
     const skip = (page - 1) * limit;
 
     const where: any = {};
+
+    if (filters.status) {
+      const s = String(filters.status).toUpperCase();
+      if (s === 'SUCCESS' || s === 'PAID') {
+        where.status = { in: [PaymentStatus.SUCCESS, PaymentStatus.PAID] };
+      } else if (Object.values(PaymentStatus).includes(s as any)) {
+        where.status = s as PaymentStatus;
+      }
+    }
 
     if (filters.receiptNo) {
       where.receiptNo = { contains: filters.receiptNo, mode: 'insensitive' };
@@ -607,5 +618,653 @@ export class PaymentService {
         totalPages: Math.ceil(total / limit)
       }
     };
+  }
+
+  /**
+   * Initiate Real Bakong KHQR Payment (Section 7 & 9)
+   * Creates a PENDING payment record and generates an authentic EMVCo Bakong KHQR
+   */
+  static async initiateKhqrPayment(dto: {
+    loanId: string;
+    installmentId?: string;
+    installmentNo?: number;
+    amount?: number;
+    currency?: 'USD' | 'KHR';
+    caller: AuthUser;
+    ipAddress?: string;
+    notes?: string;
+  }) {
+    // 1. Locate the loan account
+    const loan = await prisma.loan.findFirst({
+      where: isUuid(dto.loanId)
+        ? {
+            OR: [
+              { id: dto.loanId },
+              { applicationId: dto.loanId },
+              { loanNumber: dto.loanId }
+            ]
+          }
+        : {
+            OR: [
+              { loanNumber: dto.loanId },
+              { application: { applicationNo: dto.loanId } }
+            ]
+          },
+      include: {
+        borrower: true,
+        product: true,
+        repaymentSchedules: {
+          orderBy: { installmentNo: 'asc' }
+        }
+      }
+    });
+
+    if (!loan) {
+      throw { statusCode: 404, message: 'Loan account not found', code: 'LOAN_NOT_FOUND' };
+    }
+
+    // 2. Ownership verification: USER role can only pay their own loan
+    if (!isStaffRole(dto.caller.role) && loan.borrower.userId !== dto.caller.id) {
+      throw {
+        statusCode: 403,
+        message: 'Access denied: you can only initiate payments for your own loans',
+        code: 'FORBIDDEN_OWNERSHIP'
+      };
+    }
+
+    // 3. Loan must be in payable status (ACTIVE or OVERDUE)
+    if (loan.status === LoanStatus.COMPLETED) {
+      throw {
+        statusCode: 400,
+        message: 'Loan is already completed. No outstanding repayments due.',
+        code: 'LOAN_ALREADY_COMPLETED'
+      };
+    }
+    if (loan.status !== LoanStatus.ACTIVE && loan.status !== LoanStatus.OVERDUE) {
+      throw {
+        statusCode: 400,
+        message: `Cannot accept payment for loan with status '${loan.status}'. Payments can only be recorded on ACTIVE or OVERDUE loans.`,
+        code: 'INVALID_LOAN_STATUS'
+      };
+    }
+
+    // 4. Target installment resolution
+    let targetInstallment = null;
+    if (dto.installmentId) {
+      targetInstallment = loan.repaymentSchedules.find(
+        (s) => s.id === dto.installmentId || String(s.installmentNo) === String(dto.installmentId)
+      );
+    } else if (dto.installmentNo) {
+      targetInstallment = loan.repaymentSchedules.find((s) => s.installmentNo === dto.installmentNo);
+    } else {
+      // Default to the earliest unpaid installment
+      targetInstallment = loan.repaymentSchedules.find((s) => s.status !== ScheduleStatus.PAID);
+    }
+
+    if (!targetInstallment) {
+      throw {
+        statusCode: 404,
+        message: 'No payable unpaid installment found on this loan.',
+        code: 'INSTALLMENT_NOT_FOUND'
+      };
+    }
+
+    if (targetInstallment.status === ScheduleStatus.PAID) {
+      throw {
+        statusCode: 400,
+        message: `Installment #${targetInstallment.installmentNo} has already been paid in full.`,
+        code: 'INSTALLMENT_ALREADY_PAID'
+      };
+    }
+
+    // 5. Payment amount calculation & validation
+    const remainingInstallment = Number(targetInstallment.remainingAmount);
+    const outstandingLoan = Number(loan.outstandingBalance);
+
+    const paymentAmount = LoanCalculatorService.round2(
+      dto.amount !== undefined && dto.amount > 0 ? dto.amount : remainingInstallment
+    );
+
+    if (paymentAmount <= 0) {
+      throw { statusCode: 400, message: 'Payment amount must be greater than $0.00', code: 'INVALID_AMOUNT' };
+    }
+
+    if (paymentAmount > remainingInstallment + 0.01) {
+      throw {
+        statusCode: 400,
+        message: `Payment amount ($${paymentAmount.toFixed(2)}) exceeds remaining installment balance ($${remainingInstallment.toFixed(2)})`,
+        code: 'EXCEEDS_REMAINING_AMOUNT'
+      };
+    }
+
+    if (paymentAmount > outstandingLoan + 0.01) {
+      throw {
+        statusCode: 400,
+        message: `Payment amount ($${paymentAmount.toFixed(2)}) exceeds total outstanding loan balance ($${outstandingLoan.toFixed(2)})`,
+        code: 'EXCEEDS_REMAINING_AMOUNT'
+      };
+    }
+
+    // 6. Generate unique reference and receipt numbers
+    const referenceNo = await this.generatePaymentReference();
+    const receiptNo = await this.generateReceiptNo();
+    const currency = dto.currency || 'USD';
+
+    // 7. Call BakongService to generate official EMVCo KHQR payload & MD5 hash
+    const generated = await BakongService.generateDynamicKhqr({
+      amount: paymentAmount,
+      currency,
+      billNumber: referenceNo,
+      mobileNumber: BakongService.getMerchantPhone(),
+      storeLabel: 'Apex LMS Loan Repayment',
+      terminalLabel: `Installment #${targetInstallment.installmentNo}`
+    });
+
+    // 8. Persist PENDING payment record with KHQR details
+    const payment = await prisma.payment.create({
+      data: {
+        receiptNo,
+        referenceNo,
+        loanId: loan.id,
+        installmentId: targetInstallment.id,
+        borrowerId: loan.borrowerId,
+        amount: new Prisma.Decimal(paymentAmount),
+        currency: generated.currency,
+        paymentMethod: PaymentMethod.QR_PAYMENT,
+        paymentProvider: 'BAKONG_KHQR',
+        khqrTransactionId: null,
+        khqrMd5: generated.md5,
+        khqrQrString: generated.qr,
+        expiresAt: generated.expiresAt,
+        status: PaymentStatus.PENDING,
+        notes: dto.notes || `Bakong KHQR payment for Installment #${targetInstallment.installmentNo} (Loan ${loan.loanNumber})`,
+        receivedBy: isStaffRole(dto.caller.role) ? dto.caller.id : null
+      }
+    });
+
+    // 9. Audit Log
+    await recordAuditLog({
+      userId: dto.caller.id,
+      action: 'INITIATE_PAYMENT',
+      entityName: 'Payment',
+      entityId: payment.id,
+      details: {
+        receiptNo,
+        referenceNo,
+        amount: paymentAmount,
+        currency: generated.currency,
+        loanNumber: loan.loanNumber,
+        installmentNo: targetInstallment.installmentNo,
+        khqrMd5: generated.md5,
+        expiresAt: generated.expiresAt
+      },
+      ipAddress: dto.ipAddress
+    });
+
+    // 10. Return clean, safe payload for frontend QR display
+    return {
+      paymentId: payment.id,
+      reference: payment.referenceNo,
+      referenceNo: payment.referenceNo,
+      receiptNo: payment.receiptNo,
+      loanNumber: loan.loanNumber,
+      loanId: loan.id,
+      borrowerName: loan.borrower.fullName,
+      borrowerId: loan.borrower.borrowerId,
+      installmentNo: targetInstallment.installmentNo,
+      installmentId: targetInstallment.id,
+      amount: paymentAmount,
+      currency: generated.currency,
+      status: PaymentStatus.PENDING,
+      qr: generated.qr,
+      qrDataUrl: generated.qrDataUrl,
+      md5: generated.md5,
+      merchantName: generated.merchantName,
+      bankName: generated.bankName,
+      accountInfo: generated.accountInfo,
+      expiresAt: generated.expiresAt.toISOString(),
+      createdAt: payment.createdAt.toISOString()
+    };
+  }
+
+  /**
+   * Real Bakong Transaction Verification (Section 12, 13, 14, 15)
+   * Queries Bakong Open API, verifies transaction details, and performs ACID ledger update
+   */
+  static async verifyKhqrPayment(identifier: string, viewer: AuthUser, ipAddress?: string) {
+    // 1. Locate payment record
+    const payment = await prisma.payment.findFirst({
+      where: isUuid(identifier)
+        ? {
+            OR: [
+              { id: identifier },
+              { referenceNo: identifier },
+              { receiptNo: identifier },
+              { khqrMd5: identifier }
+            ]
+          }
+        : {
+            OR: [
+              { referenceNo: identifier },
+              { receiptNo: identifier },
+              { khqrMd5: identifier }
+            ]
+          },
+      include: {
+        loan: {
+          include: {
+            borrower: true,
+            product: true,
+            repaymentSchedules: { orderBy: { installmentNo: 'asc' } }
+          }
+        },
+        installment: true,
+        receivedByUser: true
+      }
+    });
+
+    if (!payment) {
+      throw { statusCode: 404, message: 'Payment record not found', code: 'PAYMENT_NOT_FOUND' };
+    }
+
+    // 2. Ownership verification
+    if (!isStaffRole(viewer.role) && payment.loan.borrower.userId !== viewer.id) {
+      throw {
+        statusCode: 403,
+        message: 'Access denied: you can only verify your own payments',
+        code: 'FORBIDDEN_OWNERSHIP'
+      };
+    }
+
+    // 3. Idempotent check: If already SUCCESS or PAID
+    if (payment.status === PaymentStatus.SUCCESS || payment.status === PaymentStatus.PAID) {
+      const receipt = await this.getReceipt(payment.id, viewer);
+      return {
+        status: PaymentStatus.SUCCESS,
+        isSuccess: true,
+        isAlreadyVerified: true,
+        paymentId: payment.id,
+        referenceNo: payment.referenceNo,
+        receiptNo: payment.receiptNo,
+        amount: Number(payment.amount),
+        currency: payment.currency,
+        paidAt: payment.paidAt || payment.paymentDate,
+        verifiedAt: payment.verifiedAt || payment.createdAt,
+        transactionId: payment.khqrTransactionId || payment.referenceNo,
+        message: 'Payment has already been confirmed and reconciled successfully.',
+        receipt
+      };
+    }
+
+    // 4. Expiration check
+    if (payment.status === PaymentStatus.EXPIRED) {
+      return {
+        status: PaymentStatus.EXPIRED,
+        isSuccess: false,
+        paymentId: payment.id,
+        referenceNo: payment.referenceNo,
+        message: 'This payment request has expired. Please initiate a new payment.'
+      };
+    }
+
+    const now = new Date();
+    if (payment.expiresAt && payment.expiresAt < now && payment.status === PaymentStatus.PENDING) {
+      // Mark as EXPIRED in DB
+      await prisma.payment.update({
+        where: { id: payment.id },
+        data: { status: PaymentStatus.EXPIRED }
+      });
+      return {
+        status: PaymentStatus.EXPIRED,
+        isSuccess: false,
+        paymentId: payment.id,
+        referenceNo: payment.referenceNo,
+        message: 'Payment request expired before completion.'
+      };
+    }
+
+    // 5. Query official Bakong Open API by MD5 hash
+    if (!payment.khqrMd5) {
+      throw {
+        statusCode: 400,
+        message: 'Payment record does not have a valid Bakong KHQR MD5 hash for verification.',
+        code: 'INVALID_PAYMENT_METADATA'
+      };
+    }
+
+    const bakongCheck = await BakongService.checkTransactionByMd5(payment.khqrMd5);
+
+    // 5a. If Bakong API is unconfigured in this environment:
+    if (bakongCheck.isUnconfigured) {
+      return {
+        status: PaymentStatus.PENDING,
+        isSuccess: false,
+        isPending: true,
+        isUnconfigured: true,
+        paymentId: payment.id,
+        referenceNo: payment.referenceNo,
+        message: bakongCheck.message
+      };
+    }
+
+    // 5b. If transaction is still pending customer scan / confirmation:
+    if (bakongCheck.isPending || !bakongCheck.isSuccess || !bakongCheck.transaction) {
+      return {
+        status: PaymentStatus.PENDING,
+        isSuccess: false,
+        isPending: true,
+        paymentId: payment.id,
+        referenceNo: payment.referenceNo,
+        message: bakongCheck.message || 'Payment is still pending. Waiting for Bakong clearance.'
+      };
+    }
+
+    // 6. Anti-Fraud & Integrity Validation (Verify amount, currency, recipient account)
+    const tx = bakongCheck.transaction;
+    const paymentAmount = Number(payment.amount);
+    const integrity = BakongService.validateSettlementIntegrity(tx, {
+      amount: paymentAmount,
+      currency: payment.currency
+    });
+
+    if (!integrity.isValid) {
+      // Mark payment as FAILED with explicit failure reason
+      await prisma.payment.update({
+        where: { id: payment.id },
+        data: {
+          status: PaymentStatus.FAILED,
+          failureReason: integrity.reason,
+          khqrTransactionId: tx.hash
+        }
+      });
+
+      await recordAuditLog({
+        userId: viewer.id,
+        action: 'PAYMENT_FAILED',
+        entityName: 'Payment',
+        entityId: payment.id,
+        details: {
+          referenceNo: payment.referenceNo,
+          expectedAmount: paymentAmount,
+          receivedAmount: tx.amount,
+          reason: integrity.reason,
+          transactionHash: tx.hash
+        },
+        ipAddress
+      });
+
+      return {
+        status: PaymentStatus.FAILED,
+        isSuccess: false,
+        failureCode: (integrity.reason || '').includes('Amount') ? 'AMOUNT_MISMATCH' : 'CURRENCY_MISMATCH',
+        paymentId: payment.id,
+        referenceNo: payment.referenceNo,
+        message: `Payment verification failed: ${integrity.reason || 'Integrity check failed'}`
+      };
+    }
+
+    // 7. Full PostgreSQL ACID Settlement Transaction:
+    //    Payment SUCCESS + Installment PAID + Loan Outstanding Updated + Audit Log + Notification
+    const settlementTime = new Date();
+    const result = await prisma.$transaction(async (prismaTx) => {
+      // a. Update Payment to SUCCESS
+      const updatedPayment = await prismaTx.payment.update({
+        where: { id: payment.id },
+        data: {
+          status: PaymentStatus.SUCCESS,
+          paidAt: settlementTime,
+          verifiedAt: settlementTime,
+          paymentDate: settlementTime,
+          khqrTransactionId: tx.hash,
+          failureReason: null
+        }
+      });
+
+      // b. Waterfall / Installment settlement
+      const targetSchedule = payment.installmentId
+        ? await prismaTx.repaymentSchedule.findUnique({ where: { id: payment.installmentId } })
+        : null;
+
+      if (targetSchedule) {
+        const remainingOnSchedule = Number(targetSchedule.remainingAmount);
+        const currentPaidOnSchedule = Number(targetSchedule.amountPaid);
+        const newPaidOnSchedule = LoanCalculatorService.round2(currentPaidOnSchedule + paymentAmount);
+        const newRemainingOnSchedule = LoanCalculatorService.round2(
+          Math.max(0, remainingOnSchedule - paymentAmount)
+        );
+        const newStatus = newRemainingOnSchedule <= 0.009 ? ScheduleStatus.PAID : ScheduleStatus.PARTIAL;
+
+        await prismaTx.repaymentSchedule.update({
+          where: { id: targetSchedule.id },
+          data: {
+            amountPaid: new Prisma.Decimal(newPaidOnSchedule),
+            remainingAmount: new Prisma.Decimal(newRemainingOnSchedule),
+            status: newStatus
+          }
+        });
+      }
+
+      // c. Recalculate Parent Loan Ledger
+      const currentLoan = await prismaTx.loan.findUnique({
+        where: { id: payment.loanId },
+        include: { repaymentSchedules: true }
+      });
+
+      if (!currentLoan) throw new Error('Parent loan record missing');
+
+      const newTotalPaid = LoanCalculatorService.round2(Number(currentLoan.totalPaid) + paymentAmount);
+      const newOutstanding = LoanCalculatorService.round2(
+        Math.max(0, Number(currentLoan.totalRepayment) - newTotalPaid)
+      );
+
+      const remainingUnpaidCount = await prismaTx.repaymentSchedule.count({
+        where: {
+          loanId: currentLoan.id,
+          status: { not: ScheduleStatus.PAID }
+        }
+      });
+
+      const isLoanCompleted = newOutstanding <= 0.009 && remainingUnpaidCount === 0;
+      const nextLoanStatus = isLoanCompleted ? LoanStatus.COMPLETED : LoanStatus.ACTIVE;
+
+      await prismaTx.loan.update({
+        where: { id: currentLoan.id },
+        data: {
+          totalPaid: new Prisma.Decimal(newTotalPaid),
+          outstandingBalance: new Prisma.Decimal(newOutstanding),
+          status: nextLoanStatus
+        }
+      });
+
+      // d. In-app notification for borrower
+      const borrowerUserId = payment.loan.borrower.userId;
+      if (borrowerUserId) {
+        await prismaTx.notification.create({
+          data: {
+            userId: borrowerUserId,
+            title: 'Payment Successful',
+            message: `Your Bakong KHQR payment of $${paymentAmount.toFixed(2)} for loan ${payment.loan.loanNumber} has been successfully verified and confirmed.`,
+            type: isLoanCompleted ? 'LOAN_COMPLETED' : 'PAYMENT_RECEIVED'
+          }
+        });
+      }
+
+      return { updatedPayment, newOutstanding, isLoanCompleted };
+    });
+
+    // 8. Audit Log
+    await recordAuditLog({
+      userId: viewer.id,
+      action: 'PAYMENT_VERIFIED',
+      entityName: 'Payment',
+      entityId: payment.id,
+      details: {
+        receiptNo: payment.receiptNo,
+        referenceNo: payment.referenceNo,
+        amount: paymentAmount,
+        currency: payment.currency,
+        loanNumber: payment.loan.loanNumber,
+        installmentId: payment.installmentId,
+        transactionHash: tx.hash,
+        fromAccountId: tx.fromAccountId,
+        toAccountId: tx.toAccountId,
+        remainingBalance: result.newOutstanding,
+        isCompleted: result.isLoanCompleted
+      },
+      ipAddress
+    });
+
+    const receipt = await this.getReceipt(payment.id, viewer);
+
+    return {
+      status: PaymentStatus.SUCCESS,
+      isSuccess: true,
+      paymentId: payment.id,
+      referenceNo: payment.referenceNo,
+      receiptNo: payment.receiptNo,
+      amount: paymentAmount,
+      currency: payment.currency,
+      transactionId: tx.hash,
+      paidAt: settlementTime,
+      verifiedAt: settlementTime,
+      remainingLoanBalance: result.newOutstanding,
+      isLoanCompleted: result.isLoanCompleted,
+      message: 'Your payment was successful and verified via Bakong.',
+      receipt
+    };
+  }
+
+  /**
+   * Check real-time payment status (Section 11)
+   */
+  static async getPaymentStatus(identifier: string, viewer: AuthUser) {
+    const payment = await prisma.payment.findFirst({
+      where: isUuid(identifier)
+        ? {
+            OR: [
+              { id: identifier },
+              { referenceNo: identifier },
+              { receiptNo: identifier },
+              { khqrMd5: identifier }
+            ]
+          }
+        : {
+            OR: [
+              { referenceNo: identifier },
+              { receiptNo: identifier },
+              { khqrMd5: identifier }
+            ]
+          },
+      include: {
+        loan: {
+          include: { borrower: true }
+        }
+      }
+    });
+
+    if (!payment) {
+      throw { statusCode: 404, message: 'Payment record not found', code: 'PAYMENT_NOT_FOUND' };
+    }
+
+    if (!isStaffRole(viewer.role) && payment.loan.borrower.userId !== viewer.id) {
+      throw {
+        statusCode: 403,
+        message: 'Access denied: you can only view your own payment status',
+        code: 'FORBIDDEN_OWNERSHIP'
+      };
+    }
+
+    // If PENDING, check if it just succeeded on the network
+    if (payment.status === PaymentStatus.PENDING) {
+      if (payment.expiresAt && payment.expiresAt < new Date()) {
+        await prisma.payment.update({
+          where: { id: payment.id },
+          data: { status: PaymentStatus.EXPIRED }
+        });
+        return {
+          status: PaymentStatus.EXPIRED,
+          paymentId: payment.id,
+          referenceNo: payment.referenceNo,
+          message: 'Payment request has expired'
+        };
+      }
+
+      // Proactively check Bakong if token is available
+      if (BakongService.getApiToken() && payment.khqrMd5) {
+        const verifyResult = await this.verifyKhqrPayment(payment.id, viewer);
+        return verifyResult;
+      }
+    }
+
+    const isSuccess = payment.status === PaymentStatus.SUCCESS || payment.status === PaymentStatus.PAID;
+    const receipt = isSuccess ? await this.getReceipt(payment.id, viewer) : null;
+
+    return {
+      status: payment.status,
+      isSuccess,
+      isPending: payment.status === PaymentStatus.PENDING,
+      paymentId: payment.id,
+      referenceNo: payment.referenceNo,
+      receiptNo: payment.receiptNo,
+      amount: Number(payment.amount),
+      currency: payment.currency,
+      transactionId: payment.khqrTransactionId,
+      expiresAt: payment.expiresAt,
+      secondsRemaining: payment.expiresAt
+        ? Math.max(0, Math.round((new Date(payment.expiresAt).getTime() - Date.now()) / 1000))
+        : 900,
+      paidAt: payment.paidAt,
+      verifiedAt: payment.verifiedAt,
+      failureReason: payment.failureReason,
+      receipt
+    };
+  }
+
+  /**
+   * Bakong Webhook Event Receiver (Section 21)
+   */
+  static async handleBakongWebhook(body: any, signatureHeader?: string) {
+    if (!BakongService.verifyWebhookSignature(body, signatureHeader)) {
+      throw { statusCode: 401, message: 'Invalid webhook signature', code: 'UNAUTHORIZED_WEBHOOK' };
+    }
+
+    const md5 = body.md5 || body.data?.md5;
+    const billNumber = body.billNumber || body.data?.billNumber || body.referenceNo;
+    const txHash = body.hash || body.data?.hash || body.transactionId;
+
+    if (!md5 && !billNumber && !txHash) {
+      throw { statusCode: 400, message: 'Missing transaction identifier in webhook payload', code: 'INVALID_PAYLOAD' };
+    }
+
+    const payment = await prisma.payment.findFirst({
+      where: {
+        OR: [
+          md5 ? { khqrMd5: md5 } : undefined,
+          billNumber ? { referenceNo: billNumber } : undefined,
+          txHash ? { khqrTransactionId: txHash } : undefined
+        ].filter(Boolean) as any
+      },
+      include: {
+        loan: {
+          include: { borrower: true }
+        }
+      }
+    });
+
+    if (!payment) {
+      return { success: false, message: 'No matching payment found for webhook transaction.' };
+    }
+
+    const systemUser: AuthUser = {
+      id: payment.loan.borrower.userId || 'system-webhook-agent',
+      username: 'bakong_webhook',
+      email: 'webhook@bakong.nbc.org.kh',
+      fullName: 'Bakong System Agent',
+      role: UserRole.ADMIN,
+      permissions: []
+    };
+
+    const result = await this.verifyKhqrPayment(payment.id, systemUser, 'bakong-webhook');
+    return { success: true, result };
   }
 }

@@ -48,6 +48,11 @@ adminRouter.post('/loans/disburse', LoanController.disburse);
 // 4. Payments Ledger
 adminRouter.get('/payments', PaymentController.list);
 adminRouter.post('/payments', PaymentController.record);
+adminRouter.post('/payments/create', PaymentController.record);
+adminRouter.post('/payments/record', PaymentController.record);
+adminRouter.get('/payments/khqr/diagnostics', PaymentController.getDiagnostics);
+adminRouter.get('/payments/:id/status', PaymentController.getStatus);
+adminRouter.post('/payments/:id/verify', PaymentController.verifyPayment);
 
 // 5. Overdue Engine
 adminRouter.get('/overdue', OverdueController.listOverdue);

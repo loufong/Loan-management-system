@@ -91,10 +91,13 @@ enum PaymentMethod {
 
 enum PaymentStatus {
   PENDING
+  SUCCESS
   PAID
   PARTIAL
   FAILED
   CANCELLED
+  EXPIRED
+  REFUNDED
 }
 
 enum EntityType {
@@ -409,30 +412,44 @@ model RepaymentSchedule {
 // 11. PAYMENT ENTITY
 // ==========================================
 model Payment {
-  id            String        @id @default(uuid()) @db.Uuid
-  receiptNo     String        @unique @map("receipt_no") @db.VarChar(30) // e.g. REC-2026-0001
-  loanId        String        @map("loan_id") @db.Uuid
-  installmentId String?       @map("installment_id") @db.Uuid
-  paymentDate   DateTime      @default(now()) @map("payment_date") @db.Timestamptz(6)
-  amount        Decimal       @db.Decimal(15, 2)
-  paymentMethod PaymentMethod @map("payment_method")
-  referenceNo   String        @map("reference_no") @db.VarChar(100)
-  receivedBy    String        @map("received_by") @db.Uuid
-  status        PaymentStatus @default(PAID)
-  notes         String?       @db.Text
-  idempotencyKey String?      @unique @map("idempotency_key") @db.VarChar(100)
-  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  id                 String        @id @default(uuid()) @db.Uuid
+  receiptNo          String        @unique @map("receipt_no") @db.VarChar(30) // e.g. REC-2026-0001
+  loanId             String        @map("loan_id") @db.Uuid
+  installmentId      String?       @map("installment_id") @db.Uuid
+  borrowerId         String?       @map("borrower_id") @db.Uuid
+  paymentDate        DateTime      @default(now()) @map("payment_date") @db.Timestamptz(6)
+  amount             Decimal       @db.Decimal(15, 2)
+  currency           String        @default("USD") @db.VarChar(10)
+  paymentMethod      PaymentMethod @map("payment_method")
+  paymentProvider    String        @default("BAKONG_KHQR") @map("payment_provider") @db.VarChar(50)
+  referenceNo        String        @unique @map("reference_no") @db.VarChar(100)
+  khqrTransactionId  String?       @map("khqr_transaction_id") @db.VarChar(100)
+  khqrMd5            String?       @map("khqr_md5") @db.VarChar(100)
+  khqrQrString       String?       @map("khqr_qr_string") @db.Text
+  receivedBy         String?       @map("received_by") @db.Uuid
+  status             PaymentStatus @default(PAID)
+  notes              String?       @db.Text
+  idempotencyKey     String?       @unique @map("idempotency_key") @db.VarChar(100)
+  expiresAt          DateTime?     @map("expires_at") @db.Timestamptz(6)
+  paidAt             DateTime?     @map("paid_at") @db.Timestamptz(6)
+  verifiedAt         DateTime?     @map("verified_at") @db.Timestamptz(6)
+  failureReason      String?       @map("failure_reason") @db.Text
+  createdAt          DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
 
   // Relations
   loan           Loan               @relation(fields: [loanId], references: [id], onDelete: Restrict)
   installment    RepaymentSchedule? @relation(fields: [installmentId], references: [id], onDelete: SetNull)
-  receivedByUser User               @relation("PaymentReceivedBy", fields: [receivedBy], references: [id], onDelete: Restrict)
+  receivedByUser User?              @relation("PaymentReceivedBy", fields: [receivedBy], references: [id], onDelete: SetNull)
 
   @@index([loanId])
   @@index([installmentId])
+  @@index([borrowerId])
   @@index([receivedBy])
   @@index([paymentDate])
   @@index([status])
+  @@index([referenceNo])
+  @@index([khqrMd5])
+  @@index([khqrTransactionId])
   @@map("payments")
 }
 

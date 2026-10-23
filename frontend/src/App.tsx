@@ -1082,7 +1082,7 @@ export const App: React.FC = () => {
               currency={currency}
               currentUserRole={activeRole}
               onBack={() => setActiveTab('loans')}
-              onCollectPayment={(_loanId, amount) => openPaymentForBorrowerOrStaff(activeLoan.id, undefined, amount)}
+              onCollectPayment={(_loanId, amount, instNo) => openPaymentForBorrowerOrStaff(activeLoan.id, instNo, amount)}
               onViewReceipt={(rec) => setActiveReceiptModal(rec)}
             />
           )}

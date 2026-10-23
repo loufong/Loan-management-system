@@ -4,6 +4,7 @@ import {
   LoanAccount,
   LoanApplication,
   PaymentReceipt,
+  KhqrPaymentSession,
   UserProfile,
   UserRole,
   UserDashboardSummary,
@@ -1094,6 +1095,81 @@ class ApiService {
         notes: payload.notes || 'Recorded via Borrower Payment Portal',
       };
       return newReceipt;
+    }
+  }
+
+  // --- REAL BAKONG KHQR PAYMENT INTEGRATION ---
+  public async initiateKhqrPayment(payload: {
+    loanId: string;
+    installmentId?: string;
+    installmentNo?: number;
+    amount?: number;
+    currency?: 'USD' | 'KHR';
+    notes?: string;
+  }): Promise<KhqrPaymentSession> {
+    try {
+      const res = await this.request<any>('/payments/khqr/initiate', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      return res;
+    } catch (err: any) {
+      if (isStaticHost) {
+        // Fallback for static hosting offline demo
+        const refNo = `PAY-${Date.now().toString().slice(-6)}`;
+        return {
+          paymentId: `pay-${Date.now()}`,
+          reference: refNo,
+          referenceNo: refNo,
+          receiptNo: `REC-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+          loanNumber: payload.loanId || 'LN-2026-0042',
+          loanId: payload.loanId || 'loan-1',
+          borrowerName: 'Sokha Chan',
+          borrowerId: 'BOR-2026-0001',
+          installmentNo: payload.installmentNo || 1,
+          installmentId: payload.installmentId,
+          amount: payload.amount || 100,
+          currency: payload.currency || 'USD',
+          status: 'PENDING',
+          qr: '00020101021229380009khqr@aclb0111855177908000206ACLEDA5204599953038405402505802KH5911PHON RITHYA6010Phnom Penh62360119PAY-20261021-0000010209010487718993400131792593778924011317925946789236304024C',
+          qrDataUrl: '',
+          md5: '72c7edf03985405eee9860b90fd3fe63',
+          merchantName: 'PHON RITHYA',
+          bankName: 'ACLEDA',
+          accountInfo: '85517790800',
+          expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+          createdAt: new Date().toISOString()
+        };
+      }
+      throw err;
+    }
+  }
+
+  public async getPaymentStatus(paymentId: string): Promise<any> {
+    try {
+      return await this.request<any>(`/payments/${paymentId}/status`);
+    } catch (err) {
+      if (!isStaticHost) throw err;
+      return { status: 'PENDING', isPending: true, paymentId };
+    }
+  }
+
+  public async verifyPayment(paymentId: string): Promise<any> {
+    try {
+      return await this.request<any>(`/payments/${paymentId}/verify`, {
+        method: 'POST',
+      });
+    } catch (err) {
+      if (!isStaticHost) throw err;
+      return { status: 'SUCCESS', isSuccess: true, paymentId, message: 'Verified' };
+    }
+  }
+
+  public async getKhqrDiagnostics(): Promise<any> {
+    try {
+      return await this.request<any>('/payments/khqr/diagnostics');
+    } catch {
+      return { status: 'OFFLINE_MODE', environment: 'static' };
     }
   }
 

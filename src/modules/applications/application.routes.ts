@@ -30,7 +30,7 @@ applicationRouter.get('/:id/preview', ApplicationController.getPreview);
 
 // 4. Submission (USER, ADMIN)
 applicationRouter.post(
-  '/',
+  ['/', '/create'],
   authorize(UserRole.ADMIN, UserRole.USER),
   ApplicationController.submit
 );

@@ -23,7 +23,7 @@ export interface LoanDetailProps {
   currency: Currency;
   currentUserRole: UserRole;
   onBack: () => void;
-  onCollectPayment?: (loanId: string, amount: number) => void;
+  onCollectPayment?: (loanId: string, amount: number, installmentNo?: number) => void;
   onViewReceipt?: (receipt: PaymentReceipt) => void;
 }
 
@@ -288,9 +288,10 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
 
           {!isCompleted && (
             <button
-              onClick={() =>
-                onCollectPayment?.(loan.id, loan.nextPaymentDueAmountUSD)
-              }
+              onClick={() => {
+                const nextUnpaid = loan.schedules.find((s) => s.status !== 'PAID');
+                onCollectPayment?.(loan.id, loan.nextPaymentDueAmountUSD, nextUnpaid?.installmentNo);
+              }}
               className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-[6px] text-white text-xs font-semibold transition-colors whitespace-nowrap cursor-pointer shadow-xs ${
                 isCashierOrAdmin
                   ? 'bg-[#0F172A] hover:bg-[#1E293B]'
@@ -338,7 +339,7 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
           currency={currency}
           currentUserRole={currentUserRole}
           onCollectInstallment={(instNo, amount) =>
-            onCollectPayment?.(loan.id, amount)
+            onCollectPayment?.(loan.id, amount, instNo)
           }
           onViewReceipt={() => {
             if (receipts[0]) onViewReceipt?.(receipts[0]);

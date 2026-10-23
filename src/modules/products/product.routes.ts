@@ -13,7 +13,7 @@ productRouter.post('/calculate', ProductController.calculateAmortization);
 
 // Staff management endpoints (MANAGER)
 productRouter.post(
-  '/',
+  ['/', '/create'],
   authenticate,
   authorize(UserRole.ADMIN),
   ProductController.create

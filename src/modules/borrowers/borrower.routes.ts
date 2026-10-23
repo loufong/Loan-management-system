@@ -16,7 +16,7 @@ borrowerRouter.get('/:id', BorrowerController.getById);
 
 // 3. Onboard New Borrower (ADMIN or USER self-onboarding)
 borrowerRouter.post(
-  '/',
+  ['/', '/create'],
   authorize(UserRole.ADMIN, UserRole.USER),
   BorrowerController.create
 );

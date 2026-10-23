@@ -501,7 +501,7 @@ export class ReportService {
       amount: Number(p.amount),
       paymentMethod: p.paymentMethod,
       referenceNo: p.referenceNo,
-      receivedBy: p.receivedByUser.fullName,
+      receivedBy: p.receivedByUser?.fullName ?? 'N/A',
       paymentDate: p.paymentDate,
       status: p.status
     }));

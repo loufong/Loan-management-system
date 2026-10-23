@@ -163,7 +163,9 @@ export type PaymentMethod =
   | 'Cash'
   | 'Bank Transfer'
   | 'Card'
-  | 'Dynamic QR Code';
+  | 'Dynamic QR Code'
+  | 'KHQR'
+  | 'BAKONG_KHQR';
 
 export interface LoanProduct {
   id: string;
@@ -221,6 +223,7 @@ export interface Borrower {
 }
 
 export interface RepaymentInstallment {
+  id?: string;
   installmentNo: number;
   dueDate: string;
   principalUSD: number;
@@ -261,17 +264,48 @@ export interface LoanAccount {
   schedules: RepaymentInstallment[];
 }
 
+export interface KhqrPaymentSession {
+  paymentId: string;
+  reference: string;
+  referenceNo: string;
+  receiptNo: string;
+  loanNumber: string;
+  loanId: string;
+  borrowerName: string;
+  borrowerId: string;
+  installmentNo?: number;
+  installmentId?: string;
+  amount: number;
+  currency: Currency;
+  status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'EXPIRED' | 'PAID';
+  qr: string;
+  qrDataUrl: string;
+  md5: string;
+  merchantName: string;
+  bankName: string;
+  accountInfo: string;
+  expiresAt: string;
+  createdAt: string;
+}
+
 export interface PaymentReceipt {
+  paymentId?: string;
   receiptNo: string; // e.g. REC-2026-0982
+  referenceNo?: string;
   loanNumber: string;
   borrowerId: string;
   borrowerName: string;
   installmentNo?: number;
   amountPaidUSD: number;
   amountPaidKHR: number;
+  currency?: Currency;
   paymentMethod: PaymentMethod;
   transactionRef: string;
+  transactionId?: string;
+  khqrMd5?: string;
+  status?: string;
   paidAt: string;
+  verifiedAt?: string;
   cashierName: string;
   principalAllocatedUSD: number;
   interestAllocatedUSD: number;

@@ -12,7 +12,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:validate": "prisma validate",
     "prisma:seed": "ts-node prisma/seed.ts",
-    "test": "ts-node test/two-tier-auth-rbac.test.ts && ts-node test/security.test.ts && ts-node test/borrower-product.test.ts && ts-node test/loan-calculator.test.ts && ts-node test/integration-workflow.test.ts && ts-node test/api-endpoints.test.ts && ts-node test/application-approval-workflow.test.ts && ts-node test/loan-disbursement.test.ts && ts-node test/payment-reconciliation.test.ts && ts-node test/overdue-detection.test.ts && ts-node test/kpi-reporting.test.ts && ts-node test/used-to-login-otp-bypass.test.ts",
+    "test": "ts-node test/two-tier-auth-rbac.test.ts && ts-node test/security.test.ts && ts-node test/borrower-product.test.ts && ts-node test/loan-calculator.test.ts && ts-node test/integration-workflow.test.ts && ts-node test/api-endpoints.test.ts && ts-node test/application-approval-workflow.test.ts && ts-node test/loan-disbursement.test.ts && ts-node test/payment-reconciliation.test.ts && ts-node test/overdue-detection.test.ts && ts-node test/kpi-reporting.test.ts && ts-node test/used-to-login-otp-bypass.test.ts && ts-node test/bakong-khqr-integration.test.ts",
+    "test:khqr": "ts-node test/bakong-khqr-integration.test.ts",
     "prisma:studio": "prisma studio",
     "db:push": "prisma db push",
     "db:reset": "prisma migrate reset",
@@ -36,6 +37,7 @@
   "dependencies": {
     "@prisma/client": "^5.22.0",
     "@types/nodemailer": "^8.0.2",
+    "bakong-khqr": "^1.0.20",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -45,6 +47,7 @@
     "morgan": "^1.10.0",
     "node-cron": "^4.6.0",
     "nodemailer": "^10.0.14",
+    "qrcode": "^1.5.4",
     "resend": "^6.34.1",
     "zod": "^3.23.8"
   },
@@ -56,6 +59,7 @@
     "@types/morgan": "^1.9.9",
     "@types/node": "^20.14.0",
     "@types/node-cron": "^3.0.11",
+    "@types/qrcode": "^1.5.6",
     "prisma": "^5.22.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"

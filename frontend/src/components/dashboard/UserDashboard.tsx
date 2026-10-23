@@ -57,21 +57,21 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
 
   // Filter items specifically belonging to or associated with the user
   const clientName = (currentUser.name || currentUser.fullName || '').trim().toLowerCase();
-  const userLoans = loans.filter(
-    (l) =>
-      (currentUser.borrowerId && (l.borrowerId === currentUser.borrowerId || l.borrowerId === currentUser.id)) ||
-      (l.borrowerName && clientName && (l.borrowerName.toLowerCase().includes(clientName) || clientName.includes(l.borrowerName.toLowerCase()))) ||
-      loans.length > 0
-  );
-  const activeUserLoans = userLoans.length > 0 ? userLoans : loans;
+  const currentBorrowerId = currentUser.borrowerId || currentUser.id;
 
-  const userApps = applications.filter(
-    (a) =>
-      (currentUser.borrowerId && (a.borrowerId === currentUser.borrowerId || a.borrowerId === currentUser.id)) ||
-      (a.borrowerName && clientName && (a.borrowerName.toLowerCase().includes(clientName) || clientName.includes(a.borrowerName.toLowerCase()))) ||
-      applications.length > 0
-  );
-  const activeUserApps = userApps.length > 0 ? userApps : applications;
+  const userLoans = loans.filter((l) => {
+    if (currentBorrowerId && (l.borrowerId === currentBorrowerId || l.borrowerId === currentUser.id)) return true;
+    if (l.borrowerName && clientName && (l.borrowerName.toLowerCase().includes(clientName) || clientName.includes(l.borrowerName.toLowerCase()))) return true;
+    return false;
+  });
+  const activeUserLoans = userLoans;
+
+  const userApps = applications.filter((a) => {
+    if (currentBorrowerId && (a.borrowerId === currentBorrowerId || a.borrowerId === currentUser.id)) return true;
+    if (a.borrowerName && clientName && (a.borrowerName.toLowerCase().includes(clientName) || clientName.includes(a.borrowerName.toLowerCase()))) return true;
+    return false;
+  });
+  const activeUserApps = userApps;
 
   // Derive Metrics from real database data:
   // 1. Active Loans

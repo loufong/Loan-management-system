@@ -582,35 +582,35 @@ export const App: React.FC = () => {
   const activeApplication = applications.find((a) => a.id === selectedApplicationId) || applications[0];
 
   // User-specific datasets for client borrower views
-  const isBorrowerRole = (currentUser.role || 'USER').toUpperCase() !== 'ADMIN';
+  const staffRoles = ['ADMIN', 'MANAGER', 'LOAN_OFFICER', 'CREDIT_OFFICER', 'CASHIER'];
+  const isStaffRole = staffRoles.includes((currentUser.role || 'USER').toUpperCase());
+  const isBorrowerRole = !isStaffRole;
   const currentClientName = (currentUser.name || currentUser.fullName || '').trim().toLowerCase();
+  const currentBorrowerId = currentUser.borrowerId || (isBorrowerRole ? currentUser.id : undefined);
 
-  const userFilteredLoans = loans.filter(
-    (l) =>
-      !isBorrowerRole ||
-      (currentUser.borrowerId && (l.borrowerId === currentUser.borrowerId || l.borrowerId === currentUser.id)) ||
-      (l.borrowerName && currentClientName && (l.borrowerName.toLowerCase().includes(currentClientName) || currentClientName.includes(l.borrowerName.toLowerCase()))) ||
-      loans.length > 0
-  );
-  const userDisplayLoans = isBorrowerRole ? (userFilteredLoans.length > 0 ? userFilteredLoans : loans) : loans;
+  const userFilteredLoans = loans.filter((l) => {
+    if (!isBorrowerRole) return true;
+    if (currentBorrowerId && (l.borrowerId === currentBorrowerId || l.borrowerId === currentUser.id)) return true;
+    if (l.borrowerName && currentClientName && (l.borrowerName.toLowerCase().includes(currentClientName) || currentClientName.includes(l.borrowerName.toLowerCase()))) return true;
+    return false;
+  });
+  const userDisplayLoans = isBorrowerRole ? userFilteredLoans : loans;
 
-  const userFilteredApps = applications.filter(
-    (a) =>
-      !isBorrowerRole ||
-      (currentUser.borrowerId && (a.borrowerId === currentUser.borrowerId || a.borrowerId === currentUser.id)) ||
-      (a.borrowerName && currentClientName && (a.borrowerName.toLowerCase().includes(currentClientName) || currentClientName.includes(a.borrowerName.toLowerCase()))) ||
-      applications.length > 0
-  );
-  const userDisplayApps = isBorrowerRole ? (userFilteredApps.length > 0 ? userFilteredApps : applications) : applications;
+  const userFilteredApps = applications.filter((a) => {
+    if (!isBorrowerRole) return true;
+    if (currentBorrowerId && (a.borrowerId === currentBorrowerId || a.borrowerId === currentUser.id)) return true;
+    if (a.borrowerName && currentClientName && (a.borrowerName.toLowerCase().includes(currentClientName) || currentClientName.includes(a.borrowerName.toLowerCase()))) return true;
+    return false;
+  });
+  const userDisplayApps = isBorrowerRole ? userFilteredApps : applications;
 
-  const userFilteredReceipts = receipts.filter(
-    (r) =>
-      !isBorrowerRole ||
-      (currentUser.borrowerId && (r.borrowerId === currentUser.borrowerId || r.borrowerId === currentUser.id)) ||
-      (r.borrowerName && currentClientName && (r.borrowerName.toLowerCase().includes(currentClientName) || currentClientName.includes(r.borrowerName.toLowerCase()))) ||
-      receipts.length > 0
-  );
-  const userDisplayReceipts = isBorrowerRole ? (userFilteredReceipts.length > 0 ? userFilteredReceipts : receipts) : receipts;
+  const userFilteredReceipts = receipts.filter((r) => {
+    if (!isBorrowerRole) return true;
+    if (currentBorrowerId && (r.borrowerId === currentBorrowerId || r.borrowerId === currentUser.id)) return true;
+    if (r.borrowerName && currentClientName && (r.borrowerName.toLowerCase().includes(currentClientName) || currentClientName.includes(r.borrowerName.toLowerCase()))) return true;
+    return false;
+  });
+  const userDisplayReceipts = isBorrowerRole ? userFilteredReceipts : receipts;
 
   // Helper to open payment flow appropriately for borrower (modal) or staff (cashier desk)
   const openPaymentForBorrowerOrStaff = (loanId?: string, installmentNo?: number, amount?: number) => {
@@ -911,9 +911,9 @@ export const App: React.FC = () => {
             <UserDashboard
               currentUser={currentUser}
               currency={currency}
-              loans={loans}
-              applications={applications}
-              receipts={receipts}
+              loans={userDisplayLoans}
+              applications={userDisplayApps}
+              receipts={userDisplayReceipts}
               onNavigate={handleNavSelection}
               onOpenApplyLoan={() => setActiveTab('new-application')}
               onOpenQuickPayment={(loanId) => openPaymentForBorrowerOrStaff(loanId)}

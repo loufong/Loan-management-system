@@ -147,7 +147,7 @@ export const ApplicationPipelineList: React.FC<ApplicationPipelineListProps> = (
             <thead>
               <tr>
                 <th>{t('Application ID', 'Application ID')}</th>
-                <th>{t('Applicant Borrower', 'Applicant Borrower')}</th>
+                <th>{currentUserRole === 'USER' ? (language === 'km' ? 'អ្នកស្នើសុំ' : 'Applicant') : t('Applicant Borrower', 'Applicant Borrower')}</th>
                 <th>{t('Credit Product', 'Credit Product')}</th>
                 <th className="text-right">{t('Requested Capital', 'Requested Capital')}</th>
                 <th>{t('Tenure', 'Tenure')}</th>

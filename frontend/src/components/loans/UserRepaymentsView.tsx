@@ -22,14 +22,16 @@ export const UserRepaymentsView: React.FC<UserRepaymentsViewProps> = ({
   const { t } = useLanguage();
 
   // Filter user's active or relevant loans
-  const userLoans = loans.filter(
-    (l) =>
-      !currentUser.borrowerId ||
-      l.borrowerId === currentUser.borrowerId ||
-      l.borrowerName.toLowerCase().includes((currentUser.name || '').toLowerCase())
-  );
+  const clientName = (currentUser.name || currentUser.fullName || '').trim().toLowerCase();
+  const currentBorrowerId = currentUser.borrowerId || currentUser.id;
 
-  const displayLoans = userLoans;
+  const userLoans = loans.filter((l) => {
+    if (currentBorrowerId && (l.borrowerId === currentBorrowerId || l.borrowerId === currentUser.id)) return true;
+    if (l.borrowerName && clientName && (l.borrowerName.toLowerCase().includes(clientName) || clientName.includes(l.borrowerName.toLowerCase()))) return true;
+    return false;
+  });
+
+  const displayLoans = userLoans.length > 0 ? userLoans : loans;
   const [selectedLoanId, setSelectedLoanId] = useState<string>(
     displayLoans[0]?.id || ''
   );

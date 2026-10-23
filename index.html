@@ -21,10 +21,10 @@
         var baseTag = document.createElement('base');
         if (isLocal) {
           baseTag.href = '/';
-        } else if (window.location.pathname.startsWith('/Loan-management-system')) {
-          baseTag.href = '/Loan-management-system/';
+        } else if (window.location.pathname.toLowerCase().startsWith('/loan-management-system')) {
+          baseTag.href = window.location.pathname.slice(0, '/loan-management-system'.length) + '/';
         } else {
-          baseTag.href = '/';
+          baseTag.href = './';
         }
         document.head.prepend(baseTag);
       })();
@@ -245,7 +245,7 @@
         word-break: break-all;
       }
     </style>
-    <script type="module" crossorigin src="./assets/index-Ic1U98YW.js"></script>
+    <script type="module" crossorigin src="./assets/index-Ds1P-GBR.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/index-C6v6LVJ4.css">
   </head>
   <body class="bg-[#F8FAFC] text-[#0F172A] font-sans antialiased selection:bg-[#2563EB] selection:text-white">

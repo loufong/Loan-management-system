@@ -182,11 +182,20 @@ export const App: React.FC = () => {
     }
   }, [authUser]);
 
-  // Ensure initial HTML splash loader is dismissed smoothly
+  // Safe 3-second fallback: if backend auth check takes > 3s, bypass loader to login / dashboard
+  const [authTimedOut, setAuthTimedOut] = useState(false);
+
   useEffect(() => {
     if (typeof (window as any).apexHideLoader === 'function') {
       (window as any).apexHideLoader();
     }
+    const timer = setTimeout(() => {
+      setAuthTimedOut(true);
+      if (typeof (window as any).apexHideLoader === 'function') {
+        (window as any).apexHideLoader();
+      }
+    }, 3000);
+    return () => clearTimeout(timer);
   }, []);
 
   const [currentRoute, setCurrentRoute] = useState<string>(() => getNormalizedPath());
@@ -697,7 +706,7 @@ export const App: React.FC = () => {
     }
   };
 
-  if (authLoading) {
+  if (authLoading && !authTimedOut) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center font-sans">
         <div className="flex flex-col items-center gap-3">

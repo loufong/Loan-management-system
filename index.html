@@ -245,8 +245,8 @@
         word-break: break-all;
       }
     </style>
-    <script type="module" crossorigin src="./assets/index-BbXPoF8Z.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-B8oRV9hB.css">
+    <script type="module" crossorigin src="/Loan-management-system/assets/index-DLR8AxLl.js"></script>
+    <link rel="stylesheet" crossorigin href="/Loan-management-system/assets/index-B8oRV9hB.css">
   </head>
   <body class="bg-[#F8FAFC] text-[#0F172A] font-sans antialiased selection:bg-[#2563EB] selection:text-white">
     <!-- Smooth Animated Preloader Screen -->
@@ -256,7 +256,7 @@
         <div class="apex-loader-icon-wrap">
           <div class="apex-loader-spinner-ring"></div>
           <div class="apex-loader-icon-box" style="background: rgba(15, 23, 42, 0.85); border-color: rgba(56, 189, 248, 0.5); padding: 6px;">
-            <img src="logo-transparent.png" alt="Jam Song Vich" style="width: 38px; height: 38px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.6));" />
+            <img src="logo-transparent.png" onerror="this.style.display='none'" alt="Jam Song Vich" style="width: 38px; height: 38px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.6));" />
           </div>
         </div>
         
@@ -316,11 +316,17 @@
         }, 2600);
         
         var t3 = setTimeout(function() {
-          if (fallbackEl) {
-            fallbackEl.style.display = 'block';
-            if (statusEl) statusEl.textContent = 'កំពុងបញ្ចប់ការកំណត់... (Finalizing)';
+          if (typeof window.apexHideLoader === 'function') {
+            window.apexHideLoader();
           }
-        }, 7000);
+        }, 3000);
+
+        window.addEventListener('unhandledrejection', function(event) {
+          console.warn('Unhandled promise rejection caught by preloader fallback:', event.reason);
+          if (typeof window.apexHideLoader === 'function') {
+            window.apexHideLoader();
+          }
+        });
 
         window.addEventListener('error', function(e) {
           if (fallbackEl) fallbackEl.style.display = 'block';

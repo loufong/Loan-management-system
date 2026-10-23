@@ -55,6 +55,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     let isMounted = true;
 
+    const safetyTimer = setTimeout(() => {
+      if (isMounted) setIsLoading(false);
+    }, 3000);
+
     async function initSession() {
       const activeToken = localStorage.getItem('apex_token') || sessionStorage.getItem('apex_token');
       if (!activeToken) {
@@ -67,7 +71,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       api.setToken(activeToken);
 
       try {
-        const freshUser = await api.getMe();
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Auth verification timeout')), 3000)
+        );
+        const freshUser = await Promise.race([api.getMe(), timeoutPromise]);
         if (isMounted) {
           setUser(freshUser);
           setToken(activeToken);
@@ -110,6 +117,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     initSession();
 
     return () => {
+      clearTimeout(safetyTimer);
       isMounted = false;
     };
   }, []);

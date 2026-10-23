@@ -68,14 +68,20 @@ class ApiService {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+
     let response: Response;
     try {
       response = await fetch(`${BASE_URL}${endpoint}`, {
         ...options,
+        signal: controller.signal,
         headers,
       });
     } catch {
       throw new Error('Unable to connect to the server. Please try again later.');
+    } finally {
+      clearTimeout(timeoutId);
     }
 
     if (!response.ok) {

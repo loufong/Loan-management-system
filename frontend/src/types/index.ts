@@ -12,7 +12,10 @@ export type UserRole =
   | 'LOAN_OFFICER'
   | 'CREDIT_OFFICER'
   | 'CASHIER'
-  | 'MANAGER';
+  | 'MANAGER'
+  | 'loan_officer'
+  | 'checker'
+  | 'teller';
 
 export type UserStatus = 'active' | 'inactive' | 'suspended' | 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
 

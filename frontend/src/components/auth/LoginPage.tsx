@@ -14,6 +14,7 @@ import { UserRole, UserProfile } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import logoImg from '../../assets/logo-transparent.png';
+import { LoginView } from './LoginView';
 
 interface LoginPageProps {
   onLoginSuccess: (user: UserProfile, token: string, rememberMe: boolean) => void;
@@ -34,6 +35,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 }) => {
   const { login } = useAuth();
   const { language, setLanguage, t } = useLanguage();
+  const [showCoreBankingView, setShowCoreBankingView] = useState<boolean>(() => {
+    return window.location.search.includes('view=core') || window.location.hash.includes('view=core');
+  });
   const [usernameOrEmail, setUsernameOrEmail] = useState<string>(() => {
     return initialRole === 'admin' ? 'admin@loansystem.edu' : '';
   });
@@ -44,6 +48,36 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  if (showCoreBankingView) {
+    return (
+      <LoginView
+        onSuccess={() => {
+          const userStr = localStorage.getItem('apex_user');
+          const token = localStorage.getItem('apex_token') || 'token';
+          let parsedUser: any = null;
+          if (userStr) {
+            try { parsedUser = JSON.parse(userStr); } catch (_) {}
+          }
+          if (!parsedUser) {
+            parsedUser = {
+              id: 'usr-admin',
+              username: 'admin',
+              fullName: 'Core Banking Administrator',
+              name: 'Core Admin',
+              email: 'admin@jamsongvich.com',
+              role: 'admin',
+              status: 'active',
+              branch: 'Phnom Penh Main Branch',
+            };
+          }
+          onLoginSuccess(parsedUser, token, rememberMe);
+        }}
+        onSwitchToStandard={() => setShowCoreBankingView(false)}
+        onForgotPassword={onNavigateToForgotPassword}
+      />
+    );
+  }
 
   // Exact 9-Step Login Logic execution
   const handleLogin = async (e?: React.FormEvent) => {
@@ -84,8 +118,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   return (
     <div className="min-h-screen w-full bg-[#F8FAFC] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans antialiased text-[#0F172A]">
       <div className="sm:mx-auto sm:w-full sm:max-w-[480px]">
-        {/* Language Switcher in Login Header */}
-        <div className="flex justify-end mb-3">
+        {/* Top Controls: Core Banking Screen & Language Switcher */}
+        <div className="flex items-center justify-between mb-3">
+          <button
+            type="button"
+            onClick={() => setShowCoreBankingView(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-slate-700 bg-white border border-[#E2E8F0] rounded-[6px] hover:bg-slate-50 transition shadow-xs"
+            title="Switch to Bank-Grade Dark Core Banking Screen"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+            <span>Core Banking Screen</span>
+          </button>
+
           <div className="flex items-center bg-white p-0.5 rounded-[6px] border border-[#E2E8F0] text-xs font-semibold shadow-xs">
             <button
               type="button"

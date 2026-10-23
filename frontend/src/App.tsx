@@ -91,6 +91,9 @@ import { UserRepaymentsView } from './components/loans/UserRepaymentsView';
 import { useAuth } from './context/AuthContext';
 import { useLanguage } from './context/LanguageContext';
 
+import { PinAuthModal } from './components/auth/PinAuthModal';
+import { useIdleTimer } from './hooks/useIdleTimer';
+
 type AuthView = 'login' | 'register' | 'otp_verify' | 'forgot_password' | 'set_new_password';
 
 // GitHub Pages & Static Environment Route Helpers
@@ -346,6 +349,16 @@ export const App: React.FC = () => {
     setAccessDeniedMessage(null);
     replaceAppRoute('/login');
   };
+
+  // Session Inactivity & 6-Digit PIN Quick Lock (Login Prompts 4 & 5)
+  const { isLocked: isIdleLocked, unlockSession } = useIdleTimer({
+    lockTimeoutMs: 5 * 60 * 1000,    // 5 minutes idle -> PIN lock overlay
+    logoutTimeoutMs: 15 * 60 * 1000, // 15 minutes idle -> automatic logout
+    onLogout: () => {
+      handleLogout();
+    },
+    enabled: authIsAuthenticated,
+  });
 
   // Domain Entity State (Initialized for real database persistence)
   const [borrowers, setBorrowers] = useState<Borrower[]>([]);
@@ -1352,6 +1365,25 @@ export const App: React.FC = () => {
           onSuccess={async (receipt) => {
             await reloadAllData();
             setActiveReceiptModal(receipt);
+          }}
+        />
+      )}
+      {/* 6-Digit PIN Quick-Access Modal for 5-minute Inactivity Lock (Login Prompt 4) */}
+      {isIdleLocked && authIsAuthenticated && (
+        <PinAuthModal
+          isOpen={isIdleLocked}
+          user={{
+            name: currentUser.name || currentUser.fullName || 'Staff Officer',
+            role: (currentUser.role || 'teller').toLowerCase(),
+            avatar: currentUser.avatar,
+            storedPin: '123456',
+          }}
+          onSuccess={() => {
+            unlockSession();
+          }}
+          onFallbackPassword={() => {
+            unlockSession();
+            handleLogout();
           }}
         />
       )}

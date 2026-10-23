@@ -131,6 +131,15 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
     e.preventDefault();
     setErrorMessage(null);
 
+    if (loan.status !== 'ACTIVE' && loan.status !== 'OVERDUE') {
+      setErrorMessage(
+        language === 'km'
+          ? `មិនអាចបង់ប្រាក់សម្រាប់ឥណទានក្នុងស្ថានភាព '${loan.status}' បានទេ។ ការទូទាត់អាចធ្វើបានតែលើឥណទានសកម្ម (ACTIVE) ឬ ហួសកាលកំណត់ (OVERDUE) ប៉ុណ្ណោះ។`
+          : `Cannot accept payment for loan with status '${loan.status}'. Payments can only be recorded on ACTIVE or OVERDUE loans.`
+      );
+      return;
+    }
+
     if (!amount || isNaN(amount) || amount <= 0) {
       setErrorMessage(
         language === 'km'
@@ -346,6 +355,18 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
           {step === 'FORM' && (
             <form onSubmit={handleGenerateKhqr} className="space-y-4 text-xs">
               
+              {loan.status !== 'ACTIVE' && loan.status !== 'OVERDUE' && (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-[6px] text-xs text-amber-800 flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold">{language === 'km' ? 'ព័ត៌មាន:' : 'Notice:'}</span>{' '}
+                    {language === 'km'
+                      ? `ឥណទាននេះស្ថិតក្នុងស្ថានភាព '${loan.status}' (រង់ចាំការបើកផ្តល់ប្រាក់កម្ចី)។ អ្នកអាចបង់ប្រាក់បានបន្ទាប់ពីប្រាក់កម្ចីត្រូវបានបើកផ្តល់រួច។`
+                      : `This loan is currently '${loan.status}' (pending disbursement). Repayments will be available once funds have been disbursed.`}
+                  </div>
+                </div>
+              )}
+              
               {/* Installment Selector Card */}
               <div className="bg-slate-50 border border-[#E2E8F0] rounded-[6px] p-3.5 space-y-2.5">
                 <label className="block font-bold text-[#0F172A] text-xs">
@@ -478,8 +499,8 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="px-5 py-2 rounded-[4px] font-bold text-white bg-[#0F172A] hover:bg-[#1E293B] disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                  disabled={isSubmitting || (loan.status !== 'ACTIVE' && loan.status !== 'OVERDUE')}
+                  className="px-5 py-2 rounded-[4px] font-bold text-white bg-[#0F172A] hover:bg-[#1E293B] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
                 >
                   {isSubmitting ? (
                     <>

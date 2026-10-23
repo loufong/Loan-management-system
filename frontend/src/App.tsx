@@ -365,6 +365,7 @@ export const App: React.FC = () => {
   // Sync API Data on Mount and Reload
   const reloadAllData = async () => {
     try {
+      const isStaff = (authUser?.role || '').toUpperCase() === 'ADMIN';
       const [b, p, l, a, r, n, audits] = await Promise.all([
         api.getBorrowers().catch(() => []),
         api.getProducts().catch(() => []),
@@ -372,7 +373,7 @@ export const App: React.FC = () => {
         api.getApplications().catch(() => []),
         api.getReceipts().catch(() => []),
         api.getNotifications().catch(() => []),
-        api.getAuditLogs().catch(() => []),
+        isStaff ? api.getAuditLogs().catch(() => []) : Promise.resolve([]),
       ]);
       if (Array.isArray(b)) setBorrowers(b);
       if (Array.isArray(p) && p.length > 0) setProducts(p);

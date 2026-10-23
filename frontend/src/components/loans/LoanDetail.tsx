@@ -12,7 +12,8 @@ import {
   DollarSign,
   Download,
   Zap,
-  Loader2
+  Loader2,
+  Clock
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { useLanguage } from '../../context/LanguageContext';
@@ -68,6 +69,7 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
   );
   const isOverdue = loan.status === 'OVERDUE';
   const isCompleted = loan.status === 'COMPLETED';
+  const isPending = loan.status === 'PENDING';
 
   const isCashierOrAdmin =
     currentUserRole === 'CASHIER' ||
@@ -251,7 +253,9 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
       {!isCompleted && (
         <div
           className={`p-4 rounded-[8px] border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
-            isOverdue
+            isPending
+              ? 'bg-amber-50 border-amber-200 text-amber-950'
+              : isOverdue
               ? 'bg-red-50 border-red-200 text-red-950'
               : 'bg-blue-50 border-blue-200 text-blue-950'
           }`}
@@ -259,34 +263,49 @@ export const LoanDetail: React.FC<LoanDetailProps> = ({
           <div className="flex items-center gap-3">
             <div
               className={`w-9 h-9 rounded-[6px] flex items-center justify-center font-bold text-sm shrink-0 ${
-                isOverdue
+                isPending
+                  ? 'bg-amber-600 text-white'
+                  : isOverdue
                   ? 'bg-[#DC2626] text-white'
                   : 'bg-[#2563EB] text-white'
               }`}
             >
-              {isOverdue ? <AlertTriangle className="w-4 h-4" /> : <Calendar className="w-4 h-4" />}
+              {isPending ? <Clock className="w-4 h-4" /> : isOverdue ? <AlertTriangle className="w-4 h-4" /> : <Calendar className="w-4 h-4" />}
             </div>
             <div>
               <p className="text-xs font-bold">
-                {isOverdue
+                {isPending
+                  ? t('banner_pending_disbursement', 'Loan Approved • Pending Fund Disbursement')
+                  : isOverdue
                   ? `${t('overdue_account_alert', 'Overdue Account:')} ${loan.daysOverdue || 38} ${t('days_past_due', 'Days Past Due')}`
                   : `${t('next_payment_due', 'Next Payment Due')}: ${loan.nextPaymentDueDate}`}
               </p>
               <p className="text-xs text-[#64748B] mt-0.5">
-                {t('installment_amount_due', 'Installment Amount Due:')}{' '}
-                <strong className="font-mono tabular-nums text-[#0F172A] font-bold">
-                  <MoneyText amount={loan.nextPaymentDueAmountUSD} currency={currency} />
-                </strong>
-                {loan.lateFeeAccruedUSD ? (
-                  <span className="text-[#DC2626] font-mono ml-1.5 font-semibold">
-                    (+ <MoneyText amount={loan.lateFeeAccruedUSD} currency={currency} /> {t('late_fee_label', 'Late Fee')})
-                  </span>
-                ) : null}
+                {isPending ? (
+                  <span>{t('banner_pending_disbursement_desc', 'Funds have not been disbursed yet. Repayments will begin once loan is active.')}</span>
+                ) : (
+                  <>
+                    {t('installment_amount_due', 'Installment Amount Due:')}{' '}
+                    <strong className="font-mono tabular-nums text-[#0F172A] font-bold">
+                      <MoneyText amount={loan.nextPaymentDueAmountUSD} currency={currency} />
+                    </strong>
+                    {loan.lateFeeAccruedUSD ? (
+                      <span className="text-[#DC2626] font-mono ml-1.5 font-semibold">
+                        (+ <MoneyText amount={loan.lateFeeAccruedUSD} currency={currency} /> {t('late_fee_label', 'Late Fee')})
+                      </span>
+                    ) : null}
+                  </>
+                )}
               </p>
             </div>
           </div>
 
-          {!isCompleted && (
+          {isPending ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-amber-100 text-amber-900 border border-amber-300 text-xs font-semibold whitespace-nowrap">
+              <Clock className="w-3.5 h-3.5 text-amber-700" />
+              <span>{t('status_pending_disbursement', 'Pending Disbursement')}</span>
+            </span>
+          ) : (
             <button
               onClick={() => {
                 const nextUnpaid = loan.schedules.find((s) => s.status !== 'PAID');

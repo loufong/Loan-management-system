@@ -1,549 +1,462 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Borrower, Currency, UserRole } from '../../types';
-import { useLanguage } from '../../context/LanguageContext';
+import React, { useState, useMemo } from 'react';
 import {
   Search,
   Plus,
-  Eye,
-  EyeOff,
-  Calendar,
   Users,
-  X,
   Phone,
   Mail,
   UserPlus,
-  Check,
-  Copy,
-  AlertTriangle,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  ShieldCheck,
+  CreditCard,
+  Building2,
+  DollarSign
 } from 'lucide-react';
-import { cn } from '../../lib/utils';
+import { Borrower, Currency, UserRole } from '../../types';
+import { StatusBadge } from '../common/StatusBadge';
+import { CurrencyDisplay } from '../common/CurrencyDisplay';
+import { EmptyState } from '../common/EmptyState';
 
 export interface BorrowerListProps {
-  borrowers: Borrower[];
-  currency: Currency;
-  currentUserRole: UserRole;
-  onSelectBorrower: (borrowerId: string) => void;
+  borrowers?: Borrower[];
+  currency?: Currency;
+  currentUserRole?: UserRole;
+  onSelectBorrower?: (borrowerId: string) => void;
   onOpenCreateApplication?: (borrowerId: string) => void;
   onOpenNewBorrower?: () => void;
 }
 
 export const BorrowerList: React.FC<BorrowerListProps> = ({
-  borrowers,
-  currency,
-  currentUserRole,
+  borrowers = [],
+  currency = 'USD',
+  currentUserRole = 'ADMIN',
   onSelectBorrower,
   onOpenCreateApplication,
   onOpenNewBorrower
 }) => {
-  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'HAS_OVERDUE' | 'ARCHIVED'>('ALL');
-  const [dateFilter, setDateFilter] = useState('');
-  const [revealedIds, setRevealedIds] = useState<Record<string, boolean>>({});
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [statusChip, setStatusChip] = useState<'All' | 'Active Loans' | 'In Good Standing' | 'Overdue'>('All');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   // New Borrower modal state
-  const [showNewBorrowerModal, setShowNewBorrowerModal] = useState(false);
-  const [newFullName, setNewFullName] = useState('');
-  const [newNationalId, setNewNationalId] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newNameEn, setNewNameEn] = useState('');
+  const [newNameKh, setNewNameKh] = useState('');
   const [newPhone, setNewPhone] = useState('');
-  const [newEmail, setNewEmail] = useState('');
-  const [newOccupation, setNewOccupation] = useState('');
-  const [newMonthlyIncome, setNewMonthlyIncome] = useState(1500);
+  const [newNationalId, setNewNationalId] = useState('');
+  const [newMonthlyIncome, setNewMonthlyIncome] = useState(1200);
 
-  const rate = 4100;
-  const formatMoney = (usdVal: number) => {
-    if (currency === 'KHR') {
-      const khr = usdVal * rate;
-      return new Intl.NumberFormat('km-KH', {
-        style: 'currency',
-        currency: 'KHR',
-        maximumFractionDigits: 0
-      }).format(khr);
-    }
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2
-    }).format(usdVal);
-  };
+  // Baseline mock data if none provided
+  const baseBorrowers: Borrower[] = useMemo(() => {
+    if (borrowers && borrowers.length > 0) return borrowers;
+    return [
+      {
+        id: 'b-101',
+        borrowerId: 'BOR-2026-0042',
+        fullName: 'Sokha Chan',
+        avatarUrl: '',
+        nationalId: '010892743',
+        phone: '012 345 678',
+        email: 'sokha.chan@gmail.com',
+        address: 'Boeung Keng Kang 1, Phnom Penh',
+        occupation: 'SME Retail Owner',
+        monthlyIncomeUSD: 1450,
+        status: 'ACTIVE',
+        kycStatus: 'VERIFIED',
+        activeLoansCount: 1,
+        totalBorrowedUSD: 5000,
+        totalRepaidUSD: 1579.50,
+        totalOutstandingUSD: 3420.50,
+        dtiRatio: 28,
+        createdAt: '2026-01-12'
+      },
+      {
+        id: 'b-102',
+        borrowerId: 'BOR-2026-0043',
+        fullName: 'Chhaya Meng',
+        avatarUrl: '',
+        nationalId: '090123847',
+        phone: '098 765 432',
+        email: 'chhaya.meng@gmail.com',
+        address: 'Siem Reap Town',
+        occupation: 'Farm Supervisor',
+        monthlyIncomeUSD: 950,
+        status: 'ACTIVE',
+        kycStatus: 'VERIFIED',
+        activeLoansCount: 1,
+        totalBorrowedUSD: 3500,
+        totalRepaidUSD: 1350,
+        totalOutstandingUSD: 2150,
+        dtiRatio: 32,
+        createdAt: '2026-02-18'
+      },
+      {
+        id: 'b-103',
+        borrowerId: 'BOR-2026-0044',
+        fullName: 'Dara Rath',
+        avatarUrl: '',
+        nationalId: '020485912',
+        phone: '077 889 900',
+        email: 'dara.rath@gmail.com',
+        address: 'Battambang Municipality',
+        occupation: 'Logistics Driver',
+        monthlyIncomeUSD: 1100,
+        status: 'ACTIVE',
+        kycStatus: 'VERIFIED',
+        activeLoansCount: 2,
+        totalBorrowedUSD: 8000,
+        totalRepaidUSD: 3110,
+        totalOutstandingUSD: 4890,
+        dtiRatio: 42,
+        createdAt: '2026-03-01'
+      },
+      {
+        id: 'b-104',
+        borrowerId: 'BOR-2026-0045',
+        fullName: 'Piseth Oeng',
+        avatarUrl: '',
+        nationalId: '050293841',
+        phone: '010 998 877',
+        email: 'piseth.oeng@gmail.com',
+        address: 'Takeo Province',
+        occupation: 'Commercial Property Landlord',
+        monthlyIncomeUSD: 3200,
+        status: 'BLACKLISTED',
+        kycStatus: 'VERIFIED',
+        activeLoansCount: 1,
+        totalBorrowedUSD: 25000,
+        totalRepaidUSD: 6550,
+        totalOutstandingUSD: 18450,
+        dtiRatio: 58,
+        createdAt: '2025-11-20'
+      }
+    ];
+  }, [borrowers]);
 
-  // Masked National ID helper
-  const maskNationalId = (rawId: string) => {
-    if (!rawId) return '***-**-****';
-    const clean = rawId.replace(/\D/g, '');
-    if (clean.length <= 4) return '***-**-' + clean;
-    return '***-**-' + clean.slice(-4);
-  };
+  // Filtered list based on Search & Status Chips
+  const filtered = useMemo(() => {
+    return baseBorrowers.filter(b => {
+      const q = searchTerm.toLowerCase().trim();
+      const matchSearch =
+        !q ||
+        b.fullName.toLowerCase().includes(q) ||
+        b.nationalId.includes(q) ||
+        b.phone.includes(q) ||
+        b.borrowerId.toLowerCase().includes(q);
 
-  const toggleRevealNationalId = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setRevealedIds((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
+      let matchStatus = true;
+      if (statusChip === 'Active Loans') {
+        matchStatus = b.activeLoansCount > 0;
+      } else if (statusChip === 'In Good Standing') {
+        matchStatus = b.status === 'ACTIVE' && b.totalOutstandingUSD <= 4000;
+      } else if (statusChip === 'Overdue') {
+        matchStatus = b.status === 'BLACKLISTED' || b.totalOutstandingUSD > 4000;
+      }
 
-  const handleCopyId = (bId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigator.clipboard.writeText(bId);
-    setCopiedId(bId);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
+      return matchSearch && matchStatus;
+    });
+  }, [baseBorrowers, searchTerm, statusChip]);
 
-  // Filter logic
-  const filteredBorrowers = borrowers.filter((b) => {
-    const q = searchTerm.toLowerCase();
-    const matchesSearch =
-      !searchTerm ||
-      b.fullName.toLowerCase().includes(q) ||
-      b.borrowerId.toLowerCase().includes(q) ||
-      b.phone.includes(searchTerm) ||
-      b.nationalId.includes(searchTerm) ||
-      b.email.toLowerCase().includes(q);
+  // Pagination logic
+  const totalPages = Math.ceil(filtered.length / itemsPerPage) || 1;
+  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-    let matchesStatus = true;
-    if (statusFilter === 'ACTIVE') {
-      matchesStatus = b.status === 'ACTIVE' && b.totalOutstandingUSD <= 4000;
-    } else if (statusFilter === 'HAS_OVERDUE') {
-      matchesStatus = b.totalOutstandingUSD > 4000 || b.status === 'BLACKLISTED';
-    } else if (statusFilter === 'ARCHIVED') {
-      matchesStatus = b.status === 'INACTIVE' || b.status === 'BLACKLISTED';
-    }
-
-    const matchesDate = !dateFilter || b.createdAt >= dateFilter;
-    return matchesSearch && matchesStatus && matchesDate;
-  });
-
-  const handleCreateBorrowerSubmit = (e: React.FormEvent) => {
+  const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newFullName.trim()) return;
-    alert(`Borrower ${newFullName} has been registered successfully.`);
-    setShowNewBorrowerModal(false);
-    setNewFullName('');
-    setNewNationalId('');
+    alert(`Borrower ${newNameEn} registered successfully!`);
+    setShowAddModal(false);
+    setNewNameEn('');
+    setNewNameKh('');
     setNewPhone('');
-    setNewEmail('');
+    setNewNationalId('');
   };
 
   return (
-    <div className="space-y-6 font-sans">
-      {/* 1. Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-[#E2E8F0]">
+    <div className="space-y-6 max-w-7xl mx-auto font-sans">
+      {/* Header Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl font-bold tracking-tight text-[#0F172A]">
-              {t('Borrowers Directory')}
-            </h1>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-xs font-mono font-semibold bg-slate-100 text-[#0F172A] border border-[#E2E8F0]">
-              {borrowers.length} {t('Dossiers')}
-            </span>
-          </div>
-          <p className="text-xs text-[#64748B] mt-0.5">
-            {t('Institutional borrower profiles, identification registry, debt-to-income ratings, and commercial loan histories.')}
+          <h1 className="text-2xl font-black tracking-tight text-white flex items-center gap-2">
+            <Users className="w-7 h-7 text-emerald-400" />
+            Borrower Management Directory
+          </h1>
+          <p className="text-xs text-slate-400 mt-1">
+            Search dossiers, review debt-to-income ratings, and open client profile view.
           </p>
         </div>
 
         <button
-          type="button"
           onClick={() => {
             if (onOpenNewBorrower) onOpenNewBorrower();
-            else setShowNewBorrowerModal(true);
+            else setShowAddModal(true);
           }}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-[#2563EB] hover:bg-[#1D4ED8] rounded-[6px] transition-colors cursor-pointer shadow-none"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 shadow-lg shadow-emerald-950/30 transition-all active:scale-95"
         >
-          <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-          <span>{t('Register New Borrower')}</span>
+          <Plus className="w-4 h-4" />
+          <span>Add Borrower</span>
         </button>
       </div>
 
-      {/* 2. Filter Toolbar */}
-      <div className="bg-white p-4 rounded-[8px] border border-[#E2E8F0] space-y-3">
-        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-          {/* Search Input */}
-          <div className="relative flex-1 max-w-lg">
-            <Search className="w-4 h-4 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+      {/* Search Input & Status Filter Chips */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {/* Search by name, national ID, phone */}
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder={t('Search by name, national ID, phone...', 'Search by Name, Borrower ID, Phone, National ID...')}
-              className="w-full h-10 pl-9 pr-8 rounded-[6px] bg-white text-xs text-[#0F172A] placeholder:text-[#64748B] border border-[#E2E8F0] focus:outline-none focus:border-[#2563EB] transition-colors"
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+              placeholder="Search by name, national ID, or phone..."
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-700/80 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition"
             />
-            {searchTerm && (
-              <button
-                type="button"
-                onClick={() => setSearchTerm('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#0F172A] p-0.5"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* Status Tabs */}
-            <div className="flex items-center bg-slate-100 p-0.5 rounded-[6px] border border-[#E2E8F0] text-xs font-semibold">
-              {(
-                [
-                  { id: 'ALL', label: t('All') },
-                  { id: 'ACTIVE', label: t('Active') },
-                  { id: 'HAS_OVERDUE', label: t('Has Overdue') },
-                  { id: 'ARCHIVED', label: t('Archived') }
-                ] as const
-              ).map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setStatusFilter(tab.id)}
-                  className={cn(
-                    'px-3 py-1.5 rounded-[4px] text-xs transition font-sans cursor-pointer',
-                    statusFilter === tab.id
-                      ? 'bg-white text-[#0F172A] shadow-xs font-bold'
-                      : 'text-[#64748B] hover:text-[#0F172A]'
-                  )}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Date Range Picker */}
-            <div className="flex items-center gap-2 bg-white border border-[#E2E8F0] rounded-[6px] px-3 py-1.5 text-xs text-[#64748B]">
-              <Calendar className="w-3.5 h-3.5 text-[#64748B]" />
-              <input
-                type="date"
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                className="bg-transparent text-xs text-[#0F172A] focus:outline-none cursor-pointer"
-              />
-              {dateFilter && (
-                <button
-                  type="button"
-                  onClick={() => setDateFilter('')}
-                  title={t('Clear Date', 'Clear Date')}
-                  className="text-[#64748B] hover:text-[#0F172A]"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
+          {/* Filter Chips: All, Active Loans, In Good Standing, Overdue */}
+          <div className="flex flex-wrap items-center gap-2">
+            {(['All', 'Active Loans', 'In Good Standing', 'Overdue'] as const).map(chip => (
+              <button
+                key={chip}
+                onClick={() => {
+                  setStatusChip(chip);
+                  setCurrentPage(1);
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                  statusChip === chip
+                    ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-950/40'
+                    : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'
+                }`}
+              >
+                {chip}
+              </button>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* 3. Data Table */}
-      <div className="bg-white rounded-[8px] border border-[#E2E8F0] overflow-hidden">
+      {/* Data Table */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="table-enterprise">
-            <thead>
+          <table className="w-full text-left text-xs border-collapse">
+            <thead className="bg-slate-950/80 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
               <tr>
-                <th>{t('Borrower ID')}</th>
-                <th>{t('Full Name')}</th>
-                <th>{t('National ID')}</th>
-                <th>{t('Contact Details')}</th>
-                <th className="text-right">{t('Monthly Income')}</th>
-                <th className="text-center">{t('Active Loans')}</th>
-                <th className="text-right">{t('Outstanding Balance')}</th>
-                <th>{t('KYC Status')}</th>
-                <th className="text-right">{t('Actions')}</th>
+                <th className="py-3 px-4">Borrower & Ref</th>
+                <th className="py-3 px-4">National ID</th>
+                <th className="py-3 px-4">Phone Number</th>
+                <th className="py-3 px-4 text-right">Total Borrowed</th>
+                <th className="py-3 px-4 text-center">Active Loans</th>
+                <th className="py-3 px-4 text-center">Status</th>
+                <th className="py-3 px-4 text-right">Action</th>
               </tr>
             </thead>
-
-            <tbody>
-              {filteredBorrowers.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="py-12 text-center text-[#64748B] text-xs">
-                    {t('No borrower dossiers match the selected filters.')}
-                  </td>
-                </tr>
-              ) : (
-                filteredBorrowers.map((borrower) => {
-                  const isRevealed = !!revealedIds[borrower.id];
-                  const hasDelinquency = borrower.totalOutstandingUSD > 4000;
+            <tbody className="divide-y divide-slate-800/60">
+              {paginated.length > 0 ? (
+                paginated.map(borrower => {
+                  const statusLabel =
+                    borrower.status === 'BLACKLISTED' || borrower.totalOutstandingUSD > 4000
+                      ? 'Overdue'
+                      : borrower.activeLoansCount > 0
+                      ? 'Active'
+                      : 'In Good Standing';
 
                   return (
                     <tr
                       key={borrower.id}
-                      onClick={() => onSelectBorrower(borrower.borrowerId || borrower.id)}
-                      className="hover:bg-slate-50/70 transition-colors cursor-pointer group"
+                      onClick={() => onSelectBorrower?.(borrower.id)}
+                      className="hover:bg-slate-800/50 transition cursor-pointer group"
                     >
-                      {/* Borrower ID */}
-                      <td className="font-mono font-bold text-[#2563EB] whitespace-nowrap">
-                        <div className="flex items-center gap-1.5">
-                          <span>{borrower.borrowerId}</span>
-                          <button
-                            type="button"
-                            onClick={(e) => handleCopyId(borrower.borrowerId, e)}
-                            title="Copy Borrower ID"
-                            className="opacity-0 group-hover:opacity-100 p-1 rounded-[4px] hover:bg-slate-200/60 text-[#64748B] hover:text-[#0F172A] transition"
-                          >
-                            {copiedId === borrower.borrowerId ? (
-                              <Check className="w-3 h-3 text-[#16A34A]" />
-                            ) : (
-                              <Copy className="w-3 h-3" />
-                            )}
-                          </button>
-                        </div>
-                      </td>
-
-                      {/* Full Name & Avatar */}
-                      <td>
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-[4px] bg-[#0F172A] text-white font-bold flex items-center justify-center text-xs shrink-0">
-                            {borrower.fullName.charAt(0)}
+                      {/* Avatar / Initials & Full Name */}
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-slate-800 to-slate-700 border border-slate-700 flex items-center justify-center font-bold text-xs text-emerald-400 shadow-sm shrink-0">
+                            {borrower.fullName.slice(0, 2).toUpperCase()}
                           </div>
-                          <div className="min-w-0">
-                            <p className="font-bold text-[#0F172A] group-hover:text-[#2563EB] transition-colors truncate">
+                          <div>
+                            <span className="font-bold text-white group-hover:text-emerald-400 transition block">
                               {borrower.fullName}
-                            </p>
-                            <p className="text-[11px] text-[#64748B] truncate">
-                              {borrower.occupation || 'Standard Account'}
-                            </p>
+                            </span>
+                            <span className="font-mono text-[10px] text-slate-400">{borrower.borrowerId}</span>
                           </div>
                         </div>
                       </td>
 
                       {/* National ID */}
-                      <td className="font-mono text-[#0F172A] whitespace-nowrap">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-medium">
-                            {isRevealed ? borrower.nationalId : maskNationalId(borrower.nationalId)}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={(e) => toggleRevealNationalId(borrower.id, e)}
-                            title={isRevealed ? 'Mask National ID' : 'Reveal National ID'}
-                            className="p-1 rounded-[4px] text-[#64748B] hover:text-[#0F172A] hover:bg-slate-100 transition"
-                          >
-                            {isRevealed ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                          </button>
-                        </div>
+                      <td className="py-3.5 px-4 font-mono text-slate-300">
+                        {borrower.nationalId}
                       </td>
 
-                      {/* Contact Details */}
-                      <td className="whitespace-nowrap">
-                        <div className="flex flex-col text-[11px]">
-                          <span className="font-medium text-[#0F172A] flex items-center gap-1 font-mono">
-                            <Phone className="w-3 h-3 text-[#64748B]" />
-                            {borrower.phone}
-                          </span>
-                          <span className="text-[#64748B] truncate max-w-[150px] flex items-center gap-1">
-                            <Mail className="w-3 h-3 text-[#64748B]" />
-                            {borrower.email}
-                          </span>
-                        </div>
+                      {/* Phone */}
+                      <td className="py-3.5 px-4 font-mono text-slate-300">
+                        {borrower.phone}
                       </td>
 
-                      {/* Monthly Income */}
-                      <td className="text-right font-mono font-bold text-[#0F172A] whitespace-nowrap tabular-nums">
-                        {formatMoney(borrower.monthlyIncomeUSD)}
+                      {/* Total Borrowed */}
+                      <td className="py-3.5 px-4 text-right font-mono font-bold text-white">
+                        <CurrencyDisplay amount={borrower.totalBorrowedUSD} currency="USD" />
                       </td>
 
-                      {/* Active Loans Count */}
-                      <td className="text-center whitespace-nowrap">
-                        <span className="px-2 py-0.5 rounded-[4px] text-[11px] font-mono font-bold bg-slate-100 text-[#0F172A] border border-[#E2E8F0]">
-                          {borrower.activeLoansCount} {t('active')}
-                        </span>
-                      </td>
-
-                      {/* Outstanding Balance */}
-                      <td className="text-right font-mono font-bold whitespace-nowrap tabular-nums">
-                        <span className={hasDelinquency ? 'text-[#DC2626]' : 'text-[#0F172A]'}>
-                          {formatMoney(borrower.totalOutstandingUSD)}
-                        </span>
+                      {/* Active Loan Count */}
+                      <td className="py-3.5 px-4 text-center font-bold text-emerald-400">
+                        {borrower.activeLoansCount}
                       </td>
 
                       {/* Status Badge */}
-                      <td className="whitespace-nowrap">
-                        {hasDelinquency ? (
-                          <span className="badge badge-danger">
-                            <AlertTriangle className="w-3 h-3" />
-                            <span>{t('Overdue Risk')}</span>
-                          </span>
-                        ) : borrower.status === 'ACTIVE' ? (
-                          <span className="badge badge-success">
-                            {t('Verified Active')}
-                          </span>
-                        ) : (
-                          <span className="badge badge-neutral">
-                            {t('Inactive')}
-                          </span>
-                        )}
+                      <td className="py-3.5 px-4 text-center">
+                        <StatusBadge status={statusLabel} size="sm" />
                       </td>
 
-                      {/* Actions */}
-                      <td className="text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            type="button"
-                            onClick={() => onSelectBorrower(borrower.borrowerId || borrower.id)}
-                            className="px-2.5 py-1 rounded-[6px] bg-white hover:bg-slate-50 border border-[#E2E8F0] text-[#0F172A] text-xs font-semibold transition"
-                          >
-                            {t('View')}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => onSelectBorrower(borrower.borrowerId || borrower.id)}
-                            className="px-2.5 py-1 rounded-[6px] bg-white hover:bg-slate-50 border border-[#E2E8F0] text-[#0F172A] text-xs font-semibold transition"
-                          >
-                            {t('Edit')}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => onSelectBorrower(borrower.borrowerId || borrower.id)}
-                            className="px-2.5 py-1 rounded-[6px] bg-blue-50 hover:bg-blue-100 border border-blue-200 text-[#2563EB] text-xs font-semibold transition"
-                          >
-                            {t('Loan History')}
-                          </button>
-                        </div>
+                      {/* Action */}
+                      <td className="py-3.5 px-4 text-right">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectBorrower?.(borrower.id);
+                          }}
+                          className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 transition"
+                        >
+                          View Profile
+                        </button>
                       </td>
                     </tr>
                   );
                 })
+              ) : (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center">
+                    <EmptyState
+                      headline="No Borrowers Found"
+                      description="No records match your search query or status filter."
+                      actionLabel="Register New Borrower"
+                      onAction={() => setShowAddModal(true)}
+                    />
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Bar */}
+        <div className="p-4 bg-slate-950/70 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+          <span>
+            Page <strong className="text-white">{currentPage}</strong> of{' '}
+            <strong className="text-white">{totalPages}</strong> ({filtered.length} total borrowers)
+          </span>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+              className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white disabled:opacity-40 transition"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages}
+              className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white disabled:opacity-40 transition"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Registration Modal for New Borrowers */}
-      <AnimatePresence>
-        {showNewBorrowerModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              className="w-full max-w-lg bg-white rounded-[8px] border border-[#E2E8F0] shadow-xl p-6 text-[#0F172A] relative"
+      {/* Add Borrower Modal Trigger */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <button
+              onClick={() => setShowAddModal(false)}
+              className="absolute top-4 right-4 p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
             >
-              <button
-                type="button"
-                onClick={() => setShowNewBorrowerModal(false)}
-                className="absolute top-5 right-5 text-[#64748B] hover:text-[#0F172A] p-1 rounded-[4px]"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <X className="w-5 h-5" />
+            </button>
 
-              <div className="flex items-center gap-3 mb-5 pb-3 border-b border-[#E2E8F0]">
-                <div className="w-9 h-9 rounded-[6px] bg-blue-50 border border-blue-200 text-[#2563EB] flex items-center justify-center font-bold">
-                  <UserPlus className="w-4 h-4" />
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-800 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center">
+                <UserPlus className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white">Register New Borrower</h3>
+                <p className="text-xs text-slate-400">Create client profile in KYC registry</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleAddSubmit} className="space-y-3.5 text-xs">
+              <div>
+                <label className="block text-slate-300 mb-1 font-semibold">Full Name (English)</label>
+                <input
+                  type="text"
+                  required
+                  value={newNameEn}
+                  onChange={(e) => setNewNameEn(e.target.value)}
+                  placeholder="e.g. Sokha Chan"
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 mb-1 font-semibold">Full Name (Khmer)</label>
+                <input
+                  type="text"
+                  value={newNameKh}
+                  onChange={(e) => setNewNameKh(e.target.value)}
+                  placeholder="e.g. ចាន់ សុខា"
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 mb-1 font-semibold">National ID</label>
+                  <input
+                    type="text"
+                    required
+                    value={newNationalId}
+                    onChange={(e) => setNewNationalId(e.target.value)}
+                    placeholder="e.g. 010892743"
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-[#0F172A]">
-                    Register New Borrower
-                  </h3>
-                  <p className="text-xs text-[#64748B]">
-                    Institutional borrower profile dossier registration
-                  </p>
+                  <label className="block text-slate-300 mb-1 font-semibold">Phone Number</label>
+                  <input
+                    type="text"
+                    required
+                    value={newPhone}
+                    onChange={(e) => setNewPhone(e.target.value)}
+                    placeholder="e.g. 012 345 678"
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  />
                 </div>
               </div>
 
-              <form onSubmit={handleCreateBorrowerSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  <div>
-                    <label className="block text-xs font-semibold text-[#0F172A] mb-1">
-                      Full Name *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={newFullName}
-                      onChange={(e) => setNewFullName(e.target.value)}
-                      placeholder="e.g. Sokha Mean"
-                      className="w-full h-10 px-3 rounded-[6px] bg-white border border-[#E2E8F0] text-xs text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-[#0F172A] mb-1">
-                      National ID *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={newNationalId}
-                      onChange={(e) => setNewNationalId(e.target.value)}
-                      placeholder="010892441"
-                      className="w-full h-10 px-3 rounded-[6px] bg-white border border-[#E2E8F0] text-xs font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  <div>
-                    <label className="block text-xs font-semibold text-[#0F172A] mb-1">
-                      Phone Number *
-                    </label>
-                    <input
-                      type="tel"
-                      required
-                      value={newPhone}
-                      onChange={(e) => setNewPhone(e.target.value)}
-                      placeholder="+855 12 345 678"
-                      className="w-full h-10 px-3 rounded-[6px] bg-white border border-[#E2E8F0] text-xs font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-[#0F172A] mb-1">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      value={newEmail}
-                      onChange={(e) => setNewEmail(e.target.value)}
-                      placeholder="borrower@example.com"
-                      className="w-full h-10 px-3 rounded-[6px] bg-white border border-[#E2E8F0] text-xs text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  <div>
-                    <label className="block text-xs font-semibold text-[#0F172A] mb-1">
-                      Occupation / Sector
-                    </label>
-                    <input
-                      type="text"
-                      value={newOccupation}
-                      onChange={(e) => setNewOccupation(e.target.value)}
-                      placeholder="e.g. Retail Merchant / Farmer"
-                      className="w-full h-10 px-3 rounded-[6px] bg-white border border-[#E2E8F0] text-xs text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-[#0F172A] mb-1">
-                      Monthly Income (USD)
-                    </label>
-                    <input
-                      type="number"
-                      value={newMonthlyIncome}
-                      onChange={(e) => setNewMonthlyIncome(Number(e.target.value))}
-                      className="w-full h-10 px-3 rounded-[6px] bg-white border border-[#E2E8F0] text-xs font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-[#E2E8F0]">
-                  <button
-                    type="button"
-                    onClick={() => setShowNewBorrowerModal(false)}
-                    className="px-4 py-2 rounded-[6px] text-xs font-semibold text-[#0F172A] bg-white hover:bg-slate-50 border border-[#E2E8F0] transition"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 rounded-[6px] text-xs font-semibold text-white bg-[#2563EB] hover:bg-[#1D4ED8] transition shadow-none cursor-pointer"
-                  >
-                    Save &amp; Open Dossier
-                  </button>
-                </div>
-              </form>
-            </motion.div>
+              <div className="flex items-center gap-3 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition shadow-md shadow-emerald-950/40"
+                >
+                  Save Dossier
+                </button>
+              </div>
+            </form>
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
     </div>
   );
 };

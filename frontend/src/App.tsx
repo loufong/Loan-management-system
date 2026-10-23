@@ -97,8 +97,8 @@ type AuthView = 'login' | 'register' | 'otp_verify' | 'forgot_password' | 'set_n
 const getBasePath = (): string => {
   if (typeof window === 'undefined') return '';
   const pathname = window.location.pathname;
-  if (pathname.startsWith('/Loan-management-system')) {
-    return '/Loan-management-system';
+  if (pathname.toLowerCase().startsWith('/loan-management-system')) {
+    return pathname.slice(0, '/loan-management-system'.length);
   }
   return '';
 };
@@ -107,7 +107,7 @@ const getNormalizedPath = (): string => {
   if (typeof window === 'undefined') return '/';
   let p = window.location.pathname;
   const base = getBasePath();
-  if (base && p.startsWith(base)) {
+  if (base && p.toLowerCase().startsWith(base.toLowerCase())) {
     p = p.slice(base.length);
   }
   if (!p || p === '') p = '/';

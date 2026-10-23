@@ -10,10 +10,11 @@
       var l = window.location;
       var repoName = '/Loan-management-system';
       var path = l.pathname;
-      if (path.startsWith(repoName)) {
+      if (path.toLowerCase().startsWith(repoName.toLowerCase())) {
+        var actualRepo = path.slice(0, repoName.length);
         l.replace(
           l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-          repoName + '/?/' +
+          actualRepo + '/?/' +
           path.slice(repoName.length + 1).replace(/&/g, '~and~') +
           (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
           l.hash

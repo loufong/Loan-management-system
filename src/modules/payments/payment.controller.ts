@@ -86,7 +86,7 @@ export class PaymentController {
 
       const amount = (validated.paymentAmount !== undefined ? validated.paymentAmount : validated.amount);
       if (!amount || amount <= 0) {
-        throw { statusCode: 400, message: 'Payment amount is required and must be greater than 0', code: 'INVALID_AMOUNT' };
+        throw { statusCode: 400, message: 'Payment amount is required and must be greater than 0', code: 'VALIDATION_ERROR' };
       }
       const referenceNo = validated.referenceNo || validated.transactionRef;
 

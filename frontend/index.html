@@ -21,10 +21,10 @@
         var baseTag = document.createElement('base');
         if (isLocal) {
           baseTag.href = '/';
-        } else if (window.location.pathname.startsWith('/Loan-management-system')) {
-          baseTag.href = '/Loan-management-system/';
+        } else if (window.location.pathname.toLowerCase().startsWith('/loan-management-system')) {
+          baseTag.href = window.location.pathname.slice(0, '/loan-management-system'.length) + '/';
         } else {
-          baseTag.href = '/';
+          baseTag.href = './';
         }
         document.head.prepend(baseTag);
       })();

@@ -6,7 +6,7 @@ import {
   isRouteActive,
   NavItemConfig,
 } from '../../navigation/navigation';
-import { Landmark, LogOut, LucideIcon, Zap } from 'lucide-react';
+import { Landmark, LogOut, LucideIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../context/LanguageContext';
 import logoImg from '../../assets/logo-transparent.png';
@@ -201,22 +201,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </button>
 
-        {/* Quick 1-Click Role Toggle (Admin vs Borrower) */}
-        <button
-          type="button"
-          onClick={() => {
-            if (onRoleToggle) {
-              onRoleToggle();
-            } else if (onRoleSwitch) {
-              onRoleSwitch(isAdmin ? 'BORROWER' : 'ADMIN');
-            }
-          }}
-          className="w-full py-1.5 px-2.5 rounded-[6px] bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer"
-          title={`Quick 1-click toggle: currently ${isAdmin ? 'Admin' : 'Borrower'}`}
-        >
-          <Zap className="w-3.5 h-3.5 text-amber-600 fill-amber-500" />
-          <span>Switch to {isAdmin ? '👤 Borrower' : '⚡ Admin'}</span>
-        </button>
+
 
         {/* Logout Button */}
         <button

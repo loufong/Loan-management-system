@@ -149,9 +149,24 @@ export async function fetchReportsData(
         )
       `);
 
-    // Strict Data Isolation Guard: If borrower, append .eq('borrower_id', currentUser.id)
-    if (isBorrower && borrowerId) {
-      query = query.eq('borrower_id', borrowerId);
+    // Strict Data Isolation Guard: If borrower, resolve their borrower ID and append .eq('borrower_id', ...)
+    if (isBorrower) {
+      let targetBorrowerId = borrowerId;
+      if (currentUser?.id) {
+        const { data: bor } = await supabase
+          .from('borrowers')
+          .select('id')
+          .eq('user_id', currentUser.id)
+          .maybeSingle();
+        if (bor?.id) {
+          targetBorrowerId = bor.id;
+        }
+      }
+      if (targetBorrowerId) {
+        query = query.eq('borrower_id', targetBorrowerId);
+      } else {
+        query = query.eq('borrower_id', '00000000-0000-0000-0000-000000000000');
+      }
     }
 
     if (filters.status) {

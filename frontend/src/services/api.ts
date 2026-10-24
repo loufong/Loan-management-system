@@ -1282,8 +1282,10 @@ class ApiService {
   public async initiateKhqrPayment(payload: {
     loanId: string;
     installmentId?: string;
+    scheduleId?: string;
     installmentNo?: number;
     amount?: number;
+    amountUSD?: number;
     currency?: 'USD' | 'KHR';
     notes?: string;
   }): Promise<KhqrPaymentSession> {
@@ -1292,13 +1294,18 @@ class ApiService {
         method: 'POST',
         body: JSON.stringify(payload),
       });
-      return res;
+      return {
+        ...res,
+        sessionId: res.sessionId || res.paymentId || res.id
+      };
     } catch (err: any) {
       if (isStaticHost) {
         // Fallback for static hosting offline demo
         const refNo = `PAY-${Date.now().toString().slice(-6)}`;
+        const sessId = `pay-${Date.now()}`;
         return {
-          paymentId: `pay-${Date.now()}`,
+          paymentId: sessId,
+          sessionId: sessId,
           reference: refNo,
           referenceNo: refNo,
           receiptNo: `REC-2026-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -1307,8 +1314,8 @@ class ApiService {
           borrowerName: 'Sokha Chan',
           borrowerId: 'BOR-2026-0001',
           installmentNo: payload.installmentNo || 1,
-          installmentId: payload.installmentId,
-          amount: payload.amount || 100,
+          installmentId: payload.installmentId || payload.scheduleId,
+          amount: payload.amount || payload.amountUSD || 100,
           currency: payload.currency || 'USD',
           status: 'PENDING',
           qr: '00020101021229380009khqr@aclb0111855177908000206ACLEDA5204599953038405402505802KH5911PHON RITHYA6010Phnom Penh62360119PAY-20261021-0000010209010487718993400131792593778924011317925946789236304024C',
@@ -1332,6 +1339,10 @@ class ApiService {
       if (!isStaticHost) throw err;
       return { status: 'PENDING', isPending: true, paymentId };
     }
+  }
+
+  public async checkKhqrStatus(paymentId: string): Promise<any> {
+    return await this.getPaymentStatus(paymentId);
   }
 
   public async verifyPayment(paymentId: string): Promise<any> {

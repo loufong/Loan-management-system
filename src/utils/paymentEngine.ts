@@ -53,6 +53,7 @@ export interface AllocationBreakdown {
 export interface AllocatePaymentResult {
   updatedSchedules: ScheduleItem[];
   allocationBreakdown: AllocationBreakdown;
+  isLoanFullySettled: boolean;
   remainingUnallocated: number;
 }
 
@@ -277,6 +278,8 @@ export function allocatePayment(
     currency
   );
 
+  const isLoanFullySettled = schedules.every(s => s.status === 'paid' || s.balanceRemaining <= tolerance);
+
   return {
     updatedSchedules: schedules,
     allocationBreakdown: {
@@ -286,6 +289,7 @@ export function allocatePayment(
       excessPrincipal: totalExcessPrincipal,
       totalAllocated
     },
+    isLoanFullySettled,
     remainingUnallocated: remainingMoney
   };
 }

@@ -30,6 +30,7 @@ export interface LoanCalculationParams {
 }
 
 export interface ScheduleRow {
+  // CamelCase keys
   installmentNumber: number;
   dueDate: string; // ISO Date YYYY-MM-DD
   startingBalance: number;
@@ -37,6 +38,15 @@ export interface ScheduleRow {
   interestAmount: number;
   totalMonthlyInstallment: number;
   endingBalance: number;
+
+  // Snake_case keys (Cambodian microfinance / Prompt 3.1 standard)
+  installment_no: number;
+  due_date: string;
+  opening_balance: number;
+  principal_due: number;
+  interest_due: number;
+  total_installment: number;
+  closing_balance: number;
 }
 
 export interface LoanCalculationResult {
@@ -180,6 +190,14 @@ export function generateRepaymentSchedule(params: LoanCalculationParams): LoanCa
         interestAmount,
         totalMonthlyInstallment: totalInstallment,
         endingBalance,
+
+        installment_no: i,
+        due_date: dueDate,
+        opening_balance: startBal,
+        principal_due: principalAmount,
+        interest_due: interestAmount,
+        total_installment: totalInstallment,
+        closing_balance: endingBalance,
       });
 
       currentBalance = endingBalance;
@@ -232,6 +250,14 @@ export function generateRepaymentSchedule(params: LoanCalculationParams): LoanCa
         interestAmount,
         totalMonthlyInstallment: totalInstallment,
         endingBalance,
+
+        installment_no: i,
+        due_date: dueDate,
+        opening_balance: startBal,
+        principal_due: principalAmount,
+        interest_due: interestAmount,
+        total_installment: totalInstallment,
+        closing_balance: endingBalance,
       });
 
       currentBalance = endingBalance;
@@ -379,7 +405,122 @@ export function runLoanEngineTests(): void {
   console.log('🎉 ALL 4 LOAN ENGINE TEST CASES PASSED WITH 100% ACCURACY!');
 }
 
+/**
+ * Direct Schedule Array Generator (Prompt 3.1 Standard Output)
+ * Returns array of rows: { installment_no, due_date, opening_balance, principal_due, interest_due, total_installment, closing_balance }
+ */
+export function calculateLoanSchedule(params: LoanCalculationParams): ScheduleRow[] {
+  return generateRepaymentSchedule(params).schedules;
+}
+
+// ----------------------------------------------------------------------------
+// Prompt 3.1 Exportable Test Cases
+// ----------------------------------------------------------------------------
+
+/**
+ * Test Case 1: $1,000 6-month reducing balance loan (USD)
+ */
+export function testUsdReducingSixMonths() {
+  const result = generateRepaymentSchedule({
+    principal: 1000,
+    interestRateMonthly: 1.5, // 1.5% monthly
+    termMonths: 6,
+    interestType: 'reducing',
+    currency: 'USD',
+    startDate: '2026-01-01',
+  });
+
+  const schedules = result.schedules;
+  // Assertions
+  if (schedules.length !== 6) throw new Error('Expected 6 installments');
+  if (schedules[0].principal_due >= schedules[5].principal_due) {
+    throw new Error('Principal component must grow over time in reducing balance');
+  }
+  if (schedules[0].interest_due <= schedules[5].interest_due) {
+    throw new Error('Interest component must decline over time in reducing balance');
+  }
+  if (schedules[5].closing_balance !== 0) {
+    throw new Error(`Closing balance must be 0.00, got ${schedules[5].closing_balance}`);
+  }
+
+  return {
+    testName: '$1,000 6-Month Reducing Balance Loan (USD)',
+    principal: result.principal,
+    monthlyInstallment: result.monthlyInstallment,
+    totalInterest: result.totalInterest,
+    totalRepayment: result.totalRepayment,
+    schedules: schedules.map(s => ({
+      installment_no: s.installment_no,
+      due_date: s.due_date,
+      opening_balance: s.opening_balance,
+      principal_due: s.principal_due,
+      interest_due: s.interest_due,
+      total_installment: s.total_installment,
+      closing_balance: s.closing_balance
+    }))
+  };
+}
+
+/**
+ * Test Case 2: 4,000,000 KHR 12-month flat loan (KHR)
+ */
+export function testKhrFlatTwelveMonths() {
+  const result = generateRepaymentSchedule({
+    principal: 4000000,
+    interestRateMonthly: 1.2, // 1.2% monthly
+    termMonths: 12,
+    interestType: 'flat',
+    currency: 'KHR',
+    startDate: '2026-01-01',
+  });
+
+  const schedules = result.schedules;
+  // Assertions
+  if (schedules.length !== 12) throw new Error('Expected 12 installments');
+  // Monthly flat interest = 4,000,000 * 0.012 = 48,000 KHR
+  const expectedMonthlyInterest = 48000;
+  if (schedules[0].interest_due !== expectedMonthlyInterest) {
+    throw new Error(`Expected ${expectedMonthlyInterest} KHR interest, got ${schedules[0].interest_due}`);
+  }
+  // All rows must be rounded to nearest 100 Riel
+  schedules.forEach((s) => {
+    if (s.principal_due % 100 !== 0 || s.interest_due % 100 !== 0 || s.total_installment % 100 !== 0) {
+      throw new Error(`Row ${s.installment_no} is not rounded to nearest 100 KHR`);
+    }
+  });
+  if (schedules[11].closing_balance !== 0) {
+    throw new Error('Final closing balance must be 0 KHR');
+  }
+
+  return {
+    testName: '4,000,000 KHR 12-Month Flat Loan (KHR)',
+    principal: result.principal,
+    monthlyInstallment: result.monthlyInstallment,
+    totalInterest: result.totalInterest,
+    totalRepayment: result.totalRepayment,
+    schedules: schedules.map(s => ({
+      installment_no: s.installment_no,
+      due_date: s.due_date,
+      opening_balance: s.opening_balance,
+      principal_due: s.principal_due,
+      interest_due: s.interest_due,
+      total_installment: s.total_installment,
+      closing_balance: s.closing_balance
+    }))
+  };
+}
+
+export const prompt31TestCases = {
+  testUsdReducingSixMonths,
+  testKhrFlatTwelveMonths
+};
+
 // Auto-run if executed directly via node / ts-node
 if (typeof require !== 'undefined' && require.main === module) {
   runLoanEngineTests();
+  console.log('\n▶ Executing Prompt 3.1 Specific Test Cases:');
+  const t1 = testUsdReducingSixMonths();
+  console.log(`  ✓ ${t1.testName}: EMI = $${t1.monthlyInstallment}, Total Interest = $${t1.totalInterest}`);
+  const t2 = testKhrFlatTwelveMonths();
+  console.log(`  ✓ ${t2.testName}: Installment = ${t2.monthlyInstallment.toLocaleString()} KHR, Total Interest = ${t2.totalInterest.toLocaleString()} KHR`);
 }

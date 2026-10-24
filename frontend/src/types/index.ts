@@ -269,6 +269,7 @@ export interface LoanAccount {
 
 export interface KhqrPaymentSession {
   paymentId: string;
+  sessionId?: string;
   reference: string;
   referenceNo: string;
   receiptNo: string;

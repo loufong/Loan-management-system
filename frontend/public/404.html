@@ -1,34 +1,64 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="km">
   <head>
     <meta charset="utf-8" />
-    <title>Apex LMS | Enterprise Loan Management System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jam Song Vich | Loan Management System</title>
+    <link rel="icon" type="image/png" href="logo.png" />
     <script type="text/javascript">
-      // Single Page Apps for GitHub Pages: redirect all 404s to index.html with query parameter
-      var pathSegmentsToKeep = 1;
-      var l = window.location;
-      var repoName = '/Loan-management-system';
-      var path = l.pathname;
-      if (path.startsWith(repoName)) {
-        l.replace(
-          l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-          repoName + '/?/' +
-          path.slice(repoName.length + 1).replace(/&/g, '~and~') +
-          (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
-          l.hash
-        );
-      } else {
-        l.replace(
-          l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-          '/?/' +
-          path.slice(1).replace(/&/g, '~and~') +
-          (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
-          l.hash
-        );
-      }
+      // GitHub Pages Single Page App Redirect Script
+      // Converts 404 path requests (e.g. /Loan-management-system/my-loans) into HashRouter route (#/my-loans)
+      (function() {
+        var l = window.location;
+        var repoName = '/Loan-management-system';
+        var path = l.pathname;
+        var cleanPath = path;
+
+        if (path.toLowerCase().startsWith(repoName.toLowerCase())) {
+          cleanPath = path.slice(repoName.length);
+        }
+        if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath;
+        if (cleanPath === '') cleanPath = '/';
+
+        var base = path.toLowerCase().startsWith(repoName.toLowerCase()) ? repoName : '';
+        var search = l.search ? l.search : '';
+        var hash = l.hash ? l.hash : '';
+
+        // Build target HashRouter URL: /Loan-management-system/#/my-loans
+        var targetUrl = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+                        base + '/#' + cleanPath + search + hash;
+
+        l.replace(targetUrl);
+      })();
     </script>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #090E1A;
+        color: #94A3B8;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        text-align: center;
+      }
+      .spinner {
+        width: 32px;
+        height: 32px;
+        border: 2px solid rgba(56, 189, 248, 0.2);
+        border-top-color: #38BDF8;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin: 0 auto 16px;
+      }
+      @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
   </head>
   <body>
-    <p>Redirecting to APEX LMS...</p>
+    <div>
+      <div class="spinner"></div>
+      <p>កំពុងបញ្ជូនទៅកាន់ប្រព័ន្ធ Jam Song Vich...<br/><small style="color:#64748B">Redirecting to Core Banking portal...</small></p>
+    </div>
   </body>
 </html>

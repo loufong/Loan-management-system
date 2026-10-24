@@ -99,6 +99,7 @@ import { useIdleTimer } from './hooks/useIdleTimer';
 type AuthView = 'login' | 'register' | 'otp_verify' | 'forgot_password' | 'set_new_password';
 
 // GitHub Pages & Static Environment Route Helpers
+// GitHub Pages & Static Environment Route Helpers (HashRouter & Path Dual Support)
 const getBasePath = (): string => {
   if (typeof window === 'undefined') return '';
   const pathname = window.location.pathname;
@@ -110,6 +111,32 @@ const getBasePath = (): string => {
 
 const getNormalizedPath = (): string => {
   if (typeof window === 'undefined') return '/';
+
+  // 1. Check HashRouter hash first (e.g., #/my-loans or #/admin/borrowers)
+  const hash = window.location.hash;
+  if (hash && hash.length > 1) {
+    let clean = hash.startsWith('#') ? hash.slice(1) : hash;
+    if (clean.startsWith('!')) clean = clean.slice(1);
+    if (!clean.startsWith('/')) clean = '/' + clean;
+    if (clean.includes('?')) clean = clean.split('?')[0];
+    if (clean.length > 1 && clean.endsWith('/')) {
+      clean = clean.slice(0, -1);
+    }
+    return clean || '/';
+  }
+
+  // 2. Check query parameter from 404.html redirect (e.g., /?/my-loans)
+  const search = window.location.search;
+  if (search && search.startsWith('?/')) {
+    let queryRoute = search.slice(1).split('&')[0].replace(/~and~/g, '&');
+    if (!queryRoute.startsWith('/')) queryRoute = '/' + queryRoute;
+    if (queryRoute.length > 1 && queryRoute.endsWith('/')) {
+      queryRoute = queryRoute.slice(0, -1);
+    }
+    return queryRoute;
+  }
+
+  // 3. Fallback to pathname
   let p = window.location.pathname;
   const base = getBasePath();
   if (base && p.toLowerCase().startsWith(base.toLowerCase())) {
@@ -123,18 +150,19 @@ const getNormalizedPath = (): string => {
 };
 
 const pushAppRoute = (route: string) => {
-  const base = getBasePath();
-  const target = `${base}${route.startsWith('/') ? route : '/' + route}`;
-  if (window.location.pathname !== target) {
-    window.history.pushState(null, '', target);
+  const cleanRoute = route.startsWith('/') ? route : '/' + route;
+  const targetHash = `#${cleanRoute}`;
+  if (window.location.hash !== targetHash) {
+    window.location.hash = targetHash;
   }
 };
 
 const replaceAppRoute = (route: string) => {
-  const base = getBasePath();
-  const target = `${base}${route.startsWith('/') ? route : '/' + route}`;
-  if (window.location.pathname !== target) {
-    window.history.replaceState(null, '', target);
+  const cleanRoute = route.startsWith('/') ? route : '/' + route;
+  const targetHash = `#${cleanRoute}`;
+  if (window.location.hash !== targetHash) {
+    const urlWithoutHash = window.location.href.split('#')[0];
+    window.location.replace(`${urlWithoutHash}${targetHash}`);
   }
 };
 
@@ -217,15 +245,25 @@ export const App: React.FC = () => {
   const [authTimedOut, setAuthTimedOut] = useState(false);
 
   useEffect(() => {
+    // 1. Dismiss splash preloader immediately if already mounted
     if (typeof (window as any).apexHideLoader === 'function') {
       (window as any).apexHideLoader();
     }
+
+    // 2. Maximum 3-second safe timeout fallback
     const timer = setTimeout(() => {
       setAuthTimedOut(true);
       if (typeof (window as any).apexHideLoader === 'function') {
         (window as any).apexHideLoader();
       }
+      // Direct DOM removal guard in case window.apexHideLoader wasn't defined or hung
+      const splashNode = document.getElementById('apex-splash-loader');
+      if (splashNode) {
+        splashNode.classList.add('apex-loader-hidden');
+        setTimeout(() => splashNode.remove(), 400);
+      }
     }, 3000);
+
     return () => clearTimeout(timer);
   }, []);
 
@@ -382,7 +420,11 @@ export const App: React.FC = () => {
 
     handleUrlSync();
     window.addEventListener('popstate', handleUrlSync);
-    return () => window.removeEventListener('popstate', handleUrlSync);
+    window.addEventListener('hashchange', handleUrlSync);
+    return () => {
+      window.removeEventListener('popstate', handleUrlSync);
+      window.removeEventListener('hashchange', handleUrlSync);
+    };
   }, [authIsAuthenticated, authUser]);
 
   // Auth Handlers

@@ -90,7 +90,7 @@ export function createApp(): Application {
   app.use(express.static(publicDir));
 
   // Root & App Route: Return interactive SPA to browsers, JSON to API consumers
-  app.get(['/', '/app'], (req: Request, res: Response) => {
+  app.get(['/', '/app', '/portal', '/my-loans', '/dashboard', '/user/dashboard', '/loans', '/applications', '/access-denied'], (req: Request, res: Response) => {
     const indexPath = path.join(publicDir, 'index.html');
     if (req.accepts('html') && fs.existsSync(indexPath)) {
       return res.sendFile(indexPath);
@@ -120,6 +120,7 @@ export function createApp(): Application {
   // BACKEND ADMIN ROUTE PROTECTION (/admin, /admin/*)
   // Direct access is strictly guarded: unauthenticated -> 401 / /login,
   // normal users (USER) -> 403 Forbidden / /user/dashboard or /access-denied.
+  // In development mode, allows browser HTML navigation without locking out.
   // =========================================================================
   app.all(['/admin', '/admin/*'], (req: Request, res: Response, next: NextFunction) => {
     // If this is an asset request, delegate to asset handler
@@ -131,8 +132,6 @@ export function createApp(): Application {
       req.accepts('html') &&
       !req.xhr &&
       !req.headers.accept?.includes('application/json');
-
-
 
     // For direct API requests or non-browser clients to /admin or /admin/*:
     const authHeader = req.headers.authorization;

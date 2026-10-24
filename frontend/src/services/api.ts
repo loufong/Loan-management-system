@@ -490,7 +490,7 @@ class ApiService {
   }
 
   public getMockUserDashboardSummary(): UserDashboardSummary {
-    let currentUser: UserProfile = USER_PROFILES.MANAGER;
+    let currentUser: UserProfile = USER_PROFILES.ADMIN;
     try {
       const stored = localStorage.getItem('apex_user') || sessionStorage.getItem('apex_user');
       if (stored) {
@@ -501,20 +501,20 @@ class ApiService {
     }
 
     const isBorrower = currentUser.role === 'BORROWER';
-    const cleanName = currentUser.fullName || currentUser.name || (currentUser.email ? currentUser.email.split('@')[0] : 'Lou Fong');
-    const role = currentUser.role || 'MANAGER';
+    const cleanName = currentUser.fullName || currentUser.name || (currentUser.email ? currentUser.email.split('@')[0] : 'Fong Ly');
+    const role = currentUser.role || 'ADMIN';
 
     return {
       user: {
         id: currentUser.id || 'USR-2026-001',
-        username: currentUser.username || cleanName,
+        username: currentUser.username || 'fong.ly',
         fullName: cleanName,
-        email: currentUser.email || 'manager@apex.local',
-        phone: (currentUser as any).phone || '+855 12 890 123',
+        email: currentUser.email || 'luofong03@gmail.com',
+        phone: (currentUser as any).phone || '+855 10 487 718',
         role,
         avatarUrl: currentUser.avatarUrl || currentUser.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cleanName)}`,
-        department: currentUser.department || (isBorrower ? 'Borrower Self-Service' : 'Executive Credit Committee'),
-        position: currentUser.title || (isBorrower ? 'Student Borrower' : 'Branch General Manager'),
+        department: currentUser.department || (isBorrower ? 'Borrower Self-Service' : 'Executive Administration'),
+        position: currentUser.title || (isBorrower ? 'Student Borrower' : 'System Administrator'),
         createdAt: currentUser.createdAt || '2026-01-01',
         lastLogin: new Date().toISOString(),
       },

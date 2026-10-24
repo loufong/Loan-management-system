@@ -233,6 +233,21 @@ async function main() {
     }
   });
 
+  const fongLyAdmin = await prisma.user.create({
+    data: {
+      username: 'luofong',
+      email: 'luofong03@gmail.com',
+      passwordHash: defaultPasswordHash,
+      fullName: 'Fong Ly',
+      phone: '010487718',
+      position: 'System Administrator',
+      department: 'Executive Administration',
+      role: UserRole.ADMIN,
+      status: UserStatus.ACTIVE,
+      emailVerifiedAt: new Date(),
+    }
+  });
+
   // ==========================================
   // 3. SEED LOAN PRODUCTS (5 Core Standard Products)
   // ==========================================

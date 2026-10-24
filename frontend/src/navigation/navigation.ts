@@ -152,10 +152,10 @@ export const USER_SECTIONS: NavSectionConfig[] = [
       {
         id: 'user_dashboard',
         label: 'Dashboard',
-        path: '/dashboard',
+        path: '/portal',
         icon: LayoutDashboard,
         requiredRole: 'USER',
-        aliases: ['/dashboard', '/user/dashboard', '/'],
+        aliases: ['/portal', '/dashboard', '/user/dashboard', '/my-loans', '/'],
       },
     ],
   },
@@ -176,7 +176,7 @@ export const USER_SECTIONS: NavSectionConfig[] = [
         path: '/loans',
         icon: Wallet,
         requiredRole: 'USER',
-        aliases: ['/loans', '/user/my_loans', '/user/loans'],
+        aliases: ['/loans', '/user/my_loans', '/user/loans', '/my-loans'],
       },
       {
         id: 'user_repayments',

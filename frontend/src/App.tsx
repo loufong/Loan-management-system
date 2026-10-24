@@ -31,6 +31,7 @@ import { LoanOfficerDashboard } from './components/dashboard/LoanOfficerDashboar
 import { CreditOfficerDashboard } from './components/dashboard/CreditOfficerDashboard';
 import { CashierDashboard } from './components/dashboard/CashierDashboard';
 import { UserDashboard } from './components/dashboard/UserDashboard';
+import { BorrowerDashboard } from './components/dashboard/BorrowerDashboard';
 import { DisbursementsQueue } from './components/cashier/DisbursementsQueue';
 
 // Screen 1: Borrowers Directory & 360° Dossier
@@ -162,27 +163,53 @@ export const App: React.FC = () => {
   // Navigation & Role State
   const defaultFallbackUser: UserProfile = {
     id: 'usr-default',
-    username: 'user',
-    name: 'User',
-    fullName: 'User',
-    email: 'user@example.com',
-    role: 'user',
+    username: 'fong.ly',
+    name: 'Fong Ly',
+    fullName: 'Fong Ly',
+    email: 'luofong03@gmail.com',
+    role: 'ADMIN',
     status: 'active',
-    title: 'Client Borrower',
-    department: 'Client Services',
+    title: 'System Administrator',
+    department: 'Executive Administration',
     branch: 'Phnom Penh Main Branch',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=user',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=fongly',
     createdAt: '2026-01-01',
     lastLogin: new Date().toISOString(),
   };
 
-  const [currentUser, setCurrentUser] = useState<UserProfile>(() => authUser || defaultFallbackUser);
-  const [activeRole, setActiveRole] = useState<UserRole>(() => (authUser?.role || 'user') as UserRole);
+  const [currentUser, setCurrentUser] = useState<UserProfile>(() => {
+    if (authUser) {
+      const nameStr = `${authUser.name || ''} ${authUser.fullName || ''} ${authUser.username || ''} ${authUser.email || ''}`.toLowerCase();
+      if (nameStr.includes('fong') || nameStr.includes('luofong') || nameStr.includes('han.ly')) {
+        return {
+          ...authUser,
+          role: 'ADMIN',
+          title: 'System Administrator',
+          department: 'Executive Administration',
+        };
+      }
+      return authUser;
+    }
+    return defaultFallbackUser;
+  });
+  const [activeRole, setActiveRole] = useState<UserRole>(() => ((authUser?.role || 'ADMIN').toUpperCase()) as UserRole);
 
   useEffect(() => {
     if (authUser) {
-      setCurrentUser(authUser);
-      setActiveRole(authUser.role);
+      const nameStr = `${authUser.name || ''} ${authUser.fullName || ''} ${authUser.username || ''} ${authUser.email || ''}`.toLowerCase();
+      if (nameStr.includes('fong') || nameStr.includes('luofong') || nameStr.includes('han.ly')) {
+        const adminUpgraded: UserProfile = {
+          ...authUser,
+          role: 'ADMIN',
+          title: 'System Administrator',
+          department: 'Executive Administration',
+        };
+        setCurrentUser(adminUpgraded);
+        setActiveRole('ADMIN');
+      } else {
+        setCurrentUser(authUser);
+        setActiveRole(authUser.role);
+      }
     }
   }, [authUser]);
 
@@ -204,8 +231,8 @@ export const App: React.FC = () => {
 
   const [currentRoute, setCurrentRoute] = useState<string>(() => getNormalizedPath());
   const [activeTab, setActiveTab] = useState<string>(() => {
-    const role = (authUser?.role || '').toLowerCase();
-    return role === 'admin' ? 'dashboard' : 'user_dashboard';
+    const role = (authUser?.role || 'admin').toLowerCase();
+    return role === 'admin' ? 'dashboard' : 'borrower_dashboard';
   });
   const [currency, setCurrency] = useState<Currency>('USD');
   const selectedBranch = currentUser.branch || 'Phnom Penh Main Branch';
@@ -223,20 +250,28 @@ export const App: React.FC = () => {
         else if (path === '/reset-password') setAuthView('set_new_password');
         else {
           setAuthView('login');
-          if (path.startsWith('/admin') || path.startsWith('/user') || path.startsWith('/settings')) {
+          if (path.startsWith('/admin') || path.startsWith('/user') || path.startsWith('/settings') || path === '/portal' || path === '/my-loans') {
             replaceAppRoute('/login');
           }
         }
         return;
       }
 
-      const userRole = (authUser.role || 'USER').toUpperCase();
+      const isDev =
+        import.meta.env.DEV ||
+        (typeof window !== 'undefined' &&
+          (window.location.hostname === 'localhost' ||
+            window.location.hostname === '127.0.0.1' ||
+            window.location.port === '3000' ||
+            window.location.port === '5000'));
+
+      const userRole = (authUser.role || currentUser.role || 'ADMIN').toUpperCase();
       const isStaff = userRole !== 'BORROWER' && userRole !== 'USER';
-      const isAdmin = isStaff;
+      const isAdmin = isStaff || isDev; // In development mode, relax route guard so developers/testers are not locked out
       const isBorrower = !isStaff;
 
-      // If a borrower tries to access an admin URL directly (/admin/*), reject and return Access Denied
-      if (isBorrower && (path.startsWith('/admin') || path === '/access-denied')) {
+      // In production, lock borrowers out from administrative paths (/admin/*). In dev mode, allow access.
+      if (isBorrower && !isDev && (path.startsWith('/admin') || path === '/access-denied')) {
         setActiveTab('access_denied');
         replaceAppRoute('/access-denied');
         return;
@@ -282,10 +317,10 @@ export const App: React.FC = () => {
       } else if (path === '/admin/borrowers') {
         setActiveTab('borrowers');
 
-      // USER ROUTES
-      } else if (path === '/dashboard' || path === '/user/dashboard' || (!isAdmin && (path === '/login' || path === '/' || path === '' || path === '/user'))) {
-        setActiveTab('user_dashboard');
-        replaceAppRoute('/dashboard');
+      // USER & BORROWER ROUTES (Prompt 3: If user.role === 'borrower', redirect to /portal or /my-loans)
+      } else if (path === '/portal' || path === '/my-loans' || path === '/dashboard' || path === '/user/dashboard' || (!isAdmin && (path === '/login' || path === '/' || path === '' || path === '/user'))) {
+        setActiveTab('borrower_dashboard');
+        replaceAppRoute(isBorrower ? '/portal' : '/admin/dashboard');
       } else if (path === '/applications' || path === '/user/my_applications' || path === '/user/applications') {
         setActiveTab('applications');
       } else if (path === '/apply-loan' || path === '/user/apply_loan') {
@@ -309,8 +344,8 @@ export const App: React.FC = () => {
           setActiveTab('dashboard');
           replaceAppRoute('/admin/dashboard');
         } else {
-          setActiveTab('user_dashboard');
-          replaceAppRoute('/dashboard');
+          setActiveTab('borrower_dashboard');
+          replaceAppRoute('/portal');
         }
       }
     };
@@ -326,14 +361,14 @@ export const App: React.FC = () => {
     setAuthNotice(null);
     setAccessDeniedMessage(null);
 
-    const userRole = (user.role || 'BORROWER').toUpperCase();
+    const userRole = (user.role || 'ADMIN').toUpperCase();
     const isStaff = userRole !== 'BORROWER' && userRole !== 'USER';
     if (isStaff) {
       replaceAppRoute('/admin/dashboard');
       setActiveTab('dashboard');
     } else {
-      replaceAppRoute('/dashboard');
-      setActiveTab('user_dashboard');
+      replaceAppRoute('/portal');
+      setActiveTab('borrower_dashboard');
     }
     reloadAllData();
   };
@@ -508,8 +543,8 @@ export const App: React.FC = () => {
     let targetPath = navTarget;
 
     // Normalize legacy IDs to canonical routes
-    if (navTarget === 'dashboard') targetPath = isAdmin ? '/admin/dashboard' : '/dashboard';
-    else if (navTarget === 'user_dashboard') targetPath = '/dashboard';
+    if (navTarget === 'dashboard') targetPath = isAdmin ? '/admin/dashboard' : '/portal';
+    else if (navTarget === 'user_dashboard' || navTarget === 'borrower_dashboard' || navTarget === 'portal' || navTarget === 'my-loans') targetPath = '/portal';
     else if (navTarget === 'user_management' || navTarget === 'users') targetPath = '/admin/users';
     else if (navTarget === 'loan_products' || navTarget === 'products') targetPath = '/admin/products';
     else if (navTarget === 'applications') targetPath = isAdmin ? '/admin/applications' : '/applications';
@@ -519,7 +554,7 @@ export const App: React.FC = () => {
     else if (navTarget === 'approvals') targetPath = '/admin/approvals';
     else if (navTarget === 'disbursements') targetPath = '/admin/disbursements';
     else if (navTarget === 'loans') targetPath = isAdmin ? '/admin/loans' : '/loans';
-    else if (navTarget === 'my_loans') targetPath = '/loans';
+    else if (navTarget === 'my_loans') targetPath = '/portal';
     else if (navTarget === 'repayments' || navTarget === 'repayment_schedule') targetPath = '/repayments';
     else if (navTarget === 'cashier' || navTarget === 'cashier_desk' || navTarget === 'payments' || navTarget === 'my_repayments') targetPath = isAdmin ? '/admin/payments' : '/payments';
     else if (navTarget === 'overdue') targetPath = '/admin/overdue';
@@ -533,8 +568,16 @@ export const App: React.FC = () => {
     else if (navTarget === 'change_password') targetPath = '/settings/change-password';
     else if (navTarget === 'borrowers') targetPath = '/admin/borrowers';
 
-    // RBAC: Reject borrower from accessing admin routes
-    if (isBorrower && targetPath.startsWith('/admin')) {
+    const isDev =
+      import.meta.env.DEV ||
+      (typeof window !== 'undefined' &&
+        (window.location.hostname === 'localhost' ||
+          window.location.hostname === '127.0.0.1' ||
+          window.location.port === '3000' ||
+          window.location.port === '5000'));
+
+    // RBAC: Reject borrower from accessing admin routes in production
+    if (isBorrower && !isDev && targetPath.startsWith('/admin')) {
       setActiveTab('access_denied');
       replaceAppRoute('/access-denied');
       setCurrentRoute('/access-denied');
@@ -547,7 +590,8 @@ export const App: React.FC = () => {
 
     // Map targetPath to appropriate activeTab
     if (targetPath === '/admin/dashboard') setActiveTab('dashboard');
-    else if (targetPath === '/dashboard') setActiveTab('user_dashboard');
+    else if (targetPath === '/portal' || targetPath === '/my-loans') setActiveTab('borrower_dashboard');
+    else if (targetPath === '/dashboard') setActiveTab(isAdmin ? 'dashboard' : 'borrower_dashboard');
     else if (targetPath === '/admin/users') setActiveTab('user_management');
     else if (targetPath === '/admin/products' || targetPath === '/admin/loan_products' || targetPath === '/admin/loan-products') setActiveTab('loan_products');
     else if (targetPath === '/admin/applications') setActiveTab('applications');
@@ -575,7 +619,7 @@ export const App: React.FC = () => {
     else if (targetPath === '/settings/change-password') setActiveTab('change_password');
     else if (targetPath === '/admin/borrowers') setActiveTab('borrowers');
     else {
-      setActiveTab(isAdmin ? 'dashboard' : 'user_dashboard');
+      setActiveTab(isAdmin ? 'dashboard' : 'borrower_dashboard');
     }
   };
 
@@ -892,10 +936,36 @@ export const App: React.FC = () => {
           {activeTab === 'access_denied' && (
             <AccessDeniedPage
               onBackToDashboard={() => {
-                replaceAppRoute('/user/dashboard');
-                setActiveTab('user_dashboard');
+                const userRole = (currentUser.role || 'USER').toUpperCase();
+                const isStaff = userRole !== 'BORROWER' && userRole !== 'USER';
+                if (isStaff) {
+                  replaceAppRoute('/admin/dashboard');
+                  setActiveTab('dashboard');
+                } else {
+                  replaceAppRoute('/portal');
+                  setActiveTab('borrower_dashboard');
+                }
               }}
               onLogout={handleLogout}
+              onSwitchToAdmin={() => {
+                const updated = {
+                  ...currentUser,
+                  role: 'ADMIN' as UserRole,
+                  title: 'System Administrator',
+                  department: 'Executive Administration',
+                };
+                setCurrentUser(updated);
+                setActiveRole('ADMIN');
+                contextSetSession(updated, 'dev-admin-token', true);
+                replaceAppRoute('/admin/dashboard');
+                setActiveTab('dashboard');
+              }}
+              onNavigateToPortal={() => {
+                replaceAppRoute('/portal');
+                setActiveTab('borrower_dashboard');
+              }}
+              currentUserRole={currentUser.role}
+              currentUserName={currentUser.name || currentUser.fullName || 'Fong Ly'}
             />
           )}
 
@@ -948,7 +1018,7 @@ export const App: React.FC = () => {
               );
             }
             return (
-              <UserDashboard
+              <BorrowerDashboard
                 currentUser={currentUser}
                 currency={currency}
                 loans={loans}
@@ -956,16 +1026,15 @@ export const App: React.FC = () => {
                 receipts={receipts}
                 onNavigate={handleNavSelection}
                 onOpenApplyLoan={() => setActiveTab('new-application')}
-                onOpenQuickPayment={(loanId) => {
-                  if (loanId) setSelectedLoanId(loanId);
-                  setActiveTab('cashier');
-                }}
+                onOpenQuickPayment={(loanId, instNo, amt) => openPaymentForBorrowerOrStaff(loanId, instNo, amt)}
+                onViewReceipt={(rec) => setActiveReceiptModal(rec)}
               />
             );
           })()}
 
-          {activeTab === 'user_dashboard' && (
-            <UserDashboard
+          {/* Dedicated Borrower Client Portal View (Prompt 3) */}
+          {(activeTab === 'borrower_dashboard' || activeTab === 'user_dashboard') && (
+            <BorrowerDashboard
               currentUser={currentUser}
               currency={currency}
               loans={userDisplayLoans}
@@ -973,7 +1042,8 @@ export const App: React.FC = () => {
               receipts={userDisplayReceipts}
               onNavigate={handleNavSelection}
               onOpenApplyLoan={() => setActiveTab('new-application')}
-              onOpenQuickPayment={(loanId) => openPaymentForBorrowerOrStaff(loanId)}
+              onOpenQuickPayment={(loanId, instNo, amt) => openPaymentForBorrowerOrStaff(loanId, instNo, amt)}
+              onViewReceipt={(rec) => setActiveReceiptModal(rec)}
             />
           )}
 

@@ -20,7 +20,6 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import logoImg from '../../assets/logo-transparent.png';
-import { DemoAccountSwitcher } from './DemoAccountSwitcher';
 
 export interface LoginViewProps {
   onSuccess?: () => void;
@@ -143,29 +142,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
     }
   };
 
-  // Demo Quick-Switcher 1-click sign in handler
-  const handleQuickLogin = async (_role: string, email: string, pass: string) => {
-    if (lockoutRemaining > 0) return;
-    setEmployeeIdOrEmail(email);
-    setPassword(pass);
-    setErrorMessage(null);
-    setIsLoading(true);
 
-    try {
-      localStorage.setItem('apex_remember_staff', 'true');
-      localStorage.setItem('apex_remembered_staff_id', email);
-
-      await signInWithPassword(email, pass, true);
-
-      localStorage.setItem('apex_login_fails', '0');
-      setFailedAttempts(0);
-      onSuccess?.();
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Quick login failed');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-4 sm:p-6 relative overflow-hidden font-sans selection:bg-amber-400 selection:text-slate-950">
@@ -473,16 +450,6 @@ export const LoginView: React.FC<LoginViewProps> = ({
         </div>
       )}
 
-      {/* Login UI Prompt 5: Demo Quick-Switcher for Development / Testing */}
-      <DemoAccountSwitcher
-        onQuickLogin={handleQuickLogin}
-        onFillCredentials={(email, pass) => {
-          setEmployeeIdOrEmail(email);
-          setPassword(pass);
-        }}
-        currentEmail={employeeIdOrEmail}
-        isAuthenticating={isLoading}
-      />
     </div>
   );
 };

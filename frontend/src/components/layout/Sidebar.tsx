@@ -63,6 +63,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
       case 'user_settings':
       case 'admin_settings':
         return t('nav_settings', 'Settings');
+      case 'admin_borrowers':
+      case 'borrowers':
+        return t('nav_borrowers', 'Borrowers');
       case 'admin_applications':
         return t('nav_applications', 'Applications');
       case 'admin_loans':
@@ -83,7 +86,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const handleItemClick = (item: NavItemConfig) => {
-    onNavigate(item.path);
+    onNavigate(item.path || item.id);
     onCloseMobileDrawer?.();
   };
 

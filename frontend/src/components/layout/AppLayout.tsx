@@ -110,7 +110,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
   const handleNavClick = (id: string, path: string) => {
     if (onNavigate) {
-      onNavigate(id);
+      onNavigate(path || id);
     }
     setMobileMenuOpen(false);
   };
@@ -121,7 +121,18 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     onToggleCurrency?.(nextCurr);
   };
 
-  const currentNav = navLinks.find(l => l.id === activeNav) || navLinks[0];
+  const currentNav = navLinks.find(
+    l => l.id === activeNav ||
+         l.path === activeNav ||
+         l.path === currentPath ||
+         (l.id === 'borrowers' && (
+           activeNav === 'borrowers' ||
+           activeNav === 'admin_borrowers' ||
+           activeNav === 'borrower-detail' ||
+           activeNav === '/admin/borrowers' ||
+           currentPath === '/admin/borrowers'
+         ))
+  ) || navLinks[0];
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-950 text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-slate-950">
@@ -175,7 +186,17 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         <nav className="flex-1 py-4 px-3 space-y-1.5 overflow-y-auto">
           {navLinks.map((item) => {
             const Icon = item.icon;
-            const isActive = activeNav === item.id;
+            const isActive =
+              activeNav === item.id ||
+              activeNav === item.path ||
+              currentPath === item.path ||
+              (item.id === 'borrowers' && (
+                activeNav === 'borrowers' ||
+                activeNav === 'admin_borrowers' ||
+                activeNav === 'borrower-detail' ||
+                activeNav === '/admin/borrowers' ||
+                currentPath === '/admin/borrowers'
+              ));
             return (
               <button
                 key={item.id}
@@ -348,27 +369,40 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               </div>
 
               <div className="space-y-1 flex-1">
-                {navLinks.map(item => (
-                  <button
-                    key={item.id}
-                    onClick={() => handleNavClick(item.id, item.path)}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold ${
-                      activeNav === item.id
-                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <item.icon className="w-4 h-4" />
-                      <span>{language === 'KH' ? item.khLabel : item.label}</span>
-                    </div>
-                    {item.badge && (
-                      <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-rose-500/20 text-rose-400 font-bold">
-                        {item.badge}
-                      </span>
-                    )}
-                  </button>
-                ))}
+                {navLinks.map(item => {
+                  const isActive =
+                    activeNav === item.id ||
+                    activeNav === item.path ||
+                    currentPath === item.path ||
+                    (item.id === 'borrowers' && (
+                      activeNav === 'borrowers' ||
+                      activeNav === 'admin_borrowers' ||
+                      activeNav === 'borrower-detail' ||
+                      activeNav === '/admin/borrowers' ||
+                      currentPath === '/admin/borrowers'
+                    ));
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleNavClick(item.id, item.path)}
+                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold ${
+                        isActive
+                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                          : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <item.icon className="w-4 h-4" />
+                        <span>{language === 'KH' ? item.khLabel : item.label}</span>
+                      </div>
+                      {item.badge && (
+                        <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-rose-500/20 text-rose-400 font-bold">
+                          {item.badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
 
               <div className="pt-4 border-t border-slate-800">

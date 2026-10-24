@@ -52,6 +52,14 @@ export const ADMIN_SECTIONS: NavSectionConfig[] = [
     sectionTitle: 'LOAN MANAGEMENT',
     items: [
       {
+        id: 'admin_borrowers',
+        label: 'Borrowers',
+        path: '/admin/borrowers',
+        icon: Users,
+        requiredRole: 'ADMIN',
+        aliases: ['/admin/borrowers', '/borrowers', 'borrowers', 'admin_borrowers'],
+      },
+      {
         id: 'admin_applications',
         label: 'Applications',
         path: '/admin/applications',

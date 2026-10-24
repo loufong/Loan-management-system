@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   BarChart3,
   Download,
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { CurrencyDisplay } from '../common/CurrencyDisplay';
 import { Currency } from '../../types';
+import { useAuth } from '../../context/AuthContext';
 
 export interface ReportsViewProps {
   currency?: Currency;
@@ -24,10 +25,33 @@ export interface ReportsViewProps {
 export const ReportsView: React.FC<ReportsViewProps> = ({
   currency: initialCurrency = 'USD'
 }) => {
+  const { user: authUser, profile } = useAuth();
+  const currentUser = profile || authUser;
+  const currentRole = (currentUser?.role || '').toLowerCase();
+  const isAllowedStaff = ['admin', 'manager', 'accountant'].includes(currentRole);
+
+  useEffect(() => {
+    if (!isAllowedStaff && typeof window !== 'undefined') {
+      window.location.replace('/my-loans');
+    }
+  }, [isAllowedStaff]);
+
   const [currency, setCurrency] = useState<Currency>(initialCurrency);
   const [selectedBranch, setSelectedBranch] = useState('All Branches');
   const [selectedOfficer, setSelectedOfficer] = useState('All Officers');
   const [dateRange, setDateRange] = useState({ start: '2026-10-01', end: '2026-10-31' });
+
+  if (!isAllowedStaff) {
+    return (
+      <div className="min-h-[50vh] flex flex-col items-center justify-center p-6 text-center">
+        <ShieldAlert className="w-12 h-12 text-amber-500 mb-3 animate-pulse" />
+        <h2 className="text-lg font-bold text-white">Access Restricted</h2>
+        <p className="text-xs text-slate-400 mt-1 max-w-sm">
+          Administrative reports are restricted to administrators, managers, and accountants. Redirecting to your customer portal (/my-loans)...
+        </p>
+      </div>
+    );
+  }
 
   // Portfolio Aging Buckets Data
   const agingBuckets = [

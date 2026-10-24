@@ -24,8 +24,14 @@ export const RoleGate: React.FC<RoleGateProps> = ({
         window.location.port === '3000' ||
         window.location.port === '5000'));
 
+  const isBorrower = currentRole === 'borrower' || currentRole === 'user';
+  const effectiveFallback = isBorrower ? '/my-loans' : fallbackDashboardRoute;
+
   const normalizedAllowedRoles = allowedRoles.map(r => r.toLowerCase());
-  const hasClearance = isDev || normalizedAllowedRoles.includes(currentRole) || normalizedAllowedRoles.includes('all');
+  const hasClearance =
+    (!isBorrower && isDev) ||
+    normalizedAllowedRoles.includes(currentRole) ||
+    normalizedAllowedRoles.includes('all');
 
   if (!hasClearance) {
     return (
@@ -63,18 +69,18 @@ export const RoleGate: React.FC<RoleGateProps> = ({
             </div>
           </div>
 
-          {/* Back to My Dashboard Button */}
+          {/* Back to My Dashboard / Portal Button */}
           <button
             type="button"
             onClick={() => {
               if (typeof window !== 'undefined') {
-                window.location.hash = `#${fallbackDashboardRoute}`;
+                window.location.hash = `#${effectiveFallback}`;
               }
             }}
             className="w-full py-3 px-4 rounded-xl text-xs font-bold bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-slate-950 shadow-lg shadow-amber-950/40 transition flex items-center justify-center gap-2 cursor-pointer active:scale-98"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Back to My Dashboard</span>
+            <span>{isBorrower ? 'Back to My Loans (/my-loans)' : 'Back to My Dashboard'}</span>
           </button>
         </div>
       </div>

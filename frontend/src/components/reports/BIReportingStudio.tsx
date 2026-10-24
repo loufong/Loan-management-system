@@ -1,28 +1,20 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Currency, LoanProduct } from '../../types';
 import { Badge } from '../common/Badge';
 import { MoneyText } from '../common/MoneyText';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
+import { useReports, ReportItem } from '../../hooks/useReports';
 import {
   Download,
   FileSpreadsheet,
   Printer,
-  ArrowUpDown
+  ArrowUpDown,
+  ShieldAlert,
+  Loader2
 } from 'lucide-react';
 
-export interface ReportItem {
-  id: string;
-  referenceNo: string;
-  borrowerName: string;
-  productName: string;
-  branch: string;
-  disbursedAmountUSD: number;
-  collectedAmountUSD: number;
-  outstandingAmountUSD: number;
-  overdueAmountUSD: number;
-  status: string;
-  date: string;
-}
+export type { ReportItem };
 
 export interface BIReportingStudioProps {
   products: LoanProduct[];
@@ -57,6 +49,11 @@ export const BIReportingStudio: React.FC<BIReportingStudioProps> = ({
   currency: initialCurrency
 }) => {
   const { t } = useLanguage();
+  const { user: authUser, profile } = useAuth();
+  const currentUser = profile || authUser;
+
+  const currentRole = (currentUser?.role || '').toLowerCase();
+  const isAllowedStaff = ['admin', 'manager', 'accountant'].includes(currentRole);
 
   // Top Control Bar State
   const [reportType, setReportType] = useState<
@@ -74,74 +71,28 @@ export const BIReportingStudio: React.FC<BIReportingStudioProps> = ({
   const [sortField, setSortField] = useState<keyof ReportItem>('outstandingAmountUSD');
   const [sortAsc, setSortAsc] = useState(false);
 
-  // Mock Report Dataset
-  const rawReportData: ReportItem[] = [
-    {
-      id: '1',
-      referenceNo: 'LN-2026-0042',
-      borrowerName: 'Sokha Chan',
-      productName: 'Personal Loan',
-      branch: 'Phnom Penh Main Branch',
-      disbursedAmountUSD: 6000,
-      collectedAmountUSD: 2540,
-      outstandingAmountUSD: 3850,
-      overdueAmountUSD: 0,
-      status: 'ACTIVE',
-      date: '2026-04-15',
-    },
-    {
-      id: '2',
-      referenceNo: 'LN-2026-0012',
-      borrowerName: 'Dara Pich',
-      productName: 'Emergency Loan',
-      branch: 'Phnom Penh Main Branch',
-      disbursedAmountUSD: 3000,
-      collectedAmountUSD: 1472,
-      outstandingAmountUSD: 1600,
-      overdueAmountUSD: 512,
-      status: 'OVERDUE',
-      date: '2026-01-10',
-    },
-    {
-      id: '3',
-      referenceNo: 'LN-2026-0088',
-      borrowerName: 'Vannak Keo',
-      productName: 'Business Loan',
-      branch: 'Phnom Penh Main Branch',
-      disbursedAmountUSD: 15000,
-      collectedAmountUSD: 9050,
-      outstandingAmountUSD: 8500,
-      overdueAmountUSD: 0,
-      status: 'ACTIVE',
-      date: '2025-09-01',
-    },
-    {
-      id: '4',
-      referenceNo: 'LN-2026-0004',
-      borrowerName: 'Sokha Chea',
-      productName: 'Business Loan',
-      branch: 'Phnom Penh Main Branch',
-      disbursedAmountUSD: 12000,
-      collectedAmountUSD: 4200,
-      outstandingAmountUSD: 7800,
-      overdueAmountUSD: 1240,
-      status: 'OVERDUE',
-      date: '2026-03-15',
-    },
-    {
-      id: '5',
-      referenceNo: 'LN-2026-0005',
-      borrowerName: 'Bopha Roth',
-      productName: 'Personal Loan',
-      branch: 'Phnom Penh Main Branch',
-      disbursedAmountUSD: 5000,
-      collectedAmountUSD: 0,
-      outstandingAmountUSD: 5000,
-      overdueAmountUSD: 0,
-      status: 'ACTIVE',
-      date: '2026-08-01',
-    },
-  ];
+  // Isolated Report Query Hook:
+  // Strictly checks currentUser.role and appends .eq('borrower_id', currentUser.id) if borrower
+  const { reports: rawReportData, isLoading, error } = useReports({ reportType });
+
+  // Route Access Guard: If a borrower attempts to visit /admin/reports, immediately redirect to /my-loans
+  useEffect(() => {
+    if (!isAllowedStaff && typeof window !== 'undefined') {
+      window.location.replace('/my-loans');
+    }
+  }, [isAllowedStaff]);
+
+  if (!isAllowedStaff) {
+    return (
+      <div className="min-h-[50vh] flex flex-col items-center justify-center p-6 text-center">
+        <ShieldAlert className="w-12 h-12 text-amber-500 mb-3 animate-pulse" />
+        <h2 className="text-lg font-bold text-slate-900">Access Restricted</h2>
+        <p className="text-xs text-slate-500 mt-1 max-w-sm">
+          Administrative reports are restricted to administrators, managers, and accountants. Redirecting to your customer portal (/my-loans)...
+        </p>
+      </div>
+    );
+  }
 
   const sortedData = useMemo(() => {
     return [...rawReportData].sort((a, b) => {
@@ -151,8 +102,8 @@ export const BIReportingStudio: React.FC<BIReportingStudioProps> = ({
         return sortAsc ? aVal - bVal : bVal - aVal;
       }
       return sortAsc
-        ? String(aVal).localeCompare(String(bVal))
-        : String(bVal).localeCompare(String(aVal));
+        ? String(aVal ?? '').localeCompare(String(bVal ?? ''))
+        : String(bVal ?? '').localeCompare(String(aVal ?? ''));
     });
   }, [rawReportData, sortField, sortAsc]);
 
@@ -254,46 +205,43 @@ export const BIReportingStudio: React.FC<BIReportingStudioProps> = ({
             </select>
           </div>
 
-          {/* Date Range Picker */}
-          <div className="flex items-center gap-1.5 bg-slate-100 p-0.5 rounded-[6px] border border-[#E2E8F0]">
-            <span className="text-xs font-semibold text-[#64748B] px-2 whitespace-nowrap">
-              {t('Range:')}
-            </span>
-            {(['Today', 'This Week', 'This Month', 'Year to Date'] as const).map((preset) => {
-              const active = datePreset === preset;
-              return (
-                <button
-                  key={preset}
-                  onClick={() => setDatePreset(preset)}
-                  className={`px-3 py-1 text-xs rounded-[4px] transition-colors whitespace-nowrap cursor-pointer ${
-                    active
-                      ? 'bg-white text-[#0F172A] font-bold shadow-xs'
-                      : 'text-[#64748B] hover:text-[#0F172A]'
-                  }`}
-                >
-                  {t(preset)}
-                </button>
-              );
-            })}
+          {/* Quick Date Presets */}
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-[6px] border border-[#E2E8F0]">
+            {(['Today', 'This Week', 'This Month', 'Year to Date'] as const).map((preset) => (
+              <button
+                key={preset}
+                type="button"
+                onClick={() => setDatePreset(preset)}
+                className={`px-2.5 py-1 text-xs font-semibold rounded-[4px] transition-all cursor-pointer ${
+                  datePreset === preset
+                    ? 'bg-white text-[#0F172A] shadow-xs'
+                    : 'text-[#64748B] hover:text-[#0F172A]'
+                }`}
+              >
+                {t(preset)}
+              </button>
+            ))}
           </div>
 
-          {/* Currency Switcher */}
-          <div className="inline-flex items-center p-0.5 bg-slate-100 rounded-[6px] border border-[#E2E8F0]">
+          {/* Currency Toggle */}
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-[6px] border border-[#E2E8F0]">
             <button
+              type="button"
               onClick={() => setReportCurrency('USD')}
-              className={`px-2.5 py-1 text-xs font-mono font-semibold rounded-[4px] transition-colors ${
+              className={`px-3 py-1 text-xs font-bold rounded-[4px] transition cursor-pointer ${
                 reportCurrency === 'USD'
-                  ? 'bg-white text-[#0F172A] font-bold shadow-xs'
+                  ? 'bg-[#0F172A] text-white'
                   : 'text-[#64748B] hover:text-[#0F172A]'
               }`}
             >
               USD ($)
             </button>
             <button
+              type="button"
               onClick={() => setReportCurrency('KHR')}
-              className={`px-2.5 py-1 text-xs font-mono font-semibold rounded-[4px] transition-colors ${
+              className={`px-3 py-1 text-xs font-bold rounded-[4px] transition cursor-pointer ${
                 reportCurrency === 'KHR'
-                  ? 'bg-white text-[#0F172A] font-bold shadow-xs'
+                  ? 'bg-[#0F172A] text-white'
                   : 'text-[#64748B] hover:text-[#0F172A]'
               }`}
             >
@@ -303,97 +251,109 @@ export const BIReportingStudio: React.FC<BIReportingStudioProps> = ({
         </div>
       </div>
 
-      {/* Point 20: Summary KPI Strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 bg-white border border-[#E2E8F0] rounded-[8px]">
-          <span className="text-[11px] font-semibold uppercase text-[#64748B] block">{t('Disbursed Total')}</span>
-          <MoneyText amount={totals.disbursed} currency={reportCurrency} className="text-xl font-bold text-[#0F172A] block mt-1" />
+      {/* 3. Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-4">
+          <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">
+            {t('Total Disbursed')}
+          </span>
+          <div className="text-xl font-bold font-mono text-[#0F172A] mt-1">
+            <MoneyText amount={totals.disbursed} currency={reportCurrency} />
+          </div>
         </div>
-        <div className="p-4 bg-white border border-[#E2E8F0] rounded-[8px]">
-          <span className="text-[11px] font-semibold uppercase text-[#64748B] block">{t('Collected Total')}</span>
-          <MoneyText amount={totals.collected} currency={reportCurrency} className="text-xl font-bold text-[#16A34A] block mt-1" />
+
+        <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-4">
+          <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">
+            {t('Total Principal Collected')}
+          </span>
+          <div className="text-xl font-bold font-mono text-[#16A34A] mt-1">
+            <MoneyText amount={totals.collected} currency={reportCurrency} />
+          </div>
         </div>
-        <div className="p-4 bg-white border border-[#E2E8F0] rounded-[8px]">
-          <span className="text-[11px] font-semibold uppercase text-[#64748B] block">{t('Outstanding Balance')}</span>
-          <MoneyText amount={totals.outstanding} currency={reportCurrency} className="text-xl font-bold text-[#2563EB] block mt-1" />
+
+        <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-4">
+          <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">
+            {t('Outstanding Portfolio Balance')}
+          </span>
+          <div className="text-xl font-bold font-mono text-[#2563EB] mt-1">
+            <MoneyText amount={totals.outstanding} currency={reportCurrency} />
+          </div>
         </div>
-        <div className="p-4 bg-white border border-[#E2E8F0] rounded-[8px]">
-          <span className="text-[11px] font-semibold uppercase text-[#64748B] block">{t('Overdue Risk')}</span>
-          <MoneyText amount={totals.overdue} currency={reportCurrency} className="text-xl font-bold text-[#DC2626] block mt-1" />
+
+        <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-4">
+          <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">
+            {t('Overdue Portfolio at Risk')}
+          </span>
+          <div className="text-xl font-bold font-mono text-[#DC2626] mt-1">
+            <MoneyText amount={totals.overdue} currency={reportCurrency} />
+          </div>
         </div>
       </div>
 
-      {/* 3. Report Data Grid */}
-      <div className="overflow-hidden rounded-[8px] border border-[#E2E8F0] bg-white">
+      {/* 4. Report Data Table */}
+      <div className="bg-white border border-[#E2E8F0] rounded-[8px] overflow-hidden shadow-xs">
+        <div className="px-4 py-3 border-b border-[#E2E8F0] flex items-center justify-between bg-slate-50">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-[#0F172A]">{t(reportType)}</span>
+            <span className="text-[11px] font-mono text-[#64748B]">
+              ({sortedData.length} records)
+            </span>
+          </div>
+          {isLoading && (
+            <div className="flex items-center gap-1.5 text-xs text-slate-500">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <span>Updating ledger records...</span>
+            </div>
+          )}
+        </div>
+
         <div className="overflow-x-auto">
-          <table className="table-enterprise">
-            <thead>
+          <table className="w-full text-left text-xs">
+            <thead className="bg-[#F8FAFC] border-b border-[#E2E8F0] text-[#64748B] uppercase tracking-wider font-semibold">
               <tr>
-                <th
-                  onClick={() => handleSort('referenceNo')}
-                  className="cursor-pointer hover:text-[#0F172A]"
-                >
+                <th className="py-2.5 px-4 cursor-pointer select-none" onClick={() => handleSort('referenceNo')}>
                   <div className="flex items-center gap-1">
-                    <span>{t('Reference #')}</span>
-                    <ArrowUpDown className="w-3 h-3 text-[#64748B]" />
+                    <span>{t('Ref No')}</span>
+                    <ArrowUpDown className="w-3 h-3 text-[#94A3B8]" />
                   </div>
                 </th>
-                <th
-                  onClick={() => handleSort('borrowerName')}
-                  className="cursor-pointer hover:text-[#0F172A]"
-                >
+                <th className="py-2.5 px-4 cursor-pointer select-none" onClick={() => handleSort('borrowerName')}>
                   <div className="flex items-center gap-1">
-                    <span>{t('Borrower')}</span>
-                    <ArrowUpDown className="w-3 h-3 text-[#64748B]" />
+                    <span>{t('Borrower Name')}</span>
+                    <ArrowUpDown className="w-3 h-3 text-[#94A3B8]" />
                   </div>
                 </th>
-                <th>{t('Product')}</th>
-                <th>{t('Branch')}</th>
-                <th
-                  onClick={() => handleSort('disbursedAmountUSD')}
-                  className="text-right cursor-pointer hover:text-[#0F172A]"
-                >
+                <th className="py-2.5 px-4">{t('Product')}</th>
+                <th className="py-2.5 px-4">{t('Branch')}</th>
+                <th className="py-2.5 px-4 text-right cursor-pointer select-none" onClick={() => handleSort('disbursedAmountUSD')}>
                   <div className="flex items-center justify-end gap-1">
                     <span>{t('Disbursed')}</span>
-                    <ArrowUpDown className="w-3 h-3 text-[#64748B]" />
+                    <ArrowUpDown className="w-3 h-3 text-[#94A3B8]" />
                   </div>
                 </th>
-                <th
-                  onClick={() => handleSort('collectedAmountUSD')}
-                  className="text-right cursor-pointer hover:text-[#0F172A]"
-                >
+                <th className="py-2.5 px-4 text-right cursor-pointer select-none" onClick={() => handleSort('collectedAmountUSD')}>
                   <div className="flex items-center justify-end gap-1">
-                    <span>{t('Repaid')}</span>
-                    <ArrowUpDown className="w-3 h-3 text-[#64748B]" />
+                    <span>{t('Collected')}</span>
+                    <ArrowUpDown className="w-3 h-3 text-[#94A3B8]" />
                   </div>
                 </th>
-                <th
-                  onClick={() => handleSort('outstandingAmountUSD')}
-                  className="text-right cursor-pointer hover:text-[#0F172A]"
-                >
+                <th className="py-2.5 px-4 text-right cursor-pointer select-none" onClick={() => handleSort('outstandingAmountUSD')}>
                   <div className="flex items-center justify-end gap-1">
                     <span>{t('Outstanding')}</span>
-                    <ArrowUpDown className="w-3 h-3 text-[#64748B]" />
+                    <ArrowUpDown className="w-3 h-3 text-[#94A3B8]" />
                   </div>
                 </th>
-                <th className="text-center">{t('status_label', 'Status')}</th>
-                <th>{t('Disbursement Date')}</th>
+                <th className="py-2.5 px-4 text-center">{t('Status')}</th>
+                <th className="py-2.5 px-4">{t('Date')}</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-[#E2E8F0]">
               {sortedData.map((row) => (
-                <tr
-                  key={row.id}
-                  className="hover:bg-slate-50/70 transition-colors"
-                >
-                  <td className="font-mono font-bold text-[#2563EB]">
-                    {row.referenceNo}
-                  </td>
-                  <td className="font-bold text-[#0F172A]">
-                    {row.borrowerName}
-                  </td>
-                  <td className="text-xs text-[#64748B]">{row.productName}</td>
-                  <td className="text-xs text-[#64748B]">{row.branch}</td>
+                <tr key={row.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="font-mono font-bold text-[#0F172A]">{row.referenceNo}</td>
+                  <td className="font-semibold text-[#0F172A]">{row.borrowerName}</td>
+                  <td className="text-[#64748B]">{row.productName}</td>
+                  <td className="text-[#64748B]">{row.branch}</td>
                   <td className="text-right font-mono font-bold text-[#0F172A]">
                     <MoneyText amount={row.disbursedAmountUSD} currency={reportCurrency} />
                   </td>

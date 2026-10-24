@@ -208,23 +208,28 @@ CREATE POLICY "profiles_update_self_or_admin"
 -- BORROWERS POLICIES
 -- ----------------------------------------------------------------------------
 DROP POLICY IF EXISTS "borrowers_select_staff" ON public.borrowers;
-CREATE POLICY "borrowers_select_staff"
+DROP POLICY IF EXISTS "borrowers_select_policy" ON public.borrowers;
+CREATE POLICY "borrowers_select_policy"
   ON public.borrowers FOR SELECT
   TO authenticated
-  USING (public.get_current_role() IN ('admin', 'loan_officer', 'teller'));
+  USING (
+    public.get_current_role() IN ('admin', 'manager', 'accountant', 'loan_officer', 'teller')
+    OR id = auth.uid()
+    OR created_by = auth.uid()
+  );
 
 DROP POLICY IF EXISTS "borrowers_insert_officer_admin" ON public.borrowers;
 CREATE POLICY "borrowers_insert_officer_admin"
   ON public.borrowers FOR INSERT
   TO authenticated
-  WITH CHECK (public.get_current_role() IN ('admin', 'loan_officer'));
+  WITH CHECK (public.get_current_role() IN ('admin', 'manager', 'loan_officer') OR id = auth.uid());
 
 DROP POLICY IF EXISTS "borrowers_update_officer_admin" ON public.borrowers;
 CREATE POLICY "borrowers_update_officer_admin"
   ON public.borrowers FOR UPDATE
   TO authenticated
-  USING (public.get_current_role() IN ('admin', 'loan_officer'))
-  WITH CHECK (public.get_current_role() IN ('admin', 'loan_officer'));
+  USING (public.get_current_role() IN ('admin', 'manager', 'loan_officer') OR id = auth.uid())
+  WITH CHECK (public.get_current_role() IN ('admin', 'manager', 'loan_officer') OR id = auth.uid());
 
 DROP POLICY IF EXISTS "borrowers_delete_admin" ON public.borrowers;
 CREATE POLICY "borrowers_delete_admin"
@@ -233,26 +238,34 @@ CREATE POLICY "borrowers_delete_admin"
   USING (public.get_current_role() = 'admin');
 
 -- ----------------------------------------------------------------------------
--- LOANS POLICIES
+-- LOANS POLICIES (Data Isolation & Anti-Cross-Tenant Leak)
 -- ----------------------------------------------------------------------------
 DROP POLICY IF EXISTS "loans_select_staff" ON public.loans;
-CREATE POLICY "loans_select_staff"
+DROP POLICY IF EXISTS "loans_select_policy" ON public.loans;
+CREATE POLICY "loans_select_policy"
   ON public.loans FOR SELECT
   TO authenticated
-  USING (public.get_current_role() IN ('admin', 'loan_officer', 'teller'));
+  USING (
+    public.get_current_role() IN ('admin', 'manager', 'accountant', 'loan_officer', 'teller')
+    OR borrower_id = auth.uid()
+    OR borrower_id IN (
+      SELECT b.id FROM public.borrowers b
+      WHERE b.id = auth.uid() OR b.created_by = auth.uid()
+    )
+  );
 
 DROP POLICY IF EXISTS "loans_insert_officer_admin" ON public.loans;
 CREATE POLICY "loans_insert_officer_admin"
   ON public.loans FOR INSERT
   TO authenticated
-  WITH CHECK (public.get_current_role() IN ('admin', 'loan_officer'));
+  WITH CHECK (public.get_current_role() IN ('admin', 'manager', 'loan_officer'));
 
 DROP POLICY IF EXISTS "loans_update_officer_admin" ON public.loans;
 CREATE POLICY "loans_update_officer_admin"
   ON public.loans FOR UPDATE
   TO authenticated
-  USING (public.get_current_role() IN ('admin', 'loan_officer'))
-  WITH CHECK (public.get_current_role() IN ('admin', 'loan_officer'));
+  USING (public.get_current_role() IN ('admin', 'manager', 'loan_officer'))
+  WITH CHECK (public.get_current_role() IN ('admin', 'manager', 'loan_officer'));
 
 DROP POLICY IF EXISTS "loans_delete_admin" ON public.loans;
 CREATE POLICY "loans_delete_admin"

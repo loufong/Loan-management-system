@@ -155,9 +155,13 @@ export function createApp(): Application {
     try {
       const decoded = verifyToken(token);
       const userRole = String(decoded.role || '').toUpperCase();
+      const isAllowedAdmin = ['ADMIN', 'MANAGER', 'ACCOUNTANT'].includes(userRole);
 
-      if (userRole !== 'ADMIN') {
+      if (!isAllowedAdmin) {
         if (isBrowserHtmlRequest) {
+          if (req.path.includes('/reports')) {
+            return res.redirect('/my-loans');
+          }
           return res.redirect('/user/dashboard?denied=true');
         }
         return sendError(

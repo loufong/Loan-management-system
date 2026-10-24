@@ -306,6 +306,7 @@ export const App: React.FC = () => {
       const userRole = (authUser.role || currentUser.role || 'ADMIN').toUpperCase();
       const isStaffRole = [
         'ADMIN',
+        'SUPERADMIN',
         'MANAGER',
         'ACCOUNTANT',
         'LOAN_OFFICER',
@@ -314,47 +315,78 @@ export const App: React.FC = () => {
         'TELLER',
         'CHECKER',
       ].includes(userRole);
-      const isAllowedAdminRole = ['ADMIN', 'MANAGER', 'ACCOUNTANT'].includes(userRole);
-      const isBorrower = ['CLIENT', 'BORROWER', 'USER'].includes(userRole);
+      const isBorrower = ['CLIENT', 'BORROWER', 'USER'].includes(userRole) || !isStaffRole;
       const isAdmin = isStaffRole;
 
-      // Strict Route Access Guard:
-      // Ensure /admin/reports is strictly gated to 'admin', 'manager', or 'accountant'.
-      // If a 'borrower' attempts to visit this URL, immediately redirect them to their own customer portal (/my-loans).
-      if (path === '/admin/reports' || path.startsWith('/admin/reports/')) {
-        if (!isAllowedAdminRole) {
-          replaceAppRoute(isBorrower ? '/my-loans' : '/admin/dashboard');
-          setCurrentRoute(isBorrower ? '/my-loans' : '/admin/dashboard');
-          setActiveTab(isBorrower ? 'borrower_dashboard' : 'dashboard');
-          return;
-        }
-      }
-
-      if (path.startsWith('/admin')) {
-        if (isBorrower || !isStaffRole) {
+      // 1. DEDICATED BORROWER PORTAL GATE & REDIRECTION:
+      // If user.role === 'borrower', the default landing page must be /portal or /my-loans, NOT /dashboard.
+      // Keep /dashboard, /admin/reports, /new-loan, and /borrowers strictly protected for admin, loan_officer, and teller.
+      if (isBorrower) {
+        if (
+          path === '/dashboard' ||
+          path === '/user/dashboard' ||
+          path === '/admin/dashboard' ||
+          path === '/admin' ||
+          path === '/admin/reports' ||
+          path.startsWith('/admin/reports') ||
+          path === '/borrowers' ||
+          path === '/admin/borrowers' ||
+          path.startsWith('/admin/borrowers') ||
+          path.startsWith('/admin') ||
+          path === '/access-denied' ||
+          path === '/login' ||
+          path === '/' ||
+          path === ''
+        ) {
           replaceAppRoute('/my-loans');
           setCurrentRoute('/my-loans');
           setActiveTab('borrower_dashboard');
           return;
         }
-      }
 
-      if (path === '/access-denied') {
-        if (isBorrower || !isStaffRole) {
-          replaceAppRoute('/my-loans');
-          setCurrentRoute('/my-loans');
-          setActiveTab('borrower_dashboard');
+        if (path === '/new-loan') {
+          replaceAppRoute('/apply-loan');
+          setCurrentRoute('/apply-loan');
+          setActiveTab('new-application');
           return;
         }
-        setActiveTab('access_denied');
-        return;
       }
 
-      // ADMIN & STAFF ROUTES
-      if (path === '/admin/dashboard' || (isAdmin && (path === '/login' || path === '/' || path === '' || path === '/admin'))) {
+      // 2. DEDICATED STAFF & ADMIN GATE:
+      if (isStaffRole) {
+        if (path === '/login' || path === '/' || path === '' || path === '/admin' || path === '/dashboard' || path === '/user/dashboard') {
+          replaceAppRoute('/admin/dashboard');
+          setCurrentRoute('/admin/dashboard');
+          setActiveTab('dashboard');
+          return;
+        }
+
+        if (path === '/borrowers') {
+          replaceAppRoute('/admin/borrowers');
+          setCurrentRoute('/admin/borrowers');
+          setActiveTab('borrowers');
+          return;
+        }
+
+        if (path === '/new-loan') {
+          replaceAppRoute('/admin/applications');
+          setCurrentRoute('/admin/applications');
+          setActiveTab('new-application');
+          return;
+        }
+
+        if (path === '/access-denied' || path === '/portal' || path === '/my-loans') {
+          replaceAppRoute('/admin/dashboard');
+          setCurrentRoute('/admin/dashboard');
+          setActiveTab('dashboard');
+          return;
+        }
+      }
+
+      // 3. CANONICAL ROUTE DISPATCH
+      if (path === '/admin/dashboard') {
         setActiveTab('dashboard');
-        replaceAppRoute('/admin/dashboard');
-      } else if (path === '/admin/borrowers' || path === '/borrowers' || path.startsWith('/admin/borrowers')) {
+      } else if (path === '/admin/borrowers' || path.startsWith('/admin/borrowers')) {
         setActiveTab('borrowers');
       } else if (path === '/admin/users') {
         setActiveTab('user_management');
@@ -385,10 +417,9 @@ export const App: React.FC = () => {
       } else if (path === '/admin/profile') {
         setActiveTab('profile');
 
-      // USER & BORROWER ROUTES (Redirect borrower to /my-loans)
-      } else if (path === '/portal' || path === '/my-loans' || path === '/dashboard' || path === '/user/dashboard' || (!isAdmin && (path === '/login' || path === '/' || path === '' || path === '/user'))) {
+      // USER & BORROWER ROUTES
+      } else if (path === '/portal' || path === '/my-loans') {
         setActiveTab('borrower_dashboard');
-        replaceAppRoute(isBorrower ? '/my-loans' : '/admin/dashboard');
       } else if (path === '/applications' || path === '/user/my_applications' || path === '/user/applications') {
         setActiveTab('applications');
       } else if (path === '/apply-loan' || path === '/user/apply_loan') {
@@ -434,12 +465,24 @@ export const App: React.FC = () => {
     setAccessDeniedMessage(null);
 
     const userRole = (user.role || 'ADMIN').toUpperCase();
-    const isStaff = ['ADMIN', 'MANAGER', 'ACCOUNTANT'].includes(userRole);
+    const isStaff = [
+      'ADMIN',
+      'SUPERADMIN',
+      'MANAGER',
+      'ACCOUNTANT',
+      'LOAN_OFFICER',
+      'CREDIT_OFFICER',
+      'CASHIER',
+      'TELLER',
+      'CHECKER'
+    ].includes(userRole);
     if (isStaff) {
       replaceAppRoute('/admin/dashboard');
+      setCurrentRoute('/admin/dashboard');
       setActiveTab('dashboard');
     } else {
       replaceAppRoute('/my-loans');
+      setCurrentRoute('/my-loans');
       setActiveTab('borrower_dashboard');
     }
     reloadAllData();
@@ -524,9 +567,67 @@ export const App: React.FC = () => {
     }
   }, [authIsAuthenticated, authUser?.id]);
 
-  // Handle Role Switch
-  const handleRoleSwitch = (_newRole: UserRole) => {
-    // Role switching is strictly disabled: user role is determined solely by server authentication
+  // Quick 1-Click Role Toggle (Admin vs Borrower) for development & testing
+  const handleRoleToggle = (forcedRole?: 'ADMIN' | 'BORROWER') => {
+    const userRole = (authUser?.role || currentUser.role || 'ADMIN').toUpperCase();
+    const currentIsBorrower = ['BORROWER', 'CLIENT', 'USER'].includes(userRole);
+    const targetRole = forcedRole || (currentIsBorrower ? 'ADMIN' : 'BORROWER');
+
+    if (targetRole === 'ADMIN') {
+      const adminProfile: UserProfile = {
+        ...USER_PROFILES.ADMIN,
+        id: 'user-admin-0001',
+        username: 'admin',
+        name: 'Sophea Pich',
+        fullName: 'Sophea Pich',
+        email: 'admin@jamsongvich.com',
+        role: 'ADMIN',
+        title: 'Senior Loan Director',
+        department: 'Credit Operations',
+        avatar: 'SP',
+        branch: 'Phnom Penh Main Branch',
+      };
+      setCurrentUser(adminProfile);
+      setActiveRole('ADMIN');
+      contextSetSession(adminProfile, 'dev-admin-token', true);
+      setAccessDeniedMessage(null);
+      replaceAppRoute('/admin/dashboard');
+      setCurrentRoute('/admin/dashboard');
+      setActiveTab('dashboard');
+    } else {
+      const borrowerProfile: UserProfile = {
+        ...USER_PROFILES.BORROWER,
+        id: 'usr-borrower-0001',
+        username: 'fong.ly',
+        name: 'Fong Ly',
+        fullName: 'Fong Ly',
+        email: 'fong.ly@example.com',
+        role: 'BORROWER',
+        title: 'Client Borrower',
+        department: 'Borrower Self-Service',
+        avatar: 'FL',
+        borrowerId: 'BOR-2026-0001',
+        nationalId: '010992384',
+        branch: 'Phnom Penh Main Branch',
+      };
+      setCurrentUser(borrowerProfile);
+      setActiveRole('BORROWER');
+      contextSetSession(borrowerProfile, 'dev-borrower-token', true);
+      setAccessDeniedMessage(null);
+      replaceAppRoute('/my-loans');
+      setCurrentRoute('/my-loans');
+      setActiveTab('borrower_dashboard');
+    }
+    reloadAllData();
+  };
+
+  const handleRoleSwitch = (newRole: UserRole) => {
+    const roleStr = String(newRole).toUpperCase();
+    if (roleStr === 'ADMIN' || roleStr === 'MANAGER' || roleStr === 'LOAN_OFFICER' || roleStr === 'CASHIER' || roleStr === 'TELLER') {
+      handleRoleToggle('ADMIN');
+    } else {
+      handleRoleToggle('BORROWER');
+    }
   };
 
   // Keyboard shortcut listener for Ctrl+K / Cmd+K
@@ -636,7 +737,7 @@ export const App: React.FC = () => {
       navTarget === '/admin/borrowers' ||
       navTarget === '/admin/borrower'
     ) {
-      targetPath = '/admin/borrowers';
+      targetPath = isAdmin ? '/admin/borrowers' : '/my-loans';
     } else if (
       navTarget === 'user_dashboard' ||
       navTarget === 'borrower_dashboard' ||
@@ -645,7 +746,7 @@ export const App: React.FC = () => {
       navTarget === '/portal' ||
       navTarget === '/my-loans'
     ) {
-      targetPath = '/my-loans';
+      targetPath = isBorrower ? '/my-loans' : '/admin/dashboard';
     } else if (
       navTarget === 'user_management' ||
       navTarget === 'users' ||
@@ -669,7 +770,7 @@ export const App: React.FC = () => {
     } else if (navTarget === 'my_applications' || navTarget === '/applications') {
       targetPath = '/applications';
     } else if (
-      navTarget === 'new-application' ||
+      navTarget === 'new-loan' ||
       navTarget === 'apply_loan' ||
       navTarget === '/apply-loan'
     ) {
@@ -719,7 +820,7 @@ export const App: React.FC = () => {
     } else if (navTarget === 'overdue' || navTarget === 'admin_overdue' || navTarget === '/admin/overdue') {
       targetPath = '/admin/overdue';
     } else if (navTarget === 'reports' || navTarget === 'admin_reports' || navTarget === '/admin/reports') {
-      targetPath = '/admin/reports';
+      targetPath = isAdmin ? '/admin/reports' : '/my-loans';
     } else if (navTarget === 'notifications' || navTarget === 'admin_notifications' || navTarget === '/admin/notifications') {
       targetPath = isAdmin ? '/admin/notifications' : '/notifications';
     } else if (navTarget === 'audit_logs' || navTarget === 'audit-logs' || navTarget === 'admin_audit_logs' || navTarget === '/admin/audit-logs') {
@@ -745,11 +846,24 @@ export const App: React.FC = () => {
     }
 
     // RBAC: Reject borrower from accessing admin routes; immediately redirect to /my-loans
-    if (isBorrower && targetPath.startsWith('/admin')) {
-      replaceAppRoute('/my-loans');
-      setCurrentRoute('/my-loans');
-      setActiveTab('borrower_dashboard');
-      return;
+    if (isBorrower) {
+      if (
+        targetPath.startsWith('/admin') ||
+        targetPath === '/dashboard' ||
+        targetPath === '/borrowers' ||
+        targetPath === '/admin/reports'
+      ) {
+        replaceAppRoute('/my-loans');
+        setCurrentRoute('/my-loans');
+        setActiveTab('borrower_dashboard');
+        return;
+      }
+      if (targetPath === '/new-loan') {
+        replaceAppRoute('/apply-loan');
+        setCurrentRoute('/apply-loan');
+        setActiveTab('new-application');
+        return;
+      }
     }
 
     // Update active route and browser history
@@ -1098,6 +1212,7 @@ export const App: React.FC = () => {
         breadcrumbs={getBreadcrumbs()}
         currentRole={activeRole}
         onRoleSwitch={handleRoleSwitch}
+        onRoleToggle={handleRoleToggle}
         currency={currency}
         onToggleCurrency={(c) => setCurrency(c)}
         onSearchOpen={() => setSearchModalOpen(true)}

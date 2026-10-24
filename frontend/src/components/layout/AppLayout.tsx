@@ -18,7 +18,8 @@ import {
   Shield,
   CreditCard,
   Building2,
-  AlertTriangle
+  AlertTriangle,
+  Zap
 } from 'lucide-react';
 import { Currency, UserProfile } from '../../types';
 
@@ -38,6 +39,7 @@ export interface AppLayoutProps {
   breadcrumbs?: any[];
   currentRole?: any;
   onRoleSwitch?: (role: any) => void;
+  onRoleToggle?: () => void;
   onSearchOpen?: () => void;
   notifications?: any[];
   onMarkNotificationRead?: (id: string) => void;
@@ -65,7 +67,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   currency = 'USD',
   onToggleCurrency,
   overdueCount = 6,
-  unreadNotificationsCount = 3
+  unreadNotificationsCount = 3,
+  currentRole,
+  onRoleSwitch,
+  onRoleToggle
 }) => {
   const activeNav = activeNavId || rawActiveNav;
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -92,7 +97,20 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const navLinks = [
+  const userRole = (currentUser?.role || currentRole || 'ADMIN').toUpperCase();
+  const isBorrower = ['BORROWER', 'CLIENT', 'USER'].includes(userRole);
+  const isStaff = !isBorrower;
+
+  interface LayoutNavLink {
+    id: string;
+    label: string;
+    khLabel: string;
+    icon: any;
+    path: string;
+    badge?: number | string;
+  }
+
+  const staffNavLinks: LayoutNavLink[] = [
     { id: 'dashboard', label: 'Dashboard', khLabel: 'ផ្ទាំងគ្រប់គ្រង', icon: LayoutDashboard, path: '/admin/dashboard' },
     { id: 'borrowers', label: 'Borrowers', khLabel: 'អតិថិជនកម្ចី', icon: Users, path: '/admin/borrowers' },
     { id: 'new-application', label: 'New Loan', khLabel: 'ស្នើសុំឥណទានថ្មី', icon: FilePlus2, path: '/admin/applications' },
@@ -108,6 +126,17 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     { id: 'settings', label: 'Settings', khLabel: 'ការកំណត់ប្រព័ន្ធ', icon: Settings, path: '/admin/settings' },
   ];
 
+  const borrowerNavLinks: LayoutNavLink[] = [
+    { id: 'borrower_dashboard', label: 'My Loans', khLabel: 'កម្ចីរបស់ខ្ញុំ', icon: Wallet, path: '/my-loans' },
+    { id: 'new-application', label: 'Apply for Loan', khLabel: 'ស្នើសុំកម្ចីថ្មី', icon: FilePlus2, path: '/apply-loan' },
+    { id: 'repayments', label: 'Repayment Schedule', khLabel: 'កាលវិភាគសងប្រាក់', icon: CreditCard, path: '/repayments' },
+    { id: 'cashier', label: 'Pay Installment', khLabel: 'បង់រំលស់ប្រាក់កម្ចី', icon: Wallet, path: '/payments' },
+    { id: 'profile', label: 'My Profile', khLabel: 'ព័ត៌មានផ្ទាល់ខ្លួន', icon: Shield, path: '/profile' },
+    { id: 'settings', label: 'Settings', khLabel: 'ការកំណត់', icon: Settings, path: '/settings' },
+  ];
+
+  const navLinks: LayoutNavLink[] = isStaff ? staffNavLinks : borrowerNavLinks;
+
   const handleNavClick = (id: string, path: string) => {
     if (onNavigate) {
       onNavigate(path || id);
@@ -121,6 +150,14 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     onToggleCurrency?.(nextCurr);
   };
 
+  const handleToggleRoleClick = () => {
+    if (onRoleToggle) {
+      onRoleToggle();
+    } else if (onRoleSwitch) {
+      onRoleSwitch(isBorrower ? 'ADMIN' : 'BORROWER');
+    }
+  };
+
   const currentNav = navLinks.find(
     l => l.id === activeNav ||
          l.path === activeNav ||
@@ -131,6 +168,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
            activeNav === 'borrower-detail' ||
            activeNav === '/admin/borrowers' ||
            currentPath === '/admin/borrowers'
+         )) ||
+         (l.id === 'borrower_dashboard' && (
+           activeNav === 'borrower_dashboard' ||
+           activeNav === 'user_dashboard' ||
+           currentPath === '/my-loans' ||
+           currentPath === '/portal'
          ))
   ) || navLinks[0];
 
@@ -230,22 +273,34 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         {/* User Profile Card & Logout */}
         <div className="p-3 border-t border-slate-800 bg-slate-900/60">
           {!isSidebarCollapsed ? (
-            <div className="flex items-center justify-between gap-3 p-2 rounded-xl bg-slate-950/60 border border-slate-800">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs shrink-0">
-                  {currentUser.name.slice(0, 2).toUpperCase()}
+            <div className="flex flex-col gap-2 p-2 rounded-xl bg-slate-950/60 border border-slate-800">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs shrink-0">
+                    {currentUser.name.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white truncate">{currentUser.name}</p>
+                    <p className="text-[10px] text-slate-400 truncate">{currentUser.title || (isBorrower ? 'Client Borrower' : 'Administrator')}</p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-bold text-white truncate">{currentUser.name}</p>
-                  <p className="text-[10px] text-slate-400 truncate">{currentUser.title || 'Director'}</p>
-                </div>
+                <button
+                  onClick={onLogout}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors shrink-0"
+                  title="Log out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
               </div>
+              {/* 1-Click Role Switcher Quick Toggle */}
               <button
-                onClick={onLogout}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors shrink-0"
-                title="Log out"
+                type="button"
+                onClick={handleToggleRoleClick}
+                className="w-full py-1.5 px-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer"
+                title={`Switch persona: currently ${isBorrower ? 'Borrower' : 'Admin'}`}
               >
-                <LogOut className="w-4 h-4" />
+                <Zap className="w-3 h-3 text-amber-400 fill-amber-400" />
+                <span>Switch to {isBorrower ? '⚡ Admin' : '👤 Borrower'}</span>
               </button>
             </div>
           ) : (
@@ -253,6 +308,14 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs">
                 {currentUser.name.slice(0, 2).toUpperCase()}
               </div>
+              <button
+                type="button"
+                onClick={handleToggleRoleClick}
+                className="p-1.5 rounded-lg text-amber-400 hover:bg-amber-500/20 transition-colors cursor-pointer"
+                title={`Switch to ${isBorrower ? 'Admin' : 'Borrower'}`}
+              >
+                <Zap className="w-4 h-4 fill-amber-400" />
+              </button>
               <button
                 onClick={onLogout}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 transition-colors"
@@ -308,8 +371,23 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             </div>
           </div>
 
-          {/* Right Controls: Language Switcher, Currency Indicator, Notifications */}
+          {/* Right Controls: Quick Role Switcher, Language Switcher, Currency Indicator, Notifications */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* 1-Click Role Switcher Quick Toggle: Admin vs Borrower */}
+            <button
+              type="button"
+              onClick={handleToggleRoleClick}
+              className="px-2.5 py-1.5 rounded-xl border border-amber-500/40 bg-amber-500/15 hover:bg-amber-500/25 text-amber-200 text-xs font-semibold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+              title={`Quick 1-click toggle to test as ${isBorrower ? 'Admin' : 'Borrower'}`}
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+              <span className="hidden sm:inline text-[10px] uppercase font-mono tracking-wider text-amber-400">Test:</span>
+              <span className="font-bold">{isBorrower ? '👤 Borrower' : '⚡ Admin'}</span>
+              <span className="text-[10px] text-amber-300/80 font-normal border-l border-amber-500/30 pl-1.5 hidden md:inline">
+                ⇄ Switch to {isBorrower ? 'Admin' : 'Borrower'}
+              </span>
+            </button>
+
             {/* Language Switcher Toggle */}
             <button
               onClick={() => setLanguage(l => l === 'EN' ? 'KH' : 'EN')}
@@ -405,10 +483,21 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 })}
               </div>
 
-              <div className="pt-4 border-t border-slate-800">
+              <div className="pt-4 border-t border-slate-800 space-y-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleToggleRoleClick();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-amber-300 bg-amber-500/15 border border-amber-500/30 hover:bg-amber-500/25 cursor-pointer"
+                >
+                  <Zap className="w-4 h-4 fill-amber-400 text-amber-400" />
+                  <span>Switch to {isBorrower ? '⚡ Admin' : '👤 Borrower'}</span>
+                </button>
                 <button
                   onClick={onLogout}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-rose-400 hover:bg-rose-500/10"
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-rose-400 hover:bg-rose-500/10 cursor-pointer"
                 >
                   <LogOut className="w-4 h-4" />
                   <span>Log out</span>

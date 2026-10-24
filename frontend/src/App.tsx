@@ -231,8 +231,9 @@ export const App: React.FC = () => {
       }
 
       const userRole = (authUser.role || 'USER').toUpperCase();
-      const isAdmin = userRole === 'ADMIN';
-      const isBorrower = !isAdmin;
+      const isStaff = userRole !== 'BORROWER' && userRole !== 'USER';
+      const isAdmin = isStaff;
+      const isBorrower = !isStaff;
 
       // If a borrower tries to access an admin URL directly (/admin/*), reject and return Access Denied
       if (isBorrower && (path.startsWith('/admin') || path === '/access-denied')) {
@@ -898,9 +899,42 @@ export const App: React.FC = () => {
             />
           )}
 
-          {/* Two-Tier Dashboards (ADMIN: AdminDashboard, USER: UserDashboard) */}
+          {/* Role Dashboards (ADMIN, MANAGER, LOAN_OFFICER, CASHIER, USER) */}
           {activeTab === 'dashboard' && (() => {
             const role = (currentUser.role || 'USER').toUpperCase();
+            if (role === 'MANAGER') {
+              return (
+                <ManagerDashboard
+                  currency={currency}
+                  onNavigate={handleNavSelection}
+                  loans={loans}
+                  borrowers={borrowers}
+                  applications={applications}
+                  receipts={receipts}
+                />
+              );
+            }
+            if (role === 'LOAN_OFFICER') {
+              return (
+                <LoanOfficerDashboard
+                  currency={currency}
+                  onNavigate={handleNavSelection}
+                  applications={applications}
+                  borrowers={borrowers}
+                />
+              );
+            }
+            if (role === 'CASHIER') {
+              return (
+                <CashierDashboard
+                  currency={currency}
+                  onNavigate={handleNavSelection}
+                  loans={loans}
+                  applications={applications}
+                  receipts={receipts}
+                />
+              );
+            }
             if (role === 'ADMIN') {
               return (
                 <AdminDashboard

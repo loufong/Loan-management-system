@@ -15,6 +15,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import logoImg from '../../assets/logo-transparent.png';
 import { LoginView } from './LoginView';
+import { DemoAccountSwitcher } from './DemoAccountSwitcher';
 
 interface LoginPageProps {
   onLoginSuccess: (user: UserProfile, token: string, rememberMe: boolean) => void;
@@ -114,6 +115,32 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     }
   };
 
+  // Demo Quick-Switcher 1-click sign in handler
+  const handleQuickLogin = async (_role: string, email: string, pass: string) => {
+    setUsernameOrEmail(email);
+    setPassword(pass);
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const loginResult = await login(email, pass, rememberMe);
+      if (loginResult && loginResult.requireOtp) {
+        if (onRequireOtp) {
+          onRequireOtp(loginResult.email || email);
+          return;
+        }
+      }
+      const activeToken =
+        localStorage.getItem('apex_token') ||
+        sessionStorage.getItem('apex_token') ||
+        'token';
+      onLoginSuccess(loginResult.user || loginResult, activeToken, rememberMe);
+    } catch (err: any) {
+      setError(err?.message || 'Quick login failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen w-full bg-[#F8FAFC] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans antialiased text-[#0F172A]">
@@ -361,6 +388,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           </p>
         </div>
       </div>
+
+      {/* Login UI Prompt 5: Demo Quick-Switcher for Development / Testing */}
+      <DemoAccountSwitcher
+        onQuickLogin={handleQuickLogin}
+        onFillCredentials={(email, pass) => {
+          setUsernameOrEmail(email);
+          setPassword(pass);
+        }}
+        currentEmail={usernameOrEmail}
+        isAuthenticating={isLoading}
+      />
     </div>
   );
 };

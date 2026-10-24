@@ -28,7 +28,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { language, t } = useLanguage();
   const role = (currentUser.role || 'USER').toUpperCase();
-  const isAdmin = role === 'ADMIN';
+  const isAdmin = role !== 'BORROWER' && role !== 'USER';
 
   const sections = isAdmin ? ADMIN_SECTIONS : USER_SECTIONS;
 

@@ -57,22 +57,51 @@ export class EmailService {
    * 2. EMAIL_PROVIDER='smtp' OR configured SMTP credentials -> 'smtp'
    * 3. 'unconfigured'
    */
+  /**
+   * Checks whether RESEND_API_KEY is configured with a real (non-placeholder) key.
+   */
+  public static isResendConfigured(): boolean {
+    const resendKey = (process.env.RESEND_API_KEY || '').trim();
+    if (!resendKey || resendKey.length < 24 || !resendKey.startsWith('re_')) {
+      return false;
+    }
+
+    const isPlaceholder =
+      resendKey.includes('placeholder') ||
+      resendKey.includes('your_') ||
+      resendKey.includes('api_key_here') ||
+      resendKey === 're_123456789_abcdefg' ||
+      resendKey === 're_your_resend_api_key_here';
+
+    return !isPlaceholder;
+  }
+
+  /**
+   * Identifies the active email provider.
+   * Priority:
+   * 1. EMAIL_PROVIDER='resend' OR presence of valid RESEND_API_KEY -> 'resend'
+   * 2. EMAIL_PROVIDER='smtp' OR configured SMTP credentials -> 'smtp'
+   * 3. 'unconfigured'
+   */
   public static getActiveProvider(): 'resend' | 'smtp' | 'unconfigured' {
     const providerConfig = (process.env.EMAIL_PROVIDER || '').trim().toLowerCase();
-    const resendKey = (process.env.RESEND_API_KEY || '').trim();
+    const hasResend = this.isResendConfigured();
+    const hasSmtp = this.isSmtpConfigured();
 
-    const isResendConfigured =
-      resendKey.length > 0 &&
-      !resendKey.includes('placeholder') &&
-      resendKey !== 're_123456789_abcdefg';
-
-    if (providerConfig === 'resend' || (isResendConfigured && providerConfig !== 'smtp')) {
-      return isResendConfigured ? 'resend' : 'unconfigured';
+    if (providerConfig === 'resend') {
+      if (hasResend) return 'resend';
+      if (hasSmtp) return 'smtp';
+      return 'unconfigured';
     }
 
-    if (this.isSmtpConfigured()) {
-      return 'smtp';
+    if (providerConfig === 'smtp') {
+      if (hasSmtp) return 'smtp';
+      if (hasResend) return 'resend';
+      return 'unconfigured';
     }
+
+    if (hasResend) return 'resend';
+    if (hasSmtp) return 'smtp';
 
     return 'unconfigured';
   }
@@ -87,7 +116,7 @@ export class EmailService {
   /**
    * Checks whether SMTP (Gmail or custom SMTP) is configured.
    */
-  private static isSmtpConfigured(): boolean {
+  public static isSmtpConfigured(): boolean {
     const user =
       process.env.EMAIL_USER ||
       process.env.SMTP_USER ||
@@ -124,7 +153,7 @@ export class EmailService {
   private static getResendClient(): Resend | null {
     if (!this.resendClient) {
       const apiKey = (process.env.RESEND_API_KEY || '').trim();
-      if (apiKey && !apiKey.includes('placeholder')) {
+      if (this.isResendConfigured()) {
         this.resendClient = new Resend(apiKey);
       }
     }
@@ -527,6 +556,42 @@ Apex Loan Management System
   }
 
   /**
+   * Helper: Send email via SMTP / Nodemailer
+   */
+  private static async sendViaSmtp(params: {
+    toEmail: string;
+    subject: string;
+    textContent: string;
+    htmlContent: string;
+  }): Promise<EmailSendResult> {
+    try {
+      const transporter = this.getSmtpTransporter();
+      const from = this.getFromAddress('smtp');
+      const info = await transporter.sendMail({
+        from,
+        to: params.toEmail,
+        subject: params.subject,
+        text: params.textContent,
+        html: params.htmlContent,
+      });
+
+      console.log(`📧 [SMTP Sent] Email delivered to ${params.toEmail}. MessageId: ${info.messageId}`);
+      return {
+        success: true,
+        messageId: info.messageId,
+        provider: 'smtp',
+      };
+    } catch (err: any) {
+      console.error(`❌ [SMTP Error] Exception sending email to ${params.toEmail}:`, err?.message || err);
+      return {
+        success: false,
+        error: err?.message || 'SMTP delivery failed',
+        provider: 'smtp',
+      };
+    }
+  }
+
+  /**
    * Internal Core Dispatcher: Routes email to active provider (Resend or SMTP)
    */
   private static async dispatchEmail(params: {
@@ -537,18 +602,7 @@ Apex Loan Management System
   }): Promise<EmailSendResult> {
     const { toEmail, subject, textContent, htmlContent } = params;
     const provider = this.getActiveProvider();
-
-    if (provider === 'unconfigured') {
-      console.warn(
-        `⚠️ [Email Service Warning] No active email provider configured in .env. ` +
-        `Configure RESEND_API_KEY (Recommended) or EMAIL_USER/EMAIL_PASSWORD.`
-      );
-      return {
-        success: false,
-        isSimulated: true,
-        error: 'Email provider not configured in .env. Please set RESEND_API_KEY or SMTP credentials.',
-      };
-    }
+    const isDev = process.env.NODE_ENV !== 'production';
 
     // 1. Send via Resend
     if (provider === 'resend') {
@@ -569,6 +623,25 @@ Apex Loan Management System
 
         if (response.error) {
           console.error(`❌ [Resend Error] Delivery to ${toEmail} failed:`, response.error.message);
+
+          // Try fallback to SMTP if configured
+          if (this.isSmtpConfigured()) {
+            console.log(`🔄 [Email Fallback] Resend failed. Attempting fallback via SMTP...`);
+            const smtpFallback = await this.sendViaSmtp(params);
+            if (smtpFallback.success) return smtpFallback;
+          }
+
+          // In dev mode, gracefully simulate delivery so developer/user is not blocked
+          if (isDev) {
+            console.warn(`⚠️ [Email Fallback] Live delivery failed (${response.error.message}). Simulating delivery in dev mode.`);
+            return {
+              success: true,
+              isSimulated: true,
+              error: response.error.message,
+              provider: 'resend',
+            };
+          }
+
           return {
             success: false,
             error: response.error.message,
@@ -584,6 +657,25 @@ Apex Loan Management System
         };
       } catch (err: any) {
         console.error(`❌ [Resend Error] Exception sending email to ${toEmail}:`, err?.message || err);
+
+        // Try fallback to SMTP if configured
+        if (this.isSmtpConfigured()) {
+          console.log(`🔄 [Email Fallback] Resend exception. Attempting fallback via SMTP...`);
+          const smtpFallback = await this.sendViaSmtp(params);
+          if (smtpFallback.success) return smtpFallback;
+        }
+
+        // In dev mode, gracefully simulate delivery so developer/user is not blocked
+        if (isDev) {
+          console.warn(`⚠️ [Email Fallback] Live delivery exception (${err?.message}). Simulating delivery in dev mode.`);
+          return {
+            success: true,
+            isSimulated: true,
+            error: err?.message || 'Resend delivery failed',
+            provider: 'resend',
+          };
+        }
+
         return {
           success: false,
           error: err?.message || 'Resend delivery failed',
@@ -593,30 +685,36 @@ Apex Loan Management System
     }
 
     // 2. Send via SMTP / Nodemailer
-    try {
-      const transporter = this.getSmtpTransporter();
-      const from = this.getFromAddress('smtp');
-      const info = await transporter.sendMail({
-        from,
-        to: toEmail,
-        subject,
-        text: textContent,
-        html: htmlContent,
-      });
+    if (provider === 'smtp') {
+      const smtpResult = await this.sendViaSmtp(params);
+      if (!smtpResult.success && isDev) {
+        console.warn(`⚠️ [Email Fallback] SMTP failed (${smtpResult.error}). Simulating delivery in dev mode.`);
+        return {
+          success: true,
+          isSimulated: true,
+          error: smtpResult.error,
+          provider: 'smtp',
+        };
+      }
+      return smtpResult;
+    }
 
-      console.log(`📧 [SMTP Sent] Email delivered to ${toEmail}. MessageId: ${info.messageId}`);
+    // 3. Provider is unconfigured
+    if (isDev) {
+      console.warn(
+        `⚠️ [Email Service] No active email provider configured in .env. ` +
+        `Simulating email delivery to ${toEmail} for development.`
+      );
       return {
         success: true,
-        messageId: info.messageId,
-        provider: 'smtp',
-      };
-    } catch (err: any) {
-      console.error(`❌ [SMTP Error] Exception sending email to ${toEmail}:`, err?.message || err);
-      return {
-        success: false,
-        error: err?.message || 'SMTP delivery failed',
-        provider: 'smtp',
+        isSimulated: true,
       };
     }
+
+    return {
+      success: false,
+      isSimulated: true,
+      error: 'Email provider not configured in .env. Please set RESEND_API_KEY or SMTP credentials.',
+    };
   }
 }

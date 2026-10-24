@@ -203,7 +203,25 @@ export class OtpService {
       });
     }
 
-    if (!emailResult.success) {
+    const isDev = process.env.NODE_ENV !== 'production';
+
+    // Always log OTP in terminal in development mode or when email is simulated
+    if (isDev || emailResult.isSimulated || !emailResult.success) {
+      console.log(`\n╔══════════════════════════════════════════════════════════════════════════════╗`);
+      console.log(`║             🔑 APEX LMS — OTP VERIFICATION CODE (${canonicalPurpose})                ║`);
+      console.log(`╠══════════════════════════════════════════════════════════════════════════════╣`);
+      console.log(`║  📧 Recipient : ${cleanEmail.padEnd(60)} ║`);
+      console.log(`║  👉 OTP Code  : ${otpCode.padEnd(60)} ║`);
+      console.log(`║  ⏰ Expiry    : 10 minutes                                                   ║`);
+      if (emailResult.isSimulated || !emailResult.success) {
+        console.log(`║  ⚠️ Status    : Simulated / Dev Fallback (Live provider unconfigured)        ║`);
+      } else {
+        console.log(`║  ✅ Status    : Dispatched via ${String(emailResult.provider || 'LIVE').toUpperCase().padEnd(45)} ║`);
+      }
+      console.log(`╚══════════════════════════════════════════════════════════════════════════════╝\n`);
+    }
+
+    if (!emailResult.success && !isDev) {
       return {
         success: false,
         message: emailResult.error || 'Unable to send the verification email. Please check your email service configuration.',
@@ -213,7 +231,9 @@ export class OtpService {
 
     return {
       success: true,
-      message: 'Verification code sent successfully to your email.',
+      message: (emailResult.isSimulated || !emailResult.success)
+        ? `Verification code generated. (Dev Code: ${otpCode})`
+        : 'Verification code sent successfully to your email.',
       expiresInSeconds: 600,
     };
   }

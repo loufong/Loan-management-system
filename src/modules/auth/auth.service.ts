@@ -354,7 +354,7 @@ export class AuthService {
       password: dto.password,
     });
 
-    // 7. Generate 6-digit OTP, store in otp_verifications linked to pendingRegistrationId, send via Gmail
+    // 7. Generate 6-digit OTP, store in otp_verifications linked to pendingRegistrationId, deliver via EmailService
     const otpResult = await OtpService.createAndSendOtp({
       email: cleanEmail,
       recipientName: calculatedFullName,
@@ -362,6 +362,14 @@ export class AuthService {
       purpose: 'REGISTRATION',
       pendingRegistrationId: pending.id,
     });
+
+    if (!otpResult.success) {
+      throw {
+        statusCode: 400,
+        message: otpResult.message || 'Unable to send verification code. Please try again.',
+        code: 'OTP_DELIVERY_FAILED',
+      };
+    }
 
     return {
       success: true,

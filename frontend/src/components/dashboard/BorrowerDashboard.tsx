@@ -47,7 +47,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
   const { language } = useLanguage();
   const [selectedLoanId, setSelectedLoanId] = useState<string | null>(null);
   const [isRestartedToZero, setIsRestartedToZero] = useState<boolean>(() => {
-    return localStorage.getItem('jam_restart_borrower_zero') === 'true';
+    return localStorage.getItem('jam_restart_borrower_zero') !== 'false';
   });
 
   const toggleRestartData = () => {
@@ -135,10 +135,15 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
   const recentReceipts: PaymentReceipt[] = receipts || [];
 
   const handleOpenKhqr = () => {
-    if (onOpenQuickPayment) {
-      onOpenQuickPayment(primaryLoan?.id || 'LN-2026-6042', nextInstallmentNo, nextDueAmount);
+    if (primaryLoan) {
+      if (onOpenQuickPayment) {
+        onOpenQuickPayment(primaryLoan.id || 'LN-2026-6042', nextInstallmentNo, nextDueAmount);
+      } else {
+        onNavigate('payments');
+      }
     } else {
-      onNavigate('payments');
+      if (onOpenApplyLoan) onOpenApplyLoan();
+      else onNavigate('new-application');
     }
   };
 

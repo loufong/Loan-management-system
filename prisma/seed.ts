@@ -449,7 +449,7 @@ async function main() {
   const app1 = await prisma.loanApplication.create({
     data: {
       applicationNo: 'APP-2026-0001',
-      borrowerId: borrower1.id,
+      borrowerId: borrower3.id, // Johnathan Doe restarted to zero loans
       productId: personalLoan.id,
       requestedAmount: new Prisma.Decimal('3000.00'),
       requestedTerm: 6, // 6 months

@@ -69,7 +69,7 @@ export const USER_PROFILES: Record<UserRole, UserProfile> = {
     department: 'Borrower Self-Service',
     avatar: 'JD',
     branch: 'Phnom Penh Main Branch',
-    borrowerId: 'BOR-2026-0001',
+    borrowerId: 'BOR-2026-0099',
     nationalId: '010992384',
   },
   ADMIN: {
@@ -359,7 +359,7 @@ export const MOCK_LOANS: LoanAccount[] = [
     loanNumber: 'LN-2026-6042',
     applicationNo: 'APP-2026-0038',
     borrowerId: 'BOR-2026-0001',
-    borrowerName: 'Johnathan Doe',
+    borrowerName: 'Demo Client',
     borrowerAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     borrowerPhone: '+855 12 984 219',
     productId: 'PROD-001',

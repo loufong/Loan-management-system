@@ -17,6 +17,7 @@ import {
   TrendingDown,
   Receipt,
   Filter,
+  Plus,
 } from 'lucide-react';
 import { Currency, UserProfile } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
@@ -56,6 +57,7 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
   const [selectedReceipt, setSelectedReceipt] = useState<ScheduleRow | null>(null);
 
   const NBC_RATE = 4080;
+  const isRestartedToZero = localStorage.getItem('jam_restart_borrower_zero') !== 'false';
 
   // Format currency
   const formatMoney = (valUSD: number) => {
@@ -74,7 +76,7 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
   };
 
   // Full 12-cycle Amortization Ledger for LN-2026-6042
-  const scheduleData: ScheduleRow[] = [
+  const scheduleData: ScheduleRow[] = isRestartedToZero ? [] : [
     { cycle: 1, dueDate: '2026-05-15', beginningPrincipal: 6000.0, scheduledEMI: 532.5, principal: 500.0, interest: 32.5, lateFees: 0.0, endingBalance: 5500.0, status: 'PAID', txRef: 'BK-88201', paidAt: '2026-05-14 14:22:10' },
     { cycle: 2, dueDate: '2026-06-15', beginningPrincipal: 5500.0, scheduledEMI: 529.79, principal: 500.0, interest: 29.79, lateFees: 0.0, endingBalance: 5000.0, status: 'PAID', txRef: 'BK-88212', paidAt: '2026-06-15 09:11:45' },
     { cycle: 3, dueDate: '2026-07-15', beginningPrincipal: 5000.0, scheduledEMI: 527.08, principal: 500.0, interest: 27.08, lateFees: 0.0, endingBalance: 4500.0, status: 'PAID', txRef: 'BK-88225', paidAt: '2026-07-13 16:40:02' },
@@ -158,7 +160,7 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
                 {'Amortization Repayment Ledger'}
               </h1>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                LN-2026-6042 • ACTIVE
+                {isRestartedToZero ? 'NO ACTIVE LOANS' : 'LN-2026-6042 • ACTIVE'}
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-400 mt-1">
@@ -205,8 +207,8 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 Facility & Rate
               </span>
-              <p className="text-sm font-bold text-white">Personal Loan</p>
-              <span className="text-xs font-mono text-emerald-400 font-semibold">$6,000.00 @ 6.5% p.a.</span>
+              <p className="text-sm font-bold text-white">{isRestartedToZero ? 'No Active Facility' : 'Personal Loan'}</p>
+              <span className="text-xs font-mono text-emerald-400 font-semibold">{isRestartedToZero ? '$0.00 @ 0.0% p.a.' : '$6,000.00 @ 6.5% p.a.'}</span>
             </div>
             <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-300">
               <Building className="w-4 h-4 text-emerald-400" />
@@ -219,9 +221,9 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
                 Remaining Principal
               </span>
               <p className="text-base font-bold font-mono text-white">
-                {formatMoney(3850.0)}
+                {formatMoney(isRestartedToZero ? 0 : 3850.0)}
               </p>
-              <span className="text-[11px] text-slate-400 font-mono">8 of 12 Cycles Remaining</span>
+              <span className="text-[11px] text-slate-400 font-mono">{isRestartedToZero ? '0 Cycles Remaining' : '8 of 12 Cycles Remaining'}</span>
             </div>
             <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-300">
               <TrendingDown className="w-4 h-4 text-amber-400" />
@@ -234,9 +236,9 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
                 Total Settle-to-Date
               </span>
               <p className="text-base font-bold font-mono text-emerald-400">
-                {formatMoney(2540.0)}
+                {formatMoney(isRestartedToZero ? 0 : 2540.0)}
               </p>
-              <span className="text-[11px] text-slate-400 font-mono">4 Settled Installments (40%)</span>
+              <span className="text-[11px] text-slate-400 font-mono">{isRestartedToZero ? '0 Settled Installments (0%)' : '4 Settled Installments (40%)'}</span>
             </div>
             <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
               <CheckCircle2 className="w-4 h-4" />
@@ -302,7 +304,27 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800 font-mono">
-              {filteredSchedule.map((row) => {
+              {filteredSchedule.length === 0 ? (
+                <tr>
+                  <td colSpan={10} className="py-16 text-center">
+                    <div className="w-14 h-14 mx-auto rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center text-emerald-400 mb-3 shadow-inner">
+                      <Calendar className="w-7 h-7" />
+                    </div>
+                    <h3 className="text-sm font-bold text-white mb-1">No Active Repayment Schedule</h3>
+                    <p className="text-xs text-slate-400 max-w-sm mx-auto mb-4">
+                      Your account currently has zero active facilities and no scheduled installments due. Once your credit facility is approved, the 12-cycle amortization table will appear here.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => onNavigate('new-application')}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs shadow-md shadow-emerald-500/20 cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Apply for Loan</span>
+                    </button>
+                  </td>
+                </tr>
+              ) : filteredSchedule.map((row) => {
                 const isDueSoon = row.status === 'DUE_SOON';
                 const isPaid = row.status === 'PAID';
 

@@ -1471,6 +1471,69 @@ class ApiService {
   }
 
   // --- AUDIT LOGS & REPORTS ---
+  public async getReportsSummary(): Promise<any> {
+    try {
+      return await this.request<any>('/reports/summary');
+    } catch {
+      return null;
+    }
+  }
+
+  public async getActiveLoansReport(filters: { startDate?: string; endDate?: string; branchId?: string } = {}): Promise<any[]> {
+    try {
+      const params = new URLSearchParams();
+      if (filters.startDate) params.append('startDate', filters.startDate);
+      if (filters.endDate) params.append('endDate', filters.endDate);
+      if (filters.branchId) params.append('branchId', filters.branchId);
+      const query = params.toString() ? '?' + params.toString() : '';
+      const res = await this.request<any>('/reports/active-loans' + query);
+      return res?.items || (Array.isArray(res) ? res : []);
+    } catch {
+      return [];
+    }
+  }
+
+  public async getOverdueLoansReport(filters: { startDate?: string; endDate?: string; branchId?: string } = {}): Promise<any[]> {
+    try {
+      const params = new URLSearchParams();
+      if (filters.startDate) params.append('startDate', filters.startDate);
+      if (filters.endDate) params.append('endDate', filters.endDate);
+      if (filters.branchId) params.append('branchId', filters.branchId);
+      const query = params.toString() ? '?' + params.toString() : '';
+      const res = await this.request<any>('/reports/overdue-loans' + query);
+      return res?.items || (Array.isArray(res) ? res : []);
+    } catch {
+      return [];
+    }
+  }
+
+  public async getDailyCollectionsReport(filters: { date?: string; branchId?: string } = {}): Promise<any[]> {
+    try {
+      const params = new URLSearchParams();
+      if (filters.date) params.append('date', filters.date);
+      if (filters.branchId) params.append('branchId', filters.branchId);
+      const query = params.toString() ? '?' + params.toString() : '';
+      const res = await this.request<any>('/reports/daily-collections' + query);
+      return res?.items || (Array.isArray(res) ? res : []);
+    } catch {
+      return [];
+    }
+  }
+
+  public async getDisbursementsReport(filters: { startDate?: string; endDate?: string; branchId?: string } = {}): Promise<any[]> {
+    try {
+      const params = new URLSearchParams();
+      if (filters.startDate) params.append('startDate', filters.startDate);
+      if (filters.endDate) params.append('endDate', filters.endDate);
+      if (filters.branchId) params.append('branchId', filters.branchId);
+      const query = params.toString() ? '?' + params.toString() : '';
+      const res = await this.request<any>('/reports/disbursements' + query);
+      return res?.items || (Array.isArray(res) ? res : []);
+    } catch {
+      return [];
+    }
+  }
+
   public async getAuditLogs(filters: { search?: string; startDate?: string; endDate?: string } = {}): Promise<any[]> {
     try {
       const params = new URLSearchParams();

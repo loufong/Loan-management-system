@@ -408,13 +408,13 @@ export const App: React.FC = () => {
         setActiveTab('cashier');
       } else if (path === '/admin/overdue') {
         setActiveTab('overdue');
-      } else if (path === '/admin/reports') {
+      } else if (path === '/admin/reports' || path === '/reports') {
         setActiveTab('reports');
       } else if (path === '/admin/notifications') {
         setActiveTab('notifications');
       } else if (path === '/admin/audit-logs' || path === '/admin/audit_logs') {
         setActiveTab('audit_logs');
-      } else if (path === '/admin/settings') {
+      } else if (path === '/admin/settings' || path === '/admin/system-settings' || path === '/system-settings') {
         setActiveTab('system_config');
       } else if (path === '/admin/profile') {
         setActiveTab('profile');
@@ -833,13 +833,19 @@ export const App: React.FC = () => {
       targetPath = isAdmin ? '/admin/payments' : '/payments';
     } else if (navTarget === 'overdue' || navTarget === 'admin_overdue' || navTarget === '/admin/overdue') {
       targetPath = '/admin/overdue';
-    } else if (navTarget === 'reports' || navTarget === 'admin_reports' || navTarget === '/admin/reports') {
+    } else if (navTarget === 'reports' || navTarget === 'admin_reports' || navTarget === '/admin/reports' || navTarget === '/reports') {
       targetPath = isAdmin ? '/admin/reports' : '/my-loans';
     } else if (navTarget === 'notifications' || navTarget === 'admin_notifications' || navTarget === '/admin/notifications') {
       targetPath = isAdmin ? '/admin/notifications' : '/notifications';
     } else if (navTarget === 'audit_logs' || navTarget === 'audit-logs' || navTarget === 'admin_audit_logs' || navTarget === '/admin/audit-logs') {
       targetPath = '/admin/audit-logs';
-    } else if (navTarget === 'system_config' || navTarget === 'admin_settings' || navTarget === '/admin/settings') {
+    } else if (
+      navTarget === 'system_config' ||
+      navTarget === 'admin_settings' ||
+      navTarget === '/admin/settings' ||
+      navTarget === '/system-settings' ||
+      navTarget === '/admin/system-settings'
+    ) {
       targetPath = '/admin/settings';
     } else if (navTarget === 'settings' || navTarget === '/settings') {
       targetPath = isAdmin ? '/admin/settings' : '/settings';
@@ -923,13 +929,13 @@ export const App: React.FC = () => {
       setActiveTab(isBorrower ? 'pay_installment' : 'cashier');
     } else if (targetPath === '/admin/overdue') {
       setActiveTab('overdue');
-    } else if (targetPath === '/admin/reports') {
+    } else if (targetPath === '/admin/reports' || targetPath === '/reports') {
       setActiveTab('reports');
     } else if (targetPath === '/admin/notifications' || targetPath === '/notifications') {
       setActiveTab('notifications');
     } else if (targetPath === '/admin/audit-logs' || targetPath === '/admin/audit_logs') {
       setActiveTab('audit_logs');
-    } else if (targetPath === '/admin/settings') {
+    } else if (targetPath === '/admin/settings' || targetPath === '/system-settings') {
       setActiveTab('system_config');
     } else if (targetPath === '/settings') {
       setActiveTab('user_settings');
@@ -953,6 +959,8 @@ export const App: React.FC = () => {
     { type: 'overdue', id: 'OVERDUE-QUICK', title: 'Overdue Delinquency Watchlist', sub: 'PAR 30+ delinquency management', tab: 'overdue' },
     { type: 'products', id: 'PROD-CAT', title: 'Loan Products Catalog', sub: 'Personal, Business, Agriculture, Vehicle, Emergency', tab: 'loan_products' },
     { type: 'reports', id: 'BI-STUDIO', title: 'Portfolio Reports & BI Analytics', sub: 'Aging schedules & disbursement exports', tab: 'reports' },
+    { type: 'settings', id: 'SETTINGS', title: 'System Settings & Institutional Policies', sub: 'Lending policies, interest rules, currency, security', tab: 'system_config' },
+    { type: 'settings', id: 'USER-SETTINGS', title: 'Account Settings & Preferences', sub: 'Profile security, notifications, display currency, credentials', tab: 'user_settings' },
     { type: 'audit', id: 'AUD-TRAIL', title: 'System Audit Trail', sub: 'Immutable regulatory forensic ledger', tab: 'audit_logs' },
   ];
 

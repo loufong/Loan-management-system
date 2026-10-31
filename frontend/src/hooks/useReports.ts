@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
+import { api } from '../services/api';
 
 export interface ReportItem {
   id: string;
@@ -129,6 +130,48 @@ export async function fetchReportsData(
   const role = (currentUser?.role || '').toLowerCase();
   const isBorrower = role === 'borrower' || role === 'user';
   const borrowerId = currentUser?.borrowerId || currentUser?.id;
+
+  // 1. Live Core Banking REST API Query
+  try {
+    let items: any[] = [];
+    if (filters.reportType?.includes('Overdue') || filters.reportType?.includes('Aging')) {
+      items = await api.getOverdueLoansReport({ startDate: filters.startDate, endDate: filters.endDate });
+    } else if (filters.reportType?.includes('Cashier') || filters.reportType?.includes('Collections')) {
+      items = await api.getDailyCollectionsReport({ date: filters.startDate });
+    } else if (filters.reportType?.includes('Disbursed')) {
+      items = await api.getDisbursementsReport({ startDate: filters.startDate, endDate: filters.endDate });
+    } else {
+      items = await api.getActiveLoansReport({ startDate: filters.startDate, endDate: filters.endDate });
+    }
+
+    if (Array.isArray(items) && items.length > 0) {
+      const mapped = items.map((item: any, idx: number) => ({
+        id: item.id || `rep-${idx}`,
+        referenceNo: item.referenceNo || item.loanCode || item.code || `LN-${item.id?.slice?.(0, 8) || idx}`,
+        borrowerName: item.borrowerName || item.borrower?.fullName || item.borrower?.nameEn || 'Borrower',
+        borrowerId: item.borrowerId || item.borrower?.id,
+        productName: item.productName || item.product?.name || 'Loan Facility',
+        branch: item.branch || item.branchName || 'Phnom Penh Main Branch',
+        disbursedAmountUSD: Number(item.disbursedAmountUSD || item.principal || item.amount || 0),
+        collectedAmountUSD: Number(item.collectedAmountUSD || item.totalPaid || 0),
+        outstandingAmountUSD: Number(item.outstandingAmountUSD || item.balance || item.remainingBalance || 0),
+        overdueAmountUSD: Number(item.overdueAmountUSD || item.overdueAmount || 0),
+        status: (item.status || 'ACTIVE').toUpperCase(),
+        date: item.date || item.createdAt?.split?.('T')?.[0] || new Date().toISOString().split('T')[0],
+      }));
+
+      if (isBorrower) {
+        const cleanName = (currentUser?.fullName || currentUser?.name || '').toLowerCase();
+        return mapped.filter((m: any) =>
+          (borrowerId && m.borrowerId && String(m.borrowerId).toLowerCase() === String(borrowerId).toLowerCase()) ||
+          (cleanName && m.borrowerName.toLowerCase().includes(cleanName))
+        );
+      }
+      return mapped;
+    }
+  } catch (err) {
+    console.warn('[useReports] Live API check fallback:', err);
+  }
 
   if (isSupabaseConfigured) {
     let query = supabase

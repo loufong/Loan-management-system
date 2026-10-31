@@ -40,7 +40,7 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
   onShowToast,
 }) => {
   const { language, setLanguage } = useLanguage();
-  const isKhmer = language === 'km' || (language as string) === 'KH';
+  // Fixed to English-only standard
 
   // Category 1: Localization & Display State
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>(appCurrency || 'USD');
@@ -185,24 +185,14 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
             <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
               System Display Language
             </label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => handleLanguageChange('en')}
-                className={`p-3.5 rounded-xl border text-left transition cursor-pointer ${
-                  !isKhmer
-                    ? 'bg-slate-950 border-emerald-500 ring-1 ring-emerald-500/50 shadow-md'
-                    : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-400'
-                }`}
-              >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="p-3.5 rounded-xl border text-left bg-slate-950 border-emerald-500 ring-1 ring-emerald-500/50 shadow-md">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-white">English (US)</span>
-                  {!isKhmer && <Check className="w-4 h-4 text-emerald-400" />}
+                  <Check className="w-4 h-4 text-emerald-400" />
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1">Official banking Latin typography</p>
-              </button>
-
-              
+                <p className="text-[11px] text-slate-400 mt-1">Official core banking Latin standard typography</p>
+              </div>
             </div>
           </div>
 
@@ -238,7 +228,7 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold font-mono text-white">KHR (៛) Khmer Riel</span>
+                  <span className="text-xs font-bold font-mono text-white">KHR (៛) Cambodian Riel</span>
                   {selectedCurrency === 'KHR' && <Check className="w-4 h-4 text-emerald-400" />}
                 </div>
                 <p className="text-[11px] text-slate-500 mt-1">NBC Peg Rate: 4,080 KHR / USD</p>

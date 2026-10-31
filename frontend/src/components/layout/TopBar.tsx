@@ -8,6 +8,7 @@ import {
   KeyRound,
   CheckCheck,
   User,
+  Settings,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useLanguage } from '../../context/LanguageContext';
@@ -205,6 +206,17 @@ export const TopBar: React.FC<TopBarProps> = ({
                   >
                     <User className="w-4 h-4 text-[#64748B]" />
                     <span>{t('nav_profile')}</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setProfileDropdownOpen(false);
+                      onNavigate(isAdmin ? '/admin/settings' : '/settings');
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-[13px] text-[#0F172A] hover:bg-slate-50 font-normal transition text-left cursor-pointer"
+                  >
+                    <Settings className="w-4 h-4 text-[#64748B]" />
+                    <span>{t('nav_settings', 'Settings')}</span>
                   </button>
 
                   <button

@@ -176,9 +176,13 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       return ['profile', '/profile', 'my-profile', '/my-profile', 'user_profile'].includes(activeNav) ||
         ['/profile', '/my-profile'].includes(currentPath);
     }
+    if (item.id === 'reports') {
+      return ['reports', 'admin_reports', '/admin/reports', '/reports', 'BI-STUDIO'].includes(activeNav) ||
+        ['/admin/reports', '/reports'].includes(currentPath);
+    }
     if (item.id === 'settings') {
-      return ['settings', '/settings', 'user_settings', 'system_config', '/admin/settings'].includes(activeNav) ||
-        ['/settings', '/admin/settings'].includes(currentPath);
+      return ['settings', '/settings', 'user_settings', 'system_config', '/admin/settings', 'admin_settings', '/system-settings'].includes(activeNav) ||
+        ['/settings', '/admin/settings', '/user/settings'].includes(currentPath);
     }
     return false;
   };

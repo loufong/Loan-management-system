@@ -141,10 +141,15 @@ export function createApp(): Application {
       ? authHeader.split(' ')[1]
       : queryToken;
 
-    if (!token) {
-      if (isBrowserHtmlRequest) {
-        return res.redirect('/login');
+    // For browser HTML requests (page reload or bookmark), serve index.html for SPA routing
+    if (isBrowserHtmlRequest) {
+      const indexPath = path.join(publicDir, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        return res.sendFile(indexPath);
       }
+    }
+
+    if (!token) {
       return sendError(
         res,
         'Authentication required to access administrative resources',

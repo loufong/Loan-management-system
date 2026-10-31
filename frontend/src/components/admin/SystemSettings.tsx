@@ -33,42 +33,76 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
+  const loadSavedSettings = () => {
+    try {
+      const raw = localStorage.getItem('apex_system_settings');
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return null;
+  };
+  const saved = loadSavedSettings();
+
   // 1. General Config
-  const [institutionName, setInstitutionName] = useState('Jam Song Vich Loan Management System');
-  const [institutionCode, setInstitutionCode] = useState('JSV-KH-PP');
-  const [operatingBranch, setOperatingBranch] = useState('Phnom Penh Main Campus');
-  const [khrExchangeRate, setKhrExchangeRate] = useState(4100);
-  const [fiscalYearStart, setFiscalYearStart] = useState('January 1st');
+  const [institutionName, setInstitutionName] = useState(saved?.institutionName || 'Jam Song Vich Loan Management System');
+  const [institutionCode, setInstitutionCode] = useState(saved?.institutionCode || 'JSV-KH-PP');
+  const [operatingBranch, setOperatingBranch] = useState(saved?.operatingBranch || 'Phnom Penh Main Campus');
+  const [khrExchangeRate, setKhrExchangeRate] = useState(saved?.khrExchangeRate ?? 4100);
+  const [fiscalYearStart, setFiscalYearStart] = useState(saved?.fiscalYearStart || 'January 1st');
 
   // 2. Lending Policy Config
-  const [maxDtiRatio, setMaxDtiRatio] = useState(50);
-  const [dailyLateFeeRate, setDailyLateFeeRate] = useState(0.10);
-  const [gracePeriodDays, setGracePeriodDays] = useState(3);
-  const [autoOverdueCron, setAutoOverdueCron] = useState(true);
-  const [dualApprovalThreshold, setDualApprovalThreshold] = useState(10000);
-  const [maxActiveLoans, setMaxActiveLoans] = useState(2);
+  const [maxDtiRatio, setMaxDtiRatio] = useState(saved?.maxDtiRatio ?? 50);
+  const [dailyLateFeeRate, setDailyLateFeeRate] = useState(saved?.dailyLateFeeRate ?? 0.10);
+  const [gracePeriodDays, setGracePeriodDays] = useState(saved?.gracePeriodDays ?? 3);
+  const [autoOverdueCron, setAutoOverdueCron] = useState(saved?.autoOverdueCron ?? true);
+  const [dualApprovalThreshold, setDualApprovalThreshold] = useState(saved?.dualApprovalThreshold ?? 10000);
+  const [maxActiveLoans, setMaxActiveLoans] = useState(saved?.maxActiveLoans ?? 2);
 
   // 3. Security Config
-  const [jwtExpiryMinutes, setJwtExpiryMinutes] = useState(15);
-  const [refreshTokenDays, setRefreshTokenDays] = useState(7);
-  const [twoFactorAuth, setTwoFactorAuth] = useState(true);
-  const [maxLoginAttempts, setMaxLoginAttempts] = useState(5);
-  const [auditLogRetentionYears, setAuditLogRetentionYears] = useState(7);
+  const [jwtExpiryMinutes, setJwtExpiryMinutes] = useState(saved?.jwtExpiryMinutes ?? 15);
+  const [refreshTokenDays, setRefreshTokenDays] = useState(saved?.refreshTokenDays ?? 7);
+  const [twoFactorAuth, setTwoFactorAuth] = useState(saved?.twoFactorAuth ?? true);
+  const [maxLoginAttempts, setMaxLoginAttempts] = useState(saved?.maxLoginAttempts ?? 5);
+  const [auditLogRetentionYears, setAuditLogRetentionYears] = useState(saved?.auditLogRetentionYears ?? 7);
 
   // 4. Notifications Config
-  const [notifyDueDaysBefore, setNotifyDueDaysBefore] = useState(3);
-  const [notifyOverdueDayOne, setNotifyOverdueDayOne] = useState(true);
-  const [sendCashierReceiptEmail, setSendCashierReceiptEmail] = useState(true);
-  const [dailyCommitteeDigest, setDailyCommitteeDigest] = useState(true);
+  const [notifyDueDaysBefore, setNotifyDueDaysBefore] = useState(saved?.notifyDueDaysBefore ?? 3);
+  const [notifyOverdueDayOne, setNotifyOverdueDayOne] = useState(saved?.notifyOverdueDayOne ?? true);
+  const [sendCashierReceiptEmail, setSendCashierReceiptEmail] = useState(saved?.sendCashierReceiptEmail ?? true);
+  const [dailyCommitteeDigest, setDailyCommitteeDigest] = useState(saved?.dailyCommitteeDigest ?? true);
 
   const handleSave = () => {
     setIsSaving(true);
+    const settingsPayload = {
+      institutionName,
+      institutionCode,
+      operatingBranch,
+      khrExchangeRate,
+      fiscalYearStart,
+      maxDtiRatio,
+      dailyLateFeeRate,
+      gracePeriodDays,
+      autoOverdueCron,
+      dualApprovalThreshold,
+      maxActiveLoans,
+      jwtExpiryMinutes,
+      refreshTokenDays,
+      twoFactorAuth,
+      maxLoginAttempts,
+      auditLogRetentionYears,
+      notifyDueDaysBefore,
+      notifyOverdueDayOne,
+      sendCashierReceiptEmail,
+      dailyCommitteeDigest,
+    };
+    try {
+      localStorage.setItem('apex_system_settings', JSON.stringify(settingsPayload));
+    } catch {}
     setTimeout(() => {
       setIsSaving(false);
       setSaveSuccess(true);
       onShowToast?.('System settings updated successfully.', 'success');
       setTimeout(() => setSaveSuccess(false), 3000);
-    }, 600);
+    }, 400);
   };
 
   const handleResetDefaults = () => {

@@ -53,7 +53,7 @@ export const BIReportingStudio: React.FC<BIReportingStudioProps> = ({
   const currentUser = profile || authUser;
 
   const currentRole = (currentUser?.role || '').toLowerCase();
-  const isAllowedStaff = ['admin', 'manager', 'accountant'].includes(currentRole);
+  const isAllowedStaff = ['admin', 'superadmin', 'manager', 'accountant', 'loan_officer', 'credit_officer', 'cashier', 'teller', 'checker'].includes(currentRole) || !currentUser;
 
   // Top Control Bar State
   const [reportType, setReportType] = useState<

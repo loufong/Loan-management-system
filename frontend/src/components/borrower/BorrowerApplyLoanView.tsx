@@ -935,3 +935,4 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
 };
 
 export default BorrowerApplyLoanView;
+

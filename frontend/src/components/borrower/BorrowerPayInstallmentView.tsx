@@ -580,3 +580,4 @@ export const BorrowerPayInstallmentView: React.FC<BorrowerPayInstallmentViewProp
 };
 
 export default BorrowerPayInstallmentView;
+

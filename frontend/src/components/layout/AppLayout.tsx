@@ -112,18 +112,18 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   }
 
   const staffNavLinks: LayoutNavLink[] = [
-    { id: 'dashboard', label: 'Overview (Portfolio & Risk KPIs)', icon: LayoutDashboard, path: '/admin/dashboard' },
-    { id: 'approvals', label: 'Loan Underwriting & Approvals', icon: ShieldCheck, path: '/admin/approvals', badge: 5 },
-    { id: 'borrowers', label: 'Active Facilities & Borrowers', icon: Landmark, path: '/admin/borrowers' },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard' },
+    { id: 'borrowers', label: 'Borrowers', icon: Users, path: '/admin/borrowers' },
+    { id: 'new-application', label: 'New Loan', icon: FilePlus2, path: '/admin/applications' },
     {
       id: 'cashier',
-      label: 'Repayments & Bakong Ledger',
+      label: 'Repayments / Cashier',
       icon: Wallet,
       path: '/admin/cashier',
       badge: overdueCount > 0 ? overdueCount : undefined
     },
-    { id: 'reports', label: 'CBC Reporting & Credit Scoring', icon: BarChart3, path: '/admin/reports' },
-    { id: 'settings', label: 'System Audit Logs & Staff Permissions', icon: Settings, path: '/admin/settings' },
+    { id: 'reports', label: 'Reports', icon: BarChart3, path: '/admin/reports' },
+    { id: 'settings', label: 'Settings', icon: Settings, path: '/admin/settings' },
   ];
 
   const borrowerNavLinks: LayoutNavLink[] = [
@@ -171,16 +171,16 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         ['/my-loans', '/portal', '/'].includes(currentPath);
     }
     if (item.id === 'new-application') {
-      return ['new-application', 'apply-loan', '/apply-loan', 'apply', '/apply'].includes(activeNav) ||
-        ['/apply-loan', '/apply'].includes(currentPath);
+      return ['new-application', 'apply-loan', '/apply-loan', 'apply', '/apply', 'applications', '/admin/applications'].includes(activeNav) ||
+        ['/apply-loan', '/apply', '/admin/applications'].includes(currentPath);
     }
     if (item.id === 'repayments') {
       return ['repayments', '/repayments', 'repayment-schedule', '/repayment-schedule', 'user_repayments'].includes(activeNav) ||
         ['/repayments', '/repayment-schedule'].includes(currentPath);
     }
     if (item.id === 'cashier') {
-      return ['cashier', 'payments', '/payments', 'pay_installment', 'pay-installment', '/pay-installment', 'user_payments'].includes(activeNav) ||
-        ['/payments', '/pay-installment'].includes(currentPath);
+      return ['cashier', 'payments', '/payments', 'pay_installment', 'pay-installment', '/pay-installment', 'user_payments', '/admin/cashier', '/admin/payments'].includes(activeNav) ||
+        ['/payments', '/pay-installment', '/admin/cashier', '/admin/payments'].includes(currentPath);
     }
     if (item.id === 'profile') {
       return ['profile', '/profile', 'my-profile', '/my-profile', 'user_profile'].includes(activeNav) ||

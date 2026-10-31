@@ -17,12 +17,16 @@ async function bootstrap() {
   const server = app.listen(PORT, () => {
     console.log(`
   =============================================================
-  🎓 Academic Loan Management System (LMS) - Backend Server
+  🎓 Jam Song Vich | Core Banking & Loan Management System
   =============================================================
-  🚀 Server running at: http://localhost:${PORT}
-  📡 API Base URL     : http://localhost:${PORT}/api/v1
-  🩺 Health Check     : http://localhost:${PORT}/api/v1/health
-  ⚙️  Environment      : ${process.env.NODE_ENV || 'development'}
+  🚀 Web App & Portal: http://localhost:${PORT}
+  📡 API Base URL:     http://localhost:${PORT}/api/v1
+  🩺 Health Check:     http://localhost:${PORT}/api/v1/health
+  ⚙️  Environment:      ${process.env.NODE_ENV || 'development'}
+  =============================================================
+  ✨ Core Banking server is live and ready!
+  👉 Open http://localhost:${PORT} in your web browser.
+  💡 Keep this terminal open. Press Ctrl + C to stop.
   =============================================================
     `);
 

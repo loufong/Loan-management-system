@@ -17,6 +17,7 @@ import {
   X,
   Shield,
   CreditCard,
+  Calendar,
   Building2,
   AlertTriangle
 } from 'lucide-react';
@@ -128,7 +129,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   const borrowerNavLinks: LayoutNavLink[] = [
     { id: 'borrower_dashboard', label: 'My Loans', khLabel: 'កម្ចីរបស់ខ្ញុំ', icon: Wallet, path: '/my-loans' },
     { id: 'new-application', label: 'Apply for Loan', khLabel: 'ស្នើសុំកម្ចីថ្មី', icon: FilePlus2, path: '/apply-loan' },
-    { id: 'repayments', label: 'Repayment Schedule', khLabel: 'កាលវិភាគសងប្រាក់', icon: CreditCard, path: '/repayments' },
+    { id: 'repayments', label: 'Repayment Schedule', khLabel: 'កាលវិភាគសងប្រាក់', icon: Calendar, path: '/repayments' },
     { id: 'cashier', label: 'Pay Installment', khLabel: 'បង់រំលស់ប្រាក់កម្ចី', icon: Wallet, path: '/payments' },
     { id: 'profile', label: 'My Profile', khLabel: 'ព័ត៌មានផ្ទាល់ខ្លួន', icon: Shield, path: '/profile' },
     { id: 'settings', label: 'Settings', khLabel: 'ការកំណត់', icon: Settings, path: '/settings' },
@@ -195,6 +196,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 </h1>
                 <p className="text-[10px] font-medium tracking-tight text-amber-400 truncate">
                   Core Banking System
+                </p>
+                <p className="text-[9px] font-medium text-emerald-400 truncate">
+                  ប្រព័ន្ធគ្រប់គ្រងឥណទាន
                 </p>
               </div>
             </div>
@@ -356,7 +360,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               title="Toggle Language"
             >
               <Globe className="w-3.5 h-3.5 text-emerald-400" />
-              <span>{language === 'EN' ? 'EN' : 'ភាសាខ្មែរ'}</span>
+              <span>{language === 'EN' ? 'EN | ភាសាខ្មែរ' : 'ភាសាខ្មែរ | EN'}</span>
             </button>
 
             {/* Currency Filter Indicator Toggle */}
@@ -370,7 +374,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               title="Toggle Active Currency (USD / KHR)"
             >
               <Coins className="w-3.5 h-3.5" />
-              <span>{activeCurrency}</span>
+              <span>{activeCurrency === 'USD' ? 'USD | KHR' : 'KHR | USD'}</span>
             </button>
 
             {/* Notification Bell with Indicator Dot */}
@@ -383,6 +387,21 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-slate-900 animate-pulse" />
               )}
             </button>
+
+            {/* Authenticated User Badge with Avatar: Johnathan Doe • Client Borrower */}
+            <div className="hidden sm:flex items-center gap-2.5 pl-3 border-l border-slate-800">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs shrink-0">
+                {(currentUser?.fullName || currentUser?.name || 'Johnathan Doe').slice(0, 2).toUpperCase()}
+              </div>
+              <div className="text-left hidden md:block">
+                <span className="text-xs font-bold text-white block leading-tight truncate">
+                  {currentUser?.fullName || currentUser?.name || 'Johnathan Doe'}
+                </span>
+                <span className="text-[10px] text-emerald-400 font-medium block leading-tight">
+                  {isBorrower ? 'Client Borrower' : (currentUser?.title || 'Administrator')}
+                </span>
+              </div>
+            </div>
           </div>
         </header>
 

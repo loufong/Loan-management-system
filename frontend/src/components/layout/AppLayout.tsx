@@ -19,7 +19,9 @@ import {
   CreditCard,
   Calendar,
   Building2,
-  AlertTriangle
+  AlertTriangle,
+  ShieldCheck,
+  Landmark
 } from 'lucide-react';
 import { Currency, UserProfile } from '../../types';
 
@@ -110,18 +112,18 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   }
 
   const staffNavLinks: LayoutNavLink[] = [
-    { id: 'dashboard', label: 'Executive Ledger', icon: LayoutDashboard, path: '/admin/dashboard' },
-    { id: 'borrowers', label: 'Borrowers', icon: Users, path: '/admin/borrowers' },
-    { id: 'new-application', label: 'New Loan', icon: FilePlus2, path: '/admin/applications' },
+    { id: 'dashboard', label: 'Overview (Portfolio & Risk KPIs)', icon: LayoutDashboard, path: '/admin/dashboard' },
+    { id: 'approvals', label: 'Loan Underwriting & Approvals', icon: ShieldCheck, path: '/admin/approvals', badge: 5 },
+    { id: 'borrowers', label: 'Active Facilities & Borrowers', icon: Landmark, path: '/admin/borrowers' },
     {
       id: 'cashier',
-      label: 'Repayments / Cashier',
+      label: 'Repayments & Bakong Ledger',
       icon: Wallet,
       path: '/admin/cashier',
       badge: overdueCount > 0 ? overdueCount : undefined
     },
-    { id: 'reports', label: 'Reports', icon: BarChart3, path: '/admin/reports' },
-    { id: 'settings', label: 'Settings', icon: Settings, path: '/admin/settings' },
+    { id: 'reports', label: 'CBC Reporting & Credit Scoring', icon: BarChart3, path: '/admin/reports' },
+    { id: 'settings', label: 'System Audit Logs & Staff Permissions', icon: Settings, path: '/admin/settings' },
   ];
 
   const borrowerNavLinks: LayoutNavLink[] = [
@@ -155,6 +157,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     if (item.id === 'dashboard') {
       return ['dashboard', 'admin_dashboard', '/admin/dashboard', '/admin', 'super_ledger'].includes(activeNav) ||
         ['/admin/dashboard', '/admin'].includes(currentPath);
+    }
+    if (item.id === 'approvals') {
+      return ['approvals', 'admin_approvals', '/admin/approvals'].includes(activeNav) ||
+        currentPath === '/admin/approvals';
     }
     if (item.id === 'borrowers') {
       return ['borrowers', 'admin_borrowers', 'borrower-detail', '/admin/borrowers'].includes(activeNav) ||

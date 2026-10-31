@@ -381,7 +381,7 @@ export const App: React.FC = () => {
       }
 
       // 3. CANONICAL ROUTE DISPATCH
-      if (path === '/admin/dashboard') {
+      if (path === '/admin/dashboard' || path === '/admin') {
         setActiveTab('dashboard');
       } else if (path === '/admin/borrowers' || path.startsWith('/admin/borrowers')) {
         setActiveTab('borrowers');
@@ -463,6 +463,7 @@ export const App: React.FC = () => {
 
     const userRole = (user.role || 'ADMIN').toUpperCase();
     const isStaff = [
+      'SUPER_ADMIN',
       'ADMIN',
       'SUPERADMIN',
       'MANAGER',
@@ -474,9 +475,9 @@ export const App: React.FC = () => {
       'CHECKER'
     ].includes(userRole);
     if (isStaff) {
-      replaceAppRoute('/admin/borrowers');
-      setCurrentRoute('/admin/borrowers');
-      setActiveTab('borrowers');
+      replaceAppRoute('/admin/dashboard');
+      setCurrentRoute('/admin/dashboard');
+      setActiveTab('dashboard');
     } else {
       replaceAppRoute('/my-loans');
       setCurrentRoute('/my-loans');
@@ -710,6 +711,7 @@ export const App: React.FC = () => {
   const handleNavSelection = (navTarget: string) => {
     const activeUserRole = (currentUser.role || activeRole || authUser?.role || 'USER').toUpperCase();
     const isStaffRole = [
+      'SUPER_ADMIN',
       'ADMIN',
       'SUPERADMIN',
       'MANAGER',
@@ -721,6 +723,7 @@ export const App: React.FC = () => {
       'CHECKER'
     ].includes(activeUserRole);
     const isAllowedAdminRole = [
+      'SUPER_ADMIN',
       'ADMIN',
       'SUPERADMIN',
       'MANAGER',
@@ -735,7 +738,7 @@ export const App: React.FC = () => {
     let targetPath = navTarget;
 
     // Normalize legacy IDs and targets to canonical routes
-    if (navTarget === 'dashboard' || navTarget === '/dashboard' || navTarget === '/admin/dashboard') {
+    if (navTarget === 'dashboard' || navTarget === '/dashboard' || navTarget === '/admin/dashboard' || navTarget === '/admin' || navTarget === 'admin') {
       targetPath = isAdmin ? '/admin/dashboard' : '/my-loans';
     } else if (
       navTarget === 'borrowers' ||
@@ -903,7 +906,7 @@ export const App: React.FC = () => {
       navTarget === 'borrower_directory'
     ) {
       setActiveTab('borrowers');
-    } else if (targetPath === '/admin/dashboard') {
+    } else if (targetPath === '/admin/dashboard' || targetPath === '/admin') {
       setActiveTab('dashboard');
     } else if (targetPath === '/portal' || targetPath === '/my-loans') {
       setActiveTab('borrower_dashboard');

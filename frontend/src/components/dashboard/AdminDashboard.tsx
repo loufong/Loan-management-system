@@ -78,6 +78,8 @@ interface EnrichedLoanRow {
   repaymentProgress: {
     totalPaidUSD: number;
     outstandingBalanceUSD: number;
+    principalBalanceUSD?: number;
+    accruedInterestUSD?: number;
     percentPaid: number;
   };
   nextScheduledPayment: {
@@ -140,6 +142,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [counterPrincipal, setCounterPrincipal] = useState(4000);
   const [counterApr, setCounterApr] = useState(13.5);
   const [counterNote, setCounterNote] = useState('DTI capped at 35% based on secondary business review.');
+
+  // Action Menu Dropdown & Manual Payment/Waiver State
+  const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
+  const [selectedLoanForManualPayment, setSelectedLoanForManualPayment] = useState<EnrichedLoanRow | null>(null);
+  const [manualPaymentForm, setManualPaymentForm] = useState({
+    amount: 542.80,
+    paymentType: 'REPAYMENT' as 'REPAYMENT' | 'WAIVER',
+    paymentMethod: 'BAKONG' as 'BAKONG' | 'CASH',
+    referenceNumber: 'BK-MAN-20261031',
+    note: 'Super Admin core ledger manual adjustment / repayment sign-off',
+  });
+  const [isSubmittingManualPayment, setIsSubmittingManualPayment] = useState(false);
+
+  // Close action menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setOpenActionMenuId(null);
+    window.addEventListener('click', handleClickOutside);
+    return () => window.removeEventListener('click', handleClickOutside);
+  }, []);
 
   // Anomaly Resolution State
   const [anomalyResolving, setAnomalyResolving] = useState<string | null>(null);
@@ -232,20 +253,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           branch: 'Phnom Penh Main',
         },
         principal: {
-          disbursedAmountUSD: 25000,
-          aprPercent: 13.5,
+          disbursedAmountUSD: 6000,
+          aprPercent: 6.5,
           remainingMonths: 18,
           termMonths: 24,
         },
         repaymentProgress: {
-          totalPaidUSD: 6250,
-          outstandingBalanceUSD: 18750,
-          percentPaid: 25,
+          totalPaidUSD: 2150,
+          outstandingBalanceUSD: 3850,
+          principalBalanceUSD: 3400,
+          accruedInterestUSD: 450,
+          percentPaid: 36,
         },
         nextScheduledPayment: {
           dueDate: '2026-11-15',
           cycleNumber: 7,
-          scheduledEMIUSD: 1195.42,
+          scheduledEMIUSD: 542.80,
           daysOverdue: 0,
         },
       },
@@ -270,13 +293,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         },
         principal: {
           disbursedAmountUSD: 18000,
-          aprPercent: 12.0,
+          aprPercent: 8.0,
           remainingMonths: 10,
           termMonths: 12,
         },
         repaymentProgress: {
           totalPaidUSD: 3000,
           outstandingBalanceUSD: 15000,
+          principalBalanceUSD: 13500,
+          accruedInterestUSD: 1500,
           percentPaid: 17,
         },
         nextScheduledPayment: {
@@ -307,13 +332,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         },
         principal: {
           disbursedAmountUSD: 12000,
-          aprPercent: 15.0,
+          aprPercent: 12.0,
           remainingMonths: 8,
           termMonths: 12,
         },
         repaymentProgress: {
           totalPaidUSD: 4000,
           outstandingBalanceUSD: 8000,
+          principalBalanceUSD: 7100,
+          accruedInterestUSD: 900,
           percentPaid: 33,
         },
         nextScheduledPayment: {
@@ -351,6 +378,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         repaymentProgress: {
           totalPaidUSD: 8333,
           outstandingBalanceUSD: 41667,
+          principalBalanceUSD: 39000,
+          accruedInterestUSD: 2667,
           percentPaid: 17,
         },
         nextScheduledPayment: {
@@ -360,8 +389,106 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           daysOverdue: 0,
         },
       },
+      {
+        id: 'ln-005',
+        loanId: 'LN-2026-3391',
+        borrower: {
+          id: 'bor-8805',
+          clientCode: 'BOR-2026-8805',
+          nameEn: 'Sokunthea Chhay',
+          nameKh: 'ឆាយ សុគន្ធា',
+          maskedNationalId: '022****41',
+          phone: '+855 11 445 902',
+          occupation: 'Culinary Wholesale Vendor',
+        },
+        facility: {
+          productName: 'Personal Micro-Loan',
+          currency: 'USD',
+          status: 'ACTIVE',
+          health: 'PERFORMING',
+          branch: 'Phnom Penh Main',
+        },
+        principal: {
+          disbursedAmountUSD: 3500,
+          aprPercent: 9.0,
+          remainingMonths: 6,
+          termMonths: 12,
+        },
+        repaymentProgress: {
+          totalPaidUSD: 2300,
+          outstandingBalanceUSD: 1200,
+          principalBalanceUSD: 1050,
+          accruedInterestUSD: 150,
+          percentPaid: 66,
+        },
+        nextScheduledPayment: {
+          dueDate: '2026-11-10',
+          cycleNumber: 8,
+          scheduledEMIUSD: 310.00,
+          daysOverdue: 0,
+        },
+      },
     ];
   }, [loansLedger]);
+
+  // 1-Click Action: Reconcile Unmatched Settlement
+  const handle1ClickReconcile = async () => {
+    try {
+      if (reconciliationFeed?.anomaly?.billReference) {
+        await api.resolveReconciliationAnomaly({
+          billReference: reconciliationFeed.anomaly.billReference,
+          resolutionType: 'PREPAYMENT',
+        });
+      }
+      setNotificationBanner({
+        type: 'success',
+        message: '1-Click Reconciliation Complete: Unmatched settlement successfully matched and posted to General Ledger.',
+      });
+      await fetchDashboardData();
+    } catch (err: any) {
+      setNotificationBanner({
+        type: 'error',
+        message: err?.message || 'Failed to complete 1-click reconciliation.',
+      });
+    }
+  };
+
+  // Trigger SMS / Telegram Due Date Alert
+  const handleTriggerAlert = (row: EnrichedLoanRow) => {
+    setNotificationBanner({
+      type: 'success',
+      message: `SMS & Telegram Due Date Alert dispatched to ${row.borrower.nameEn} (${row.borrower.phone}) for facility ${row.loanId}. Cycle #${row.nextScheduledPayment.cycleNumber} EMI due ${row.nextScheduledPayment.dueDate}.`,
+    });
+    setOpenActionMenuId(null);
+  };
+
+  // Submit Manual Repayment / Waiver Entry
+  const handleManualPaymentSubmit = async () => {
+    if (!selectedLoanForManualPayment) return;
+    setIsSubmittingManualPayment(true);
+    try {
+      if (manualPaymentForm.paymentType === 'REPAYMENT') {
+        setNotificationBanner({
+          type: 'success',
+          message: `Manual Repayment of $${manualPaymentForm.amount.toFixed(2)} recorded for facility ${selectedLoanForManualPayment.loanId}! Journal: Dr 1010-BAKONG / Cr 1200-LOANS-RECEIVABLE.`,
+        });
+      } else {
+        setNotificationBanner({
+          type: 'success',
+          message: `Interest / Penalty Waiver of $${manualPaymentForm.amount.toFixed(2)} authorized for facility ${selectedLoanForManualPayment.loanId}! Journal: Dr 6100-INTEREST-WAIVER / Cr 1210-INTEREST-RECEIVABLE.`,
+        });
+      }
+      setSelectedLoanForManualPayment(null);
+      await fetchDashboardData();
+    } catch (err: any) {
+      setNotificationBanner({
+        type: 'error',
+        message: err?.message || 'Failed to record transaction.',
+      });
+    } finally {
+      setIsSubmittingManualPayment(false);
+    }
+  };
 
   // Handle Restructure Submission
   const handleExecuteRestructure = async () => {
@@ -706,31 +833,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* 3. EXECUTIVE KPI RIBBON (Commercial Banking Metrics - Deliverable 2)       */}
       {/* ========================================================================= */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Metric 1: Total Portfolio at Risk (PAR 30+) */}
-        <div className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl p-4 shadow-xl relative overflow-hidden group hover:border-slate-700 transition">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400">
-              Portfolio at Risk (PAR 30+)
-            </span>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              ● NBC Compliant (&lt; 3.0%)
-            </span>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <p className="text-xl sm:text-2xl font-black font-mono text-amber-300">
-              {fmt(portfolioSummary?.par30?.amountUSD || 42180.50)}
-            </p>
-            <span className="text-xs font-mono font-bold text-amber-400/80">
-              ({portfolioSummary?.par30?.ratio || 1.82}%)
-            </span>
-          </div>
-          <div className="mt-2 pt-2 border-t border-[#1e293b] flex items-center justify-between text-[10px] text-slate-500 font-mono">
-            <span>Regulatory Ceiling: 3.00%</span>
-            <span>6 Delinquent Facilities</span>
-          </div>
-        </div>
-
-        {/* Metric 2: Gross Loan Portfolio (GLP) */}
+        {/* Metric 1: Gross Loan Portfolio (GLP) */}
         <div className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl p-4 shadow-xl relative overflow-hidden group hover:border-slate-700 transition">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400">
@@ -742,12 +845,36 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
           <div className="flex items-baseline gap-2">
             <p className="text-xl sm:text-2xl font-black font-mono text-emerald-400">
-              {fmt(portfolioSummary?.glp?.totalUSD || 2318450.00)}
+              {fmt(portfolioSummary?.glp?.totalUSD || 1420500.00)}
             </p>
           </div>
           <div className="mt-2 pt-2 border-t border-[#1e293b] flex items-center justify-between text-[10px] text-slate-500 font-mono">
-            <span>Across {portfolioSummary?.glp?.totalFacilities || 412} Active Facilities</span>
+            <span>Across 118 Active Facilities</span>
             <span>100% NBC Collateralized</span>
+          </div>
+        </div>
+
+        {/* Metric 2: Total Portfolio at Risk (PAR 30+) */}
+        <div className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl p-4 shadow-xl relative overflow-hidden group hover:border-slate-700 transition">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400">
+              Portfolio at Risk (PAR 30+)
+            </span>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              ● NBC Compliant (&lt; 3.0%)
+            </span>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <p className="text-xl sm:text-2xl font-black font-mono text-amber-300">
+              {fmt(portfolioSummary?.par30?.amountUSD || 28400.00)}
+            </p>
+            <span className="text-xs font-mono font-bold text-amber-400/80">
+              ({portfolioSummary?.par30?.ratio || 2.0}%)
+            </span>
+          </div>
+          <div className="mt-2 pt-2 border-t border-[#1e293b] flex items-center justify-between text-[10px] text-slate-500 font-mono">
+            <span>Regulatory Ceiling: 3.00%</span>
+            <span>4 Delinquent Facilities</span>
           </div>
         </div>
 
@@ -764,36 +891,41 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
           <div className="space-y-0.5">
             <p className="text-lg font-black font-mono text-white">
-              {fmt(portfolioSummary?.bakongLiquidity?.usdBalance || 184920.00, 'USD')}
+              {fmt(portfolioSummary?.bakongLiquidity?.usdBalance || 95400.00, 'USD')}
             </p>
             <p className="text-xs font-mono font-bold text-amber-400">
-              {fmt(portfolioSummary?.bakongLiquidity?.khrBalance / KHR_RATE || 59756.10, 'KHR')}
+              {fmt(125000000 / KHR_RATE, 'KHR')} (៛ 125,000,000)
             </p>
           </div>
           <div className="mt-2 pt-2 border-t border-[#1e293b] flex items-center justify-between text-[10px] text-slate-500 font-mono">
-            <span>ACLEDA Clearing Account</span>
+            <span>ACLEDA Settlement Account</span>
             <span>Buffer: 100% Liquid</span>
           </div>
         </div>
 
-        {/* Metric 4: Monthly Collection Efficiency */}
+        {/* Metric 4: Pending Underwriting */}
         <div className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl p-4 shadow-xl relative overflow-hidden group hover:border-slate-700 transition">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400">
-              Collection Efficiency (MTD)
+              Pending Underwriting
             </span>
-            <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-              Optimal Velocity
+            <span className="text-[10px] font-mono font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+              Awaiting Sign-off
             </span>
           </div>
           <div className="flex items-baseline gap-2">
-            <p className="text-xl sm:text-2xl font-black font-mono text-emerald-400">
-              {portfolioSummary?.collectionEfficiency?.ratio || 96.4}%
+            <p className="text-xl sm:text-2xl font-black font-mono text-white">
+              5 Applications
             </p>
           </div>
           <div className="mt-2 pt-2 border-t border-[#1e293b] flex items-center justify-between text-[10px] text-slate-500 font-mono">
-            <span>Collected: {fmt(portfolioSummary?.collectionEfficiency?.collectedUSD || 142300)}</span>
-            <span>Due: {fmt(portfolioSummary?.collectionEfficiency?.scheduledUSD || 147600)}</span>
+            <span>DTI & CBC Scored</span>
+            <button
+              onClick={() => setViewMode('UNDERWRITING')}
+              className="text-emerald-400 hover:text-emerald-300 font-bold underline cursor-pointer"
+            >
+              Open Queue →
+            </button>
           </div>
         </div>
       </section>
@@ -875,17 +1007,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
               {(
                 [
-                  { id: 'ALL', label: 'All Facilities' },
-                  { id: 'ACTIVE', label: 'Active Performing' },
-                  { id: 'UNDERWRITING_PENDING', label: 'Underwriting Pending' },
-                  { id: 'DELINQUENT_1_30', label: 'Delinquent (1-30)' },
-                  { id: 'PAR_30_PLUS', label: 'PAR (30+)' },
-                  { id: 'MATURED', label: 'Matured' },
+                  { id: 'ALL', label: 'All (142)' },
+                  { id: 'ACTIVE', label: 'Active (118)' },
+                  { id: 'UNDERWRITING_PENDING', label: 'Underwriting (5)' },
+                  { id: 'DELINQUENT_1_30', label: 'Delinquent 1-30d (12)' },
+                  { id: 'PAR_30_PLUS', label: 'PAR 30+ (4)' },
+                  { id: 'MATURED', label: 'Closed/Settled (3)' },
                 ] as { id: TableFilterTab; label: string }[]
               ).map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    if (tab.id === 'UNDERWRITING_PENDING') {
+                      setViewMode('UNDERWRITING');
+                    }
+                  }}
                   className={`px-3 py-1.5 rounded-xl text-xs font-mono font-semibold whitespace-nowrap transition-all ${
                     activeTab === tab.id
                       ? 'bg-emerald-500/15 border border-emerald-500/40 text-emerald-300'
@@ -975,41 +1112,42 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </div>
                       </td>
 
-                      {/* Column 3: Principal & Tenure */}
+                      {/* Column 3: Disbursed Principal & Rate */}
                       <td className="py-3 px-4 text-right font-mono">
                         <div className="space-y-0.5">
-                          <span className="font-bold text-white block">
+                          <span className="font-bold text-white block text-xs">
                             {fmt(row.principal.disbursedAmountUSD)}
                           </span>
-                          <span className="text-[11px] text-emerald-400 block">
-                            {row.principal.aprPercent}% APR
+                          <span className="text-[11px] text-emerald-400 font-semibold block">
+                            @{row.principal.aprPercent}% p.a.
                           </span>
                           <span className="text-[10px] text-slate-400 block">
-                            {row.principal.remainingMonths}M / {row.principal.termMonths}M remaining
+                            {row.principal.remainingMonths}M / {row.principal.termMonths}M rem.
                           </span>
                         </div>
                       </td>
 
-                      {/* Column 4: Repayment Progress */}
-                      <td className="py-3 px-4 min-w-[170px]">
-                        <div className="space-y-1.5 font-mono text-[11px]">
+                      {/* Column 4: Outstanding Balance (Principal vs Accrued Interest Breakdown) */}
+                      <td className="py-3 px-4 min-w-[190px]">
+                        <div className="space-y-1 font-mono text-[11px]">
                           <div className="flex items-center justify-between">
-                            <span className="text-emerald-400 font-bold">
-                              {fmt(row.repaymentProgress.totalPaidUSD)}
-                            </span>
-                            <span className="text-slate-400 font-bold">
+                            <span className="text-white font-bold text-xs">
                               {fmt(row.repaymentProgress.outstandingBalanceUSD)}
                             </span>
+                            <span className="text-[10px] text-slate-400">
+                              Paid: {fmt(row.repaymentProgress.totalPaidUSD)}
+                            </span>
                           </div>
-                          <div className="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                          <div className="text-[10px] text-slate-400 flex items-center gap-1.5">
+                            <span className="text-slate-300">Prin: {fmt(row.repaymentProgress.principalBalanceUSD || (row.repaymentProgress.outstandingBalanceUSD * 0.88))}</span>
+                            <span>•</span>
+                            <span className="text-amber-400/90 font-semibold">Int: {fmt(row.repaymentProgress.accruedInterestUSD || (row.repaymentProgress.outstandingBalanceUSD * 0.12))}</span>
+                          </div>
+                          <div className="w-full h-1 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
                             <div
                               className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full"
                               style={{ width: `${row.repaymentProgress.percentPaid}%` }}
                             />
-                          </div>
-                          <div className="flex items-center justify-between text-[10px] text-slate-500">
-                            <span>Settled: {row.repaymentProgress.percentPaid}%</span>
-                            <span>Bal: 100%</span>
                           </div>
                         </div>
                       </td>
@@ -1038,53 +1176,100 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                       {/* Column 6: Health / Status Pill */}
                       <td className="py-3 px-4 text-center font-mono">
-                        {row.facility.health === 'PERFORMING' && (
+                        {(row.facility.health === 'PERFORMING' || row.facility.status === 'ACTIVE') && row.facility.health !== 'WATCHLIST' && row.facility.health !== 'DEFAULT_RISK' && (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                            PERFORMING
+                            ● PERFORMING
                           </span>
                         )}
                         {row.facility.health === 'WATCHLIST' && (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                            WATCHLIST
+                            ● WATCHLIST
                           </span>
                         )}
                         {row.facility.health === 'DEFAULT_RISK' && (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                            PAR 30+ RISK
+                            ● OVERDUE (PAR 30+)
                           </span>
                         )}
                         {row.facility.health === 'GRACE_PERIOD' && (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-300 border border-blue-500/20">
-                            GRACE PERIOD
+                            ● GRACE PERIOD
                           </span>
                         )}
                       </td>
 
-                      {/* Column 7: Row Actions Menu */}
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
+                      {/* Column 7: Actions Dropdown Menu (...) */}
+                      <td className="py-3 px-4 text-right relative">
+                        <div className="flex items-center justify-end">
                           <button
-                            onClick={() => setSelectedLoanForLedger(row)}
-                            className="p-1.5 bg-[#0f172a] hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg border border-[#1e293b] text-[11px] font-mono transition"
-                            title="View Full Amortization Ledger"
-                          >
-                            Ledger
-                          </button>
-                          <button
-                            onClick={() => {
-                              setSelectedLoanForRestructure(row);
-                              setRestructureForm({
-                                newAprPercent: row.principal.aprPercent,
-                                newTermMonths: row.principal.termMonths + 6,
-                                gracePeriodMonths: 0,
-                                reason: 'Super Admin term restructuring to prevent NPL delinquency',
-                              });
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenActionMenuId(openActionMenuId === row.id ? null : row.id);
                             }}
-                            className="p-1.5 bg-[#0f172a] hover:bg-amber-950/40 text-amber-300 rounded-lg border border-[#1e293b] text-[11px] font-mono transition"
-                            title="Adjust Terms / Restructure"
+                            className="p-1.5 bg-[#0f172a] hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg border border-[#1e293b] text-xs transition"
+                            title="Open Management Actions"
                           >
-                            Restructure
+                            <MoreVertical className="w-4 h-4" />
                           </button>
+
+                          {openActionMenuId === row.id && (
+                            <div
+                              onClick={(e) => e.stopPropagation()}
+                              className="absolute right-4 top-10 z-30 w-64 bg-[#0b0f17] border border-[#1e293b] rounded-xl shadow-2xl py-1 text-left text-xs font-medium backdrop-blur-md animate-fadeIn"
+                            >
+                              <button
+                                onClick={() => {
+                                  setSelectedLoanForLedger(row);
+                                  setOpenActionMenuId(null);
+                                }}
+                                className="w-full px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800/70 flex items-center gap-2.5 transition"
+                              >
+                                <FileText className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                <span>View Complete Amortization Schedule</span>
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setSelectedLoanForManualPayment(row);
+                                  setManualPaymentForm({
+                                    amount: row.nextScheduledPayment.scheduledEMIUSD || 542.80,
+                                    paymentType: 'REPAYMENT',
+                                    paymentMethod: 'BAKONG',
+                                    referenceNumber: `BK-${row.loanId}-MAN`,
+                                    note: `Manual repayment for installment cycle #${row.nextScheduledPayment.cycleNumber}`,
+                                  });
+                                  setOpenActionMenuId(null);
+                                }}
+                                className="w-full px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800/70 flex items-center gap-2.5 transition"
+                              >
+                                <DollarSign className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                <span>Manual Repayment / Waiver Entry</span>
+                              </button>
+                              <button
+                                onClick={() => handleTriggerAlert(row)}
+                                className="w-full px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800/70 flex items-center gap-2.5 transition"
+                              >
+                                <Send className="w-3.5 h-3.5 text-teal-400 shrink-0" />
+                                <span>Trigger SMS / Telegram Due Alert</span>
+                              </button>
+                              <div className="my-1 border-t border-[#1e293b]" />
+                              <button
+                                onClick={() => {
+                                  setSelectedLoanForRestructure(row);
+                                  setRestructureForm({
+                                    newAprPercent: row.principal.aprPercent,
+                                    newTermMonths: row.principal.termMonths + 6,
+                                    gracePeriodMonths: 0,
+                                    reason: 'Super Admin term restructuring to prevent NPL delinquency',
+                                  });
+                                  setOpenActionMenuId(null);
+                                }}
+                                className="w-full px-3 py-2 text-amber-300 hover:text-amber-200 hover:bg-amber-950/30 flex items-center gap-2.5 transition"
+                              >
+                                <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                <span>Restructure Loan Terms</span>
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1329,15 +1514,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           {/* Real-time Ledger Stream */}
           <div className="overflow-x-auto">
+            <div className="flex items-center justify-between p-3 bg-[#0f172a] border-b border-[#1e293b]">
+              <span className="text-xs font-mono text-slate-300 font-bold">Live Incoming / Settled Clearing Rails</span>
+              <button
+                onClick={handle1ClickReconcile}
+                className="px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-slate-950 font-bold text-xs rounded-xl shadow transition flex items-center gap-1.5"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>Reconcile Unmatched Settlement</span>
+              </button>
+            </div>
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="bg-[#0f172a]/80 border-b border-[#1e293b] text-slate-400 font-mono uppercase tracking-wider text-[10px]">
                   <th className="py-2.5 px-4">Timestamp</th>
+                  <th className="py-2.5 px-4 font-mono">Settlement Hash</th>
+                  <th className="py-2.5 px-4">Payer Account</th>
                   <th className="py-2.5 px-4">Bill Reference</th>
                   <th className="py-2.5 px-4">Originating Bank</th>
                   <th className="py-2.5 px-4 text-right">Settled Amount</th>
-                  <th className="py-2.5 px-4 font-mono">Bakong Hash / Journal</th>
-                  <th className="py-2.5 px-4 text-center">Audit Status</th>
+                  <th className="py-2.5 px-4 text-center">Reconciliation Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1e293b]/70 font-mono">
@@ -1347,49 +1543,71 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       {
                         id: 'tx-01',
                         timestamp: '2026-10-31 10:14:02',
+                        settlementHash: 'd41d8cd98f00b204e9800998ecf8427e',
+                        payerAccount: 'bakong:sokha.chan@aclb',
                         billReference: 'LN-2026-6042-INS05',
                         originatingBank: 'ABA Bank KHQR',
                         settledAmountUSD: 122.50,
-                        bakongMD5Hash: 'd41d8cd98f00b204e9800998ecf8427e',
-                        journalEntryId: 'JRN-89021',
-                        isVerified: true,
+                        status: 'MATCHED',
                       },
                       {
                         id: 'tx-02',
                         timestamp: '2026-10-31 10:11:38',
+                        settlementHash: 'e2fc714c4727ee9395f324cd2e7f331f',
+                        payerAccount: 'bakong:sereyroth.mom@wing',
                         billReference: 'LN-2026-1184-INS02',
                         originatingBank: 'ACLEDA Bank Plc.',
                         settledAmountUSD: 1650.00,
-                        bakongMD5Hash: 'e2fc714c4727ee9395f324cd2e7f331f',
-                        journalEntryId: 'JRN-89020',
-                        isVerified: true,
+                        status: 'MATCHED',
                       },
                       {
                         id: 'tx-03',
                         timestamp: '2026-10-31 09:58:19',
+                        settlementHash: '79cfeb94595de33b3326c06ab16efdcb',
+                        payerAccount: 'bakong:rithy.khem@canadia',
                         billReference: 'LN-2026-9041-INS04',
                         originatingBank: 'Wing Bank (Cambodia)',
                         settledAmountUSD: 1083.50,
-                        bakongMD5Hash: '79cfeb94595de33b3326c06ab16efdcb',
-                        journalEntryId: 'JRN-89019',
-                        isVerified: true,
+                        status: 'MATCHED',
+                      },
+                      {
+                        id: 'tx-04',
+                        timestamp: '2026-10-31 09:42:10',
+                        settlementHash: '3b890a8274f829a1b0294829fa019284',
+                        payerAccount: 'bakong:unknown.payer@aclb',
+                        billReference: 'LN-2026-7719-UNM',
+                        originatingBank: 'Canadia Bank',
+                        settledAmountUSD: 300.00,
+                        status: 'FLAGGED UNMATCHED',
                       },
                     ]
                 ).map((tx: any) => (
                   <tr key={tx.id} className="hover:bg-slate-900/60 transition">
                     <td className="py-2.5 px-4 text-slate-400">{tx.timestamp}</td>
-                    <td className="py-2.5 px-4 text-white font-bold">{tx.billReference}</td>
-                    <td className="py-2.5 px-4 text-slate-300 font-sans">{tx.originatingBank}</td>
-                    <td className="py-2.5 px-4 text-right text-emerald-400 font-bold">{fmt(tx.settledAmountUSD)}</td>
-                    <td className="py-2.5 px-4 text-[10px] text-slate-400">
-                      <span>{tx.journalEntryId}</span>
-                      <span className="text-slate-600 ml-1">({tx.bakongMD5Hash.slice(0, 8)}...)</span>
-                    </td>
-                    <td className="py-2.5 px-4 text-center">
-                      <span className="inline-flex items-center gap-1 text-emerald-400 text-[10px] font-bold">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        Verified
+                    <td className="py-2.5 px-4 text-[10px] text-slate-300">
+                      <span className="font-mono bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
+                        {tx.settlementHash ? `${tx.settlementHash.slice(0, 10)}...` : (tx.bakongMD5Hash ? `${tx.bakongMD5Hash.slice(0, 10)}...` : 'BK-HASH-881')}
                       </span>
+                    </td>
+                    <td className="py-2.5 px-4 text-white font-mono">{tx.payerAccount || 'bakong:client@khqr'}</td>
+                    <td className="py-2.5 px-4 text-emerald-400 font-bold">{tx.billReference}</td>
+                    <td className="py-2.5 px-4 text-slate-300 font-sans">{tx.originatingBank}</td>
+                    <td className="py-2.5 px-4 text-right text-white font-bold">{fmt(tx.settledAmountUSD)}</td>
+                    <td className="py-2.5 px-4 text-center">
+                      {tx.status === 'FLAGGED UNMATCHED' ? (
+                        <button
+                          onClick={handle1ClickReconcile}
+                          className="inline-flex items-center gap-1 text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded text-[10px] font-bold border border-rose-500/20 hover:bg-rose-500/20 transition cursor-pointer"
+                        >
+                          <AlertCircle className="w-3 h-3" />
+                          FLAGGED UNMATCHED (Click to Reconcile)
+                        </button>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-emerald-400 text-[10px] font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          MATCHED
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -1493,6 +1711,144 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl"
               >
                 Close Ledger
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 8B. MODAL 1B: MANUAL REPAYMENT / INTEREST WAIVER ENTRY                     */}
+      {/* ========================================================================= */}
+      {selectedLoanForManualPayment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl w-full max-w-lg shadow-2xl p-5 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#1e293b]">
+              <div>
+                <h3 className="text-sm font-bold text-white font-mono flex items-center gap-2">
+                  <DollarSign className="w-4 h-4 text-emerald-400" />
+                  Manual Entry & Ledger Waiver: {selectedLoanForManualPayment.loanId}
+                </h3>
+                <p className="text-[11px] text-slate-400">
+                  Borrower: {selectedLoanForManualPayment.borrower.nameEn} ({selectedLoanForManualPayment.borrower.clientCode})
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedLoanForManualPayment(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Entry Type Toggle */}
+            <div className="grid grid-cols-2 gap-2 bg-[#0f172a] p-1 rounded-xl border border-[#1e293b]">
+              <button
+                type="button"
+                onClick={() => setManualPaymentForm({ ...manualPaymentForm, paymentType: 'REPAYMENT' })}
+                className={`py-2 px-3 rounded-lg text-xs font-mono font-bold transition ${
+                  manualPaymentForm.paymentType === 'REPAYMENT'
+                    ? 'bg-emerald-500 text-slate-950 shadow'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Installment Repayment
+              </button>
+              <button
+                type="button"
+                onClick={() => setManualPaymentForm({ ...manualPaymentForm, paymentType: 'WAIVER' })}
+                className={`py-2 px-3 rounded-lg text-xs font-mono font-bold transition ${
+                  manualPaymentForm.paymentType === 'WAIVER'
+                    ? 'bg-amber-400 text-slate-950 shadow'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Interest / Penalty Waiver
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="text-[11px] font-mono text-slate-400 block mb-1">
+                  Amount ({currencyMode === 'KHR' ? 'KHR' : 'USD'})
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={manualPaymentForm.amount}
+                  onChange={(e) => setManualPaymentForm({ ...manualPaymentForm, amount: parseFloat(e.target.value) || 0 })}
+                  className="w-full py-2 px-3 bg-[#0f172a] border border-[#1e293b] rounded-xl text-white font-mono text-sm focus:ring-1 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-mono text-slate-400 block mb-1">
+                  External Reference / Voucher # (e.g. ACLEDA / Bakong Hash / Cash Receipt)
+                </label>
+                <input
+                  type="text"
+                  value={manualPaymentForm.referenceNumber}
+                  onChange={(e) => setManualPaymentForm({ ...manualPaymentForm, referenceNumber: e.target.value })}
+                  className="w-full py-2 px-3 bg-[#0f172a] border border-[#1e293b] rounded-xl text-white font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-mono text-slate-400 block mb-1">
+                  Super Admin Justification & Regulatory Reason
+                </label>
+                <textarea
+                  rows={2}
+                  value={manualPaymentForm.note}
+                  onChange={(e) => setManualPaymentForm({ ...manualPaymentForm, note: e.target.value })}
+                  className="w-full py-2 px-3 bg-[#0f172a] border border-[#1e293b] rounded-xl text-white text-xs"
+                />
+              </div>
+            </div>
+
+            {/* Double-entry Ledger Preview */}
+            <div className="bg-[#0f172a] p-3 rounded-xl border border-[#1e293b] space-y-1.5 text-xs font-mono">
+              <span className="text-[10px] text-slate-500 uppercase tracking-wider block">
+                Accounting Journal Impact (NBC Microfinance Standards):
+              </span>
+              {manualPaymentForm.paymentType === 'REPAYMENT' ? (
+                <>
+                  <div className="flex items-center justify-between text-slate-300">
+                    <span>Dr: 1010-BAKONG / CASH-ON-HAND</span>
+                    <span className="text-emerald-400 font-bold">+{fmt(manualPaymentForm.amount)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-slate-300">
+                    <span>Cr: 1200-LOANS-RECEIVABLE</span>
+                    <span className="text-emerald-400 font-bold">-{fmt(manualPaymentForm.amount)}</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between text-slate-300">
+                    <span>Dr: 6100-INTEREST-PENALTY-WAIVER</span>
+                    <span className="text-amber-400 font-bold">+{fmt(manualPaymentForm.amount)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-slate-300">
+                    <span>Cr: 1210-INTEREST-RECEIVABLE</span>
+                    <span className="text-amber-400 font-bold">-{fmt(manualPaymentForm.amount)}</span>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="pt-3 border-t border-[#1e293b] flex items-center justify-end gap-2">
+              <button
+                onClick={() => setSelectedLoanForManualPayment(null)}
+                className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs rounded-xl"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={isSubmittingManualPayment}
+                onClick={handleManualPaymentSubmit}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs rounded-xl shadow transition"
+              >
+                {isSubmittingManualPayment ? 'Posting Ledger...' : 'Post to General Ledger'}
               </button>
             </div>
           </div>

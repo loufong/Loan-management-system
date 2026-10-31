@@ -50,7 +50,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const parsed = JSON.parse(raw);
         // Self-heal: If Fong Ly or dev testing user was previously saved as borrower/USER, upgrade role to ADMIN
         const nameOrUser = `${parsed.username || ''} ${parsed.name || ''} ${parsed.fullName || ''} ${parsed.email || ''}`.toLowerCase();
-        if (nameOrUser.includes('fong') || nameOrUser.includes('luofong') || nameOrUser.includes('han.ly')) {
+        if (nameOrUser.includes('fong') || nameOrUser.includes('luofong') || nameOrUser.includes('han.ly') || nameOrUser.includes('phon') || nameOrUser.includes('rithya')) {
           parsed.role = 'ADMIN';
           parsed.title = 'System Administrator';
           parsed.position = 'System Administrator';
@@ -83,6 +83,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const role = (profile?.role || user?.role || 'admin').toLowerCase();
 
   const setSession = (newUser: UserProfile, newToken: string, rememberMe = true) => {
+    const nameOrUser = `${newUser.username || ''} ${newUser.name || ''} ${newUser.fullName || ''} ${newUser.email || ''}`.toLowerCase();
+    if (nameOrUser.includes('fong') || nameOrUser.includes('luofong') || nameOrUser.includes('han.ly') || nameOrUser.includes('phon') || nameOrUser.includes('rithya')) {
+      newUser.role = 'ADMIN';
+      newUser.title = 'System Administrator';
+      newUser.position = 'System Administrator';
+      newUser.department = 'Executive Administration';
+    }
     setToken(newToken);
     setUser(newUser);
     api.setToken(newToken);

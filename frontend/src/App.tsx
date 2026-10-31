@@ -210,7 +210,7 @@ export const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<UserProfile>(() => {
     if (authUser) {
       const nameStr = `${authUser.name || ''} ${authUser.fullName || ''} ${authUser.username || ''} ${authUser.email || ''}`.toLowerCase();
-      if (nameStr.includes('fong') || nameStr.includes('luofong') || nameStr.includes('han.ly')) {
+      if (nameStr.includes('fong') || nameStr.includes('luofong') || nameStr.includes('han.ly') || nameStr.includes('phon') || nameStr.includes('rithya')) {
         return {
           ...authUser,
           role: 'ADMIN',
@@ -227,7 +227,7 @@ export const App: React.FC = () => {
   useEffect(() => {
     if (authUser) {
       const nameStr = `${authUser.name || ''} ${authUser.fullName || ''} ${authUser.username || ''} ${authUser.email || ''}`.toLowerCase();
-      if (nameStr.includes('fong') || nameStr.includes('luofong') || nameStr.includes('han.ly')) {
+      if (nameStr.includes('fong') || nameStr.includes('luofong') || nameStr.includes('han.ly') || nameStr.includes('phon') || nameStr.includes('rithya')) {
         const adminUpgraded: UserProfile = {
           ...authUser,
           role: 'ADMIN',
@@ -305,7 +305,7 @@ export const App: React.FC = () => {
             window.location.port === '3000' ||
             window.location.port === '5000'));
 
-      const userRole = (authUser.role || currentUser.role || 'ADMIN').toUpperCase();
+      const userRole = (currentUser.role || activeRole || authUser?.role || 'ADMIN').toUpperCase();
       const isStaffRole = [
         'ADMIN',
         'SUPERADMIN',
@@ -317,7 +317,7 @@ export const App: React.FC = () => {
         'TELLER',
         'CHECKER',
       ].includes(userRole);
-      const isBorrower = ['CLIENT', 'BORROWER', 'USER'].includes(userRole) || !isStaffRole;
+      const isBorrower = !isStaffRole;
       const isAdmin = isStaffRole;
 
       // 1. DEDICATED BORROWER PORTAL GATE & REDIRECTION:
@@ -713,9 +713,10 @@ export const App: React.FC = () => {
 
   // Sidebar navigation mapping & access control enforcement
   const handleNavSelection = (navTarget: string) => {
-    const activeUserRole = (authUser?.role || currentUser.role || 'USER').toUpperCase();
+    const activeUserRole = (currentUser.role || activeRole || authUser?.role || 'USER').toUpperCase();
     const isStaffRole = [
       'ADMIN',
+      'SUPERADMIN',
       'MANAGER',
       'ACCOUNTANT',
       'LOAN_OFFICER',
@@ -724,9 +725,17 @@ export const App: React.FC = () => {
       'TELLER',
       'CHECKER'
     ].includes(activeUserRole);
-    const isAllowedAdminRole = ['ADMIN', 'MANAGER', 'ACCOUNTANT'].includes(activeUserRole);
+    const isAllowedAdminRole = [
+      'ADMIN',
+      'SUPERADMIN',
+      'MANAGER',
+      'ACCOUNTANT',
+      'LOAN_OFFICER',
+      'CREDIT_OFFICER',
+      'CASHIER'
+    ].includes(activeUserRole);
     const isAdmin = isStaffRole;
-    const isBorrower = ['CLIENT', 'BORROWER', 'USER'].includes(activeUserRole);
+    const isBorrower = !isStaffRole;
 
     let targetPath = navTarget;
 

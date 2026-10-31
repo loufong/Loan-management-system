@@ -158,7 +158,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
               <div className="flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200/80 text-blue-700 text-[11px] font-semibold tracking-wide">
                   <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
-                  {language === 'km' ? 'គណនីអតិថិជនបានផ្ទៀងផ្ទាត់' : 'Verified Borrower'}
+                  {language === 'km' ? 'គណនីអតិថិជនបានផ្ទៀងផ្ទាត់' : 'Verified Borrower Self-Service Portal'}
                 </span>
                 {currentUser?.borrowerId && (
                   <span className="text-[11px] font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
@@ -179,7 +179,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
               <p className="text-xs sm:text-sm text-slate-500 leading-relaxed max-w-xl">
                 {language === 'km'
                   ? 'ទិដ្ឋភាពទូទៅនៃកម្ចីសកម្ម ការទូទាត់រំលស់តាម Bakong KHQR និងកាលវិភាគសងប្រាក់របស់អ្នក។'
-                  : 'Manage active credit facilities, settle installments instantly via Bakong KHQR, and monitor repayments.'}
+                  : 'Manage your active credit facilities, settle installments instantly via Bakong KHQR, and monitor your repayment schedule.'}
               </p>
             </div>
           </div>
@@ -208,16 +208,16 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
                   onNavigate('new-application');
                 }
               }}
-              className="inline-flex items-center justify-center gap-2 h-10 px-5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs sm:text-sm shadow-xs transition-colors cursor-pointer select-none whitespace-nowrap active:scale-[0.99]"
+              className="inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-xl bg-white hover:bg-slate-50 text-slate-800 hover:text-slate-950 font-medium text-xs sm:text-sm border border-slate-200/90 hover:border-slate-300 shadow-2xs transition-all cursor-pointer select-none whitespace-nowrap active:scale-[0.98]"
             >
-              <Plus className="w-4 h-4 text-white shrink-0" />
-              <span>{language === 'km' ? 'ស្នើសុំកម្ចីថ្មី' : 'Apply for Loan'}</span>
+              <Plus className="w-4 h-4 text-slate-500 shrink-0" />
+              <span>{language === 'km' ? '+ ស្នើសុំកម្ចីថ្មី' : '+ Apply for Loan'}</span>
             </button>
 
             <button
               type="button"
               onClick={() => onNavigate('repayments')}
-              className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-lg bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 font-medium text-xs sm:text-sm border border-slate-200 shadow-xs transition-colors cursor-pointer select-none whitespace-nowrap active:scale-[0.99]"
+              className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-xl bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 font-medium text-xs sm:text-sm border border-slate-200/90 hover:border-slate-300 shadow-2xs transition-all cursor-pointer select-none whitespace-nowrap active:scale-[0.98]"
               title={language === 'km' ? 'កាលវិភាគសងប្រាក់' : 'Repayment Schedule'}
             >
               <Calendar className="w-4 h-4 text-slate-500 shrink-0" />

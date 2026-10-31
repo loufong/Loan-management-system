@@ -80,17 +80,15 @@ export async function authenticate(
       user = await prisma.user.findFirst().catch(() => null);
     }
 
-    if (user) {
-      req.user = {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        fullName: user.fullName || (isBorrower ? 'Johnathan Doe' : 'System Administrator'),
-        permissions: getPermissionsForRole(user.role),
-      };
-      return next();
-    }
+    req.user = {
+      id: user?.id || (isBorrower ? 'user-borrower-0001' : 'user-admin-0001'),
+      username: user?.username || (isBorrower ? 'j.doe' : 'admin'),
+      email: user?.email || (isBorrower ? 'johnathan.doe@student.edu' : 'admin@loansystem.edu'),
+      role: user?.role || targetRole,
+      fullName: user?.fullName || (isBorrower ? 'Johnathan Doe' : 'System Administrator'),
+      permissions: getPermissionsForRole(user?.role || targetRole),
+    };
+    return next();
   }
 
   // 2. Standard JWT token verification

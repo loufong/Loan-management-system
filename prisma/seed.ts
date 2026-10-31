@@ -70,7 +70,8 @@ async function main() {
       position: 'Chief Information Officer & LMS Administrator',
       department: 'IT & Systems Governance',
       role: UserRole.ADMIN,
-      status: UserStatus.ACTIVE
+      status: UserStatus.ACTIVE,
+      emailVerifiedAt: new Date()
     }
   });
 
@@ -84,7 +85,8 @@ async function main() {
       position: 'Head of Financial Aid & Lending',
       department: 'Credit & Financial Affairs',
       role: UserRole.ADMIN,
-      status: UserStatus.ACTIVE
+      status: UserStatus.ACTIVE,
+      emailVerifiedAt: new Date()
     }
   });
 
@@ -98,7 +100,8 @@ async function main() {
       position: 'Senior Credit Risk Analyst',
       department: 'Risk Management',
       role: UserRole.ADMIN,
-      status: UserStatus.ACTIVE
+      status: UserStatus.ACTIVE,
+      emailVerifiedAt: new Date()
     }
   });
 
@@ -112,7 +115,8 @@ async function main() {
       position: 'Senior Loan Origination Officer',
       department: 'Student Financial Services',
       role: UserRole.ADMIN,
-      status: UserStatus.ACTIVE
+      status: UserStatus.ACTIVE,
+      emailVerifiedAt: new Date()
     }
   });
 
@@ -126,7 +130,8 @@ async function main() {
       position: 'University Bursar & Lead Cashier',
       department: 'Disbursement & Treasury',
       role: UserRole.ADMIN,
-      status: UserStatus.ACTIVE
+      status: UserStatus.ACTIVE,
+      emailVerifiedAt: new Date()
     }
   });
 
@@ -173,7 +178,8 @@ async function main() {
       position: 'Credit Underwriting Manager',
       department: 'Credit Committee',
       role: UserRole.ADMIN,
-      status: UserStatus.ACTIVE
+      status: UserStatus.ACTIVE,
+      emailVerifiedAt: new Date()
     }
   });
 
@@ -187,7 +193,8 @@ async function main() {
       position: 'Credit Risk Officer',
       department: 'Credit Assessment',
       role: UserRole.ADMIN,
-      status: UserStatus.ACTIVE
+      status: UserStatus.ACTIVE,
+      emailVerifiedAt: new Date()
     }
   });
 
@@ -201,7 +208,8 @@ async function main() {
       position: 'Senior Loan & DTI Officer',
       department: 'Origination & Risk',
       role: UserRole.ADMIN,
-      status: UserStatus.ACTIVE
+      status: UserStatus.ACTIVE,
+      emailVerifiedAt: new Date()
     }
   });
 
@@ -215,7 +223,8 @@ async function main() {
       position: 'Lead Teller & Cashier',
       department: 'Disbursement & Treasury',
       role: UserRole.ADMIN,
-      status: UserStatus.ACTIVE
+      status: UserStatus.ACTIVE,
+      emailVerifiedAt: new Date()
     }
   });
 
@@ -229,7 +238,8 @@ async function main() {
       position: 'Graduate Research Student',
       department: 'School of Computer Science',
       role: UserRole.USER,
-      status: UserStatus.ACTIVE
+      status: UserStatus.ACTIVE,
+      emailVerifiedAt: new Date()
     }
   });
 

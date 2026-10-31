@@ -709,6 +709,29 @@ Thank you for banking with JAM SONG VICH.
   }
 
   /**
+   * Generic dual-provider dispatch function: sendEmail({ to, subject, html, text })
+   */
+  public static async sendEmail({
+    to,
+    subject,
+    html,
+    text,
+  }: {
+    to: string | string[];
+    subject: string;
+    html: string;
+    text?: string;
+  }): Promise<EmailSendResult> {
+    const toEmail = Array.isArray(to) ? to[0] : to;
+    return this.dispatchEmail({
+      toEmail,
+      subject,
+      textContent: text || '',
+      htmlContent: html,
+    });
+  }
+
+  /**
    * Helper: Send email via SMTP / Nodemailer
    */
   private static async sendViaSmtp(params: {
@@ -728,7 +751,7 @@ Thank you for banking with JAM SONG VICH.
         html: params.htmlContent,
       });
 
-      console.log(`📧 [SMTP Sent] Email delivered to ${params.toEmail}. MessageId: ${info.messageId}`);
+      console.log(`[Email Service] Successfully sent email to ${params.toEmail} via smtp`);
       return {
         success: true,
         messageId: info.messageId,
@@ -802,7 +825,7 @@ Thank you for banking with JAM SONG VICH.
           };
         }
 
-        console.log(`📧 [Resend Sent] Email delivered to ${toEmail}. MessageId: ${response.data?.id}`);
+        console.log(`[Email Service] Successfully sent email to ${toEmail} via resend`);
         return {
           success: true,
           messageId: response.data?.id,

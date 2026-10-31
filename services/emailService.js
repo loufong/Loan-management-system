@@ -1,14 +1,135 @@
 const { Resend } = require('resend');
 const nodemailer = require('nodemailer');
 const dotenv = require('dotenv');
+
 dotenv.config();
 
 class EmailService {
-  static isResendConfigured() {
-    const key = (process.env.RESEND_API_KEY || '').trim();
-    return Boolean(key && key.startsWith('re_') && !key.includes('placeholder') && !key.includes('your_'));
+  /**
+   * Runtime environment validator
+   * Validates active email provider credentials and configuration
+   */
+  static validateConfig() {
+    const provider = (process.env.EMAIL_PROVIDER || '').trim().toLowerCase();
+    const resendKey = (process.env.RESEND_API_KEY || '').trim();
+    const smtpUser = (process.env.SMTP_USER || process.env.EMAIL_USER || process.env.MAIL_USERNAME || '').trim();
+    const smtpPass = (process.env.SMTP_PASS || process.env.EMAIL_PASSWORD || process.env.MAIL_PASSWORD || '').trim();
+
+    const isPlaceholderKey = !resendKey || resendKey.includes('your_') || resendKey.includes('placeholder') || !resendKey.startsWith('re_');
+    const isPlaceholderSmtp = !smtpUser || !smtpPass || smtpPass.includes('your_') || smtpPass.includes('placeholder');
+
+    if (provider === 'resend') {
+      if (isPlaceholderKey) {
+        throw new Error(
+          '[Email Service] EMAIL_PROVIDER is configured as "resend" but RESEND_API_KEY is missing or invalid in .env. Please set a valid Resend API key.'
+        );
+      }
+      return 'resend';
+    }
+
+    if (provider === 'smtp') {
+      if (isPlaceholderSmtp) {
+        throw new Error(
+          '[Email Service] EMAIL_PROVIDER is configured as "smtp" but SMTP credentials (SMTP_USER / SMTP_PASS) are missing or invalid in .env.'
+        );
+      }
+      return 'smtp';
+    }
+
+    // Auto-detection fallback when EMAIL_PROVIDER is not explicitly specified
+    if (!isPlaceholderKey) {
+      return 'resend';
+    }
+
+    if (!isPlaceholderSmtp) {
+      return 'smtp';
+    }
+
+    throw new Error(
+      '[Email Service] No active email provider configured. Please set EMAIL_PROVIDER to "resend" (with RESEND_API_KEY) or "smtp" (with SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS) in .env.'
+    );
   }
 
+  /**
+   * Creates Nodemailer transporter for SMTP
+   */
+  static getTransporter() {
+    const host = process.env.SMTP_HOST || process.env.EMAIL_HOST || 'smtp.gmail.com';
+    const port = Number(process.env.SMTP_PORT || process.env.EMAIL_PORT || 465);
+    const secure = process.env.SMTP_SECURE !== undefined 
+      ? (String(process.env.SMTP_SECURE).toLowerCase() === 'true')
+      : port === 465;
+    const user = process.env.SMTP_USER || process.env.EMAIL_USER || process.env.MAIL_USERNAME;
+    const pass = process.env.SMTP_PASS || process.env.EMAIL_PASSWORD || process.env.MAIL_PASSWORD;
+
+    return nodemailer.createTransport({
+      host,
+      port,
+      secure,
+      auth: {
+        user,
+        pass,
+      },
+    });
+  }
+
+  /**
+   * Core dispatch function: sendEmail({ to, subject, html, text })
+   */
+  static async sendEmail({ to, subject, html, text }) {
+    const provider = this.validateConfig();
+    const from = process.env.EMAIL_FROM || 'JAM SONG VICH Banking <notifications@jamsongvich.com>';
+    const recipient = Array.isArray(to) ? to.join(', ') : to;
+
+    try {
+      if (provider === 'resend') {
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        const res = await resend.emails.send({
+          from,
+          to: Array.isArray(to) ? to : [to],
+          subject,
+          html,
+          text: text || '',
+        });
+
+        if (res.error) {
+          throw new Error(res.error.message || 'Resend API dispatch failed');
+        }
+
+        console.log(`[Email Service] Successfully sent email to ${recipient} via resend`);
+        return {
+          success: true,
+          provider: 'resend',
+          messageId: res.data?.id,
+        };
+      }
+
+      if (provider === 'smtp') {
+        const transporter = this.getTransporter();
+        const info = await transporter.sendMail({
+          from,
+          to,
+          subject,
+          html,
+          text: text || '',
+        });
+
+        console.log(`[Email Service] Successfully sent email to ${recipient} via smtp`);
+        return {
+          success: true,
+          provider: 'smtp',
+          messageId: info.messageId,
+        };
+      }
+    } catch (error) {
+      console.error(`[Email Service] Failed to send email to ${recipient} via ${provider}:`, error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Official payment receipt dispatcher
+   */
   static async sendRepaymentReceipt(toEmail, details) {
     const amountStr = details.currency === 'KHR'
       ? `${new Intl.NumberFormat('km-KH').format(details.amountPaid)} KHR`
@@ -40,27 +161,14 @@ class EmailService {
 </body>
 </html>`;
 
-    if (this.isResendConfigured()) {
-      try {
-        const resend = new Resend(process.env.RESEND_API_KEY);
-        const from = process.env.EMAIL_FROM || 'JAM SONG VICH <onboarding@resend.dev>';
-        const res = await resend.emails.send({
-          from,
-          to: [toEmail],
-          subject,
-          html,
-          text: `Repayment received for ${details.loanNumber}: ${amountStr}. Remaining: ${balanceStr}. Ref: ${details.transactionRef}`
-        });
-        return { success: !res.error, messageId: res.data?.id, error: res.error?.message };
-      } catch (err) {
-        console.warn('Resend send warning:', err.message);
-      }
-    }
+    const text = `Repayment received for ${details.loanNumber}: ${amountStr}. Remaining: ${balanceStr}. Ref: ${details.transactionRef}`;
 
-    console.log(`📧 [Simulated Email] Receipt to ${toEmail}: ${amountStr} for ${details.loanNumber}`);
-    return { success: true, isSimulated: true };
+    return await this.sendEmail({ to: toEmail, subject, html, text });
   }
 }
 
-module.exports = { EmailService };
-
+module.exports = {
+  EmailService,
+  sendEmail: EmailService.sendEmail.bind(EmailService),
+  sendRepaymentReceipt: EmailService.sendRepaymentReceipt.bind(EmailService),
+};

@@ -41,3 +41,4 @@ export const PayInstallmentModal: React.FC<PayInstallmentModalProps> = ({
 };
 
 export default PayInstallmentModal;
+

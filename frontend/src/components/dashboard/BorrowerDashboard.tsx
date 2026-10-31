@@ -16,7 +16,6 @@ import {
   ArrowRight,
   Building,
   Sparkles,
-  RotateCcw,
 } from 'lucide-react';
 import { Currency, LoanAccount, LoanApplication, PaymentReceipt, UserProfile } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
@@ -46,15 +45,9 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
 }) => {
   const { language } = useLanguage();
   const [selectedLoanId, setSelectedLoanId] = useState<string | null>(null);
-  const [isRestartedToZero, setIsRestartedToZero] = useState<boolean>(() => {
+  const [isRestartedToZero] = useState<boolean>(() => {
     return localStorage.getItem('jam_restart_borrower_zero') !== 'false';
   });
-
-  const toggleRestartData = () => {
-    const nextState = !isRestartedToZero;
-    setIsRestartedToZero(nextState);
-    localStorage.setItem('jam_restart_borrower_zero', String(nextState));
-  };
 
   // Currency Formatter: USD or KHR (1 USD = 4,100 KHR)
   const formatMoney = (valUSD: number) => {
@@ -250,21 +243,6 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
             >
               <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
               <span>{'Schedule'}</span>
-            </button>
-
-            {/* Restart / Reset Data Control */}
-            <button
-              type="button"
-              onClick={toggleRestartData}
-              className={`inline-flex items-center justify-center gap-1.5 h-10 px-3.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer select-none whitespace-nowrap active:scale-[0.98] ${
-                isRestartedToZero
-                  ? 'bg-emerald-600/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-600/30'
-                  : 'bg-slate-850 hover:bg-slate-800 text-slate-300 hover:text-white border-slate-700/80 hover:border-slate-600'
-              }`}
-              title={isRestartedToZero ? 'Restore JAM SONG VICH Facility (LN-2026-6042)' : 'Restart All Borrowing Data to Zero'}
-            >
-              <RotateCcw className={`w-3.5 h-3.5 ${isRestartedToZero ? 'text-emerald-400' : 'text-slate-400'}`} />
-              <span>{isRestartedToZero ? ('Restore Facility') : ('Restart Data')}</span>
             </button>
           </div>
         </div>

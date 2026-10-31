@@ -88,6 +88,11 @@ import { ChangePasswordPage } from './components/auth/ChangePasswordPage';
 import { NotificationsCenter } from './components/notifications/NotificationsCenter';
 import { UserProfileView } from './components/profile/UserProfileView';
 import { UserSettingsView } from './components/settings/UserSettingsView';
+import { BorrowerApplyLoanView } from './components/borrower/BorrowerApplyLoanView';
+import { BorrowerRepaymentScheduleView } from './components/borrower/BorrowerRepaymentScheduleView';
+import { BorrowerPayInstallmentView } from './components/borrower/BorrowerPayInstallmentView';
+import { BorrowerProfileView } from './components/borrower/BorrowerProfileView';
+import { BorrowerSettingsView } from './components/borrower/BorrowerSettingsView';
 import { UserRepaymentsView } from './components/loans/UserRepaymentsView';
 import { useAuth } from './context/AuthContext';
 import { useLanguage } from './context/LanguageContext';
@@ -656,14 +661,19 @@ export const App: React.FC = () => {
         return [{ label: 'User Portal' }, { label: 'My Dashboard', active: true }];
       case 'borrower_dashboard':
         return [{ label: 'Core Banking' }, { label: 'My Loans', active: true }];
+      case 'new-application':
+        return [{ label: 'Core Banking' }, { label: 'Apply for Loan', active: true }];
+      case 'repayments':
+        return [{ label: 'Core Banking' }, { label: 'Repayment Schedule', active: true }];
+      case 'cashier':
+      case 'pay_installment':
+        return [{ label: 'Core Banking' }, { label: isBorrowerRole ? 'Pay Installment' : 'Cashier Desk', active: true }];
       case 'borrowers':
         return [{ label: 'Institutional Registry', onClick: () => handleNavSelection('/admin/borrowers') }, { label: 'Borrowers Directory', active: true }];
       case 'borrower-detail':
         return [{ label: 'Borrowers', onClick: () => handleNavSelection('/admin/borrowers') }, { label: `360° Dossier (${selectedBorrowerId})`, active: true }];
       case 'applications':
         return [{ label: 'Loan Origination', onClick: () => handleNavSelection(currentUser.role === 'admin' ? '/admin/applications' : '/applications') }, { label: 'Pipeline Stages', active: true }];
-      case 'new-application':
-        return [{ label: 'Applications', onClick: () => handleNavSelection('/applications') }, { label: 'New Loan Wizard', active: true }];
       case 'credit_reviews':
         return [{ label: 'Underwriting', onClick: () => handleNavSelection('/admin/credit_reviews') }, { label: 'Credit Review Queue', active: true }];
       case 'risk_assessment':
@@ -676,10 +686,6 @@ export const App: React.FC = () => {
         return [{ label: 'Core Banking', onClick: () => handleNavSelection(currentUser.role === 'admin' ? '/admin/loans' : '/loans') }, { label: 'Active Facilities Directory', active: true }];
       case 'loan-detail':
         return [{ label: 'Core Banking', onClick: () => handleNavSelection(currentUser.role === 'admin' ? '/admin/loans' : '/loans') }, { label: `Amortization Schedule (${selectedLoanId})`, active: true }];
-      case 'repayments':
-        return [{ label: 'Borrower Facilities' }, { label: 'Repayment Schedule', active: true }];
-      case 'cashier':
-        return [{ label: 'Cashier Desk' }, { label: 'Payment Collection Terminal', active: true }];
       case 'overdue':
         return [{ label: 'Risk Management' }, { label: 'Overdue Delinquency Watchlist', active: true }];
       case 'loan_products':
@@ -771,6 +777,8 @@ export const App: React.FC = () => {
       navTarget === 'new-loan' ||
       navTarget === 'apply_loan' ||
       navTarget === 'apply-loan' ||
+      navTarget === 'apply' ||
+      navTarget === '/apply' ||
       navTarget === 'new-application' ||
       navTarget === '/apply-loan'
     ) {
@@ -804,17 +812,23 @@ export const App: React.FC = () => {
     } else if (
       navTarget === 'repayments' ||
       navTarget === 'repayment_schedule' ||
+      navTarget === 'repayment-schedule' ||
+      navTarget === '/repayment-schedule' ||
       navTarget === '/repayments'
     ) {
       targetPath = '/repayments';
     } else if (
+      navTarget === 'pay_installment' ||
+      navTarget === 'pay-installment' ||
+      navTarget === '/pay-installment' ||
       navTarget === 'cashier' ||
       navTarget === 'cashier_desk' ||
       navTarget === 'payments' ||
       navTarget === 'admin_payments' ||
       navTarget === 'my_repayments' ||
       navTarget === '/admin/payments' ||
-      navTarget === '/admin/cashier'
+      navTarget === '/admin/cashier' ||
+      navTarget === '/payments'
     ) {
       targetPath = isAdmin ? '/admin/payments' : '/payments';
     } else if (navTarget === 'overdue' || navTarget === 'admin_overdue' || navTarget === '/admin/overdue') {
@@ -891,7 +905,7 @@ export const App: React.FC = () => {
       setActiveTab('loan_products');
     } else if (targetPath === '/admin/applications' || targetPath === '/applications') {
       setActiveTab('applications');
-    } else if (targetPath === '/apply-loan') {
+    } else if (targetPath === '/apply-loan' || targetPath === '/apply') {
       setActiveTab('new-application');
     } else if (targetPath === '/admin/credit_reviews' || targetPath === '/admin/credit-reviews') {
       setActiveTab('credit_reviews');
@@ -901,10 +915,12 @@ export const App: React.FC = () => {
       setActiveTab('disbursements');
     } else if (targetPath === '/admin/loans' || targetPath === '/loans') {
       setActiveTab('loans');
-    } else if (targetPath === '/repayments') {
+    } else if (targetPath === '/repayments' || targetPath === '/repayment-schedule') {
       setActiveTab('repayments');
-    } else if (targetPath === '/admin/payments' || targetPath === '/payments') {
-      setActiveTab(isBorrower ? 'repayments' : 'cashier');
+    } else if (targetPath === '/admin/payments') {
+      setActiveTab('cashier');
+    } else if (targetPath === '/payments' || targetPath === '/pay-installment') {
+      setActiveTab(isBorrower ? 'pay_installment' : 'cashier');
     } else if (targetPath === '/admin/overdue') {
       setActiveTab('overdue');
     } else if (targetPath === '/admin/reports') {
@@ -1418,15 +1434,24 @@ export const App: React.FC = () => {
           )}
 
           {activeTab === 'new-application' && (
-            <LoanApplicationWizard
-              borrowers={borrowers}
-              products={products}
-              currency={currency}
-              currentUser={currentUser}
-              currentUserRole={activeRole}
-              onCancel={() => handleNavSelection(isBorrowerRole ? 'my-loans' : 'applications')}
-              onSubmitApplication={handleApplicationSubmit}
-            />
+            isBorrowerRole ? (
+              <BorrowerApplyLoanView
+                currentUser={currentUser}
+                currency={currency}
+                onNavigate={handleNavSelection}
+                onSubmitSuccess={() => reloadAllData()}
+              />
+            ) : (
+              <LoanApplicationWizard
+                borrowers={borrowers}
+                products={products}
+                currency={currency}
+                currentUser={currentUser}
+                currentUserRole={activeRole}
+                onCancel={() => handleNavSelection('applications')}
+                onSubmitApplication={handleApplicationSubmit}
+              />
+            )
           )}
 
           {/* SCREEN 3: Credit Review Queue & DTI Risk Workbench */}
@@ -1540,6 +1565,18 @@ export const App: React.FC = () => {
             />
           )}
 
+          {/* SCREEN: Dedicated Borrower Pay Installment (Bakong KHQR) */}
+          {activeTab === 'pay_installment' && (
+            <BorrowerPayInstallmentView
+              currentUser={currentUser}
+              currency={currency}
+              initialAmountUSD={122.50}
+              initialInstallmentNo={5}
+              onNavigate={handleNavSelection}
+              onPaymentSettled={() => reloadAllData()}
+            />
+          )}
+
           {/* SCREEN 7: Overdue Delinquency Watchlist */}
           {activeTab === 'overdue' && (
             <OverdueWatchlist
@@ -1650,32 +1687,59 @@ export const App: React.FC = () => {
 
           {/* SCREEN 15: User Profile */}
           {activeTab === 'profile' && (
-            <UserProfileView
-              currentUser={currentUser}
-              onUpdateUser={(updated) => setCurrentUser(updated)}
-              onChangePassword={() => handleNavSelection('/settings/change-password')}
-            />
+            isBorrowerRole ? (
+              <BorrowerProfileView
+                currentUser={currentUser}
+                currency={currency}
+                onNavigate={handleNavSelection}
+              />
+            ) : (
+              <UserProfileView
+                currentUser={currentUser}
+                onUpdateUser={(updated) => setCurrentUser(updated)}
+                onChangePassword={() => handleNavSelection('/settings/change-password')}
+              />
+            )
           )}
 
           {/* SCREEN 16: Standard User Settings */}
           {activeTab === 'user_settings' && (
-            <UserSettingsView
-              currentUser={currentUser}
-              currency={currency}
-              onToggleCurrency={(c) => setCurrency(c)}
-              onChangePassword={() => handleNavSelection('/settings/change-password')}
-              onShowToast={(msg) => alert(msg)}
-            />
+            isBorrowerRole ? (
+              <BorrowerSettingsView
+                currentUser={currentUser}
+                currency={currency}
+                onToggleCurrency={(c) => setCurrency(c)}
+                onNavigate={handleNavSelection}
+                onShowToast={(msg) => alert(msg)}
+              />
+            ) : (
+              <UserSettingsView
+                currentUser={currentUser}
+                currency={currency}
+                onToggleCurrency={(c) => setCurrency(c)}
+                onChangePassword={() => handleNavSelection('/settings/change-password')}
+                onShowToast={(msg) => alert(msg)}
+              />
+            )
           )}
 
           {/* SCREEN 17: User Repayment Schedule */}
           {activeTab === 'repayments' && (
-            <UserRepaymentsView
-              loans={isBorrowerRole ? userDisplayLoans : loans}
-              currentUser={currentUser}
-              currency={currency}
-              onOpenPaymentForLoan={(loanId, instNo, amt) => openPaymentForBorrowerOrStaff(loanId, instNo, amt)}
-            />
+            isBorrowerRole ? (
+              <BorrowerRepaymentScheduleView
+                currentUser={currentUser}
+                currency={currency}
+                onNavigate={handleNavSelection}
+                onOpenPayInstallment={(cycle, amt) => handleNavSelection('/pay-installment')}
+              />
+            ) : (
+              <UserRepaymentsView
+                loans={loans}
+                currentUser={currentUser}
+                currency={currency}
+                onOpenPaymentForLoan={(loanId, instNo, amt) => openPaymentForBorrowerOrStaff(loanId, instNo, amt)}
+              />
+            )
           )}
         </div>
       </AppLayout>

@@ -161,7 +161,7 @@ export const USER_SECTIONS: NavSectionConfig[] = [
         path: '/apply-loan',
         icon: FilePlus2,
         requiredRole: 'USER',
-        aliases: ['/apply-loan', '/applications', '/user/apply_loan', '/user/applications'],
+        aliases: ['/apply-loan', '/apply', '/applications', '/user/apply_loan', '/user/applications'],
       },
       {
         id: 'user_repayments',
@@ -169,7 +169,7 @@ export const USER_SECTIONS: NavSectionConfig[] = [
         path: '/repayments',
         icon: Calendar,
         requiredRole: 'USER',
-        aliases: ['/repayments', '/user/repayment_schedule', '/user/repayments'],
+        aliases: ['/repayments', '/repayment-schedule', '/user/repayment_schedule', '/user/repayments'],
       },
       {
         id: 'user_payments',
@@ -177,7 +177,7 @@ export const USER_SECTIONS: NavSectionConfig[] = [
         path: '/payments',
         icon: Wallet,
         requiredRole: 'USER',
-        aliases: ['/payments', '/user/payments', '/user/my_repayments'],
+        aliases: ['/payments', '/pay-installment', '/user/payments', '/user/my_repayments'],
       },
     ],
   },
@@ -190,7 +190,7 @@ export const USER_SECTIONS: NavSectionConfig[] = [
         path: '/profile',
         icon: Shield,
         requiredRole: 'USER',
-        aliases: ['/profile', '/user/profile', '/admin/profile'],
+        aliases: ['/profile', '/my-profile', '/user/profile', '/admin/profile'],
       },
       {
         id: 'user_settings',

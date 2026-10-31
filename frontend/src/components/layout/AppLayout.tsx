@@ -152,24 +152,40 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
 
 
-  const currentNav = navLinks.find(
-    l => l.id === activeNav ||
-         l.path === activeNav ||
-         l.path === currentPath ||
-         (l.id === 'borrowers' && (
-           activeNav === 'borrowers' ||
-           activeNav === 'admin_borrowers' ||
-           activeNav === 'borrower-detail' ||
-           activeNav === '/admin/borrowers' ||
-           currentPath === '/admin/borrowers'
-         )) ||
-         (l.id === 'borrower_dashboard' && (
-           activeNav === 'borrower_dashboard' ||
-           activeNav === 'user_dashboard' ||
-           currentPath === '/my-loans' ||
-           currentPath === '/portal'
-         ))
-  ) || navLinks[0];
+    const isItemActive = (item: LayoutNavLink) => {
+    if (activeNav === item.id || activeNav === item.path || currentPath === item.path) return true;
+    if (item.id === 'borrowers') {
+      return ['borrowers', 'admin_borrowers', 'borrower-detail', '/admin/borrowers'].includes(activeNav) ||
+        currentPath === '/admin/borrowers';
+    }
+    if (item.id === 'borrower_dashboard') {
+      return ['borrower_dashboard', 'user_dashboard', 'my-loans', '/my-loans', 'portal', '/portal', '/'].includes(activeNav) ||
+        ['/my-loans', '/portal', '/'].includes(currentPath);
+    }
+    if (item.id === 'new-application') {
+      return ['new-application', 'apply-loan', '/apply-loan', 'apply', '/apply'].includes(activeNav) ||
+        ['/apply-loan', '/apply'].includes(currentPath);
+    }
+    if (item.id === 'repayments') {
+      return ['repayments', '/repayments', 'repayment-schedule', '/repayment-schedule', 'user_repayments'].includes(activeNav) ||
+        ['/repayments', '/repayment-schedule'].includes(currentPath);
+    }
+    if (item.id === 'cashier') {
+      return ['cashier', 'payments', '/payments', 'pay_installment', 'pay-installment', '/pay-installment', 'user_payments'].includes(activeNav) ||
+        ['/payments', '/pay-installment'].includes(currentPath);
+    }
+    if (item.id === 'profile') {
+      return ['profile', '/profile', 'my-profile', '/my-profile', 'user_profile'].includes(activeNav) ||
+        ['/profile', '/my-profile'].includes(currentPath);
+    }
+    if (item.id === 'settings') {
+      return ['settings', '/settings', 'user_settings', 'system_config', '/admin/settings'].includes(activeNav) ||
+        ['/settings', '/admin/settings'].includes(currentPath);
+    }
+    return false;
+  };
+
+  const currentNav = navLinks.find(isItemActive) || navLinks[0];
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-950 text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-slate-950">
@@ -226,34 +242,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         <nav className="flex-1 py-4 px-3 space-y-1.5 overflow-y-auto">
           {navLinks.map((item) => {
             const Icon = item.icon;
-            const isActive =
-              activeNav === item.id ||
-              activeNav === item.path ||
-              currentPath === item.path ||
-              (item.id === 'borrowers' && (
-                activeNav === 'borrowers' ||
-                activeNav === 'admin_borrowers' ||
-                activeNav === 'borrower-detail' ||
-                activeNav === '/admin/borrowers' ||
-                currentPath === '/admin/borrowers'
-              )) ||
-              (item.id === 'borrower_dashboard' && (
-                activeNav === 'borrower_dashboard' ||
-                activeNav === 'user_dashboard' ||
-                activeNav === 'my-loans' ||
-                activeNav === '/my-loans' ||
-                activeNav === '/portal' ||
-                activeNav === '/' ||
-                currentPath === '/my-loans' ||
-                currentPath === '/portal' ||
-                currentPath === '/'
-              )) ||
-              (item.id === 'new-application' && (
-                activeNav === 'new-application' ||
-                activeNav === 'apply-loan' ||
-                activeNav === '/apply-loan' ||
-                currentPath === '/apply-loan'
-              ));
+            const isActive = isItemActive(item);
             return (
               <button
                 key={item.id}
@@ -445,17 +434,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
               <div className="space-y-1 flex-1">
                 {navLinks.map(item => {
-                  const isActive =
-                    activeNav === item.id ||
-                    activeNav === item.path ||
-                    currentPath === item.path ||
-                    (item.id === 'borrowers' && (
-                      activeNav === 'borrowers' ||
-                      activeNav === 'admin_borrowers' ||
-                      activeNav === 'borrower-detail' ||
-                      activeNav === '/admin/borrowers' ||
-                      currentPath === '/admin/borrowers'
-                    ));
+                  const isActive = isItemActive(item);
                   return (
                     <button
                       key={item.id}

@@ -5,7 +5,6 @@ import { createApp } from './app';
 import { prisma } from './config/prisma';
 import { initOverdueCronJob, stopOverdueCronJob } from './modules/overdue/overdue.cron';
 import { initRegistrationCleanupCron, stopRegistrationCleanupCron } from './modules/auth/registration-cleanup.cron';
-
 import { ensureDatabaseConnected, stopWslKeeper } from './config/db-keeper';
 
 const PORT = parseInt(process.env.PORT || '5000', 10);
@@ -42,6 +41,15 @@ async function bootstrap() {
       console.error(`💡 Solution: Run "npm run free-port" to release the port, then rerun "npm run dev".\n`);
       process.exit(1);
     }
+  });
+
+  // Global Exception & Rejection Handlers to keep process resilient
+  process.on('uncaughtException', (err) => {
+    console.error('⚠️ [Server] Uncaught Exception:', err);
+  });
+
+  process.on('unhandledRejection', (reason) => {
+    console.error('⚠️ [Server] Unhandled Rejection:', reason);
   });
 
   // Graceful Shutdown Handlers

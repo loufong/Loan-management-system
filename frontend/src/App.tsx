@@ -419,7 +419,7 @@ export const App: React.FC = () => {
       } else if (path === '/admin/profile') {
         setActiveTab('profile');
 
-      // USER & BORROWER ROUTES
+        // USER & BORROWER ROUTES
       } else if (path === '/portal' || path === '/my-loans') {
         setActiveTab('borrower_dashboard');
       } else if (path === '/applications' || path === '/user/my_applications' || path === '/user/applications') {
@@ -1161,8 +1161,8 @@ export const App: React.FC = () => {
               authOtpPurpose === 'register_verification'
                 ? 'register'
                 : authOtpPurpose === 'login_verification'
-                ? 'login'
-                : 'forgot_password';
+                  ? 'login'
+                  : 'forgot_password';
             setAuthView(backView);
             pushAppRoute(backView === 'register' ? '/register' : backView === 'forgot_password' ? '/forgot-password' : '/login');
           }}
@@ -1487,15 +1487,15 @@ export const App: React.FC = () => {
                   prev.map((a) =>
                     a.id === appId
                       ? {
-                          ...a,
-                          status: 'UNDER_REVIEW',
-                          creditOfficerReview: {
-                            reviewerName: currentUser.name,
-                            recommendation: rec,
-                            notes,
-                            signedAt: new Date().toISOString(),
-                          },
-                        }
+                        ...a,
+                        status: 'UNDER_REVIEW',
+                        creditOfficerReview: {
+                          reviewerName: currentUser.name,
+                          recommendation: rec,
+                          notes,
+                          signedAt: new Date().toISOString(),
+                        },
+                      }
                       : a
                   )
                 );
@@ -1677,7 +1677,7 @@ export const App: React.FC = () => {
               currentUserRole={activeRole}
               onMarkRead={handleMarkNotificationRead}
               onMarkAllRead={async () => {
-                await api.markAllNotificationsRead().catch(() => {});
+                await api.markAllNotificationsRead().catch(() => { });
                 setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
               }}
               onNavigateToAction={(linkId, category) => {

@@ -15,6 +15,10 @@
 
     <!-- Dynamic Base Resolution for Localhost & GitHub Pages -->
     <script type="text/javascript">
+      try {
+        localStorage.removeItem('apex_session_locked');
+        localStorage.removeItem('apex_staff_pin');
+      } catch(e) {}
       (function() {
         var host = window.location.hostname;
         var isLocal = host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0' || host.startsWith('192.168.');
@@ -56,7 +60,7 @@
         justify-content: center;
         background: radial-gradient(circle at 50% 25%, #0F172A 0%, #090E1A 60%, #030712 100%);
         color: #F8FAFC;
-        font-family: 'Suwannaphum', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-family: 'Inter', 'Suwannaphum', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.45s;
         overflow: hidden;
         -webkit-user-select: none;
@@ -245,8 +249,8 @@
         word-break: break-all;
       }
     </style>
-    <script type="module" crossorigin src="/Loan-management-system/assets/index-DSevB74_.js"></script>
-    <link rel="stylesheet" crossorigin href="/Loan-management-system/assets/index-BM5FZpae.css">
+    <script type="module" crossorigin src="/Loan-management-system/assets/index-C05noLvF.js"></script>
+    <link rel="stylesheet" crossorigin href="/Loan-management-system/assets/index-BUHi1T0-.css">
   </head>
   <body class="bg-[#F8FAFC] text-[#0F172A] font-sans antialiased selection:bg-[#2563EB] selection:text-white">
     <!-- Smooth Animated Preloader Screen -->

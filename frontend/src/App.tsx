@@ -92,9 +92,6 @@ import { UserRepaymentsView } from './components/loans/UserRepaymentsView';
 import { useAuth } from './context/AuthContext';
 import { useLanguage } from './context/LanguageContext';
 
-import { PinAuthModal } from './components/auth/PinAuthModal';
-import { PinLockScreen } from './components/auth/PinLockScreen';
-import { useIdleTimer } from './hooks/useIdleTimer';
 
 type AuthView = 'login' | 'register' | 'otp_verify' | 'forgot_password' | 'set_new_password';
 
@@ -502,15 +499,14 @@ export const App: React.FC = () => {
     replaceAppRoute('/login');
   };
 
-  // Session Inactivity & 6-Digit PIN Quick Lock (Login Prompts 4 & 5)
-  const { isLocked: isIdleLocked, unlockSession } = useIdleTimer({
-    lockTimeoutMs: 5 * 60 * 1000,    // 5 minutes idle -> PIN lock overlay
-    logoutTimeoutMs: 15 * 60 * 1000, // 15 minutes idle -> automatic logout
-    onLogout: () => {
-      handleLogout();
-    },
-    enabled: authIsAuthenticated,
-  });
+  // Inactivity Lock permanently disabled
+  useEffect(() => {
+    try {
+      localStorage.removeItem('apex_session_locked');
+    } catch {
+      // ignore
+    }
+  }, []);
 
   // Domain Entity State (Initialized for real database persistence)
   const [borrowers, setBorrowers] = useState<Borrower[]>([]);
@@ -772,9 +768,11 @@ export const App: React.FC = () => {
     } else if (
       navTarget === 'new-loan' ||
       navTarget === 'apply_loan' ||
+      navTarget === 'apply-loan' ||
+      navTarget === 'new-application' ||
       navTarget === '/apply-loan'
     ) {
-      targetPath = isAdmin ? '/admin/applications' : '/apply-loan';
+      targetPath = '/apply-loan';
     } else if (
       navTarget === 'credit_reviews' ||
       navTarget === 'admin_credit_reviews' ||
@@ -858,7 +856,7 @@ export const App: React.FC = () => {
         setActiveTab('borrower_dashboard');
         return;
       }
-      if (targetPath === '/new-loan') {
+      if (targetPath === '/apply-loan' || targetPath === '/new-loan') {
         replaceAppRoute('/apply-loan');
         setCurrentRoute('/apply-loan');
         setActiveTab('new-application');
@@ -1019,7 +1017,7 @@ export const App: React.FC = () => {
     try {
       const created = await api.submitApplication({
         ...appData,
-        borrowerId: appData.borrowerId || currentUser.borrowerId || selectedBorrowerId || activeBorrower?.id,
+        borrowerId: appData.borrowerId || currentUser.borrowerId || selectedBorrowerId || activeBorrower?.id || 'BOR-2026-0001',
         productId: appData.productId || products[0]?.id,
         requestedAmountUSD: appData.requestedAmountUSD || 5000,
         requestedTermMonths: appData.requestedTermMonths || 12,
@@ -1028,8 +1026,16 @@ export const App: React.FC = () => {
       });
       await reloadAllData();
       if (created?.id) setSelectedApplicationId(created.id);
-      setActiveTab('applications');
-      alert(`Application ${created?.applicationNo || 'created'} ${isDraft ? 'saved as draft' : 'submitted for underwriting'}!`);
+      if (isBorrowerRole) {
+        setActiveTab('borrower_dashboard');
+        replaceAppRoute('/my-loans');
+        setCurrentRoute('/my-loans');
+      } else {
+        setActiveTab('applications');
+        replaceAppRoute('/admin/applications');
+        setCurrentRoute('/admin/applications');
+      }
+      alert(`Application ${created?.applicationNo || 'submitted'} ${isDraft ? 'saved as draft' : 'submitted for underwriting'}!`);
     } catch (err: any) {
       console.error('Submission error:', err);
       alert(`Failed to submit application: ${err.message || 'Error occurred'}`);
@@ -1329,7 +1335,7 @@ export const App: React.FC = () => {
                 applications={applications}
                 receipts={receipts}
                 onNavigate={handleNavSelection}
-                onOpenApplyLoan={() => setActiveTab('new-application')}
+                onOpenApplyLoan={() => handleNavSelection('new-application')}
                 onOpenQuickPayment={(loanId, instNo, amt) => openPaymentForBorrowerOrStaff(loanId, instNo, amt)}
                 onViewReceipt={(rec) => setActiveReceiptModal(rec)}
               />
@@ -1345,7 +1351,7 @@ export const App: React.FC = () => {
               applications={userDisplayApps}
               receipts={userDisplayReceipts}
               onNavigate={handleNavSelection}
-              onOpenApplyLoan={() => setActiveTab('new-application')}
+              onOpenApplyLoan={() => handleNavSelection('new-application')}
               onOpenQuickPayment={(loanId, instNo, amt) => openPaymentForBorrowerOrStaff(loanId, instNo, amt)}
               onViewReceipt={(rec) => setActiveReceiptModal(rec)}
             />
@@ -1416,7 +1422,7 @@ export const App: React.FC = () => {
               currency={currency}
               currentUser={currentUser}
               currentUserRole={activeRole}
-              onCancel={() => setActiveTab('applications')}
+              onCancel={() => handleNavSelection(isBorrowerRole ? 'my-loans' : 'applications')}
               onSubmitApplication={handleApplicationSubmit}
             />
           )}
@@ -1774,26 +1780,6 @@ export const App: React.FC = () => {
           onSuccess={async (receipt) => {
             await reloadAllData();
             setActiveReceiptModal(receipt);
-          }}
-        />
-      )}
-      {/* 6-Digit PIN Quick-Access Screen for 5-minute Inactivity Lock (Login UI Prompt 4) */}
-      {isIdleLocked && authIsAuthenticated && (
-        <PinLockScreen
-          user={{
-            fullName: currentUser.fullName || currentUser.name || 'Sophea Kem',
-            name: currentUser.name || currentUser.fullName || 'Sophea Kem',
-            role: (currentUser.role || 'teller').toLowerCase(),
-            branch: currentUser.branch || 'Daun Penh',
-            avatar: currentUser.avatar,
-            storedPin: '123456',
-          }}
-          onSuccess={() => {
-            unlockSession();
-          }}
-          onFallbackPassword={() => {
-            unlockSession();
-            handleLogout();
           }}
         />
       )}

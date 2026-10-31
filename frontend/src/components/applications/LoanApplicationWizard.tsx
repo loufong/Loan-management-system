@@ -298,7 +298,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
       borrowerAvatar: selectedBorrower?.avatarUrl,
       borrowerIncomeUSD: selectedBorrower?.monthlyIncomeUSD,
       productId: selectedProduct?.id || selectedProductId,
-      productName: selectedProduct?.name || 'Standard Credit Facility',
+      productName: getProductName(selectedProduct),
       requestedAmountUSD: requestedAmount,
       requestedTermMonths: requestedTerm,
       frequency,
@@ -315,147 +315,220 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
     }, 400);
   };
 
-  const getProductCategoryIcon = (category: string) => {
+  const getProductName = (prod?: any): string => {
+    if (!prod) return 'Loan Facility';
+    return prod.name || prod.productName || 'Loan Facility';
+  };
+
+  const getProductCategory = (prod?: any): string => {
+    if (prod?.category) return prod.category;
+    const title = (prod?.name || prod?.productName || '').toLowerCase();
+    if (title.includes('agri') || title.includes('farm')) return 'Agriculture';
+    if (title.includes('business') || title.includes('sme')) return 'Business';
+    if (title.includes('vehicle') || title.includes('car') || title.includes('moto')) return 'Vehicle';
+    if (title.includes('emergency') || title.includes('urgent')) return 'Emergency';
+    return 'Personal';
+  };
+
+  const getCategoryTheme = (category: string) => {
     switch (category?.toLowerCase()) {
-      case 'personal':
-        return <Home className="w-4 h-4 text-slate-700" />;
-      case 'business':
-        return <Briefcase className="w-4 h-4 text-blue-600" />;
       case 'agriculture':
-        return <Sprout className="w-4 h-4 text-emerald-600" />;
+        return {
+          icon: <Sprout className="w-4 h-4 text-emerald-600" />,
+          badgeBg: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
+          iconBg: 'bg-emerald-50 border border-emerald-200/60',
+          label: language === 'km' ? 'កសិកម្ម' : 'Agriculture',
+        };
+      case 'business':
+        return {
+          icon: <Briefcase className="w-4 h-4 text-indigo-600" />,
+          badgeBg: 'bg-indigo-50 text-indigo-700 border-indigo-200/80',
+          iconBg: 'bg-indigo-50 border border-indigo-200/60',
+          label: language === 'km' ? 'អាជីវកម្ម SME' : 'SME Business',
+        };
       case 'vehicle':
-        return <Car className="w-4 h-4 text-amber-600" />;
+        return {
+          icon: <Car className="w-4 h-4 text-amber-600" />,
+          badgeBg: 'bg-amber-50 text-amber-700 border-amber-200/80',
+          iconBg: 'bg-amber-50 border border-amber-200/60',
+          label: language === 'km' ? 'យានយន្ត' : 'Vehicle',
+        };
       case 'emergency':
-        return <Zap className="w-4 h-4 text-rose-600" />;
+        return {
+          icon: <Zap className="w-4 h-4 text-rose-600" />,
+          badgeBg: 'bg-rose-50 text-rose-700 border-rose-200/80',
+          iconBg: 'bg-rose-50 border border-rose-200/60',
+          label: language === 'km' ? 'បន្ទាន់' : 'Emergency',
+        };
+      case 'personal':
       default:
-        return <Building className="w-4 h-4 text-slate-700" />;
+        return {
+          icon: <Home className="w-4 h-4 text-blue-600" />,
+          badgeBg: 'bg-blue-50 text-blue-700 border-blue-200/80',
+          iconBg: 'bg-blue-50 border border-blue-200/60',
+          label: language === 'km' ? 'បុគ្គល & ការសិក្សា' : 'Personal & Education',
+        };
     }
   };
 
+  const isBorrowerMode = ['BORROWER', 'CLIENT', 'USER'].includes((currentUserRole || '').toUpperCase());
+
   return (
-    <div className="max-w-5xl mx-auto space-y-5">
-      {/* 1. Header Toolbar */}
-      <div className="flex items-center justify-between bg-white px-5 py-3.5 rounded-lg border border-slate-200">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onCancel}
-            className="p-1.5 -ml-1 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors"
-            title="Return"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-          <div>
-            <h1 className="text-base font-bold text-slate-900 leading-none">
-              {t('wizard_apply_title', 'Apply for Loan')}
-            </h1>
-            <p className="text-xs text-slate-500 mt-1">
-              {language === 'km' ? 'បំពេញពាក្យស្នើសុំរបស់អ្នកតាម ៤ ជំហានងាយៗ' : 'Complete your request in 4 simple steps'}
-            </p>
-          </div>
+    <div className="max-w-5xl mx-auto font-sans">
+      {/* Unified Master Wizard Card */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
+        
+        {/* Top Active Progress Track */}
+        <div className="w-full h-1 bg-slate-100">
+          <div
+            className="h-full bg-blue-600 transition-all duration-300 ease-in-out"
+            style={{ width: `${(currentStep / 4) * 100}%` }}
+          />
         </div>
 
-        {/* Currency Switcher & Step Indicator */}
-        <div className="flex items-center gap-3">
-          <div className="inline-flex p-0.5 bg-slate-100 rounded-md border border-slate-200">
+        {/* 1. Header Toolbar */}
+        <div className="px-5 py-4 sm:px-7 sm:py-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
             <button
               type="button"
-              onClick={() => setCalcCurrency('USD')}
-              className={`px-2.5 py-1 text-xs font-semibold rounded transition-colors ${
-                calcCurrency === 'USD' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
-              }`}
+              onClick={onCancel}
+              className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors shadow-2xs"
+              title="Return"
             >
-              USD ($)
+              <ArrowLeft className="w-4 h-4" />
             </button>
-            <button
-              type="button"
-              onClick={() => setCalcCurrency('KHR')}
-              className={`px-2.5 py-1 text-xs font-semibold rounded transition-colors ${
-                calcCurrency === 'KHR' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              KHR (៛)
-            </button>
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h1 className="text-base sm:text-lg font-bold text-slate-900 leading-none">
+                  {t('wizard_apply_title', 'Apply for Credit Facility')}
+                </h1>
+                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 font-mono">
+                  {language === 'km' ? `ជំហាន ${currentStep} / ៤` : `Step ${currentStep} of 4`}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                {language === 'km'
+                  ? 'បំពេញពាក្យស្នើសុំរបស់អ្នកតាម ៤ ជំហានងាយៗ និងរហ័ស'
+                  : 'Fast-track financing application: Facility, Terms, Documents & Verification'}
+              </p>
+            </div>
           </div>
-          <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">
-            {language === 'km' ? `ជំហានទី ${currentStep} នៃ ៤` : `Step ${currentStep} of 4`}
-          </span>
-        </div>
-      </div>
 
-      {/* 2. Stepper Progress Bar */}
-      <div className="bg-white border border-slate-200 rounded-lg p-3">
-        <div className="grid grid-cols-4 gap-2">
-          {wizardSteps.map((s) => {
-            const isCompleted = currentStep > s.id;
-            const isCurrent = currentStep === s.id;
-            const isClickable = s.id < currentStep;
-
-            return (
+          {/* Currency Switcher */}
+          <div className="flex items-center gap-3 self-start sm:self-auto">
+            <span className="text-xs text-slate-400 font-medium hidden sm:inline">Currency:</span>
+            <div className="inline-flex p-1 bg-slate-100 rounded-lg border border-slate-200/80">
               <button
-                key={s.id}
                 type="button"
-                disabled={!isClickable}
-                onClick={() => isClickable && setCurrentStep(s.id as any)}
-                className={`flex items-center gap-2 p-2 rounded-md transition-all text-left ${
-                  isCurrent
-                    ? 'bg-slate-900 text-white'
-                    : isCompleted
-                    ? 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 cursor-pointer'
-                    : 'text-slate-400 cursor-default'
+                onClick={() => setCalcCurrency('USD')}
+                className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                  calcCurrency === 'USD'
+                    ? 'bg-white text-slate-900 shadow-2xs font-bold'
+                    : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
-                <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                USD ($)
+              </button>
+              <button
+                type="button"
+                onClick={() => setCalcCurrency('KHR')}
+                className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                  calcCurrency === 'KHR'
+                    ? 'bg-white text-slate-900 shadow-2xs font-bold'
+                    : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                KHR (៛)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* 2. Integrated Stepper Track */}
+        <div className="bg-slate-50/70 border-b border-slate-100 px-5 py-3 sm:px-7">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {wizardSteps.map((s) => {
+              const isCompleted = currentStep > s.id;
+              const isCurrent = currentStep === s.id;
+              const isClickable = s.id < currentStep;
+
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  disabled={!isClickable}
+                  onClick={() => isClickable && setCurrentStep(s.id as any)}
+                  className={`flex items-center gap-2.5 p-2 rounded-lg transition-all text-left ${
                     isCurrent
-                      ? 'bg-white text-slate-900'
+                      ? 'bg-white border border-slate-200 shadow-2xs text-slate-900 ring-1 ring-slate-900/5'
                       : isCompleted
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-slate-100 text-slate-400 border border-slate-200'
+                      ? 'bg-emerald-50/70 border border-emerald-200/70 text-emerald-800 hover:bg-emerald-100/70 cursor-pointer'
+                      : 'text-slate-400 border border-transparent cursor-default'
                   }`}
                 >
-                  {isCompleted ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : s.id}
-                </div>
-                <span className="text-xs font-semibold truncate hidden sm:inline">
-                  {s.title}
-                </span>
-              </button>
-            );
-          })}
+                  <div
+                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors ${
+                      isCurrent
+                        ? 'bg-blue-600 text-white shadow-2xs'
+                        : isCompleted
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-200/80 text-slate-500'
+                    }`}
+                  >
+                    {isCompleted ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : s.id}
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
+                      Step 0${s.id}
+                    </span>
+                    <span className={`text-xs font-semibold truncate block ${
+                      isCurrent ? 'text-slate-900 font-bold' : isCompleted ? 'text-emerald-800' : 'text-slate-500'
+                    }`}>
+                      {s.title}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
 
-      {/* 3. Main Step Surface */}
-      <div className="bg-white border border-slate-200 rounded-lg p-6">
+        {/* 3. Main Step Surface */}
+        <div className="p-6 sm:p-7">
         {/* ================================================================ */}
         {/* STEP 1: PRODUCT SELECTION                                       */}
         {/* ================================================================ */}
         {currentStep === 1 && (
           <div className="space-y-5">
             {/* Applicant Profile Card */}
-            {currentUserRole === 'USER' ? (
-              <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-lg border border-slate-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center">
+            {isBorrowerMode ? (
+              <div className="p-4 rounded-xl bg-gradient-to-r from-slate-50 via-slate-50/80 to-blue-50/30 border border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-2xs">
                     {(selectedBorrower?.fullName || currentUser?.name || 'ME').slice(0, 2).toUpperCase()}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-slate-900">
+                      <span className="text-xs sm:text-sm font-bold text-slate-900">
                         {selectedBorrower?.fullName || currentUser?.name || 'Applicant'}
                       </span>
-                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-semibold px-2 py-0.5 rounded">
-                        Verified
+                      <span className="inline-flex items-center gap-1 text-[11px] bg-emerald-100/80 text-emerald-800 font-semibold px-2 py-0.5 rounded-full border border-emerald-200">
+                        <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                        Verified Borrower
                       </span>
                     </div>
-                    <span className="text-[11px] text-slate-500 font-mono">
-                      ID: {selectedBorrower?.borrowerId || currentUser?.borrowerId || 'BOR-2026-0001'}
+                    <span className="text-[11px] text-slate-500 font-mono mt-0.5 block">
+                      Borrower ID: {selectedBorrower?.borrowerId || currentUser?.borrowerId || 'BOR-2026-0001'}
                     </span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <span className="text-[10px] uppercase font-semibold text-slate-500 block">Monthly Income</span>
-                  <span className="text-xs font-bold text-slate-900 font-mono">
-                    <MoneyText amount={selectedBorrower?.monthlyIncomeUSD || 2800} currency={calcCurrency} />/mo
+                <div className="sm:text-right bg-white sm:bg-transparent p-2.5 sm:p-0 rounded-lg border sm:border-0 border-slate-100">
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">
+                    Verified Monthly Income
+                  </span>
+                  <span className="text-xs sm:text-sm font-bold text-slate-900 font-mono">
+                    <MoneyText amount={selectedBorrower?.monthlyIncomeUSD || 2800} currency={calcCurrency} />
+                    <span className="text-slate-400 font-normal text-xs"> / month</span>
                   </span>
                 </div>
               </div>
@@ -527,55 +600,88 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
             )}
 
             {/* Loan Products Grid */}
-            <div className="space-y-2.5 pt-2">
-              <label className="text-xs font-semibold text-slate-900 block">Choose Loan Facility</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-xs sm:text-sm font-bold text-slate-900 block">
+                    Choose Credit Facility
+                  </label>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Select a tailored lending product matching your capital requirements
+                  </p>
+                </div>
+                <span className="text-xs font-mono font-semibold text-slate-400">
+                  {products.length} Facilities Available
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {products.map((prod) => {
                   const isSelected = prod.id === selectedProductId;
+                  const prodName = getProductName(prod);
+                  const prodCategory = getProductCategory(prod);
+                  const theme = getCategoryTheme(prodCategory);
+
                   return (
                     <div
                       key={prod.id}
                       onClick={() => handleSelectProduct(prod)}
-                      className={`p-4 rounded-lg border cursor-pointer transition-all flex flex-col justify-between relative ${
+                      className={`group relative p-4 sm:p-5 rounded-xl border text-left cursor-pointer transition-all duration-200 flex flex-col justify-between ${
                         isSelected
-                          ? 'border-slate-900 bg-slate-50/80 shadow-xs ring-1 ring-slate-900'
-                          : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/40'
+                          ? 'bg-blue-50/40 border-blue-600 ring-2 ring-blue-600/20 shadow-xs'
+                          : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-2xs hover:bg-slate-50/30'
                       }`}
                     >
                       <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="w-8 h-8 rounded-md bg-slate-100 border border-slate-200 flex items-center justify-center">
-                            {getProductCategoryIcon(prod.category)}
+                        {/* Top Badges Row */}
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${theme.iconBg}`}>
+                              {theme.icon}
+                            </div>
+                            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border ${theme.badgeBg}`}>
+                              {theme.label}
+                            </span>
                           </div>
-                          <span className="text-xs font-bold font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-700">
-                            {prod.interestRate}% APR
-                          </span>
+
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-bold font-mono px-2 py-0.5 rounded-full bg-slate-900 text-white">
+                              {prod.interestRate}% APR
+                            </span>
+                            {isSelected && (
+                              <div className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-2xs">
+                                <Check className="w-3 h-3 stroke-[3]" />
+                              </div>
+                            )}
+                          </div>
                         </div>
 
-                        <h3 className="text-xs font-bold text-slate-900">{prod.name}</h3>
-                        <p className="text-[11px] text-slate-500 mt-1 line-clamp-1">{prod.description}</p>
+                        {/* Title & Description */}
+                        <h3 className={`text-xs sm:text-sm font-bold transition-colors ${
+                          isSelected ? 'text-blue-900' : 'text-slate-900 group-hover:text-blue-600'
+                        }`}>
+                          {prodName}
+                        </h3>
+                        <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                          {prod.description}
+                        </p>
                       </div>
 
-                      <div className="mt-3 pt-2.5 border-t border-slate-200/80 space-y-1 text-[11px] font-mono">
-                        <div className="flex justify-between text-slate-500">
-                          <span>Amount:</span>
+                      {/* Facility Limits */}
+                      <div className="mt-4 pt-3 border-t border-slate-100 space-y-1.5 text-xs font-mono">
+                        <div className="flex justify-between items-center text-slate-500">
+                          <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 font-sans">Credit Limit:</span>
                           <span className="font-semibold text-slate-900">
-                            <MoneyText amount={prod.minAmount} currency={calcCurrency} /> – <MoneyText amount={prod.maxAmount} currency={calcCurrency} />
+                            <MoneyText amount={Number(prod.minAmount)} currency={calcCurrency} /> – <MoneyText amount={Number(prod.maxAmount)} currency={calcCurrency} />
                           </span>
                         </div>
-                        <div className="flex justify-between text-slate-500">
-                          <span>Tenure:</span>
+                        <div className="flex justify-between items-center text-slate-500">
+                          <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 font-sans">Tenure:</span>
                           <span className="font-semibold text-slate-900">
-                            {prod.minTerm} to {prod.maxTerm} mos
+                            {prod.minTerm} to {prod.maxTerm} months
                           </span>
                         </div>
                       </div>
-
-                      {isSelected && (
-                        <div className="absolute top-3 right-3 w-4 h-4 rounded-full bg-slate-900 text-white flex items-center justify-center">
-                          <Check className="w-2.5 h-2.5 stroke-[3]" />
-                        </div>
-                      )}
                     </div>
                   );
                 })}
@@ -593,7 +699,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
             <div className="lg:col-span-7 space-y-4">
               {/* Product Badge Header */}
               <div className="p-3 rounded-md bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
-                <span className="font-semibold text-slate-700">{selectedProduct?.name}</span>
+                <span className="font-bold text-slate-900">{getProductName(selectedProduct)}</span>
                 <span className="font-mono font-bold text-blue-600">{selectedProduct?.interestRate}% APR Fixed</span>
               </div>
 
@@ -909,7 +1015,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
               {/* Card 1: Loan Facility */}
               <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2.5">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-                  <span className="font-bold text-slate-900 text-xs">{selectedProduct?.name}</span>
+                  <span className="font-bold text-slate-900 text-xs">{getProductName(selectedProduct)}</span>
                   <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded bg-blue-100 text-blue-800">
                     {calc.rate}% APR
                   </span>
@@ -991,13 +1097,13 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
         )}
 
         {/* 4. Wizard Footer Controls */}
-        <div className="flex items-center justify-between pt-5 mt-6 border-t border-slate-200">
+        <div className="flex items-center justify-between pt-6 mt-8 border-t border-slate-100">
           <div>
             {currentStep > 1 ? (
               <button
                 type="button"
                 onClick={() => setCurrentStep((prev) => (prev - 1) as any)}
-                className="px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-md transition-colors inline-flex items-center gap-1.5"
+                className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-2xs"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>{t('btn_back', 'Back')}</span>
@@ -1006,21 +1112,21 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
               <button
                 type="button"
                 onClick={onCancel}
-                className="px-3.5 py-2 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors"
+                className="px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors"
               >
                 {t('btn_cancel', 'Cancel')}
               </button>
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             {currentStep === 4 ? (
               <>
                 <button
                   type="button"
                   onClick={() => handleFinalSubmit(true)}
                   disabled={isSubmitting}
-                  className="px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-md transition-colors"
+                  className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors shadow-2xs"
                 >
                   {t('wizard_save_draft_btn', 'Save Draft')}
                 </button>
@@ -1028,11 +1134,11 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                   type="button"
                   disabled={!confirmAgreed || isSubmitting}
                   onClick={() => handleFinalSubmit(false)}
-                  className="px-4 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors inline-flex items-center gap-1.5 shadow-xs"
+                  className="px-5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-all inline-flex items-center gap-2 shadow-sm"
                 >
                   {isSubmitting ? (
                     <>
-                      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                       <span>{language === 'km' ? 'កំពុងដាក់ស្នើ...' : 'Submitting...'}</span>
                     </>
                   ) : (
@@ -1047,7 +1153,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
               <button
                 type="button"
                 onClick={() => setCurrentStep((prev) => (prev + 1) as any)}
-                className="px-4 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-md transition-colors inline-flex items-center gap-1.5 shadow-xs"
+                className="px-5 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-all inline-flex items-center gap-2 shadow-sm"
               >
                 <span>{t('btn_continue', 'Continue')}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -1055,6 +1161,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
             )}
           </div>
         </div>
+      </div>
       </div>
 
       {/* Amortization Schedule Modal */}
@@ -1065,7 +1172,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
               <div>
                 <h3 className="text-sm font-bold text-slate-900">Amortization Schedule</h3>
                 <span className="text-xs text-slate-500 font-mono">
-                  {selectedProduct?.name} • {calc.termMonths} mos • {calc.rate}% APR
+                  {getProductName(selectedProduct)} • {calc.termMonths} mos • {calc.rate}% APR
                 </span>
               </div>
               <button

@@ -18,6 +18,9 @@ import {
   Percent,
   Banknote,
   Sparkles,
+  Plus,
+  User,
+  ArrowUpRight,
 } from 'lucide-react';
 import { Currency, LoanAccount, LoanApplication, PaymentReceipt, UserProfile } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
@@ -65,6 +68,14 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
 
   const clientName = (currentUser.name || currentUser.fullName || '').trim().toLowerCase();
   const currentBorrowerId = currentUser.borrowerId || currentUser.id;
+  const displayName = currentUser.fullName || currentUser.name || 'Johnathan Doe';
+  const userInitials = displayName
+    .split(' ')
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || 'JD';
 
   // Filter loans belonging to this borrower
   const userLoans = loans.filter((l) => {
@@ -112,48 +123,105 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
 
   return (
     <div className="space-y-6 font-sans text-[#0F172A] pb-10">
-      {/* 1. Header Banner */}
-      <div className="bg-gradient-to-r from-[#0F172A] via-[#1E293B] to-[#2563EB] rounded-2xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
-        {/* Subtle background glow */}
-        <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-10 -left-10 w-60 h-60 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+      {/* 1. Human-Crafted Warm Welcome Header */}
+      <div className="relative bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-7 shadow-[0_1px_3px_rgba(15,23,42,0.03),0_6px_20px_-6px_rgba(15,23,42,0.04)] overflow-hidden">
+        {/* Subtle decorative top accent line & corner glow */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-500" />
+        <div className="absolute -top-16 -right-16 w-64 h-64 bg-gradient-to-br from-blue-50/70 via-indigo-50/40 to-transparent rounded-full blur-2xl pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-200 text-xs font-semibold backdrop-blur-md">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span>{language === 'km' ? 'ផតថលអតិថិជនឥណទាន • Verified Borrower Portal' : 'Verified Borrower Self-Service Portal'}</span>
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          {/* User Profile & Greeting */}
+          <div className="flex items-start sm:items-center gap-4 sm:gap-5">
+            {/* Avatar with status indicator */}
+            <div className="relative shrink-0">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-slate-900 via-slate-800 to-slate-700 text-white flex items-center justify-center font-bold text-lg sm:text-xl shadow-md shadow-slate-900/10 ring-4 ring-slate-100">
+                {currentUser?.avatar && currentUser.avatar.startsWith('http') ? (
+                  <img
+                    src={currentUser.avatar}
+                    alt={displayName}
+                    className="w-full h-full rounded-2xl object-cover"
+                  />
+                ) : (
+                  userInitials
+                )}
+              </div>
+              <span
+                className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 ring-2 ring-white flex items-center justify-center"
+                title="Account Active & Verified"
+              >
+                <CheckCircle2 className="w-2.5 h-2.5 text-white" />
+              </span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-              {language === 'km' ? `សូមស្វាគមន៍, ${currentUser.name || currentUser.fullName || 'អតិថិជន'}` : `Welcome back, ${currentUser.name || currentUser.fullName || 'Borrower'}`}
-            </h1>
-            <p className="text-slate-300 text-xs md:text-sm leading-relaxed">
-              {language === 'km'
-                ? 'តាមដានស្ថានភាពកម្ចីសកម្ម បង់ប្រាក់រំលស់តាម Bakong KHQR និងពិនិត្យប្រវត្តិនៃការទូទាត់របស់អ្នកបានយ៉ាងងាយស្រួល។'
-                : 'Manage your active credit facilities, settle installments instantly via Bakong KHQR, and monitor your repayment schedule.'}
-            </p>
+
+            {/* Greeting & Meta Info */}
+            <div className="space-y-1.5 min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200/80 text-blue-700 text-[11px] font-semibold tracking-wide">
+                  <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+                  {language === 'km' ? 'គណនីអតិថិជនបានផ្ទៀងផ្ទាត់' : 'Verified Borrower'}
+                </span>
+                {currentUser?.borrowerId && (
+                  <span className="text-[11px] font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                    {currentUser.borrowerId}
+                  </span>
+                )}
+                <span className="text-[11px] text-slate-500 hidden sm:inline-flex items-center gap-1">
+                  • {currentUser?.branch || 'Phnom Penh Main Branch'}
+                </span>
+              </div>
+
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                {language === 'km'
+                  ? `សូមស្វាគមន៍, ${displayName}`
+                  : `Welcome back, ${displayName}`}
+              </h1>
+
+              <p className="text-xs sm:text-sm text-slate-500 leading-relaxed max-w-xl">
+                {language === 'km'
+                  ? 'ទិដ្ឋភាពទូទៅនៃកម្ចីសកម្ម ការទូទាត់រំលស់តាម Bakong KHQR និងកាលវិភាគសងប្រាក់របស់អ្នក។'
+                  : 'Manage active credit facilities, settle installments instantly via Bakong KHQR, and monitor repayments.'}
+              </p>
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          {/* Action Hub on the Right */}
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 pt-2 lg:pt-0 shrink-0">
             {activeLoan && (
               <button
                 type="button"
                 onClick={() => onOpenQuickPayment?.(activeLoan.id, nextSchedule?.installmentNo, nextDueAmount)}
-                className="px-5 py-3 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-500 hover:to-rose-600 text-white font-bold text-xs shadow-lg shadow-red-900/40 hover:shadow-red-800/60 transition-all flex items-center gap-2.5 cursor-pointer active:scale-95"
+                className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium text-xs sm:text-sm shadow-xs transition-colors cursor-pointer select-none whitespace-nowrap active:scale-[0.99]"
               >
-                <div className="w-5 h-5 rounded-md bg-white text-red-600 flex items-center justify-center font-black text-[10px] shadow-xs">
+                <div className="w-4 h-4 rounded bg-white text-red-600 flex items-center justify-center font-black text-[9px] shrink-0">
                   KH
                 </div>
-                <span>{language === 'km' ? 'បង់ប្រាក់តាម Bakong KHQR' : 'Pay via Bakong KHQR'}</span>
+                <span>{language === 'km' ? 'បង់ប្រាក់ KHQR' : 'Pay via Bakong KHQR'}</span>
               </button>
             )}
 
             <button
               type="button"
-              onClick={() => onOpenApplyLoan?.() || onNavigate('new-application')}
-              className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/20 backdrop-blur-md transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+              onClick={() => {
+                if (onOpenApplyLoan) {
+                  onOpenApplyLoan();
+                } else {
+                  onNavigate('new-application');
+                }
+              }}
+              className="inline-flex items-center justify-center gap-2 h-10 px-5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs sm:text-sm shadow-xs transition-colors cursor-pointer select-none whitespace-nowrap active:scale-[0.99]"
             >
-              <span>{language === 'km' ? '+ ស្នើសុំកម្ចីថ្មី' : '+ Apply for Loan'}</span>
+              <Plus className="w-4 h-4 text-white shrink-0" />
+              <span>{language === 'km' ? 'ស្នើសុំកម្ចីថ្មី' : 'Apply for Loan'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onNavigate('repayments')}
+              className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-lg bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 font-medium text-xs sm:text-sm border border-slate-200 shadow-xs transition-colors cursor-pointer select-none whitespace-nowrap active:scale-[0.99]"
+              title={language === 'km' ? 'កាលវិភាគសងប្រាក់' : 'Repayment Schedule'}
+            >
+              <Calendar className="w-4 h-4 text-slate-500 shrink-0" />
+              <span>{language === 'km' ? 'កាលវិភាគ' : 'Schedule'}</span>
             </button>
           </div>
         </div>
@@ -161,68 +229,69 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
 
       {/* 2. Top Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Active Loans */}
-        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between">
+        {/* Card 1: Active Facilities */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-[0_1px_3px_rgba(15,23,42,0.03)] hover:shadow-md hover:border-slate-300 transition-all flex items-center justify-between group">
           <div className="space-y-1">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
               {language === 'km' ? 'កម្ចីសកម្ម' : 'Active Facilities'}
             </span>
-            <div className="text-2xl font-bold text-slate-900">{activeLoansCount}</div>
+            <div className="text-2xl font-bold text-slate-900 tracking-tight">{activeLoansCount}</div>
             <span className="text-[11px] text-emerald-600 font-medium flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3" />
+              <CheckCircle2 className="w-3 h-3 text-emerald-500" />
               {language === 'km' ? 'គណនីមានសុពលភាព' : 'In Good Standing'}
             </span>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
-            <Wallet className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 group-hover:scale-105 transition-transform shadow-2xs">
+            <Wallet className="w-5 h-5" />
           </div>
         </div>
 
         {/* Card 2: Total Borrowed */}
-        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between">
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-[0_1px_3px_rgba(15,23,42,0.03)] hover:shadow-md hover:border-slate-300 transition-all flex items-center justify-between group">
           <div className="space-y-1">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
               {language === 'km' ? 'ទំហំឥណទានសរុប' : 'Total Borrowed'}
             </span>
-            <div className="text-2xl font-bold text-slate-900">{formatMoney(totalBorrowed)}</div>
+            <div className="text-2xl font-bold text-slate-900 tracking-tight">{formatMoney(totalBorrowed)}</div>
             <span className="text-[11px] text-slate-500">
               {userLoans.length} {language === 'km' ? 'កិច្ចសន្យាឥណទាន' : 'Total Facilities'}
             </span>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
-            <Banknote className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 group-hover:scale-105 transition-transform shadow-2xs">
+            <Banknote className="w-5 h-5" />
           </div>
         </div>
 
         {/* Card 3: Outstanding Balance */}
-        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between">
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-[0_1px_3px_rgba(15,23,42,0.03)] hover:shadow-md hover:border-slate-300 transition-all flex items-center justify-between group">
           <div className="space-y-1">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
               {language === 'km' ? 'សមតុល្យនៅសល់' : 'Outstanding Balance'}
             </span>
-            <div className="text-2xl font-bold text-slate-900">{formatMoney(totalOutstanding)}</div>
-            <span className="text-[11px] text-amber-600 font-medium">
-              {language === 'km' ? 'ប្រាក់ដើម និងការប្រាក់' : 'Principal & Accrued Interest'}
+            <div className="text-2xl font-bold text-slate-900 tracking-tight">{formatMoney(totalOutstanding)}</div>
+            <span className="text-[11px] text-amber-600 font-medium flex items-center gap-1">
+              <Clock className="w-3 h-3 text-amber-500" />
+              {language === 'km' ? 'ប្រាក់ដើម និងការប្រាក់' : 'Principal & Interest'}
             </span>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
-            <Clock className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 group-hover:scale-105 transition-transform shadow-2xs">
+            <Clock className="w-5 h-5" />
           </div>
         </div>
 
-        {/* Card 4: Total Paid */}
-        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-xs flex items-center justify-between">
+        {/* Card 4: Total Repaid */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-[0_1px_3px_rgba(15,23,42,0.03)] hover:shadow-md hover:border-slate-300 transition-all flex items-center justify-between group">
           <div className="space-y-1">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
               {language === 'km' ? 'បានសងសរុប' : 'Total Repaid'}
             </span>
-            <div className="text-2xl font-bold text-emerald-600">{formatMoney(totalRepaid)}</div>
+            <div className="text-2xl font-bold text-emerald-600 tracking-tight">{formatMoney(totalRepaid)}</div>
             <span className="text-[11px] text-slate-500">
-              {userReceipts.length} {language === 'km' ? 'វិក្កយបត្របានទូទាត់' : 'Completed Payments'}
+              {userReceipts.length} {language === 'km' ? 'វិក្កយបត្របានទូទាត់' : 'Settled Receipts'}
             </span>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
-            <TrendingUp className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 group-hover:scale-105 transition-transform shadow-2xs">
+            <TrendingUp className="w-5 h-5" />
           </div>
         </div>
       </div>
@@ -305,7 +374,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
                 </div>
 
                 {/* Upcoming Installment & Bakong KHQR CTA Box */}
-                <div className="p-5 rounded-2xl bg-gradient-to-br from-rose-50/60 via-red-50/40 to-amber-50/30 border border-red-200/80 flex flex-col md:flex-row md:items-center justify-between gap-5 shadow-xs">
+                <div className="p-5 rounded-xl bg-rose-50/60 border border-red-200/80 flex flex-col md:flex-row md:items-center justify-between gap-5 shadow-xs">
                   <div className="space-y-1.5">
                     <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-red-600 text-white text-[10px] font-bold uppercase tracking-wider">
                       <Clock className="w-3 h-3" />
@@ -360,10 +429,17 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
               </div>
               <button
                 type="button"
-                onClick={() => onOpenApplyLoan?.() || onNavigate('new-application')}
-                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition cursor-pointer"
+                onClick={() => {
+                  if (onOpenApplyLoan) {
+                    onOpenApplyLoan();
+                  } else {
+                    onNavigate('new-application');
+                  }
+                }}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs shadow-sm hover:shadow transition-all cursor-pointer active:scale-95"
               >
-                {language === 'km' ? 'ស្នើសុំឥណទានឥឡូវនេះ' : 'Apply for a Loan'}
+                <Plus className="w-4 h-4 text-white" />
+                <span>{language === 'km' ? 'ស្នើសុំឥណទានឥឡូវនេះ' : 'Apply for a Loan'}</span>
               </button>
             </div>
           )}
@@ -459,18 +535,18 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
         {/* Right 1 Column: Bakong KHQR Info, Applications & Quick Assistance */}
         <div className="space-y-6">
           {/* Cambodia Bakong KHQR Quick Scan Card */}
-          <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 rounded-2xl p-6 text-white shadow-lg border border-slate-800 space-y-4">
+          <div className="bg-slate-900 rounded-xl p-5 text-white shadow-xs border border-slate-800 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-red-600 text-white flex items-center justify-center font-black text-xs shadow-md shadow-red-900/50">
+                <div className="w-8 h-8 rounded-lg bg-[#DC2626] text-white flex items-center justify-center font-black text-xs shadow-xs">
                   KH
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold tracking-tight">Cambodia Bakong KHQR</h4>
+                  <h4 className="text-sm font-bold text-white tracking-tight">Cambodia Bakong KHQR</h4>
                   <p className="text-[10px] text-slate-400">National Bank of Cambodia Standard</p>
                 </div>
               </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                 LIVE
               </span>
             </div>
@@ -481,7 +557,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
                 : 'Settle repayments seamlessly from any supported Cambodian banking app (ACLEDA, ABA, Wing, Canadia, Bakong App) with zero transaction fees.'}
             </p>
 
-            <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800/80 space-y-1.5 text-[11px] text-slate-300">
+            <div className="p-3 bg-slate-950/80 rounded-lg border border-slate-800 space-y-1.5 text-[11px] text-slate-300">
               <div className="flex justify-between">
                 <span className="text-slate-400">{language === 'km' ? 'ធនាគារទទួល:' : 'Receiving Bank:'}</span>
                 <span className="font-semibold text-white">ACLEDA Bank Plc.</span>
@@ -500,7 +576,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
               <button
                 type="button"
                 onClick={() => onOpenQuickPayment?.(activeLoan.id, nextSchedule?.installmentNo, nextDueAmount)}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-xs shadow-lg shadow-red-950/40 transition flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                className="w-full py-2.5 rounded-lg bg-[#DC2626] hover:bg-[#B91C1C] text-white font-semibold text-xs shadow-xs transition flex items-center justify-center gap-2 cursor-pointer active:scale-98"
               >
                 <QrCode className="w-4 h-4" />
                 <span>{language === 'km' ? 'បង្កើតកូដ KHQR ឥឡូវនេះ' : 'Generate Bakong KHQR Now'}</span>

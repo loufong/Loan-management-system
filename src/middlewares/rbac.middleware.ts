@@ -29,8 +29,8 @@ export function checkRole(
 
     const userRole = String(req.user.role).toUpperCase();
 
-    // ADMIN has full administrative permissions across all operations
-    if (userRole === 'ADMIN') {
+    // ADMIN and SUPER_ADMIN have full administrative permissions across all operations
+    if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') {
       return next();
     }
 

@@ -212,7 +212,16 @@ export class AuthService {
           passwordHash: dbUser.passwordHash,
           fullName: dbUser.fullName,
           phone: dbUser.phone || undefined,
-          role: (dbUser.email === 'luofong03@gmail.com' || dbUser.username === 'phon.rithya' || dbUser.username === 'admin') ? UserRole.ADMIN : dbUser.role,
+          role: (() => {
+            const adminWhitelist = (process.env.INITIAL_ADMIN_EMAILS || 'luofong03@gmail.com,admin@jamsongvich.com')
+              .split(',')
+              .map(e => e.trim().toLowerCase())
+              .filter(Boolean);
+            if (adminWhitelist.includes(dbUser.email.toLowerCase())) {
+              return UserRole.ADMIN;
+            }
+            return dbUser.role;
+          })(),
           status: dbUser.status,
           avatarUrl: dbUser.avatarUrl || undefined,
           lastLogin: dbUser.lastLogin,
@@ -243,6 +252,14 @@ export class AuthService {
     const defaultAvatar = data.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cleanUsername)}`;
     const now = new Date();
 
+    const adminWhitelist = (process.env.INITIAL_ADMIN_EMAILS || 'luofong03@gmail.com,admin@jamsongvich.com')
+      .split(',')
+      .map(e => e.trim().toLowerCase())
+      .filter(Boolean);
+    const isWhitelistedAdmin = adminWhitelist.includes(cleanEmail);
+    const assignedRole = data.role || (isWhitelistedAdmin ? UserRole.ADMIN : UserRole.BORROWER);
+    const assignedKyc = isWhitelistedAdmin ? 'VERIFIED' : 'PENDING';
+
     try {
       const user = await prisma.user.upsert({
         where: { email: cleanEmail },
@@ -253,7 +270,8 @@ export class AuthService {
           passwordHash: bcrypt.hashSync(crypto.randomBytes(16).toString('hex'), 10),
           avatarUrl: defaultAvatar,
           lastLogin: now,
-          role: data.role || UserRole.USER,
+          role: assignedRole,
+          kycStatus: assignedKyc,
           status: UserStatus.ACTIVE,
           emailVerifiedAt: now,
           userSetting: {
@@ -1333,7 +1351,8 @@ export class AuthService {
           passwordHash,
           fullName: dto.fullName,
           phone: dto.phone,
-          role: UserRole.USER,
+          role: UserRole.BORROWER,
+          kycStatus: 'PENDING',
           status: UserStatus.ACTIVE,
           emailVerifiedAt: new Date(),
         },

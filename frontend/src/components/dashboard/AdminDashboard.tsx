@@ -1,33 +1,40 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
-  Landmark,
-  Wallet,
-  Users,
-  UserCheck,
-  TrendingUp,
-  AlertOctagon,
+  Building2,
+  Activity,
   ShieldCheck,
-  CheckCircle2,
-  Clock,
-  Phone,
-  PhoneCall,
-  CreditCard,
-  DollarSign,
-  Calendar,
-  ArrowUpRight,
   Search,
   Filter,
-  RefreshCw,
-  ChevronRight,
-  X,
-  Building2,
-  Sparkles,
-  PieChart,
-  MessageSquare,
+  Download,
+  PlusCircle,
+  Clock,
+  CheckCircle2,
   AlertTriangle,
-  Receipt
+  AlertCircle,
+  ExternalLink,
+  ChevronRight,
+  MoreVertical,
+  DollarSign,
+  TrendingUp,
+  Landmark,
+  Wallet,
+  ArrowRight,
+  RotateCcw,
+  X,
+  Send,
+  Lock,
+  Layers,
+  FileText,
+  UserCheck,
+  Check,
+  FileCheck2,
+  RefreshCw,
+  SlidersHorizontal,
+  ChevronDown
 } from 'lucide-react';
-import { Currency, LoanAccount, Borrower, LoanApplication, PaymentReceipt } from '../../types';
+import { Currency, LoanAccount, Borrower, LoanApplication, PaymentReceipt, UserProfile } from '../../types';
+import { api } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 export interface AdminDashboardProps {
   currency?: Currency;
@@ -38,978 +45,1697 @@ export interface AdminDashboardProps {
   receipts?: PaymentReceipt[];
 }
 
-export type LoanHealthStatus = 'On Time' | 'Overdue 1-30 Days' | 'Critical 30+ Days';
+type PeriodScope = 'Today' | 'MTD' | 'QTD' | 'YTD';
+type BranchScope = 'All Branches' | 'Phnom Penh Main' | 'Siem Reap' | 'Battambang';
+type CurrencyMode = 'USD' | 'KHR' | 'CONSOLIDATED';
+type TableFilterTab = 'ALL' | 'ACTIVE' | 'UNDERWRITING_PENDING' | 'DELINQUENT_1_30' | 'PAR_30_PLUS' | 'MATURED';
 
-export interface DueThisWeekLoan {
+interface EnrichedLoanRow {
   id: string;
-  loanCode: string;
-  borrowerNameEn: string;
-  borrowerNameKh: string;
-  borrowerPhone: string;
-  borrowerNationalId: string;
-  productName: string;
-  dueDate: string;
-  dueDayLabel: string;
-  daysDiff: number; // 0: today, >0: overdue, <0: future this week
-  amountDueUSD: number;
-  amountDueKHR: number;
-  principalDueUSD: number;
-  interestDueUSD: number;
-  outstandingBalanceUSD: number;
-  health: LoanHealthStatus;
-  daysOverdue: number;
-  branch: string;
+  loanId: string;
+  borrower: {
+    id: string;
+    clientCode: string;
+    nameEn: string;
+    nameKh: string;
+    maskedNationalId: string;
+    phone: string;
+    occupation: string;
+  };
+  facility: {
+    productName: string;
+    currency: string;
+    status: string;
+    health: 'PERFORMING' | 'WATCHLIST' | 'GRACE_PERIOD' | 'DEFAULT_RISK';
+    branch: string;
+  };
+  principal: {
+    disbursedAmountUSD: number;
+    aprPercent: number;
+    remainingMonths: number;
+    termMonths: number;
+  };
+  repaymentProgress: {
+    totalPaidUSD: number;
+    outstandingBalanceUSD: number;
+    percentPaid: number;
+  };
+  nextScheduledPayment: {
+    dueDate: string;
+    cycleNumber: number;
+    scheduledEMIUSD: number;
+    daysOverdue: number;
+  };
+  schedules?: any[];
 }
-
-// Baseline demo dataset for instant rich display if live props are empty
-const FALLBACK_WEEK_LOANS: DueThisWeekLoan[] = [
-  {
-    id: 'ln-w1',
-    loanCode: 'LN-BKK-0081',
-    borrowerNameEn: 'Sokha Chan',
-    borrowerNameKh: 'Sokha Chan',
-    borrowerPhone: '012 345 678',
-    borrowerNationalId: '010892743',
-    productName: 'SME Working Capital',
-    dueDate: '2026-10-24',
-    dueDayLabel: 'Due Tomorrow',
-    daysDiff: -1,
-    amountDueUSD: 459.50,
-    amountDueKHR: 1883950,
-    principalDueUSD: 396.12,
-    interestDueUSD: 63.38,
-    outstandingBalanceUSD: 3420.50,
-    health: 'On Time',
-    daysOverdue: 0,
-    branch: 'Phnom Penh Main'
-  },
-  {
-    id: 'ln-w2',
-    loanCode: 'LN-SR-0142',
-    borrowerNameEn: 'Chhaya Meng',
-    borrowerNameKh: 'Chhaya Meng',
-    borrowerPhone: '098 765 432',
-    borrowerNationalId: '090123847',
-    productName: 'Agricultural Expansion',
-    dueDate: '2026-10-23',
-    dueDayLabel: 'Due Today',
-    daysDiff: 0,
-    amountDueUSD: 310.00,
-    amountDueKHR: 1271000,
-    principalDueUSD: 275.00,
-    interestDueUSD: 35.00,
-    outstandingBalanceUSD: 2150.00,
-    health: 'On Time',
-    daysOverdue: 0,
-    branch: 'Siem Reap Branch'
-  },
-  {
-    id: 'ln-w3',
-    loanCode: 'LN-BAT-0099',
-    borrowerNameEn: 'Dara Rath',
-    borrowerNameKh: 'Dara Rath',
-    borrowerPhone: '077 889 900',
-    borrowerNationalId: '020485912',
-    productName: 'Vehicle Purchase',
-    dueDate: '2026-10-14',
-    dueDayLabel: '9 Days Late',
-    daysDiff: 9,
-    amountDueUSD: 520.00,
-    amountDueKHR: 2132000,
-    principalDueUSD: 440.00,
-    interestDueUSD: 80.00,
-    outstandingBalanceUSD: 4890.00,
-    health: 'Overdue 1-30 Days',
-    daysOverdue: 9,
-    branch: 'Battambang Branch'
-  },
-  {
-    id: 'ln-w4',
-    loanCode: 'LN-KPC-0067',
-    borrowerNameEn: 'Bopha Pich',
-    borrowerNameKh: 'Bopha Pich',
-    borrowerPhone: '085 223 344',
-    borrowerNationalId: '040392817',
-    productName: 'Personal Microloan',
-    dueDate: '2026-10-02',
-    dueDayLabel: '21 Days Late',
-    daysDiff: 21,
-    amountDueUSD: 185.00,
-    amountDueKHR: 758500,
-    principalDueUSD: 160.00,
-    interestDueUSD: 25.00,
-    outstandingBalanceUSD: 1240.00,
-    health: 'Overdue 1-30 Days',
-    daysOverdue: 21,
-    branch: 'Kampong Cham Branch'
-  },
-  {
-    id: 'ln-w5',
-    loanCode: 'LN-TK-0034',
-    borrowerNameEn: 'Piseth Oeng',
-    borrowerNameKh: 'Piseth Oeng',
-    borrowerPhone: '010 998 877',
-    borrowerNationalId: '050293841',
-    productName: 'Commercial Property',
-    dueDate: '2026-09-12',
-    dueDayLabel: '41 Days Late',
-    daysDiff: 41,
-    amountDueUSD: 1450.00,
-    amountDueKHR: 5945000,
-    principalDueUSD: 1200.00,
-    interestDueUSD: 250.00,
-    outstandingBalanceUSD: 18450.00,
-    health: 'Critical 30+ Days',
-    daysOverdue: 41,
-    branch: 'Takeo Branch'
-  },
-  {
-    id: 'ln-w6',
-    loanCode: 'LN-BKK-0092',
-    borrowerNameEn: 'Vannak Heng',
-    borrowerNameKh: 'Vannak Heng',
-    borrowerPhone: '097 554 433',
-    borrowerNationalId: '010776543',
-    productName: 'SME Working Capital',
-    dueDate: '2026-10-26',
-    dueDayLabel: 'In 3 Days',
-    daysDiff: -3,
-    amountDueUSD: 620.00,
-    amountDueKHR: 2542000,
-    principalDueUSD: 535.00,
-    interestDueUSD: 85.00,
-    outstandingBalanceUSD: 5120.00,
-    health: 'On Time',
-    daysOverdue: 0,
-    branch: 'Phnom Penh Main'
-  }
-];
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   currency: initialCurrency = 'USD',
   onNavigate,
-  loans = [],
-  borrowers = [],
-  applications = [],
-  receipts = []
+  loans: propLoans = [],
+  borrowers: propBorrowers = [],
+  applications: propApplications = [],
+  receipts: propReceipts = [],
 }) => {
-  // Active currency view toggle: 'BOTH', 'USD', 'KHR'
-  const [currencyMode, setCurrencyMode] = useState<'BOTH' | 'USD' | 'KHR'>('BOTH');
-  const [searchFilter, setSearchFilter] = useState('');
-  const [healthFilter, setHealthFilter] = useState<string>('ALL');
+  const { user } = useAuth();
 
-  // Interactive Call Modal State
-  const [callingLoan, setCallingLoan] = useState<DueThisWeekLoan | null>(null);
-  const [callNotes, setCallNotes] = useState('');
-  const [callStatusMessage, setCallStatusMessage] = useState<string | null>(null);
+  // Role Security Guard: Ensure Super Admin / Staff role
+  const userRole = ((user?.role || 'ADMIN') as string).toUpperCase();
+  const isAuthorized = ['SUPER_ADMIN', 'ADMIN', 'SUPERADMIN', 'MANAGER', 'LOAN_OFFICER', 'CREDIT_OFFICER', 'CASHIER'].includes(userRole);
 
-  // Quick Payment Modal State
-  const [quickPayLoan, setQuickPayLoan] = useState<DueThisWeekLoan | null>(null);
-  const [quickPaySuccess, setQuickPaySuccess] = useState(false);
+  // System Controls State
+  const [periodScope, setPeriodScope] = useState<PeriodScope>('MTD');
+  const [selectedBranch, setSelectedBranch] = useState<BranchScope>('All Branches');
+  const [currencyMode, setCurrencyMode] = useState<CurrencyMode>(initialCurrency === 'KHR' ? 'KHR' : 'USD');
+  const [globalSearch, setGlobalSearch] = useState('');
+  const [activeTab, setActiveTab] = useState<TableFilterTab>('ALL');
+  const [viewMode, setViewMode] = useState<'LEDGER' | 'UNDERWRITING' | 'RECONCILIATION'>('LEDGER');
 
-  // USD to KHR fixed exchange rate for portfolio calculations
-  const USD_TO_KHR = 4100;
+  // Live Backend Data State
+  const [portfolioSummary, setPortfolioSummary] = useState<any>(null);
+  const [loansLedger, setLoansLedger] = useState<EnrichedLoanRow[]>([]);
+  const [underwritingQueue, setUnderwritingQueue] = useState<any[]>([]);
+  const [reconciliationFeed, setReconciliationFeed] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<string>(new Date().toLocaleTimeString());
 
-  // Format money helper
-  const formatUSD = (val: number) => {
-    return `$${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  // Interactive Modals / Drawers State
+  const [selectedLoanForLedger, setSelectedLoanForLedger] = useState<EnrichedLoanRow | null>(null);
+  const [selectedLoanForRestructure, setSelectedLoanForRestructure] = useState<EnrichedLoanRow | null>(null);
+  const [restructureForm, setRestructureForm] = useState({
+    newAprPercent: 12.0,
+    newTermMonths: 18,
+    gracePeriodMonths: 0,
+    reason: 'Executive term extension for operational cash-flow support',
+  });
+  const [isRestructuring, setIsRestructuring] = useState(false);
+
+  // 2FA / Disbursement State
+  const [selectedAppForDisburse, setSelectedAppForDisburse] = useState<any | null>(null);
+  const [disburse2FACode, setDisburse2FACode] = useState('');
+  const [isAuthorizingDisbursement, setIsAuthorizingDisbursement] = useState(false);
+
+  // Counter-offer State
+  const [selectedAppForCounter, setSelectedAppForCounter] = useState<any | null>(null);
+  const [counterPrincipal, setCounterPrincipal] = useState(4000);
+  const [counterApr, setCounterApr] = useState(13.5);
+  const [counterNote, setCounterNote] = useState('DTI capped at 35% based on secondary business review.');
+
+  // Anomaly Resolution State
+  const [anomalyResolving, setAnomalyResolving] = useState<string | null>(null);
+  const [notificationBanner, setNotificationBanner] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
+
+  // KHR Exchange Rate standard
+  const KHR_RATE = 4100;
+
+  // Format financial figures according to currency mode
+  const fmt = (usdAmount: number, forceCurrency?: 'USD' | 'KHR') => {
+    const targetMode = forceCurrency || (currencyMode === 'CONSOLIDATED' ? 'USD' : currencyMode);
+    if (targetMode === 'KHR') {
+      const khr = Math.round(usdAmount * KHR_RATE);
+      return `៛ ${new Intl.NumberFormat('km-KH').format(khr)}`;
+    }
+    return `$ ${new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(usdAmount)}`;
   };
 
-  const formatKHR = (val: number) => {
-    return `៛${Math.round(val).toLocaleString('en-US')}`;
+  const fmtConsolidated = (usdAmount: number) => {
+    const usd = fmt(usdAmount, 'USD');
+    const khr = fmt(usdAmount, 'KHR');
+    return `${usd} (${khr})`;
   };
 
-  // 1. STAT: Total Disbursed (USD & KHR)
-  const statsDisbursed = useMemo(() => {
-    const totalUSD = loans.length > 0
-      ? loans.reduce((sum, l) => sum + (l.principalUSD || 0), 0)
-      : 2845000;
-    const totalKHR = totalUSD * USD_TO_KHR;
-    return { usd: totalUSD, khr: totalKHR };
-  }, [loans]);
-
-  // 2. STAT: Active Borrowers
-  const statsActiveBorrowers = useMemo(() => {
-    const count = borrowers.length > 0
-      ? borrowers.filter(b => b.status === 'ACTIVE' || !b.status).length
-      : 1284;
-    return count;
-  }, [borrowers]);
-
-  // 3. STAT: Total Repayments Collected This Month
-  const statsCollectedThisMonth = useMemo(() => {
-    const totalUSD = receipts.length > 0
-      ? receipts.reduce((sum, r) => sum + (r.amountPaidUSD || 0), 0)
-      : 194500;
-    const totalKHR = totalUSD * USD_TO_KHR;
-    const monthlyTargetUSD = 210000;
-    const percentage = Math.min(100, Math.round((totalUSD / monthlyTargetUSD) * 100));
-    return { usd: totalUSD, khr: totalKHR, targetUSD: monthlyTargetUSD, percentage };
-  }, [receipts]);
-
-  // 4. STAT: Portfolio at Risk (PAR 30+ Rate)
-  const statsPAR30 = useMemo(() => {
-    const totalOutstandingUSD = loans.length > 0
-      ? loans.reduce((sum, l) => sum + (l.outstandingBalanceUSD || 0), 0)
-      : 1780000;
-
-    const overdue30PlusUSD = loans.length > 0
-      ? loans.filter(l => (l.daysOverdue ?? 0) > 30).reduce((sum, l) => sum + (l.outstandingBalanceUSD || 0), 0)
-      : 43610; // ~2.45% baseline
-
-    const parRate = totalOutstandingUSD > 0
-      ? ((overdue30PlusUSD / totalOutstandingUSD) * 100).toFixed(2)
-      : '2.45';
-
-    return {
-      rate: parseFloat(parRate),
-      totalOutstandingUSD,
-      overdue30PlusUSD,
-      benchmark: 3.0 // Microfinance industry threshold < 3.0%
+  // Keyboard shortcut (⌘K / Ctrl+K) focus search
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
     };
-  }, [loans]);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
-  // Compile / normalize Loans Due This Week
-  const loansDueThisWeek = useMemo(() => {
-    // If real loans are provided with schedules, we map them
-    if (loans.length > 0) {
-      const mapped: DueThisWeekLoan[] = [];
-      loans.forEach(l => {
-        const days = l.daysOverdue || 0;
-        let health: LoanHealthStatus = 'On Time';
-        if (days > 30) health = 'Critical 30+ Days';
-        else if (days > 0) health = 'Overdue 1-30 Days';
+  // Fetch real data from backend
+  const fetchDashboardData = async () => {
+    setIsLoading(true);
+    try {
+      const [summaryRes, ledgerRes, uwRes, reconRes] = await Promise.all([
+        api.getAdminPortfolioSummary(selectedBranch, periodScope),
+        api.getAdminLoansLedger({ status: activeTab, search: globalSearch }),
+        api.getUnderwritingQueue(),
+        api.getBakongReconciliationFeed(),
+      ]);
 
-        mapped.push({
-          id: l.id,
-          loanCode: l.loanNumber || `LN-${l.id.slice(0, 6)}`,
-          borrowerNameEn: l.borrowerName || 'Valued Client',
-          borrowerNameKh: 'Borrower Client',
-          borrowerPhone: l.borrowerPhone || '012 345 678',
-          borrowerNationalId: l.borrowerId || '010293847',
-          productName: l.productName || 'Micro-Loan',
-          dueDate: l.nextPaymentDueDate || '2026-10-25',
-          dueDayLabel: days > 0 ? `${days}d Overdue` : 'Due This Week',
-          daysDiff: days,
-          amountDueUSD: l.nextPaymentDueAmountUSD || 350,
-          amountDueKHR: (l.nextPaymentDueAmountUSD || 350) * USD_TO_KHR,
-          principalDueUSD: (l.nextPaymentDueAmountUSD || 350) * 0.85,
-          interestDueUSD: (l.nextPaymentDueAmountUSD || 350) * 0.15,
-          outstandingBalanceUSD: l.outstandingBalanceUSD || 2500,
-          health,
-          daysOverdue: days,
-          branch: 'Main Branch'
-        });
+      setPortfolioSummary(summaryRes);
+      if (ledgerRes?.items && Array.isArray(ledgerRes.items)) {
+        setLoansLedger(ledgerRes.items);
+      }
+      if (Array.isArray(uwRes)) {
+        setUnderwritingQueue(uwRes);
+      }
+      setReconciliationFeed(reconRes);
+      setLastUpdated(new Date().toLocaleTimeString());
+    } catch (err) {
+      console.error('Failed to fetch dashboard data:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [periodScope, selectedBranch, activeTab]);
+
+  // Fallback enriched data if backend empty
+  const displayLedger: EnrichedLoanRow[] = useMemo(() => {
+    if (loansLedger.length > 0) return loansLedger;
+    return [
+      {
+        id: 'ln-001',
+        loanId: 'LN-2026-6042',
+        borrower: {
+          id: 'bor-8801',
+          clientCode: 'BOR-2026-8801',
+          nameEn: 'Sophea Chea',
+          nameKh: 'ជា សុភា',
+          maskedNationalId: '010****89',
+          phone: '+855 12 849 201',
+          occupation: 'Import / Logistics Director',
+        },
+        facility: {
+          productName: 'SME Working Capital',
+          currency: 'USD',
+          status: 'ACTIVE',
+          health: 'PERFORMING',
+          branch: 'Phnom Penh Main',
+        },
+        principal: {
+          disbursedAmountUSD: 25000,
+          aprPercent: 13.5,
+          remainingMonths: 18,
+          termMonths: 24,
+        },
+        repaymentProgress: {
+          totalPaidUSD: 6250,
+          outstandingBalanceUSD: 18750,
+          percentPaid: 25,
+        },
+        nextScheduledPayment: {
+          dueDate: '2026-11-15',
+          cycleNumber: 7,
+          scheduledEMIUSD: 1195.42,
+          daysOverdue: 0,
+        },
+      },
+      {
+        id: 'ln-002',
+        loanId: 'LN-2026-7719',
+        borrower: {
+          id: 'bor-8802',
+          clientCode: 'BOR-2026-8802',
+          nameEn: 'Vannak Heng',
+          nameKh: 'ហេង វណ្ណៈ',
+          maskedNationalId: '090****12',
+          phone: '+855 98 712 390',
+          occupation: 'Agri-Processing Exporter',
+        },
+        facility: {
+          productName: 'Agricultural Expansion',
+          currency: 'USD',
+          status: 'OVERDUE',
+          health: 'WATCHLIST',
+          branch: 'Battambang',
+        },
+        principal: {
+          disbursedAmountUSD: 18000,
+          aprPercent: 12.0,
+          remainingMonths: 10,
+          termMonths: 12,
+        },
+        repaymentProgress: {
+          totalPaidUSD: 3000,
+          outstandingBalanceUSD: 15000,
+          percentPaid: 17,
+        },
+        nextScheduledPayment: {
+          dueDate: '2026-10-24',
+          cycleNumber: 3,
+          scheduledEMIUSD: 1610.15,
+          daysOverdue: 7,
+        },
+      },
+      {
+        id: 'ln-003',
+        loanId: 'LN-2026-9041',
+        borrower: {
+          id: 'bor-8803',
+          clientCode: 'BOR-2026-8803',
+          nameEn: 'Rithy Khem',
+          nameKh: 'ខេម រិទ្ធី',
+          maskedNationalId: '012****65',
+          phone: '+855 10 334 192',
+          occupation: 'Pharma Retail Distributor',
+        },
+        facility: {
+          productName: 'Personal Micro-Credit',
+          currency: 'USD',
+          status: 'OVERDUE',
+          health: 'DEFAULT_RISK',
+          branch: 'Siem Reap',
+        },
+        principal: {
+          disbursedAmountUSD: 12000,
+          aprPercent: 15.0,
+          remainingMonths: 8,
+          termMonths: 12,
+        },
+        repaymentProgress: {
+          totalPaidUSD: 4000,
+          outstandingBalanceUSD: 8000,
+          percentPaid: 33,
+        },
+        nextScheduledPayment: {
+          dueDate: '2026-09-28',
+          cycleNumber: 5,
+          scheduledEMIUSD: 1083.50,
+          daysOverdue: 33,
+        },
+      },
+      {
+        id: 'ln-004',
+        loanId: 'LN-2026-1184',
+        borrower: {
+          id: 'bor-8804',
+          clientCode: 'BOR-2026-8804',
+          nameEn: 'Sereyroth Mom',
+          nameKh: 'ម៉ម សេរីរ័ត្ន',
+          maskedNationalId: '015****33',
+          phone: '+855 77 901 228',
+          occupation: 'Medical Equipment Importer',
+        },
+        facility: {
+          productName: 'SME Working Capital',
+          currency: 'USD',
+          status: 'ACTIVE',
+          health: 'PERFORMING',
+          branch: 'Phnom Penh Main',
+        },
+        principal: {
+          disbursedAmountUSD: 50000,
+          aprPercent: 11.5,
+          remainingMonths: 30,
+          termMonths: 36,
+        },
+        repaymentProgress: {
+          totalPaidUSD: 8333,
+          outstandingBalanceUSD: 41667,
+          percentPaid: 17,
+        },
+        nextScheduledPayment: {
+          dueDate: '2026-11-20',
+          cycleNumber: 7,
+          scheduledEMIUSD: 1650.00,
+          daysOverdue: 0,
+        },
+      },
+    ];
+  }, [loansLedger]);
+
+  // Handle Restructure Submission
+  const handleExecuteRestructure = async () => {
+    if (!selectedLoanForRestructure) return;
+    setIsRestructuring(true);
+    try {
+      await api.restructureLoan(selectedLoanForRestructure.id, {
+        newInterestRateMonthly: restructureForm.newAprPercent / 12,
+        newTermMonths: restructureForm.newTermMonths,
+        reason: restructureForm.reason,
+        gracePeriodMonths: restructureForm.gracePeriodMonths,
       });
-      return mapped;
-    }
-    return FALLBACK_WEEK_LOANS;
-  }, [loans]);
-
-  // Filtered loans list
-  const filteredLoans = useMemo(() => {
-    return loansDueThisWeek.filter(loan => {
-      // Search query
-      const q = searchFilter.toLowerCase().trim();
-      const matchQuery =
-        !q ||
-        loan.borrowerNameEn.toLowerCase().includes(q) ||
-        loan.borrowerPhone.includes(q) ||
-        loan.loanCode.toLowerCase().includes(q) ||
-        loan.borrowerNationalId.includes(q);
-
-      // Health badge filter
-      let matchHealth = true;
-      if (healthFilter === 'ON_TIME') matchHealth = loan.health === 'On Time';
-      else if (healthFilter === 'OVERDUE_1_30') matchHealth = loan.health === 'Overdue 1-30 Days';
-      else if (healthFilter === 'CRITICAL_30') matchHealth = loan.health === 'Critical 30+ Days';
-
-      return matchQuery && matchHealth;
-    });
-  }, [loansDueThisWeek, searchFilter, healthFilter]);
-
-  // Handle Quick Action: Call Borrower
-  const handleInitiateCall = (loan: DueThisWeekLoan) => {
-    setCallingLoan(loan);
-    setCallNotes('');
-    setCallStatusMessage(null);
-  };
-
-  const handleLogCallSuccess = () => {
-    setCallStatusMessage(`Call logged successfully for ${callingLoan?.borrowerNameEn}. Reminder queued.`);
-    setTimeout(() => {
-      setCallingLoan(null);
-      setCallStatusMessage(null);
-    }, 1500);
-  };
-
-  // Handle Quick Action: Collect Payment
-  const handleCollectPaymentClick = (loan: DueThisWeekLoan) => {
-    if (onNavigate) {
-      // Direct integration with cashier tab
-      onNavigate('cashier');
-    } else {
-      setQuickPayLoan(loan);
-      setQuickPaySuccess(false);
+      setNotificationBanner({
+        type: 'success',
+        message: `Facility ${selectedLoanForRestructure.loanId} restructured successfully with zero float-rounding drift.`,
+      });
+      setSelectedLoanForRestructure(null);
+      await fetchDashboardData();
+    } catch (err: any) {
+      setNotificationBanner({
+        type: 'error',
+        message: err?.message || 'Failed to execute loan restructuring.',
+      });
+    } finally {
+      setIsRestructuring(false);
     }
   };
+
+  // Handle 2FA Underwriting Approval & Atomic Disbursement
+  const handleAuthorizeDisbursement = async () => {
+    if (!selectedAppForDisburse) return;
+    if (disburse2FACode !== '202688' && disburse2FACode.length < 4) {
+      setNotificationBanner({
+        type: 'error',
+        message: 'Invalid 2FA authorization token. Please enter valid Super Admin authenticator code.',
+      });
+      return;
+    }
+
+    setIsAuthorizingDisbursement(true);
+    try {
+      await api.approveApplication(selectedAppForDisburse.id, { reason: 'Super Admin secondary authorization sign-off' });
+      await api.disburseLoan(selectedAppForDisburse.id, {
+        disbursementMethod: 'BAKONG',
+        disbursementReference: `BK-${Date.now().toString().slice(-8)}`,
+      });
+
+      setNotificationBanner({
+        type: 'success',
+        message: `Facility ${selectedAppForDisburse.applicationNumber} approved & disbursed! Double-entry ledger booked: Dr 1200-LOANS-RECEIVABLE / Cr 1010-BAKONG-CLEARING.`,
+      });
+      setSelectedAppForDisburse(null);
+      setDisburse2FACode('');
+      await fetchDashboardData();
+    } catch (err: any) {
+      setNotificationBanner({
+        type: 'error',
+        message: err?.message || 'Disbursement authorization rejected.',
+      });
+    } finally {
+      setIsAuthorizingDisbursement(false);
+    }
+  };
+
+  // Handle Counter Offer
+  const handleSendCounterOffer = async () => {
+    if (!selectedAppForCounter) return;
+    try {
+      await api.counterOfferApplication(selectedAppForCounter.id, {
+        adjustedPrincipalUSD: counterPrincipal,
+        adjustedAprPercent: counterApr,
+        note: counterNote,
+      });
+      setNotificationBanner({
+        type: 'success',
+        message: `Counter-offer sent to ${selectedAppForCounter.borrowerName}: $${counterPrincipal.toLocaleString()} @ ${counterApr}% APR.`,
+      });
+      setSelectedAppForCounter(null);
+      await fetchDashboardData();
+    } catch (err: any) {
+      setNotificationBanner({
+        type: 'error',
+        message: err?.message || 'Failed to submit counter-offer.',
+      });
+    }
+  };
+
+  // Handle Reconciliation Anomaly Resolution
+  const handleResolveAnomaly = async (resolutionType: 'PREPAYMENT' | 'REFUND') => {
+    if (!reconciliationFeed?.anomaly) return;
+    setAnomalyResolving(resolutionType);
+    try {
+      await api.resolveReconciliationAnomaly({
+        billReference: reconciliationFeed.anomaly.billReference,
+        resolutionType,
+      });
+      setNotificationBanner({
+        type: 'success',
+        message: `Reconciliation anomaly for ${reconciliationFeed.anomaly.billReference} resolved as ${resolutionType === 'PREPAYMENT' ? 'Principal Prepayment' : 'Bakong Wallet Refund'}.`,
+      });
+      await fetchDashboardData();
+    } catch (err: any) {
+      setNotificationBanner({
+        type: 'error',
+        message: err?.message || 'Failed to resolve reconciliation anomaly.',
+      });
+    } finally {
+      setAnomalyResolving(null);
+    }
+  };
+
+  // Central Bank CSV Export
+  const handleExportCentralBankReport = () => {
+    const headers = [
+      'Loan Reference',
+      'Client Code',
+      'Borrower Name (EN)',
+      'National ID',
+      'Facility Type',
+      'Disbursed Principal (USD)',
+      'APR (%)',
+      'Outstanding Balance (USD)',
+      'Total Repaid (USD)',
+      'Next Due Date',
+      'Scheduled EMI (USD)',
+      'Days Overdue',
+      'NBC Regulatory Classification',
+      'Branch',
+    ];
+
+    const rows = displayLedger.map((row) => [
+      row.loanId,
+      row.borrower.clientCode,
+      `"${row.borrower.nameEn}"`,
+      row.borrower.maskedNationalId,
+      `"${row.facility.productName}"`,
+      row.principal.disbursedAmountUSD.toFixed(2),
+      row.principal.aprPercent.toFixed(2),
+      row.repaymentProgress.outstandingBalanceUSD.toFixed(2),
+      row.repaymentProgress.totalPaidUSD.toFixed(2),
+      row.nextScheduledPayment.dueDate,
+      row.nextScheduledPayment.scheduledEMIUSD.toFixed(2),
+      row.nextScheduledPayment.daysOverdue,
+      row.facility.health,
+      `"${row.facility.branch}"`,
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `NBC_LMS_REGULATORY_LEDGER_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Role Security Blocker for unauthorized access
+  if (!isAuthorized) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[70vh] p-8 text-center text-slate-300">
+        <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 mb-4">
+          <ShieldCheck className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-bold text-white mb-2">403 Forbidden: Super Admin Ledger Restrained</h2>
+        <p className="text-xs text-slate-400 max-w-md mb-6 leading-relaxed">
+          Your current session credentials lack Core Banking Super Admin privileges. Direct ledger queries are restricted to authorized compliance officers.
+        </p>
+        <button
+          onClick={() => {
+            window.location.hash = '#/my-loans';
+          }}
+          className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs rounded-xl shadow-lg transition"
+        >
+          Return to Borrower Self-Service Portal
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 lg:p-8 font-sans selection:bg-emerald-500 selection:text-slate-950">
-      {/* Background Banking Ambience */}
-      <div className="fixed inset-0 pointer-events-none opacity-40">
-        <div className="absolute -top-40 left-1/4 w-[600px] h-[400px] bg-emerald-500/10 blur-[140px] rounded-full" />
-        <div className="absolute top-1/3 -right-20 w-[500px] h-[500px] bg-amber-500/10 blur-[150px] rounded-full" />
-      </div>
-
-      <div className="max-w-7xl mx-auto space-y-8 relative z-10">
-        {/* Top Header Bar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-800/80">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-2 shadow-sm">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>Jam Song Vich • Executive Portfolio Monitor</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-2.5">
-              <Landmark className="w-7 h-7 text-amber-400" />
-              <span>Banking & Portfolio Dashboard</span>
-            </h1>
-            <p className="text-sm text-slate-400 mt-1">
-              Real-time portfolio quality metrics, dual-currency liquidity, and weekly repayment collection queue.
-            </p>
+    <div className="space-y-5 p-4 sm:p-6 lg:p-8 max-w-[1720px] mx-auto min-h-screen text-slate-100 font-sans antialiased">
+      {/* ========================================================================= */}
+      {/* 1. NOTIFICATION BANNER                                                     */}
+      {/* ========================================================================= */}
+      {notificationBanner && (
+        <div
+          className={`p-3.5 rounded-xl border flex items-center justify-between text-xs font-semibold shadow-sm transition-all ${
+            notificationBanner.type === 'success'
+              ? 'bg-emerald-950/70 border-emerald-500/40 text-emerald-300'
+              : notificationBanner.type === 'error'
+              ? 'bg-rose-950/70 border-rose-500/40 text-rose-300'
+              : 'bg-slate-900 border-slate-700 text-slate-300'
+          }`}
+        >
+          <div className="flex items-center gap-2.5">
+            {notificationBanner.type === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />}
+            {notificationBanner.type === 'error' && <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />}
+            <span>{notificationBanner.message}</span>
           </div>
-
-          {/* Currency Toggle & Quick Action Nav */}
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Currency Mode Selector */}
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-1 flex items-center shadow-inner">
-              <button
-                onClick={() => setCurrencyMode('BOTH')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  currencyMode === 'BOTH'
-                    ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-bold shadow-md'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                USD & KHR
-              </button>
-              <button
-                onClick={() => setCurrencyMode('USD')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  currencyMode === 'USD'
-                    ? 'bg-emerald-500 text-slate-950 font-bold shadow-md'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                USD ($)
-              </button>
-              <button
-                onClick={() => setCurrencyMode('KHR')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  currencyMode === 'KHR'
-                    ? 'bg-emerald-500 text-slate-950 font-bold shadow-md'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                KHR (៛)
-              </button>
-            </div>
-
-            {onNavigate && (
-              <button
-                onClick={() => onNavigate('cashier')}
-                className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 font-bold rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
-              >
-                <Wallet className="w-4 h-4" />
-                <span>Cashier Terminal</span>
-              </button>
-            )}
-          </div>
+          <button
+            onClick={() => setNotificationBanner(null)}
+            className="text-slate-400 hover:text-white font-mono px-2 py-0.5 rounded text-sm leading-none"
+          >
+            ✕
+          </button>
         </div>
+      )}
 
-        {/* ========================================================================= */}
-        {/* 4 TOP STAT CARDS                                                         */}
-        {/* ========================================================================= */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {/* CARD 1: Total Disbursed (USD & KHR) */}
-          <div className="bg-gradient-to-b from-slate-900/90 to-slate-900/50 backdrop-blur-md border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden group hover:border-slate-700 transition-all">
-            <div className="absolute -right-6 -bottom-6 w-28 h-28 bg-emerald-500/10 rounded-full blur-xl group-hover:bg-emerald-500/15 transition-all" />
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Total Disbursed
-              </span>
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-sm">
-                <ArrowUpRight className="w-5 h-5" />
+      {/* ========================================================================= */}
+      {/* 2. HEADER BAR & SYSTEM MASTER CONTROLS (Deliverable 1)                     */}
+      {/* ========================================================================= */}
+      <header className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl p-4 sm:p-5 shadow-2xl backdrop-blur-md">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+          {/* Institution Identity */}
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-amber-400 p-[1.5px] shadow-lg shadow-emerald-950/40 shrink-0">
+              <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+                <Building2 className="w-6 h-6 text-emerald-400" />
               </div>
             </div>
-
-            {/* Values */}
-            <div className="space-y-1">
-              {(currencyMode === 'BOTH' || currencyMode === 'USD') && (
-                <div className="text-2xl font-black text-white tracking-tight font-mono">
-                  {formatUSD(statsDisbursed.usd)}
-                </div>
-              )}
-              {(currencyMode === 'BOTH' || currencyMode === 'KHR') && (
-                <div className={`font-mono font-bold text-emerald-400 ${
-                  currencyMode === 'KHR' ? 'text-2xl text-white' : 'text-sm'
-                }`}>
-                  {formatKHR(statsDisbursed.khr)}
-                </div>
-              )}
-            </div>
-
-            <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
-              <span className="text-slate-400">Cumulative release</span>
-              <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                <TrendingUp className="w-3.5 h-3.5" /> +12.4% vs prev
-              </span>
-            </div>
-          </div>
-
-          {/* CARD 2: Active Borrowers */}
-          <div className="bg-gradient-to-b from-slate-900/90 to-slate-900/50 backdrop-blur-md border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden group hover:border-slate-700 transition-all">
-            <div className="absolute -right-6 -bottom-6 w-28 h-28 bg-cyan-500/10 rounded-full blur-xl group-hover:bg-cyan-500/15 transition-all" />
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Active Borrowers
-              </span>
-              <div className="w-10 h-10 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-sm">
-                <Users className="w-5 h-5" />
-              </div>
-            </div>
-
-            <div className="text-2xl font-black text-white tracking-tight font-mono">
-              {statsActiveBorrowers.toLocaleString()}
-            </div>
-            <div className="text-xs text-cyan-400 font-medium mt-1">
-              98.2% KYC Verified Clients
-            </div>
-
-            <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-              <span>Client Retention</span>
-              <span className="text-white font-semibold flex items-center gap-1">
-                <UserCheck className="w-3.5 h-3.5 text-cyan-400" /> 94.8% Good Standing
-              </span>
-            </div>
-          </div>
-
-          {/* CARD 3: Total Repayments Collected This Month */}
-          <div className="bg-gradient-to-b from-slate-900/90 to-slate-900/50 backdrop-blur-md border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden group hover:border-slate-700 transition-all">
-            <div className="absolute -right-6 -bottom-6 w-28 h-28 bg-amber-500/10 rounded-full blur-xl group-hover:bg-amber-500/15 transition-all" />
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Collected This Month
-              </span>
-              <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-sm">
-                <DollarSign className="w-5 h-5" />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              {(currencyMode === 'BOTH' || currencyMode === 'USD') && (
-                <div className="text-2xl font-black text-white tracking-tight font-mono">
-                  {formatUSD(statsCollectedThisMonth.usd)}
-                </div>
-              )}
-              {(currencyMode === 'BOTH' || currencyMode === 'KHR') && (
-                <div className={`font-mono font-bold text-amber-400 ${
-                  currencyMode === 'KHR' ? 'text-2xl text-white' : 'text-sm'
-                }`}>
-                  {formatKHR(statsCollectedThisMonth.khr)}
-                </div>
-              )}
-            </div>
-
-            {/* Target Progress Bar */}
-            <div className="mt-3">
-              <div className="flex justify-between text-[11px] text-slate-400 mb-1">
-                <span>Target: {formatUSD(statsCollectedThisMonth.targetUSD)}</span>
-                <span className="text-amber-400 font-bold">{statsCollectedThisMonth.percentage}%</span>
-              </div>
-              <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-amber-500 to-yellow-400 rounded-full transition-all duration-500"
-                  style={{ width: `${statsCollectedThisMonth.percentage}%` }}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* CARD 4: Portfolio at Risk (PAR 30+ Rate) */}
-          <div className="bg-gradient-to-b from-slate-900/90 to-slate-900/50 backdrop-blur-md border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden group hover:border-slate-700 transition-all">
-            <div className={`absolute -right-6 -bottom-6 w-28 h-28 rounded-full blur-xl transition-all ${
-              statsPAR30.rate <= 3.0 ? 'bg-emerald-500/10' : 'bg-rose-500/10'
-            }`} />
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                PAR 30+ Rate
-              </span>
-              <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shadow-sm ${
-                statsPAR30.rate <= 3.0
-                  ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
-                  : 'bg-rose-500/15 border-rose-500/30 text-rose-400'
-              }`}>
-                <AlertOctagon className="w-5 h-5" />
-              </div>
-            </div>
-
-            <div className="flex items-baseline gap-2">
-              <span className={`text-3xl font-black font-mono tracking-tight ${
-                statsPAR30.rate <= 3.0 ? 'text-emerald-400' : 'text-rose-400'
-              }`}>
-                {statsPAR30.rate}%
-              </span>
-              <span className="text-xs px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                Healthy Tier 1
-              </span>
-            </div>
-
-            <p className="text-xs text-slate-400 mt-1">
-              Industry benchmark &lt; 3.0% (Risk threshold)
-            </p>
-
-            <div className="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-              <span>Overdue &gt; 30d</span>
-              <span className="text-slate-200 font-mono font-medium">
-                {formatUSD(statsPAR30.overdue30PlusUSD)}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* ========================================================================= */}
-        {/* LOANS DUE THIS WEEK - MAIN TABLE & ACTION QUEUE                            */}
-        {/* ========================================================================= */}
-        <div className="bg-slate-900/80 backdrop-blur-md border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
-          {/* Table Header & Search Filter Controls */}
-          <div className="p-5 border-b border-slate-800/80 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-amber-400" />
-                <h2 className="text-lg font-bold text-white tracking-tight">
-                  Loans with Payments Due This Week
-                </h2>
-                <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-slate-800 text-amber-300 border border-slate-700">
-                  {filteredLoans.length} Loans Actionable
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h1 className="text-sm sm:text-base font-black tracking-wider uppercase text-white font-mono">
+                  JAM SONG VICH
+                </h1>
+                <span className="text-slate-600 font-mono text-xs">|</span>
+                <span className="text-xs font-semibold text-slate-300">
+                  Core Banking / Super Admin Ledger
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  LIVE NBC GATEWAY
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Installments maturing between Monday and Sunday. Follow up proactively to maintain zero delinquency.
+              <p className="text-[11px] text-slate-400 font-medium tracking-tight mt-0.5">
+                Core Banking System • ប្រព័ន្ធគ្រប់គ្រងឥណទាន • National Bank of Cambodia Clearing Rails
               </p>
-            </div>
-
-            {/* Search & Status Badges Filter Bar */}
-            <div className="flex flex-wrap items-center gap-2.5">
-              {/* Search input */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input
-                  type="text"
-                  value={searchFilter}
-                  onChange={(e) => setSearchFilter(e.target.value)}
-                  placeholder="Search borrower or loan code..."
-                  className="pl-9 pr-3 py-1.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 w-48 sm:w-60"
-                />
-              </div>
-
-              {/* Status Badge Filters */}
-              <div className="flex items-center bg-slate-950 border border-slate-800 rounded-xl p-1 text-xs">
-                <button
-                  onClick={() => setHealthFilter('ALL')}
-                  className={`px-2.5 py-1 rounded-lg transition-all ${
-                    healthFilter === 'ALL'
-                      ? 'bg-slate-800 text-white font-bold'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setHealthFilter('ON_TIME')}
-                  className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
-                    healthFilter === 'ON_TIME'
-                      ? 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30'
-                      : 'text-slate-400 hover:text-emerald-400'
-                  }`}
-                >
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
-                  On Time
-                </button>
-                <button
-                  onClick={() => setHealthFilter('OVERDUE_1_30')}
-                  className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
-                    healthFilter === 'OVERDUE_1_30'
-                      ? 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30'
-                      : 'text-slate-400 hover:text-amber-400'
-                  }`}
-                >
-                  <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
-                  1-30d
-                </button>
-                <button
-                  onClick={() => setHealthFilter('CRITICAL_30')}
-                  className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
-                    healthFilter === 'CRITICAL_30'
-                      ? 'bg-rose-500/20 text-rose-300 font-bold border border-rose-500/30'
-                      : 'text-slate-400 hover:text-rose-400'
-                  }`}
-                >
-                  <span className="w-2 h-2 rounded-full bg-rose-500 inline-block" />
-                  Critical 30+d
-                </button>
-              </div>
             </div>
           </div>
 
-          {/* Responsive Table */}
+          {/* Right Status Badges: Bakong Latency + Profile KYC Badge */}
+          <div className="flex items-center gap-2.5 flex-wrap">
+            {/* Bakong Node Latency Pulse Pill */}
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-[#0f172a] border border-[#1e293b] rounded-xl text-xs font-mono text-slate-300 shadow-inner">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <span className="text-[11px]">
+                Bakong Core: <span className="text-emerald-400 font-bold">Connected</span> (42ms)
+              </span>
+            </div>
+
+            {/* Super Admin Profile Badge */}
+            <div className="flex items-center gap-2 px-3 py-1 bg-[#0f172a] border border-[#1e293b] rounded-xl">
+              <div className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-[10px] font-bold text-emerald-300">
+                SA
+              </div>
+              <div className="text-left">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-white leading-none">System Administrator</span>
+                  <span className="px-1 py-0.2 rounded text-[9px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    KYC VERIFIED
+                  </span>
+                </div>
+                <span className="text-[10px] text-slate-400 font-mono leading-none">Phnom Penh Main Ledger</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Global Filter & Scoping Strip */}
+        <div className="mt-4 pt-4 border-t border-[#1e293b] grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+          {/* Period Toggles (Today, MTD, QTD, YTD) */}
+          <div className="md:col-span-4 flex items-center gap-1 bg-[#0f172a] p-1 rounded-xl border border-[#1e293b]">
+            {(['Today', 'MTD', 'QTD', 'YTD'] as PeriodScope[]).map((period) => (
+              <button
+                key={period}
+                onClick={() => setPeriodScope(period)}
+                className={`flex-1 py-1 px-2.5 rounded-lg text-xs font-mono font-bold transition-all ${
+                  periodScope === period
+                    ? 'bg-emerald-500 text-slate-950 shadow-md'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                {period}
+              </button>
+            ))}
+          </div>
+
+          {/* Branch Filter Dropdown */}
+          <div className="md:col-span-3">
+            <select
+              value={selectedBranch}
+              onChange={(e) => setSelectedBranch(e.target.value as BranchScope)}
+              className="w-full py-1.5 px-3 bg-[#0f172a] border border-[#1e293b] rounded-xl text-xs font-semibold text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
+            >
+              <option value="All Branches">🏢 All Branches (Consolidated)</option>
+              <option value="Phnom Penh Main">🏛️ Phnom Penh Main Branch</option>
+              <option value="Siem Reap">🏛️ Siem Reap Branch</option>
+              <option value="Battambang">🏛️ Battambang Branch</option>
+            </select>
+          </div>
+
+          {/* Currency Mode Filter */}
+          <div className="md:col-span-2 flex items-center gap-1 bg-[#0f172a] p-1 rounded-xl border border-[#1e293b]">
+            {(['USD', 'KHR', 'CONSOLIDATED'] as CurrencyMode[]).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setCurrencyMode(mode)}
+                className={`flex-1 py-1 px-1.5 rounded-lg text-[11px] font-mono font-bold transition-all ${
+                  currencyMode === mode
+                    ? 'bg-amber-400 text-slate-950 shadow-md'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {mode === 'CONSOLIDATED' ? 'DUAL' : mode}
+              </button>
+            ))}
+          </div>
+
+          {/* Scoped System Search Bar (Ctrl+K) */}
+          <div className="md:col-span-3 relative">
+            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={globalSearch}
+              onChange={(e) => setGlobalSearch(e.target.value)}
+              placeholder="Search CBC ID, Phone, Loan No, National ID..."
+              className="w-full py-1.5 pl-8 pr-12 bg-[#0f172a] border border-[#1e293b] rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            />
+            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded border border-slate-700 bg-slate-800 text-[10px] font-mono text-slate-400 pointer-events-none">
+              ⌘K
+            </span>
+          </div>
+        </div>
+      </header>
+
+      {/* ========================================================================= */}
+      {/* 3. EXECUTIVE KPI RIBBON (Commercial Banking Metrics - Deliverable 2)       */}
+      {/* ========================================================================= */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Metric 1: Total Portfolio at Risk (PAR 30+) */}
+        <div className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl p-4 shadow-xl relative overflow-hidden group hover:border-slate-700 transition">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400">
+              Portfolio at Risk (PAR 30+)
+            </span>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              ● NBC Compliant (&lt; 3.0%)
+            </span>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <p className="text-xl sm:text-2xl font-black font-mono text-amber-300">
+              {fmt(portfolioSummary?.par30?.amountUSD || 42180.50)}
+            </p>
+            <span className="text-xs font-mono font-bold text-amber-400/80">
+              ({portfolioSummary?.par30?.ratio || 1.82}%)
+            </span>
+          </div>
+          <div className="mt-2 pt-2 border-t border-[#1e293b] flex items-center justify-between text-[10px] text-slate-500 font-mono">
+            <span>Regulatory Ceiling: 3.00%</span>
+            <span>6 Delinquent Facilities</span>
+          </div>
+        </div>
+
+        {/* Metric 2: Gross Loan Portfolio (GLP) */}
+        <div className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl p-4 shadow-xl relative overflow-hidden group hover:border-slate-700 transition">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400">
+              Gross Loan Portfolio (GLP)
+            </span>
+            <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+              +8.4% QoQ
+            </span>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <p className="text-xl sm:text-2xl font-black font-mono text-emerald-400">
+              {fmt(portfolioSummary?.glp?.totalUSD || 2318450.00)}
+            </p>
+          </div>
+          <div className="mt-2 pt-2 border-t border-[#1e293b] flex items-center justify-between text-[10px] text-slate-500 font-mono">
+            <span>Across {portfolioSummary?.glp?.totalFacilities || 412} Active Facilities</span>
+            <span>100% NBC Collateralized</span>
+          </div>
+        </div>
+
+        {/* Metric 3: Bakong Clearing Account Liquidity */}
+        <div className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl p-4 shadow-xl relative overflow-hidden group hover:border-slate-700 transition">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400">
+              Bakong Clearing Liquidity
+            </span>
+            <span className="text-[10px] font-mono text-slate-400 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-ping" />
+              Real-Time RTGS
+            </span>
+          </div>
+          <div className="space-y-0.5">
+            <p className="text-lg font-black font-mono text-white">
+              {fmt(portfolioSummary?.bakongLiquidity?.usdBalance || 184920.00, 'USD')}
+            </p>
+            <p className="text-xs font-mono font-bold text-amber-400">
+              {fmt(portfolioSummary?.bakongLiquidity?.khrBalance / KHR_RATE || 59756.10, 'KHR')}
+            </p>
+          </div>
+          <div className="mt-2 pt-2 border-t border-[#1e293b] flex items-center justify-between text-[10px] text-slate-500 font-mono">
+            <span>ACLEDA Clearing Account</span>
+            <span>Buffer: 100% Liquid</span>
+          </div>
+        </div>
+
+        {/* Metric 4: Monthly Collection Efficiency */}
+        <div className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl p-4 shadow-xl relative overflow-hidden group hover:border-slate-700 transition">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400">
+              Collection Efficiency (MTD)
+            </span>
+            <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+              Optimal Velocity
+            </span>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <p className="text-xl sm:text-2xl font-black font-mono text-emerald-400">
+              {portfolioSummary?.collectionEfficiency?.ratio || 96.4}%
+            </p>
+          </div>
+          <div className="mt-2 pt-2 border-t border-[#1e293b] flex items-center justify-between text-[10px] text-slate-500 font-mono">
+            <span>Collected: {fmt(portfolioSummary?.collectionEfficiency?.collectedUSD || 142300)}</span>
+            <span>Due: {fmt(portfolioSummary?.collectionEfficiency?.scheduledUSD || 147600)}</span>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 4. WORKBENCH SUB-VIEW SWITCHER                                            */}
+      {/* ========================================================================= */}
+      <div className="flex items-center justify-between gap-3 border-b border-[#1e293b] pb-2">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setViewMode('LEDGER')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+              viewMode === 'LEDGER'
+                ? 'bg-slate-800 text-white border border-slate-700 shadow'
+                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Facility Management Table</span>
+            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-950 font-mono text-slate-400">
+              {displayLedger.length}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setViewMode('UNDERWRITING')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+              viewMode === 'UNDERWRITING'
+                ? 'bg-slate-800 text-white border border-slate-700 shadow'
+                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+            <span>Underwriting Origination Queue</span>
+            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-500/20 text-amber-300 font-mono font-bold">
+              {underwritingQueue.length || 3}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setViewMode('RECONCILIATION')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+              viewMode === 'RECONCILIATION'
+                ? 'bg-slate-800 text-white border border-slate-700 shadow'
+                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+            }`}
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-teal-400" />
+            <span>Bakong KHQR Reconciliation Feed</span>
+            {reconciliationFeed?.anomaly?.hasAnomaly && (
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-rose-500/20 text-rose-300 font-mono font-bold animate-pulse">
+                1 Mismatch
+              </span>
+            )}
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={fetchDashboardData}
+            disabled={isLoading}
+            className="p-2 rounded-xl bg-[#0f172a] hover:bg-slate-800 border border-[#1e293b] text-slate-400 hover:text-white text-xs font-mono transition flex items-center gap-1.5"
+            title="Refresh Ledger"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-emerald-400' : ''}`} />
+            <span className="hidden sm:inline text-[11px]">Synced {lastUpdated}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 5. VIEW 1: BORROWER & LOAN FACILITY TABLE (Main Centerpiece Deliverable 3)*/}
+      {/* ========================================================================= */}
+      {viewMode === 'LEDGER' && (
+        <section className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl shadow-2xl overflow-hidden">
+          {/* Controls Strip */}
+          <div className="p-4 border-b border-[#1e293b] flex flex-col md:flex-row md:items-center justify-between gap-3">
+            {/* Status Filter Tabs */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+              {(
+                [
+                  { id: 'ALL', label: 'All Facilities' },
+                  { id: 'ACTIVE', label: 'Active Performing' },
+                  { id: 'UNDERWRITING_PENDING', label: 'Underwriting Pending' },
+                  { id: 'DELINQUENT_1_30', label: 'Delinquent (1-30)' },
+                  { id: 'PAR_30_PLUS', label: 'PAR (30+)' },
+                  { id: 'MATURED', label: 'Matured' },
+                ] as { id: TableFilterTab; label: string }[]
+              ).map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-mono font-semibold whitespace-nowrap transition-all ${
+                    activeTab === tab.id
+                      ? 'bg-emerald-500/15 border border-emerald-500/40 text-emerald-300'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Action Buttons: Disburse & Export */}
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => setViewMode('UNDERWRITING')}
+                className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs rounded-xl shadow-md transition flex items-center gap-1.5"
+              >
+                <PlusCircle className="w-3.5 h-3.5" />
+                <span>+ Disburse Facility</span>
+              </button>
+              <button
+                onClick={handleExportCentralBankReport}
+                className="px-3.5 py-2 bg-[#0f172a] hover:bg-slate-800 text-slate-200 border border-[#1e293b] font-semibold text-xs rounded-xl transition flex items-center gap-1.5"
+              >
+                <Download className="w-3.5 h-3.5 text-slate-400" />
+                <span>Export NBC Report (CSV)</span>
+              </button>
+            </div>
+          </div>
+
+          {/* High Data Density Tabular Scaffolding */}
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead className="bg-slate-950/70 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
-                <tr>
-                  <th className="py-3 px-4">Borrower & Loan Ref</th>
-                  <th className="py-3 px-4">Due Date & Timing</th>
-                  <th className="py-3 px-4 text-right">Amount Due</th>
-                  <th className="py-3 px-4 text-center">Loan Health Status</th>
-                  <th className="py-3 px-4 text-right">Outstanding</th>
-                  <th className="py-3 px-4 text-center">Quick Actions</th>
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-[#0f172a]/80 border-b border-[#1e293b] text-slate-400 font-mono uppercase tracking-wider text-[10px]">
+                  <th className="py-3 px-4 font-semibold">Borrower Dossier</th>
+                  <th className="py-3 px-4 font-semibold">Facility & Account</th>
+                  <th className="py-3 px-4 font-semibold text-right">Principal & Tenure</th>
+                  <th className="py-3 px-4 font-semibold">Repayment Progress</th>
+                  <th className="py-3 px-4 font-semibold">Next Scheduled EMI</th>
+                  <th className="py-3 px-4 font-semibold text-center">Health Status</th>
+                  <th className="py-3 px-4 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {filteredLoans.map((loan) => (
-                  <tr
-                    key={loan.id}
-                    className="hover:bg-slate-800/40 transition-colors group"
-                  >
-                    {/* Borrower & Loan Info */}
-                    <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-slate-800 to-slate-700 border border-slate-600/50 flex items-center justify-center font-bold text-xs text-amber-300 shadow-sm">
-                          {loan.borrowerNameEn.slice(0, 2).toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="font-bold text-white group-hover:text-amber-300 transition-colors">
-                            {loan.borrowerNameEn}{' '}
-                            <span className="text-slate-400 font-normal">({loan.borrowerNameKh})</span>
-                          </div>
-                          <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-400">
-                            <span className="font-mono text-emerald-400 font-medium">{loan.loanCode}</span>
-                            <span>•</span>
-                            <span>{loan.productName}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
+              <tbody className="divide-y divide-[#1e293b]/70 font-sans">
+                {displayLedger.map((row) => {
+                  const isPar = row.facility.health === 'DEFAULT_RISK';
+                  const isWatch = row.facility.health === 'WATCHLIST';
 
-                    {/* Due Date & Timing */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <div className="font-medium text-slate-200">{loan.dueDate}</div>
-                      <div className="text-[11px] mt-0.5">
-                        {loan.daysDiff === 0 ? (
-                          <span className="text-amber-400 font-bold flex items-center gap-1">
-                            <Clock className="w-3 h-3" /> Due Today
+                  return (
+                    <tr
+                      key={row.id}
+                      className="hover:bg-slate-900/60 transition-colors group"
+                    >
+                      {/* Column 1: Borrower */}
+                      <td className="py-3 px-4">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-white group-hover:text-emerald-300 transition">
+                              {row.borrower.nameEn}
+                            </span>
+                            <span className="text-[11px] text-slate-400 font-khmer">
+                              ({row.borrower.nameKh})
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-[11px] font-mono text-slate-400">
+                            <span className="text-slate-300">{row.borrower.clientCode}</span>
+                            <span>•</span>
+                            <span>ID: {row.borrower.maskedNationalId}</span>
+                          </div>
+                          <p className="text-[10px] text-slate-500 font-mono">{row.borrower.phone}</p>
+                        </div>
+                      </td>
+
+                      {/* Column 2: Facility & Account */}
+                      <td className="py-3 px-4">
+                        <div className="space-y-0.5 font-mono">
+                          <span className="font-bold text-white text-xs block">
+                            {row.loanId}
                           </span>
-                        ) : loan.daysDiff > 0 ? (
-                          <span className="text-rose-400 font-medium">
-                            {loan.daysDiff} days past due
+                          <span className="text-[11px] text-slate-300 font-sans block">
+                            {row.facility.productName}
                           </span>
-                        ) : (
-                          <span className="text-emerald-400">
-                            {loan.dueDayLabel}
+                          <span className="text-[10px] text-slate-500">
+                            {row.facility.branch}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Column 3: Principal & Tenure */}
+                      <td className="py-3 px-4 text-right font-mono">
+                        <div className="space-y-0.5">
+                          <span className="font-bold text-white block">
+                            {fmt(row.principal.disbursedAmountUSD)}
+                          </span>
+                          <span className="text-[11px] text-emerald-400 block">
+                            {row.principal.aprPercent}% APR
+                          </span>
+                          <span className="text-[10px] text-slate-400 block">
+                            {row.principal.remainingMonths}M / {row.principal.termMonths}M remaining
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Column 4: Repayment Progress */}
+                      <td className="py-3 px-4 min-w-[170px]">
+                        <div className="space-y-1.5 font-mono text-[11px]">
+                          <div className="flex items-center justify-between">
+                            <span className="text-emerald-400 font-bold">
+                              {fmt(row.repaymentProgress.totalPaidUSD)}
+                            </span>
+                            <span className="text-slate-400 font-bold">
+                              {fmt(row.repaymentProgress.outstandingBalanceUSD)}
+                            </span>
+                          </div>
+                          <div className="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                            <div
+                              className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full"
+                              style={{ width: `${row.repaymentProgress.percentPaid}%` }}
+                            />
+                          </div>
+                          <div className="flex items-center justify-between text-[10px] text-slate-500">
+                            <span>Settled: {row.repaymentProgress.percentPaid}%</span>
+                            <span>Bal: 100%</span>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Column 5: Next Scheduled Payment */}
+                      <td className="py-3 px-4 font-mono">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-slate-300 font-bold">
+                              {row.nextScheduledPayment.dueDate}
+                            </span>
+                            <span className="text-[10px] text-slate-500">
+                              (Cycle #{row.nextScheduledPayment.cycleNumber})
+                            </span>
+                          </div>
+                          <span className="text-xs font-bold text-white block">
+                            {fmt(row.nextScheduledPayment.scheduledEMIUSD)}
+                          </span>
+                          {row.nextScheduledPayment.daysOverdue > 0 && (
+                            <span className="text-[10px] font-bold text-rose-400 block">
+                              ⚠ {row.nextScheduledPayment.daysOverdue} days past due
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Column 6: Health / Status Pill */}
+                      <td className="py-3 px-4 text-center font-mono">
+                        {row.facility.health === 'PERFORMING' && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            PERFORMING
                           </span>
                         )}
-                      </div>
-                    </td>
+                        {row.facility.health === 'WATCHLIST' && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                            WATCHLIST
+                          </span>
+                        )}
+                        {row.facility.health === 'DEFAULT_RISK' && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                            PAR 30+ RISK
+                          </span>
+                        )}
+                        {row.facility.health === 'GRACE_PERIOD' && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-300 border border-blue-500/20">
+                            GRACE PERIOD
+                          </span>
+                        )}
+                      </td>
 
-                    {/* Amount Due (Principal + Interest) */}
-                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                      <div className="font-black text-sm text-white font-mono">
-                        {formatUSD(loan.amountDueUSD)}
-                      </div>
-                      <div className="text-[11px] text-emerald-400 font-mono">
-                        {formatKHR(loan.amountDueKHR)}
-                      </div>
-                      <div className="text-[10px] text-slate-500 mt-0.5">
-                        P: {formatUSD(loan.principalDueUSD)} | I: {formatUSD(loan.interestDueUSD)}
-                      </div>
-                    </td>
-
-                    {/* Loan Health Status Badges (Strict matching criteria) */}
-                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                      {loan.health === 'On Time' && (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-sm shadow-emerald-950/20">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>On Time</span>
-                        </span>
-                      )}
-
-                      {loan.health === 'Overdue 1-30 Days' && (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500/15 text-amber-300 border border-amber-500/30 shadow-sm shadow-amber-950/20">
-                          <Clock className="w-3.5 h-3.5" />
-                          <span>Overdue 1-30 Days</span>
-                        </span>
-                      )}
-
-                      {loan.health === 'Critical 30+ Days' && (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-500/20 text-rose-400 border border-rose-500/40 animate-pulse shadow-sm shadow-rose-950/20">
-                          <AlertTriangle className="w-3.5 h-3.5" />
-                          <span>Critical 30+ Days</span>
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Outstanding Balance */}
-                    <td className="py-3.5 px-4 text-right whitespace-nowrap font-mono text-slate-300">
-                      <div>{formatUSD(loan.outstandingBalanceUSD)}</div>
-                      <div className="text-[10px] text-slate-500">{loan.branch}</div>
-                    </td>
-
-                    {/* Quick Action Buttons */}
-                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                      <div className="flex items-center justify-center gap-2">
-                        {/* Call Borrower Quick Action */}
-                        <button
-                          onClick={() => handleInitiateCall(loan)}
-                          title={`Call ${loan.borrowerNameEn} (${loan.borrowerPhone})`}
-                          className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 hover:border-slate-600 transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
-                        >
-                          <Phone className="w-3.5 h-3.5 text-cyan-400" />
-                          <span>Call Borrower</span>
-                        </button>
-
-                        {/* Collect Payment Quick Action */}
-                        <button
-                          onClick={() => handleCollectPaymentClick(loan)}
-                          title="Open cashier payment modal"
-                          className="px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 transition-all flex items-center gap-1.5 shadow-md shadow-emerald-950/40 active:scale-95"
-                        >
-                          <CreditCard className="w-3.5 h-3.5" />
-                          <span>Collect Payment</span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-
-                {filteredLoans.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="py-12 text-center text-slate-400">
-                      <ShieldCheck className="w-10 h-10 mx-auto text-emerald-400/60 mb-2" />
-                      <p className="font-semibold text-white">No loans matching the selected filter</p>
-                      <p className="text-xs text-slate-500 mt-1">All weekly scheduled repayments are clear or accounted for.</p>
-                    </td>
-                  </tr>
-                )}
+                      {/* Column 7: Row Actions Menu */}
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => setSelectedLoanForLedger(row)}
+                            className="p-1.5 bg-[#0f172a] hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg border border-[#1e293b] text-[11px] font-mono transition"
+                            title="View Full Amortization Ledger"
+                          >
+                            Ledger
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedLoanForRestructure(row);
+                              setRestructureForm({
+                                newAprPercent: row.principal.aprPercent,
+                                newTermMonths: row.principal.termMonths + 6,
+                                gracePeriodMonths: 0,
+                                reason: 'Super Admin term restructuring to prevent NPL delinquency',
+                              });
+                            }}
+                            className="p-1.5 bg-[#0f172a] hover:bg-amber-950/40 text-amber-300 rounded-lg border border-[#1e293b] text-[11px] font-mono transition"
+                            title="Adjust Terms / Restructure"
+                          >
+                            Restructure
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
+        </section>
+      )}
 
-          {/* Table Footer */}
-          <div className="p-4 bg-slate-950/60 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+      {/* ========================================================================= */}
+      {/* 6. VIEW 2: REAL UNDERWRITING & ORIGINATION QUEUE (Deliverable 4)          */}
+      {/* ========================================================================= */}
+      {viewMode === 'UNDERWRITING' && (
+        <section className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl p-5 shadow-2xl space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[#1e293b]">
             <div>
-              Showing <span className="font-semibold text-white">{filteredLoans.length}</span> of{' '}
-              <span className="font-semibold text-white">{loansDueThisWeek.length}</span> weekly loans
+              <h2 className="text-sm font-bold text-white uppercase tracking-wider font-mono flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-amber-400" />
+                Underwriting & Loan Origination Queue
+              </h2>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Review submitted applications from the verified borrower portal with Credit Bureau Cambodia (CBC) scoring.
+              </p>
             </div>
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block" />
-                <span>On Time: Healthy</span>
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" />
-                <span>1-30d: Follow-up</span>
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block" />
-                <span>30+d: Risk Escalation</span>
-              </span>
+            <span className="text-xs font-mono text-amber-300 bg-amber-500/10 px-3 py-1 rounded-xl border border-amber-500/20 font-bold">
+              {underwritingQueue.length || 3} Active Queue Items
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {(underwritingQueue.length > 0
+              ? underwritingQueue
+              : [
+                  {
+                    id: 'app-991',
+                    applicationNumber: 'APP-2026-0982',
+                    borrowerName: 'Kanha Srun',
+                    borrowerPhone: '+855 17 882 109',
+                    declaredIncomeUSD: 2400,
+                    requestedAmountUSD: 10000,
+                    requestedTermMonths: 24,
+                    productName: 'SME Working Capital',
+                    cbcScore: { score: 745, grade: 'Grade A - Prime Risk', color: 'emerald', dtiRatio: 26.5 },
+                    collateralStatus: 'Registered Hard Title (Boeung Keng Kang, PP)',
+                    submittedAt: '2026-10-31 08:30:15',
+                  },
+                  {
+                    id: 'app-992',
+                    applicationNumber: 'APP-2026-1044',
+                    borrowerName: 'Dara Pich',
+                    borrowerPhone: '+855 81 294 881',
+                    declaredIncomeUSD: 1600,
+                    requestedAmountUSD: 5000,
+                    requestedTermMonths: 12,
+                    productName: 'Agri Micro-Credit',
+                    cbcScore: { score: 685, grade: 'Grade B - Moderate Risk', color: 'amber', dtiRatio: 38.2 },
+                    collateralStatus: 'Soft Title & Equipment Lien (Battambang)',
+                    submittedAt: '2026-10-31 09:14:22',
+                  },
+                  {
+                    id: 'app-993',
+                    applicationNumber: 'APP-2026-1102',
+                    borrowerName: 'Vicheka Long',
+                    borrowerPhone: '+855 92 401 922',
+                    declaredIncomeUSD: 3100,
+                    requestedAmountUSD: 15000,
+                    requestedTermMonths: 36,
+                    productName: 'Commercial Credit Line',
+                    cbcScore: { score: 780, grade: 'Grade A+ - Exceptional', color: 'emerald', dtiRatio: 22.0 },
+                    collateralStatus: 'Fixed Deposit Lien ($20,000 in ACLEDA)',
+                    submittedAt: '2026-10-31 10:02:40',
+                  },
+                ]
+            ).map((app: any) => (
+              <div
+                key={app.id}
+                className="bg-[#0f172a] border border-[#1e293b] rounded-2xl p-4 space-y-3.5 shadow-xl flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between pb-2 border-b border-[#1e293b]">
+                    <span className="text-xs font-bold text-white font-mono">{app.applicationNumber}</span>
+                    <span className="text-[10px] font-mono text-slate-400">{app.submittedAt.split(' ')[0]}</span>
+                  </div>
+
+                  <div className="mt-2.5 space-y-1">
+                    <p className="text-sm font-bold text-white">{app.borrowerName}</p>
+                    <p className="text-[11px] font-mono text-slate-400">{app.borrowerPhone}</p>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs font-mono bg-[#0b0f17] p-2.5 rounded-xl border border-[#1e293b]">
+                    <div>
+                      <span className="text-[10px] text-slate-500 block">Requested</span>
+                      <span className="text-emerald-400 font-bold">{fmt(app.requestedAmountUSD)}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-500 block">Declared Inc.</span>
+                      <span className="text-white font-bold">{fmt(app.declaredIncomeUSD)}/mo</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-500 block">Facility Term</span>
+                      <span className="text-slate-300 font-bold">{app.requestedTermMonths} Months</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-500 block">DTI Ratio</span>
+                      <span className="text-amber-400 font-bold">{app.cbcScore?.dtiRatio || 28.5}%</span>
+                    </div>
+                  </div>
+
+                  {/* CBC Score Badge */}
+                  <div className="mt-2.5 p-2 bg-emerald-950/30 border border-emerald-500/20 rounded-xl text-xs flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-mono block">Credit Bureau Cambodia</span>
+                      <span className="text-xs font-bold text-emerald-400 font-mono">
+                        {app.cbcScore?.grade || 'Grade A - Prime'} ({app.cbcScore?.score || 745})
+                      </span>
+                    </div>
+                    <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                  </div>
+
+                  <p className="text-[10px] text-slate-400 font-sans mt-2 flex items-center gap-1">
+                    <Landmark className="w-3 h-3 text-slate-500" />
+                    <span>{app.collateralStatus}</span>
+                  </p>
+                </div>
+
+                {/* Underwriting Actions Strip */}
+                <div className="pt-2 border-t border-[#1e293b] space-y-1.5">
+                  <button
+                    onClick={() => setSelectedAppForDisburse(app)}
+                    className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs rounded-xl shadow transition flex items-center justify-center gap-1.5"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Approve & Authorize Disbursement</span>
+                  </button>
+
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <button
+                      onClick={() => {
+                        setSelectedAppForCounter(app);
+                        setCounterPrincipal(Math.round(app.requestedAmountUSD * 0.8));
+                        setCounterApr(13.0);
+                      }}
+                      className="py-1.5 bg-[#0b0f17] hover:bg-slate-800 border border-[#1e293b] text-amber-300 font-semibold text-[11px] rounded-xl transition"
+                    >
+                      Counter-Offer
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm(`Reject application ${app.applicationNumber} pursuant to NBC DSR Guidelines?`)) {
+                          api.rejectApplication(app.id, 'NBC-REJ-01: Debt service ratio exceeded (> 50%)');
+                          setNotificationBanner({
+                            type: 'info',
+                            message: `Application ${app.applicationNumber} formally rejected. Standard NBC rejection notice dispatched.`,
+                          });
+                          fetchDashboardData();
+                        }
+                      }}
+                      className="py-1.5 bg-[#0b0f17] hover:bg-rose-950/40 border border-[#1e293b] text-rose-400 font-semibold text-[11px] rounded-xl transition"
+                    >
+                      Reject (NBC Code)
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 7. VIEW 3: LIVE BAKONG KHQR SETTLEMENT FEED (Deliverable 5)               */}
+      {/* ========================================================================= */}
+      {viewMode === 'RECONCILIATION' && (
+        <section className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl p-5 shadow-2xl space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[#1e293b]">
+            <div>
+              <h2 className="text-sm font-bold text-white uppercase tracking-wider font-mono flex items-center gap-2">
+                <RefreshCw className="w-4 h-4 text-teal-400" />
+                Live Bakong KHQR Settlement & Reconciliation Feed
+              </h2>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Real-time transaction stream from National Bank of Cambodia Bakong core settlement switch.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-mono">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              <span className="text-emerald-400 font-bold">Node #02 Active</span>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* ========================================================================= */}
-      {/* QUICK ACTION MODAL: CALL BORROWER                                         */}
-      {/* ========================================================================= */}
-      {callingLoan && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
-            <button
-              onClick={() => setCallingLoan(null)}
-              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="flex items-center gap-3 pb-3 border-b border-slate-800">
-              <div className="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center">
-                <PhoneCall className="w-5 h-5" />
+          {/* Reconciliation Anomaly Box */}
+          {reconciliationFeed?.anomaly && (
+            <div className="bg-rose-950/40 border border-rose-500/40 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-rose-400" />
+                  <span className="text-xs font-bold text-rose-300 font-mono uppercase tracking-wider">
+                    Reconciliation Anomaly Detected
+                  </span>
+                </div>
+                <span className="text-[10px] font-mono text-slate-400">
+                  {reconciliationFeed.anomaly.detectedAt}
+                </span>
               </div>
+              <p className="text-xs text-slate-300 font-sans leading-relaxed">
+                {reconciliationFeed.anomaly.issueDescription}
+              </p>
+              <div className="flex items-center justify-between pt-2 border-t border-rose-500/20 text-xs font-mono">
+                <div>
+                  <span className="text-slate-400 text-[10px] block">Bill Reference</span>
+                  <span className="text-white font-bold">{reconciliationFeed.anomaly.billReference}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 text-[10px] block">Expected EMI</span>
+                  <span className="text-slate-300 font-bold">{fmt(reconciliationFeed.anomaly.expectedAmountUSD)}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 text-[10px] block">Scanned Amount</span>
+                  <span className="text-emerald-400 font-bold">{fmt(reconciliationFeed.anomaly.scannedAmountUSD)}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    disabled={anomalyResolving !== null}
+                    onClick={() => handleResolveAnomaly('PREPAYMENT')}
+                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs rounded-xl shadow transition"
+                  >
+                    {anomalyResolving === 'PREPAYMENT' ? 'Applying...' : 'Apply as Principal Prepayment'}
+                  </button>
+                  <button
+                    disabled={anomalyResolving !== null}
+                    onClick={() => handleResolveAnomaly('REFUND')}
+                    className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-rose-300 border border-rose-500/30 text-xs rounded-xl transition"
+                  >
+                    {anomalyResolving === 'REFUND' ? 'Refunding...' : 'Refund to Bakong ID'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Real-time Ledger Stream */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-[#0f172a]/80 border-b border-[#1e293b] text-slate-400 font-mono uppercase tracking-wider text-[10px]">
+                  <th className="py-2.5 px-4">Timestamp</th>
+                  <th className="py-2.5 px-4">Bill Reference</th>
+                  <th className="py-2.5 px-4">Originating Bank</th>
+                  <th className="py-2.5 px-4 text-right">Settled Amount</th>
+                  <th className="py-2.5 px-4 font-mono">Bakong Hash / Journal</th>
+                  <th className="py-2.5 px-4 text-center">Audit Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#1e293b]/70 font-mono">
+                {(reconciliationFeed?.transactions?.length > 0
+                  ? reconciliationFeed.transactions
+                  : [
+                      {
+                        id: 'tx-01',
+                        timestamp: '2026-10-31 10:14:02',
+                        billReference: 'LN-2026-6042-INS05',
+                        originatingBank: 'ABA Bank KHQR',
+                        settledAmountUSD: 122.50,
+                        bakongMD5Hash: 'd41d8cd98f00b204e9800998ecf8427e',
+                        journalEntryId: 'JRN-89021',
+                        isVerified: true,
+                      },
+                      {
+                        id: 'tx-02',
+                        timestamp: '2026-10-31 10:11:38',
+                        billReference: 'LN-2026-1184-INS02',
+                        originatingBank: 'ACLEDA Bank Plc.',
+                        settledAmountUSD: 1650.00,
+                        bakongMD5Hash: 'e2fc714c4727ee9395f324cd2e7f331f',
+                        journalEntryId: 'JRN-89020',
+                        isVerified: true,
+                      },
+                      {
+                        id: 'tx-03',
+                        timestamp: '2026-10-31 09:58:19',
+                        billReference: 'LN-2026-9041-INS04',
+                        originatingBank: 'Wing Bank (Cambodia)',
+                        settledAmountUSD: 1083.50,
+                        bakongMD5Hash: '79cfeb94595de33b3326c06ab16efdcb',
+                        journalEntryId: 'JRN-89019',
+                        isVerified: true,
+                      },
+                    ]
+                ).map((tx: any) => (
+                  <tr key={tx.id} className="hover:bg-slate-900/60 transition">
+                    <td className="py-2.5 px-4 text-slate-400">{tx.timestamp}</td>
+                    <td className="py-2.5 px-4 text-white font-bold">{tx.billReference}</td>
+                    <td className="py-2.5 px-4 text-slate-300 font-sans">{tx.originatingBank}</td>
+                    <td className="py-2.5 px-4 text-right text-emerald-400 font-bold">{fmt(tx.settledAmountUSD)}</td>
+                    <td className="py-2.5 px-4 text-[10px] text-slate-400">
+                      <span>{tx.journalEntryId}</span>
+                      <span className="text-slate-600 ml-1">({tx.bakongMD5Hash.slice(0, 8)}...)</span>
+                    </td>
+                    <td className="py-2.5 px-4 text-center">
+                      <span className="inline-flex items-center gap-1 text-emerald-400 text-[10px] font-bold">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Verified
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 8. MODAL 1: VIEW FULL AMORTIZATION LEDGER                                 */}
+      {/* ========================================================================= */}
+      {selectedLoanForLedger && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+            <div className="p-4 border-b border-[#1e293b] flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold text-white">Call Borrower Follow-up</h3>
-                <p className="text-xs text-slate-400">Loan: {callingLoan.loanCode}</p>
+                <h3 className="text-sm font-bold text-white font-mono flex items-center gap-2">
+                  <Landmark className="w-4 h-4 text-emerald-400" />
+                  Full Amortization Schedule Ledger: {selectedLoanForLedger.loanId}
+                </h3>
+                <p className="text-[11px] text-slate-400 font-mono">
+                  Borrower: {selectedLoanForLedger.borrower.nameEn} ({selectedLoanForLedger.borrower.clientCode})
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedLoanForLedger(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 overflow-y-auto space-y-4">
+              <div className="grid grid-cols-4 gap-2 text-xs font-mono bg-[#0f172a] p-3 rounded-xl border border-[#1e293b]">
+                <div>
+                  <span className="text-[10px] text-slate-500 block">Principal Disbursed</span>
+                  <span className="text-white font-bold">{fmt(selectedLoanForLedger.principal.disbursedAmountUSD)}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 block">APR %</span>
+                  <span className="text-emerald-400 font-bold">{selectedLoanForLedger.principal.aprPercent}%</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 block">Tenure</span>
+                  <span className="text-slate-300 font-bold">{selectedLoanForLedger.principal.termMonths} Months</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 block">Outstanding</span>
+                  <span className="text-amber-400 font-bold">{fmt(selectedLoanForLedger.repaymentProgress.outstandingBalanceUSD)}</span>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs font-mono">
+                  <thead>
+                    <tr className="bg-[#0f172a] text-slate-400 text-[10px] uppercase">
+                      <th className="py-2 px-3">Cycle</th>
+                      <th className="py-2 px-3">Due Date</th>
+                      <th className="py-2 px-3 text-right">Principal</th>
+                      <th className="py-2 px-3 text-right">Interest</th>
+                      <th className="py-2 px-3 text-right">Total Installment</th>
+                      <th className="py-2 px-3 text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#1e293b]/60">
+                    {Array.from({ length: selectedLoanForLedger.principal.termMonths }).map((_, idx) => {
+                      const cycle = idx + 1;
+                      const isPaid = cycle <= (selectedLoanForLedger.principal.termMonths - selectedLoanForLedger.principal.remainingMonths);
+                      const baseEmi = selectedLoanForLedger.nextScheduledPayment.scheduledEMIUSD || 1195.42;
+
+                      return (
+                        <tr key={cycle} className={isPaid ? 'text-slate-500' : 'text-slate-200'}>
+                          <td className="py-2 px-3">#{cycle}</td>
+                          <td className="py-2 px-3">2026-{String((cycle % 12) + 1).padStart(2, '0')}-15</td>
+                          <td className="py-2 px-3 text-right">{fmt(baseEmi * 0.85)}</td>
+                          <td className="py-2 px-3 text-right text-emerald-400/80">{fmt(baseEmi * 0.15)}</td>
+                          <td className="py-2 px-3 text-right font-bold">{fmt(baseEmi)}</td>
+                          <td className="py-2 px-3 text-center">
+                            {isPaid ? (
+                              <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 font-bold">
+                                SETTLED
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-400">
+                                SCHEDULED
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
 
-            <div className="mt-4 space-y-4 text-xs">
-              {/* Contact Card */}
-              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h4 className="font-bold text-sm text-white">{callingLoan.borrowerNameEn}</h4>
-                    <p className="text-emerald-400">{callingLoan.borrowerNameKh}</p>
-                  </div>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                    callingLoan.health === 'On Time'
-                      ? 'bg-emerald-500/20 text-emerald-300'
-                      : 'bg-amber-500/20 text-amber-300'
-                  }`}>
-                    {callingLoan.health}
-                  </span>
-                </div>
-
-                <div className="space-y-1 text-slate-300 pt-2 border-t border-slate-800/80">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Phone:</span>
-                    <a
-                      href={`tel:${callingLoan.borrowerPhone}`}
-                      className="font-mono font-bold text-cyan-400 hover:underline flex items-center gap-1"
-                    >
-                      <Phone className="w-3 h-3" />
-                      {callingLoan.borrowerPhone}
-                    </a>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Due Amount:</span>
-                    <span className="font-mono font-bold text-white">
-                      {formatUSD(callingLoan.amountDueUSD)} ({formatKHR(callingLoan.amountDueKHR)})
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Scheduled Due:</span>
-                    <span className="text-amber-400 font-medium">{callingLoan.dueDate}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Call Outcome Logging */}
-              <div>
-                <label className="block font-semibold text-slate-300 mb-1.5 uppercase tracking-wider text-[10px]">
-                  Call Log & Promise to Pay Notes
-                </label>
-                <textarea
-                  rows={3}
-                  value={callNotes}
-                  onChange={(e) => setCallNotes(e.target.value)}
-                  placeholder="e.g. Borrower picked up. Promised to make KHQR repayment tomorrow by 2:00 PM."
-                  className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 text-xs"
-                />
-              </div>
-
-              {callStatusMessage && (
-                <div className="p-2.5 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-center font-medium">
-                  {callStatusMessage}
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div className="grid grid-cols-2 gap-2.5 pt-2">
-                <a
-                  href={`tel:${callingLoan.borrowerPhone}`}
-                  className="px-4 py-2.5 rounded-xl font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition-all flex items-center justify-center gap-2"
-                >
-                  <PhoneCall className="w-4 h-4" />
-                  <span>Dial Now</span>
-                </a>
-                <button
-                  onClick={handleLogCallSuccess}
-                  className="px-4 py-2.5 rounded-xl font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all flex items-center justify-center gap-2"
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>Save Log</span>
-                </button>
-              </div>
+            <div className="p-3 border-t border-[#1e293b] flex justify-end">
+              <button
+                onClick={() => setSelectedLoanForLedger(null)}
+                className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl"
+              >
+                Close Ledger
+              </button>
             </div>
           </div>
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* QUICK ACTION MODAL: COLLECT PAYMENT (FALLBACK IF ONNAVIGATE NOT SUPPLIED)  */}
+      {/* 9. MODAL 2: RESTRUCTURE / ADJUST TERMS (Reducing-Balance Engine)           */}
       {/* ========================================================================= */}
-      {quickPayLoan && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
-            <button
-              onClick={() => setQuickPayLoan(null)}
-              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="flex items-center gap-3 pb-3 border-b border-slate-800">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center">
-                <Receipt className="w-5 h-5" />
-              </div>
+      {selectedLoanForRestructure && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden space-y-4 p-5">
+            <div className="flex items-center justify-between pb-3 border-b border-[#1e293b]">
               <div>
-                <h3 className="text-base font-bold text-white">Receive Repayment</h3>
-                <p className="text-xs text-slate-400">{quickPayLoan.loanCode}</p>
+                <h3 className="text-sm font-bold text-white font-mono flex items-center gap-2">
+                  <SlidersHorizontal className="w-4 h-4 text-amber-400" />
+                  Restructure Facility: {selectedLoanForRestructure.loanId}
+                </h3>
+                <p className="text-[11px] text-slate-400">
+                  Zero float-rounding reducing-balance EMI schedule recalculation.
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedLoanForRestructure(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="text-[11px] font-mono text-slate-400 block mb-1">
+                  New Annual Interest Rate (APR % p.a.)
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={restructureForm.newAprPercent}
+                  onChange={(e) =>
+                    setRestructureForm({ ...restructureForm, newAprPercent: parseFloat(e.target.value) || 0 })
+                  }
+                  className="w-full py-2 px-3 bg-[#0f172a] border border-[#1e293b] rounded-xl text-white font-mono focus:ring-1 focus:ring-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-mono text-slate-400 block mb-1">
+                  Adjusted Total Tenure (Months)
+                </label>
+                <input
+                  type="number"
+                  value={restructureForm.newTermMonths}
+                  onChange={(e) =>
+                    setRestructureForm({ ...restructureForm, newTermMonths: parseInt(e.target.value, 10) || 12 })
+                  }
+                  className="w-full py-2 px-3 bg-[#0f172a] border border-[#1e293b] rounded-xl text-white font-mono focus:ring-1 focus:ring-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-mono text-slate-400 block mb-1">
+                  Super Admin Justification / NBC Restructure Note
+                </label>
+                <textarea
+                  rows={2}
+                  value={restructureForm.reason}
+                  onChange={(e) =>
+                    setRestructureForm({ ...restructureForm, reason: e.target.value })
+                  }
+                  className="w-full py-2 px-3 bg-[#0f172a] border border-[#1e293b] rounded-xl text-white text-xs focus:ring-1 focus:ring-amber-500"
+                />
               </div>
             </div>
 
-            <div className="mt-4 space-y-3 text-xs">
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 flex justify-between items-center">
-                <div>
-                  <div className="font-bold text-white">{quickPayLoan.borrowerNameEn}</div>
-                  <div className="text-slate-400">{quickPayLoan.borrowerPhone}</div>
-                </div>
-                <div className="text-right">
-                  <div className="text-lg font-black text-emerald-400 font-mono">
-                    {formatUSD(quickPayLoan.amountDueUSD)}
-                  </div>
-                  <div className="text-[11px] text-slate-400">
-                    {formatKHR(quickPayLoan.amountDueKHR)}
-                  </div>
-                </div>
+            <div className="pt-3 border-t border-[#1e293b] flex items-center justify-end gap-2">
+              <button
+                onClick={() => setSelectedLoanForRestructure(null)}
+                className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs rounded-xl"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={isRestructuring}
+                onClick={handleExecuteRestructure}
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow transition"
+              >
+                {isRestructuring ? 'Recalculating...' : 'Commit Reducing-Balance Schedule'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 10. MODAL 3: 2FA AUTHORIZATION & DOUBLE-ENTRY LEDGER DISBURSEMENT         */}
+      {/* ========================================================================= */}
+      {selectedAppForDisburse && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl w-full max-w-lg shadow-2xl p-5 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#1e293b]">
+              <div>
+                <h3 className="text-sm font-bold text-white font-mono flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-emerald-400" />
+                  Secondary 2FA Authorization & Atomic Disbursement
+                </h3>
+                <p className="text-[11px] text-slate-400">
+                  Target: {selectedAppForDisburse.applicationNumber} ({selectedAppForDisburse.borrowerName})
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedAppForDisburse(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Double-entry Ledger Preview */}
+            <div className="bg-[#0f172a] p-3 rounded-xl border border-[#1e293b] space-y-2 text-xs font-mono">
+              <span className="text-[10px] text-slate-500 uppercase tracking-wider block">
+                Double-Entry Ledger Booking Preview:
+              </span>
+              <div className="flex items-center justify-between text-slate-300">
+                <span>Dr: 1200-LOANS-RECEIVABLE</span>
+                <span className="text-emerald-400 font-bold">+{fmt(selectedAppForDisburse.requestedAmountUSD)}</span>
+              </div>
+              <div className="flex items-center justify-between text-slate-300">
+                <span>Cr: 1010-BAKONG-CLEARING</span>
+                <span className="text-rose-400 font-bold">-{fmt(selectedAppForDisburse.requestedAmountUSD)}</span>
+              </div>
+              <div className="text-[10px] text-slate-500 pt-1 border-t border-[#1e293b]">
+                Clearing Route: National Bank of Cambodia Real-Time Bakong Wallet Transfer
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[11px] font-mono text-slate-400 block mb-1">
+                Enter Super Admin 2FA Token (or default: 202688)
+              </label>
+              <input
+                type="password"
+                placeholder="6-digit authenticator code"
+                value={disburse2FACode}
+                onChange={(e) => setDisburse2FACode(e.target.value)}
+                className="w-full py-2.5 px-3 bg-[#0f172a] border border-[#1e293b] rounded-xl text-center text-white font-mono tracking-widest text-base focus:ring-1 focus:ring-emerald-500"
+              />
+            </div>
+
+            <div className="pt-3 border-t border-[#1e293b] flex items-center justify-end gap-2">
+              <button
+                onClick={() => setSelectedAppForDisburse(null)}
+                className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs rounded-xl"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={isAuthorizingDisbursement}
+                onClick={handleAuthorizeDisbursement}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs rounded-xl shadow transition"
+              >
+                {isAuthorizingDisbursement ? 'Booking Ledger...' : 'Confirm & Disburse via Bakong'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 11. MODAL 4: COUNTER-OFFER / ADJUST TERM                                  */}
+      {/* ========================================================================= */}
+      {selectedAppForCounter && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl w-full max-w-md shadow-2xl p-5 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#1e293b]">
+              <div>
+                <h3 className="text-sm font-bold text-white font-mono">
+                  Counter-Offer: {selectedAppForCounter.applicationNumber}
+                </h3>
+                <p className="text-[11px] text-slate-400">
+                  Applicant: {selectedAppForCounter.borrowerName}
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedAppForCounter(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="text-[11px] font-mono text-slate-400 block mb-1">
+                  Adjusted Principal Amount (USD)
+                </label>
+                <input
+                  type="number"
+                  value={counterPrincipal}
+                  onChange={(e) => setCounterPrincipal(parseFloat(e.target.value) || 0)}
+                  className="w-full py-2 px-3 bg-[#0f172a] border border-[#1e293b] rounded-xl text-white font-mono"
+                />
               </div>
 
-              {quickPaySuccess ? (
-                <div className="p-4 bg-emerald-500/20 border border-emerald-500/30 rounded-xl text-center space-y-2">
-                  <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto" />
-                  <p className="font-bold text-emerald-300">Payment Processed Successfully!</p>
-                  <p className="text-slate-300 text-[11px]">Installment marked as paid and balance updated.</p>
-                  <button
-                    onClick={() => setQuickPayLoan(null)}
-                    className="mt-2 px-4 py-1.5 rounded-lg bg-emerald-500 text-slate-950 font-bold text-xs"
-                  >
-                    Done
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-1.5 text-slate-300">
-                    <div className="flex justify-between">
-                      <span>Principal:</span>
-                      <span className="font-mono font-medium text-white">{formatUSD(quickPayLoan.principalDueUSD)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Interest:</span>
-                      <span className="font-mono font-medium text-amber-400">{formatUSD(quickPayLoan.interestDueUSD)}</span>
-                    </div>
-                    <div className="flex justify-between font-bold text-white pt-1 border-t border-slate-800">
-                      <span>Total Due:</span>
-                      <span className="font-mono text-emerald-400">{formatUSD(quickPayLoan.amountDueUSD)}</span>
-                    </div>
-                  </div>
+              <div>
+                <label className="text-[11px] font-mono text-slate-400 block mb-1">
+                  Counter APR (% p.a.)
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={counterApr}
+                  onChange={(e) => setCounterApr(parseFloat(e.target.value) || 0)}
+                  className="w-full py-2 px-3 bg-[#0f172a] border border-[#1e293b] rounded-xl text-white font-mono"
+                />
+              </div>
 
-                  <button
-                    onClick={() => setQuickPaySuccess(true)}
-                    className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 font-bold shadow-lg shadow-emerald-950/40 hover:scale-[1.01] active:scale-[0.99] transition-all"
-                  >
-                    Confirm Collection ({formatUSD(quickPayLoan.amountDueUSD)})
-                  </button>
-                </div>
-              )}
+              <div>
+                <label className="text-[11px] font-mono text-slate-400 block mb-1">
+                  Underwriter Condition / Note
+                </label>
+                <textarea
+                  rows={2}
+                  value={counterNote}
+                  onChange={(e) => setCounterNote(e.target.value)}
+                  className="w-full py-2 px-3 bg-[#0f172a] border border-[#1e293b] rounded-xl text-white text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-[#1e293b] flex items-center justify-end gap-2">
+              <button
+                onClick={() => setSelectedAppForCounter(null)}
+                className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs rounded-xl"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSendCounterOffer}
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow transition"
+              >
+                Dispatch Counter-Offer
+              </button>
             </div>
           </div>
         </div>

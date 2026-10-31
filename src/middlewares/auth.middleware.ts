@@ -34,9 +34,13 @@ export async function authenticate(
   const authHeader = req.headers.authorization;
   let token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : '';
 
-  // 1. Support Dev / Demo / Simulated tokens and Dev-Mode fallback when token is missing or dev-token
+  if (!token) {
+    sendError(res, 'UNAUTHORIZED', 'Authentication token required', 401);
+    return;
+  }
+
+  // 1. Support Dev / Demo / Simulated tokens and Dev-Mode fallback when dev-token is used
   const isDevToken =
-    !token ||
     token === 'null' ||
     token === 'undefined' ||
     token.startsWith('dev-') ||

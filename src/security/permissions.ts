@@ -38,6 +38,7 @@ export enum Permission {
 }
 
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
+  [UserRole.SUPER_ADMIN]: Object.values(Permission),
   [UserRole.ADMIN]: Object.values(Permission),
   [UserRole.MANAGER]: Object.values(Permission),
   [UserRole.LOAN_OFFICER]: [

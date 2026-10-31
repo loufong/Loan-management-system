@@ -48,14 +48,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
-        // Self-heal: If Fong Ly or dev testing user was previously saved as borrower/USER, upgrade role to ADMIN
-        const nameOrUser = `${parsed.username || ''} ${parsed.name || ''} ${parsed.fullName || ''} ${parsed.email || ''}`.toLowerCase();
-        if (nameOrUser.includes('fong') || nameOrUser.includes('luofong') || nameOrUser.includes('han.ly') || nameOrUser.includes('phon') || nameOrUser.includes('rithya')) {
-          parsed.role = 'ADMIN';
-          parsed.title = 'System Administrator';
-          parsed.position = 'System Administrator';
-          parsed.department = 'Executive Administration';
-          localStorage.setItem('apex_user', JSON.stringify(parsed));
+        // Normalize role to uppercase if present
+        if (parsed.role) {
+          parsed.role = parsed.role.toUpperCase();
         }
         return parsed;
       } catch {
@@ -83,12 +78,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const role = (profile?.role || user?.role || 'admin').toLowerCase();
 
   const setSession = (newUser: UserProfile, newToken: string, rememberMe = true) => {
-    const nameOrUser = `${newUser.username || ''} ${newUser.name || ''} ${newUser.fullName || ''} ${newUser.email || ''}`.toLowerCase();
-    if (nameOrUser.includes('fong') || nameOrUser.includes('luofong') || nameOrUser.includes('han.ly') || nameOrUser.includes('phon') || nameOrUser.includes('rithya')) {
-      newUser.role = 'ADMIN';
-      newUser.title = 'System Administrator';
-      newUser.position = 'System Administrator';
-      newUser.department = 'Executive Administration';
+    if (newUser.role) {
+      newUser.role = (newUser.role as string).toUpperCase() as any;
     }
     setToken(newToken);
     setUser(newUser);

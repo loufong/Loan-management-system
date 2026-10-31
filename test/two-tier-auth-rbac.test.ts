@@ -71,6 +71,39 @@ function request(method: string, url: string, body?: any, headers: Record<string
 
 async function runTests() {
   await ensureDatabaseConnected();
+
+  // Ensure test users exist in database
+  const passwordHash = await bcrypt.hash('Password123!', 10);
+  await prisma.user.upsert({
+    where: { username: 'admin' },
+    update: { passwordHash, email: 'admin@loansystem.edu' },
+    create: {
+      id: '00000000-0000-4000-8000-000000000001',
+      username: 'admin',
+      email: 'admin@loansystem.edu',
+      fullName: 'System Administrator',
+      passwordHash,
+      role: UserRole.ADMIN,
+      status: UserStatus.ACTIVE,
+      emailVerifiedAt: new Date(),
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: 'johnathan.doe@student.edu' },
+    update: { passwordHash, lastLogin: new Date() },
+    create: {
+      id: '00000000-0000-4000-8000-000000000002',
+      username: 'johnathan.doe',
+      email: 'johnathan.doe@student.edu',
+      fullName: 'Johnathan Doe',
+      passwordHash,
+      role: UserRole.USER,
+      status: UserStatus.ACTIVE,
+      emailVerifiedAt: new Date(),
+      lastLogin: new Date(),
+    },
+  });
   // -------------------------------------------------------------------------
   // Pre-seed test tokens
   // -------------------------------------------------------------------------

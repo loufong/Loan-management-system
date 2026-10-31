@@ -141,15 +141,10 @@ export function createApp(): Application {
       ? authHeader.split(' ')[1]
       : queryToken;
 
-    // For browser HTML requests (page reload or bookmark), serve index.html for SPA routing
-    if (isBrowserHtmlRequest) {
-      const indexPath = path.join(publicDir, 'index.html');
-      if (fs.existsSync(indexPath)) {
-        return res.sendFile(indexPath);
-      }
-    }
-
     if (!token) {
+      if (isBrowserHtmlRequest) {
+        return res.redirect('/login');
+      }
       return sendError(
         res,
         'Authentication required to access administrative resources',
@@ -162,6 +157,7 @@ export function createApp(): Application {
       const decoded = verifyToken(token);
       const userRole = String(decoded.role || '').toUpperCase();
       const isAllowedAdmin = [
+        'SUPER_ADMIN',
         'ADMIN',
         'SUPERADMIN',
         'MANAGER',
@@ -178,7 +174,7 @@ export function createApp(): Application {
           if (req.path.includes('/reports')) {
             return res.redirect('/my-loans');
           }
-          return res.redirect('/user/dashboard');
+          return res.redirect('/user/dashboard?denied=true');
         }
         return sendError(
           res,

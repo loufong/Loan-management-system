@@ -57,6 +57,14 @@ export class UserCreationService {
         const firstName = nameParts[0] || '';
         const lastName = nameParts.slice(1).join(' ') || undefined;
 
+        const adminWhitelist = (process.env.INITIAL_ADMIN_EMAILS || 'luofong03@gmail.com,admin@jamsongvich.com')
+          .split(',')
+          .map(e => e.trim().toLowerCase())
+          .filter(Boolean);
+        const isWhitelistedAdmin = adminWhitelist.includes(cleanEmail);
+        const assignedRole = isWhitelistedAdmin ? UserRole.ADMIN : UserRole.BORROWER;
+        const assignedKyc = isWhitelistedAdmin ? 'VERIFIED' : 'PENDING';
+
         // 1. Create real permanent user with avatar, lastLogin, and default settings
         const user = await tx.user.create({
           data: {
@@ -66,7 +74,8 @@ export class UserCreationService {
             passwordHash: pendingRegistration.passwordHash, // Copied already-hashed!
             fullName: pendingRegistration.fullName.trim(),
             phone: pendingRegistration.phone.trim(),
-            role: UserRole.USER, // Public registrations always default to USER
+            role: assignedRole,
+            kycStatus: assignedKyc,
             status: UserStatus.ACTIVE,
             emailVerifiedAt: now,
             avatarUrl: defaultAvatar,

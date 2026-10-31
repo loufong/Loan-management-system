@@ -209,37 +209,31 @@ export const App: React.FC = () => {
 
   const [currentUser, setCurrentUser] = useState<UserProfile>(() => {
     if (authUser) {
-      const nameStr = `${authUser.name || ''} ${authUser.fullName || ''} ${authUser.username || ''} ${authUser.email || ''}`.toLowerCase();
-      if (nameStr.includes('fong') || nameStr.includes('luofong') || nameStr.includes('han.ly') || nameStr.includes('phon') || nameStr.includes('rithya')) {
-        return {
-          ...authUser,
-          role: 'ADMIN',
-          title: 'System Administrator',
-          department: 'Executive Administration',
-        };
-      }
-      return authUser;
+      const roleUpper = (authUser.role || 'BORROWER').toUpperCase();
+      const isStaff = ['ADMIN', 'SUPER_ADMIN', 'SUPERADMIN', 'MANAGER', 'LOAN_OFFICER', 'CREDIT_OFFICER', 'CASHIER'].includes(roleUpper);
+      return {
+        ...authUser,
+        role: roleUpper as UserRole,
+        title: isStaff ? (authUser.title || 'System Administrator') : 'Verified Borrower',
+        department: isStaff ? (authUser.department || 'Executive Administration') : 'Client Services',
+      };
     }
     return defaultFallbackUser;
   });
-  const [activeRole, setActiveRole] = useState<UserRole>(() => ((authUser?.role || 'ADMIN').toUpperCase()) as UserRole);
+  const [activeRole, setActiveRole] = useState<UserRole>(() => ((authUser?.role || 'BORROWER').toUpperCase()) as UserRole);
 
   useEffect(() => {
     if (authUser) {
-      const nameStr = `${authUser.name || ''} ${authUser.fullName || ''} ${authUser.username || ''} ${authUser.email || ''}`.toLowerCase();
-      if (nameStr.includes('fong') || nameStr.includes('luofong') || nameStr.includes('han.ly') || nameStr.includes('phon') || nameStr.includes('rithya')) {
-        const adminUpgraded: UserProfile = {
-          ...authUser,
-          role: 'ADMIN',
-          title: 'System Administrator',
-          department: 'Executive Administration',
-        };
-        setCurrentUser(adminUpgraded);
-        setActiveRole('ADMIN');
-      } else {
-        setCurrentUser(authUser);
-        setActiveRole(authUser.role);
-      }
+      const roleUpper = (authUser.role || 'BORROWER').toUpperCase();
+      const isStaff = ['ADMIN', 'SUPER_ADMIN', 'SUPERADMIN', 'MANAGER', 'LOAN_OFFICER', 'CREDIT_OFFICER', 'CASHIER'].includes(roleUpper);
+      const scopedUser: UserProfile = {
+        ...authUser,
+        role: roleUpper as UserRole,
+        title: isStaff ? (authUser.title || 'System Administrator') : 'Verified Borrower',
+        department: isStaff ? (authUser.department || 'Executive Administration') : 'Client Services',
+      };
+      setCurrentUser(scopedUser);
+      setActiveRole(roleUpper as UserRole);
     }
   }, [authUser]);
 
@@ -307,6 +301,7 @@ export const App: React.FC = () => {
 
       const userRole = (currentUser.role || activeRole || authUser?.role || 'ADMIN').toUpperCase();
       const isStaffRole = [
+        'SUPER_ADMIN',
         'ADMIN',
         'SUPERADMIN',
         'MANAGER',
@@ -1350,7 +1345,7 @@ export const App: React.FC = () => {
                 />
               );
             }
-            if (role === 'ADMIN') {
+            if (role === 'ADMIN' || role === 'SUPER_ADMIN' || role === 'SUPERADMIN') {
               return (
                 <AdminDashboard
                   currency={currency}

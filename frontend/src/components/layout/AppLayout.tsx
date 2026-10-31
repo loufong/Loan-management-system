@@ -110,7 +110,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   }
 
   const staffNavLinks: LayoutNavLink[] = [
-
+    { id: 'dashboard', label: 'Executive Ledger', icon: LayoutDashboard, path: '/admin/dashboard' },
     { id: 'borrowers', label: 'Borrowers', icon: Users, path: '/admin/borrowers' },
     { id: 'new-application', label: 'New Loan', icon: FilePlus2, path: '/admin/applications' },
     {
@@ -152,6 +152,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
     const isItemActive = (item: LayoutNavLink) => {
     if (activeNav === item.id || activeNav === item.path || currentPath === item.path) return true;
+    if (item.id === 'dashboard') {
+      return ['dashboard', 'admin_dashboard', '/admin/dashboard', '/admin', 'super_ledger'].includes(activeNav) ||
+        ['/admin/dashboard', '/admin'].includes(currentPath);
+    }
     if (item.id === 'borrowers') {
       return ['borrowers', 'admin_borrowers', 'borrower-detail', '/admin/borrowers'].includes(activeNav) ||
         currentPath === '/admin/borrowers';

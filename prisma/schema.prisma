@@ -15,9 +15,10 @@ datasource db {
 // ==========================================
 
 enum UserRole {
+  SUPER_ADMIN
   ADMIN
-  USER
   BORROWER
+  USER
   MANAGER
   LOAN_OFFICER
   CREDIT_OFFICER
@@ -137,11 +138,11 @@ model User {
   department             String?                    @db.VarChar(100)
   avatarUrl              String?                    @map("avatar_url") @db.VarChar(500)
   lastLogin              DateTime?                  @map("last_login") @db.Timestamptz(6)
-  role                   UserRole                   @default(USER)
+  role                   UserRole                   @default(BORROWER)
   status                 UserStatus                 @default(ACTIVE)
   emailVerifiedAt        DateTime?                  @map("email_verified_at") @db.Timestamptz(6)
   emailVerified          Boolean                    @default(true) @map("email_verified")
-  kycStatus              String?                    @default("VERIFIED") @map("kyc_status") @db.VarChar(50)
+  kycStatus              String?                    @default("PENDING") @map("kyc_status") @db.VarChar(50)
   bakongAccountId        String?                    @map("bakong_account_id") @db.VarChar(100)
   createdAt              DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt              DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(6)

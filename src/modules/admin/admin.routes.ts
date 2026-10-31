@@ -1,5 +1,5 @@
-import { Router } from 'express';
-import { authenticate } from '../../middlewares/auth.middleware';
+import { Router, Response } from 'express';
+import { authenticate, AuthenticatedRequest } from '../../middlewares/auth.middleware';
 import { checkRole } from '../../middlewares/rbac.middleware';
 import { UserRole } from '@prisma/client';
 import { UserController } from '../users/user.controller';
@@ -10,20 +10,28 @@ import { OverdueController } from '../overdue/overdue.controller';
 import { ReportController } from '../reports/report.controller';
 import { reportRouter } from '../reports/report.routes';
 import { sendSuccess } from '../../utils/response';
+import { AdminCoreController } from './admin.controller';
 
 export const adminRouter = Router();
 
-// Strictly authenticate and authorize ADMIN role only
-adminRouter.use(authenticate, checkRole(UserRole.ADMIN));
+// Strictly authenticate and authorize ADMIN and SUPER_ADMIN roles
+adminRouter.use(authenticate, checkRole([UserRole.ADMIN, UserRole.SUPER_ADMIN]));
 
 // Root administrative overview endpoint
-adminRouter.get('/', (req, res) => {
+adminRouter.get('/', (req: AuthenticatedRequest, res: Response) => {
   sendSuccess(res, {
-    service: 'Administrative Core API',
+    service: 'JAM SONG VICH Super Admin Ledger API',
     status: 'AUTHORIZED',
-    role: UserRole.ADMIN,
+    role: req.user?.role || UserRole.ADMIN,
   });
 });
+
+// 0. Super Admin Core Banking & Portfolio Deliverables
+adminRouter.get('/portfolio/summary', AdminCoreController.getPortfolioSummary);
+adminRouter.get('/underwriting/queue', AdminCoreController.getUnderwritingQueue);
+adminRouter.post('/applications/:id/counter-offer', AdminCoreController.counterOfferApplication);
+adminRouter.get('/reconciliation/bakong-feed', AdminCoreController.getBakongReconciliationFeed);
+adminRouter.post('/reconciliation/resolve-anomaly', AdminCoreController.resolveReconciliationAnomaly);
 
 // 1. User Management
 adminRouter.get('/users', UserController.list);
@@ -40,10 +48,11 @@ adminRouter.post('/applications/:id/approve', ApplicationController.approve);
 adminRouter.post('/applications/:id/reject', ApplicationController.reject);
 
 // 3. Loans & Disbursements
-adminRouter.get('/loans', LoanController.list);
+adminRouter.get('/loans', AdminCoreController.getLoansLedger);
 adminRouter.get('/loans/:id', LoanController.getById);
 adminRouter.post('/loans/:id/disburse', LoanController.disburse);
 adminRouter.post('/loans/disburse', LoanController.disburse);
+adminRouter.post('/loans/:id/restructure', AdminCoreController.restructureLoan);
 
 // 4. Payments Ledger
 adminRouter.get('/payments', PaymentController.list);

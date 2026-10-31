@@ -829,7 +829,7 @@ export class AuthService {
     }
 
     // Step 2 & 3: Find user by email or username
-    const user = await this.findActiveUserByEmailOrUsername(dto.usernameOrEmail);
+    let user = await this.findActiveUserByEmailOrUsername(dto.usernameOrEmail);
     if (!user) {
       this.recordFailedAttempt(cleanIdentifier);
       throw {
@@ -864,7 +864,7 @@ export class AuthService {
         user.email.endsWith('@jamsongvich.com');
 
       if (isDevOrDemo) {
-        user = await prisma.user.update({
+        await prisma.user.update({
           where: { id: user.id },
           data: { emailVerifiedAt: new Date() },
         });

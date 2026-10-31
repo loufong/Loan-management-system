@@ -70,7 +70,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   const currentTitle = t(rawTitle, rawTitle);
   const role = (currentUser?.role || currentRole || 'USER').toUpperCase();
   const isAdmin = role === 'ADMIN';
-  const displayRole = isAdmin ? (language === 'km' ? 'អ្នកគ្រប់គ្រង (Admin)' : 'Admin') : (language === 'km' ? 'អតិថិជន (User)' : 'User');
+  const displayRole = isAdmin ? ('Admin') : ('User');
 
   return (
     <header className="sticky top-0 z-30 h-16 bg-white border-b border-[#E2E8F0] px-4 sm:px-6 flex items-center justify-between select-none font-sans">
@@ -215,7 +215,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                     className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-[4px] text-[13px] text-[#0F172A] hover:bg-slate-50 font-normal transition text-left cursor-pointer"
                   >
                     <KeyRound className="w-4 h-4 text-[#64748B]" />
-                    <span>{language === 'km' ? 'ប្តូរពាក្យសម្ងាត់' : 'Change Password'}</span>
+                    <span>{'Change Password'}</span>
                   </button>
                 </>
               )}

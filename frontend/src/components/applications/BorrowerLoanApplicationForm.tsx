@@ -113,22 +113,22 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
   const validate = (): boolean => {
     const errs: Record<string, string> = {};
     if (!fullName.trim()) {
-      errs.fullName = isKhmer ? 'សូមបញ្ចូលឈ្មោះពេញរបស់អ្នកខ្ចី' : 'Borrower full name is required';
+      errs.fullName = 'Borrower full name is required';
     }
     if (!phone.trim()) {
-      errs.phone = isKhmer ? 'សូមបញ្ចូលលេខទូរស័ព្ទ' : 'Phone number is required';
+      errs.phone = 'Phone number is required';
     }
     if (!nationalId.trim()) {
-      errs.nationalId = isKhmer ? 'សូមបញ្ចូលលេខអត្តសញ្ញាណប័ណ្ណ' : 'National ID number is required';
+      errs.nationalId = 'National ID number is required';
     }
     if (principalAmount <= 0) {
-      errs.principal = isKhmer ? 'ចំនួនទឹកប្រាក់កម្ចីត្រូវតែធំជាង ០' : 'Loan amount must be greater than zero';
+      errs.principal = 'Loan amount must be greater than zero';
     }
     if (termMonths < 1 || termMonths > 120) {
-      errs.termMonths = isKhmer ? 'រយៈពេលកម្ចីត្រូវស្ថិតនៅចន្លោះ ១ ដល់ ១២០ ខែ' : 'Term must be between 1 and 120 months';
+      errs.termMonths = 'Term must be between 1 and 120 months';
     }
     if (interestRateMonthly < 0) {
-      errs.rate = isKhmer ? 'អត្រាការប្រាក់មិនអាចអវិជ្ជមានបានទេ' : 'Interest rate cannot be negative';
+      errs.rate = 'Interest rate cannot be negative';
     }
 
     setErrors(errs);
@@ -166,13 +166,11 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
                 <FileText className="w-5 h-5" />
               </div>
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#0F172A]">
-                {isKhmer ? 'ចុះឈ្មោះអ្នកខ្ចី & ស្នើសុំកម្ចី' : 'Borrower Registration & Loan Application'}
+                {'Borrower Registration & Loan Application'}
               </h1>
             </div>
             <p className="text-xs text-[#64748B]">
-              {isKhmer
-                ? 'បំពេញព័ត៌មានអត្តសញ្ញាណអ្នកខ្ចី កំណត់ទំហំកម្ចី និងពិនិត្យតារាងបង់ប្រាក់ក្នុងពេលជាក់ស្តែង'
-                : 'Register borrower identity, configure loan terms, and preview repayment amortization in real time.'}
+              {'Register borrower identity, configure loan terms, and preview repayment amortization in real time.'}
             </p>
           </div>
 
@@ -211,12 +209,10 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
           </div>
           <div className="space-y-1">
             <h2 className="text-lg font-bold text-emerald-900">
-              {isKhmer ? 'ការស្នើសុំកម្ចីត្រូវបានដាក់ជោគជ័យ!' : 'Loan Application Submitted Successfully!'}
+              {'Loan Application Submitted Successfully!'}
             </h2>
             <p className="text-xs text-emerald-700 max-w-md mx-auto">
-              {isKhmer
-                ? `ពាក្យស្នើសុំរបស់ ${fullName} ចំនួន ${formatCurrency(principalAmount, currency)} ត្រូវបានបង្កើត និងបញ្ជូនទៅកាន់ជួរពិនិត្យឥណទាន។`
-                : `Application for ${fullName} of ${formatCurrency(principalAmount, currency)} has been submitted and queued for underwriting.`}
+              {`Application for ${fullName} of ${formatCurrency(principalAmount, currency)} has been submitted and queued for underwriting.`}
             </p>
           </div>
           <button
@@ -224,7 +220,7 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
             onClick={() => setIsSuccess(false)}
             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-[6px] transition-colors cursor-pointer"
           >
-            {isKhmer ? 'បង្កើតពាក្យស្នើសុំថ្មី' : 'Create Another Application'}
+            {'Create Another Application'}
           </button>
         </div>
       ) : (
@@ -238,7 +234,7 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
               <div className="flex items-center gap-2 pb-2 border-b border-[#E2E8F0]">
                 <User className="w-4 h-4 text-[#2563EB]" />
                 <h2 className="text-sm font-bold text-[#0F172A] uppercase tracking-wider">
-                  {isKhmer ? '១. ព័ត៌មានអ្នកខ្ចី' : '1. Borrower Identity'}
+                  {'1. Borrower Identity'}
                 </h2>
               </div>
 
@@ -246,7 +242,7 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
                 {/* Full Name */}
                 <div>
                   <label className="block text-xs font-semibold text-[#0F172A] mb-1">
-                    <span>{isKhmer ? 'ឈ្មោះពេញ / Full Name' : 'Full Name (ឈ្មោះ)'}</span>
+                    <span>{'Full Name'}</span>
                     <span className="text-rose-500 ml-1">*</span>
                   </label>
                   <div className="relative">
@@ -255,7 +251,7 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
                       type="text"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      placeholder={isKhmer ? 'ឧទាហរណ៍៖ សុខា ចាន់' : 'e.g. Johnathan Doe'}
+                      placeholder={'e.g. Johnathan Doe'}
                       className={`w-full h-10 pl-9 pr-3 text-xs bg-white border rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB] transition-colors ${
                         errors.fullName ? 'border-rose-400 bg-rose-50/20' : 'border-[#E2E8F0]'
                       }`}
@@ -269,7 +265,7 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
                   {/* Phone */}
                   <div>
                     <label className="block text-xs font-semibold text-[#0F172A] mb-1">
-                      <span>{isKhmer ? 'លេខទូរស័ព្ទ / Phone' : 'Phone (លេខទូរស័ព្ទ)'}</span>
+                      <span>{'Phone Number'}</span>
                       <span className="text-rose-500 ml-1">*</span>
                     </label>
                     <div className="relative">
@@ -290,7 +286,7 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
                   {/* National ID */}
                   <div>
                     <label className="block text-xs font-semibold text-[#0F172A] mb-1">
-                      <span>{isKhmer ? 'អត្តសញ្ញាណប័ណ្ណ / National ID' : 'National ID (អត្តសញ្ញាណប័ណ្ណ)'}</span>
+                      <span>{'National ID / Passport'}</span>
                       <span className="text-rose-500 ml-1">*</span>
                     </label>
                     <div className="relative">
@@ -316,7 +312,7 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
               <div className="flex items-center gap-2 pb-2 border-b border-[#E2E8F0]">
                 <Calculator className="w-4 h-4 text-[#2563EB]" />
                 <h2 className="text-sm font-bold text-[#0F172A] uppercase tracking-wider">
-                  {isKhmer ? '២. លក្ខខណ្ឌកម្ចី' : '2. Loan Terms & Parameters'}
+                  {'2. Loan Terms & Parameters'}
                 </h2>
               </div>
 
@@ -325,11 +321,11 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className="text-xs font-semibold text-[#0F172A]">
-                      <span>{isKhmer ? 'ចំនួនទឹកប្រាក់កម្ចី / Loan Amount' : 'Loan Amount (ចំនួនប្រាក់)'}</span>
+                      <span>{'Loan Amount'}</span>
                       <span className="text-rose-500 ml-1">*</span>
                     </label>
                     <span className="text-[11px] font-mono text-[#64748B]">
-                      {currency === 'KHR' ? 'គិតជាប្រាក់រៀល (KHR)' : 'Denominated in US Dollars (USD)'}
+                      {currency === 'KHR' ? 'Denominated in Khmer Riel (KHR)' : 'Denominated in US Dollars (USD)'}
                     </span>
                   </div>
                   <div className="relative">
@@ -355,11 +351,11 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className="text-xs font-semibold text-[#0F172A]">
-                      <span>{isKhmer ? 'រយៈពេលកម្ចី / Term' : 'Term in Months (រយៈពេល)'}</span>
+                      <span>{'Term in Months'}</span>
                       <span className="text-rose-500 ml-1">*</span>
                     </label>
                     <span className="text-[11px] font-mono text-[#2563EB] font-bold">
-                      {termMonths} {isKhmer ? 'ខែ' : 'months'}
+                      {termMonths} {'months'}
                     </span>
                   </div>
 
@@ -376,7 +372,7 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
                             : 'bg-white text-[#64748B] border-[#E2E8F0] hover:bg-slate-50'
                         }`}
                       >
-                        {months} {isKhmer ? 'ខែ' : 'm'}
+                        {months} {'m'}
                       </button>
                     ))}
                   </div>
@@ -399,7 +395,7 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
                   {/* Monthly Rate */}
                   <div>
                     <label className="block text-xs font-semibold text-[#0F172A] mb-1">
-                      <span>{isKhmer ? 'អត្រាការប្រាក់ប្រចាំខែ / Monthly Rate' : 'Monthly Rate (%)'}</span>
+                      <span>{'Monthly Rate (%)'}</span>
                       <span className="text-rose-500 ml-1">*</span>
                     </label>
                     <div className="relative">
@@ -415,14 +411,14 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
                       />
                     </div>
                     <span className="text-[10px] text-[#64748B] mt-0.5 block">
-                      ≈ {(interestRateMonthly * 12).toFixed(1)}% {isKhmer ? 'ក្នុងមួយឆ្នាំ (APR)' : 'p.a.'}
+                      ≈ {(interestRateMonthly * 12).toFixed(1)}% {'p.a.'}
                     </span>
                   </div>
 
                   {/* Calculation Method Dropdown */}
                   <div>
                     <label className="block text-xs font-semibold text-[#0F172A] mb-1">
-                      <span>{isKhmer ? 'វិធីសាស្ត្រគណនា / Method' : 'Calculation Method'}</span>
+                      <span>{'Calculation Method'}</span>
                       <span className="text-rose-500 ml-1">*</span>
                     </label>
                     <div className="relative">
@@ -432,18 +428,18 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
                         className="w-full h-10 px-3 text-xs font-semibold bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] focus:outline-none focus:border-[#2563EB] transition-colors appearance-none cursor-pointer pr-8"
                       >
                         <option value="reducing">
-                          {isKhmer ? 'ការប្រាក់ថយចុះ (Reducing EMI)' : 'Reducing Balance (EMI)'}
+                          {'Reducing Balance (EMI)'}
                         </option>
                         <option value="flat">
-                          {isKhmer ? 'ការប្រាក់ថេរ (Flat Rate)' : 'Flat Rate Method'}
+                          {'Flat Rate Method'}
                         </option>
                       </select>
                       <ChevronDown className="w-4 h-4 text-[#64748B] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                     </div>
                     <span className="text-[10px] text-[#64748B] mt-0.5 block">
                       {interestType === 'reducing'
-                        ? (isKhmer ? 'ការប្រាក់គិតលើសមតុល្យជាក់ស្តែង' : 'Interest charged on remaining balance')
-                        : (isKhmer ? 'ការប្រាក់ថេរលើប្រាក់ដើមដំបូង' : 'Interest fixed on starting principal')}
+                        ? ('Interest charged on remaining balance')
+                        : ('Interest fixed on starting principal')}
                     </span>
                   </div>
                 </div>
@@ -458,7 +454,7 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
                   onClick={onCancel}
                   className="px-4 py-2 text-xs font-semibold text-[#64748B] hover:text-[#0F172A] bg-white border border-[#E2E8F0] rounded-[6px] transition-colors cursor-pointer"
                 >
-                  {isKhmer ? 'បោះបង់' : 'Cancel'}
+                  {'Cancel'}
                 </button>
               )}
               <button
@@ -467,10 +463,10 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
                 className="px-6 py-2.5 text-xs font-bold text-white bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 disabled:cursor-not-allowed rounded-[6px] transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm"
               >
                 {isSubmitting ? (
-                  <span>{isKhmer ? 'កំពុងដំណើរការ...' : 'Submitting...'}</span>
+                  <span>{'Submitting...'}</span>
                 ) : (
                   <>
-                    <span>{isKhmer ? 'ដាក់ពាក្យស្នើសុំកម្ចី' : 'Submit Loan Application'}</span>
+                    <span>{'Submit Loan Application'}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </>
                 )}
@@ -488,7 +484,7 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-sky-400" />
                   <span className="text-xs font-mono font-bold tracking-wider uppercase text-slate-300">
-                    {isKhmer ? 'ការគណនាបង់ប្រាក់ជាក់ស្តែង' : 'Real-Time Calculation'}
+                    {'Real-Time Calculation'}
                   </span>
                 </div>
                 <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-[4px] bg-slate-800 text-sky-400 border border-slate-600">
@@ -499,7 +495,7 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
               {/* Monthly Installment Highlight */}
               <div className="space-y-1">
                 <p className="text-[11px] text-slate-400 font-medium">
-                  {isKhmer ? 'ការបង់ប្រចាំខែប៉ាន់ស្មាន' : 'Estimated Monthly Payment'}
+                  {'Estimated Monthly Payment'}
                 </p>
                 <div className="text-3xl font-extrabold tracking-tight text-white font-mono flex items-baseline gap-1.5">
                   <span>
@@ -508,13 +504,13 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
                       : '—'}
                   </span>
                   <span className="text-xs text-slate-400 font-sans font-normal">
-                    {isKhmer ? '/ ខែ' : '/ month'}
+                    {'/ month'}
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400">
                   {interestType === 'reducing'
-                    ? (isKhmer ? 'ប្រាក់បង់ស្មើគ្នារៀងរាល់ខែ (EMI)' : 'Equal monthly installments over term')
-                    : (isKhmer ? 'ប្រាក់ដើមថេរ + ការប្រាក់ថេរ' : 'Fixed monthly principal & interest')}
+                    ? ('Equal monthly installments over term')
+                    : ('Fixed monthly principal & interest')}
                 </p>
               </div>
 
@@ -522,7 +518,7 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
               <div className="grid grid-cols-2 gap-3 pt-2">
                 <div className="bg-slate-800/60 p-3 rounded-[6px] border border-slate-700/60">
                   <p className="text-[10px] text-slate-400 uppercase tracking-wider font-mono">
-                    {isKhmer ? 'ប្រាក់ដើម' : 'Principal'}
+                    {'Principal'}
                   </p>
                   <p className="text-sm font-bold font-mono text-slate-100 mt-0.5">
                     {calculation ? formatCurrency(calculation.totalPrincipal, currency) : '—'}
@@ -531,7 +527,7 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
 
                 <div className="bg-slate-800/60 p-3 rounded-[6px] border border-slate-700/60">
                   <p className="text-[10px] text-slate-400 uppercase tracking-wider font-mono">
-                    {isKhmer ? 'ការប្រាក់សរុប' : 'Total Interest'}
+                    {'Total Interest'}
                   </p>
                   <p className="text-sm font-bold font-mono text-amber-400 mt-0.5">
                     {calculation ? formatCurrency(calculation.totalInterest, currency) : '—'}
@@ -540,7 +536,7 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
 
                 <div className="col-span-2 bg-slate-800/80 p-3.5 rounded-[6px] border border-slate-700 flex items-center justify-between">
                   <span className="text-xs text-slate-300 font-medium">
-                    {isKhmer ? 'ការទូទាត់សរុប' : 'Total Repayment'}
+                    {'Total Repayment'}
                   </span>
                   <span className="text-base font-extrabold font-mono text-emerald-400">
                     {calculation ? formatCurrency(calculation.totalRepayment, currency) : '—'}
@@ -560,14 +556,14 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
                   <div className="flex items-center gap-2">
                     <Layers className="w-4 h-4 text-[#2563EB]" />
                     <span className="text-xs font-bold text-[#0F172A]">
-                      {isKhmer ? 'តារាងកាលវិភាគបង់ប្រាក់' : 'Amortization Repayment Schedule'}
+                      {'Amortization Repayment Schedule'}
                     </span>
                     <span className="text-[11px] font-mono font-semibold px-2 py-0.2 bg-white text-[#2563EB] border border-[#E2E8F0] rounded-[4px]">
-                      {calculation.schedules.length} {isKhmer ? 'ខែ' : 'months'}
+                      {calculation.schedules.length} {'months'}
                     </span>
                   </div>
                   <div className="flex items-center gap-1 text-xs text-[#64748B] font-semibold">
-                    <span>{showScheduleTable ? (isKhmer ? 'បង្រួញ' : 'Collapse') : (isKhmer ? 'ពន្លាត' : 'Expand')}</span>
+                    <span>{showScheduleTable ? ('Collapse') : ('Expand')}</span>
                     {showScheduleTable ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </div>
                 </button>
@@ -578,11 +574,11 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
                       <thead className="bg-slate-50 sticky top-0 border-b border-[#E2E8F0] text-[11px] font-semibold text-[#64748B]">
                         <tr>
                           <th className="py-2.5 px-3 font-mono">#</th>
-                          <th className="py-2.5 px-3">{isKhmer ? 'កាលបរិច្ឆេទ' : 'Due Date'}</th>
-                          <th className="py-2.5 px-3 text-right">{isKhmer ? 'ប្រាក់ដើម' : 'Principal'}</th>
-                          <th className="py-2.5 px-3 text-right">{isKhmer ? 'ការប្រាក់' : 'Interest'}</th>
-                          <th className="py-2.5 px-3 text-right">{isKhmer ? 'សរុប' : 'Total Due'}</th>
-                          <th className="py-2.5 px-3 text-right">{isKhmer ? 'សមតុល្យ' : 'Balance'}</th>
+                          <th className="py-2.5 px-3">{'Due Date'}</th>
+                          <th className="py-2.5 px-3 text-right">{'Principal'}</th>
+                          <th className="py-2.5 px-3 text-right">{'Interest'}</th>
+                          <th className="py-2.5 px-3 text-right">{'Total Due'}</th>
+                          <th className="py-2.5 px-3 text-right">{'Balance'}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[#E2E8F0] font-mono text-[11px]">
@@ -608,7 +604,7 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
                       <tfoot className="bg-slate-100 font-bold font-mono text-[11px] text-[#0F172A] border-t border-[#E2E8F0]">
                         <tr>
                           <td colSpan={2} className="py-2 px-3">
-                            {isKhmer ? 'សរុប (TOTAL)' : 'TOTAL'}
+                            {'TOTAL'}
                           </td>
                           <td className="py-2 px-3 text-right">
                             {formatCurrency(calculation.totalPrincipal, currency)}

@@ -195,7 +195,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {currentUser.name || currentUser.fullName || 'User'}
             </span>
             <span className="text-[11px] text-[#64748B] truncate leading-tight mt-0.5">
-              {isAdmin ? (language === 'km' ? 'អ្នកគ្រប់គ្រង (Admin)' : 'Administrator') : (language === 'km' ? 'អតិថិជន (Borrower)' : 'Borrower User')}
+              {isAdmin ? ('Administrator') : ('Borrower User')}
             </span>
           </div>
         </button>

@@ -360,20 +360,20 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
               <div className="flex items-center justify-between py-1 border-b border-slate-50">
                 <span className="text-[#64748B] flex items-center gap-2">
                   <Briefcase className="w-3.5 h-3.5" />
-                  {language === 'km' ? 'មុខតំណែង' : 'Title / Position'}
+                  {'Title / Position'}
                 </span>
                 <span className="text-[#0F172A]">
-                  {currentUser.position || currentUser.title || (isAdmin ? (language === 'km' ? 'អ្នកគ្រប់គ្រងប្រព័ន្ធ' : 'Platform Administrator') : (language === 'km' ? 'អតិថិជនអ្នកខ្ចី' : 'Client Borrower'))}
+                  {currentUser.position || currentUser.title || (isAdmin ? ('Platform Administrator') : ('Client Borrower'))}
                 </span>
               </div>
 
               <div className="flex items-center justify-between py-1 border-b border-slate-50">
                 <span className="text-[#64748B] flex items-center gap-2">
                   <Building className="w-3.5 h-3.5" />
-                  {language === 'km' ? 'ផ្នែក / នាយកដ្ឋាន' : 'Department'}
+                  {'Department'}
                 </span>
                 <span className="text-[#0F172A]">
-                  {currentUser.department || (isAdmin ? (language === 'km' ? 'រដ្ឋបាលប្រតិបត្តិ' : 'Executive Administration') : (language === 'km' ? 'សេវាកម្មអតិថិជន' : 'Client Services'))}
+                  {currentUser.department || (isAdmin ? ('Executive Administration') : ('Client Services'))}
                 </span>
               </div>
             </div>

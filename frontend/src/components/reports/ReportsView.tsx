@@ -57,7 +57,6 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
   const agingBuckets = [
     {
       label: 'Current (0 days)',
-      khLabel: 'ទាន់ពេលវេលា',
       balanceUSD: 1620000,
       count: 1140,
       percentage: 90.8,
@@ -66,7 +65,6 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
     },
     {
       label: '1 - 30 days (PAR 30)',
-      khLabel: 'ហួសកំណត់ ១-៣០ថ្ងៃ',
       balanceUSD: 72000,
       count: 48,
       percentage: 4.0,
@@ -75,7 +73,6 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
     },
     {
       label: '31 - 60 days (PAR 60)',
-      khLabel: 'ហួសកំណត់ ៣១-៦០ថ្ងៃ',
       balanceUSD: 36000,
       count: 18,
       percentage: 2.0,
@@ -84,7 +81,6 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
     },
     {
       label: '90+ days (Default Risk)',
-      khLabel: 'ហានិភ័យបាត់បង់ (៩០+)',
       balanceUSD: 56250,
       count: 12,
       percentage: 3.2,

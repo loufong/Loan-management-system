@@ -466,7 +466,7 @@ export const UserSettingsView: React.FC<UserSettingsViewProps> = ({
                 </span>
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
                   <BadgeCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  {language === 'km' ? 'បានផ្ទៀងផ្ទាត់ KYC' : 'KYC Verified'}
+                  {'KYC Verified'}
                 </span>
               </div>
 
@@ -487,7 +487,7 @@ export const UserSettingsView: React.FC<UserSettingsViewProps> = ({
                 >
                   <Copy className="w-3.5 h-3.5 text-slate-400" />
                   ID: <span className="font-mono">{currentUser.id ? `${currentUser.id.slice(0, 8)}...` : 'N/A'}</span>
-                  {copiedId && <span className="text-emerald-600 font-medium ml-1">{language === 'km' ? 'បានចម្លង!' : 'Copied!'}</span>}
+                  {copiedId && <span className="text-emerald-600 font-medium ml-1">{'Copied!'}</span>}
                 </button>
               </div>
             </div>
@@ -513,7 +513,7 @@ export const UserSettingsView: React.FC<UserSettingsViewProps> = ({
               {isSaving ? (
                 <>
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>{language === 'km' ? 'កំពុងរក្សាទុក...' : 'Saving...'}</span>
+                  <span>{'Saving...'}</span>
                 </>
               ) : (
                 <>
@@ -1074,70 +1074,30 @@ export const UserSettingsView: React.FC<UserSettingsViewProps> = ({
           {/* Language Preference */}
           <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-6 space-y-4">
             <div className="border-b border-[#E2E8F0] pb-3">
-              <h2 className="text-base font-bold text-[#0F172A]">Interface Language (ភាសាប្រព័ន្ធ)</h2>
+              <h2 className="text-base font-bold text-[#0F172A]">Interface Language</h2>
               <p className="text-xs text-[#64748B] mt-0.5">
-                Switch seamlessly between Khmer (with Suwannaphum font rendering) and English.
+                Standard English Latin banking interface.
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
               <div
-                onClick={() => {
-                  setLanguage('km');
-                  showToast('ភាសាត្រូវបានផ្លាស់ប្តូរទៅជា ភាសាខ្មែរ', 'success');
-                }}
-                className={`p-4 rounded-[8px] border-2 cursor-pointer transition flex items-center justify-between ${
-                  language === 'km'
-                    ? 'border-[#2563EB] bg-blue-50/40 shadow-xs'
-                    : 'border-[#E2E8F0] hover:border-slate-300 bg-white'
-                }`}
-              >
-                <div className="flex items-center gap-3.5">
-                  <span className="text-2xl">🇰🇭</span>
-                  <div>
-                    <div className="text-xs font-bold text-[#0F172A] flex items-center gap-1.5">
-                      <span className="font-serif">ភាសាខ្មែរ (Khmer)</span>
-                      {language === 'km' && (
-                        <span className="px-1.5 py-0.2 bg-[#2563EB] text-white text-[10px] font-semibold rounded">
-                          បានជ្រើសរើស
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-[11px] text-[#64748B] mt-0.5">ពុម្ពអក្សរសួស្តី Suwannaphum Font</div>
-                  </div>
-                </div>
-                <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${language === 'km' ? 'border-[#2563EB] bg-[#2563EB]' : 'border-slate-300'}`}>
-                  {language === 'km' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                </div>
-              </div>
-
-              <div
-                onClick={() => {
-                  setLanguage('en');
-                  showToast('Language changed to English (US)', 'success');
-                }}
-                className={`p-4 rounded-[8px] border-2 cursor-pointer transition flex items-center justify-between ${
-                  language === 'en'
-                    ? 'border-[#2563EB] bg-blue-50/40 shadow-xs'
-                    : 'border-[#E2E8F0] hover:border-slate-300 bg-white'
-                }`}
+                className="p-4 rounded-[8px] border-2 border-[#2563EB] bg-blue-50/40 shadow-xs flex items-center justify-between"
               >
                 <div className="flex items-center gap-3.5">
                   <span className="text-2xl">🇺🇸</span>
                   <div>
                     <div className="text-xs font-bold text-[#0F172A] flex items-center gap-1.5">
                       <span>English (US)</span>
-                      {language === 'en' && (
-                        <span className="px-1.5 py-0.2 bg-[#2563EB] text-white text-[10px] font-semibold rounded">
-                          Selected
-                        </span>
-                      )}
+                      <span className="px-1.5 py-0.2 bg-[#2563EB] text-white text-[10px] font-semibold rounded">
+                        Selected
+                      </span>
                     </div>
                     <div className="text-[11px] text-[#64748B] mt-0.5">International Banking Standard</div>
                   </div>
                 </div>
-                <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${language === 'en' ? 'border-[#2563EB] bg-[#2563EB]' : 'border-slate-300'}`}>
-                  {language === 'en' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                <div className="w-4 h-4 rounded-full border border-[#2563EB] bg-[#2563EB] flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 rounded-full bg-white" />
                 </div>
               </div>
             </div>

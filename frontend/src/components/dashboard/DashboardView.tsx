@@ -42,7 +42,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       id: 'due-1',
       loanCode: 'LN-BKK-0081',
       borrowerName: 'Sokha Chan',
-      borrowerNameKh: 'ចាន់ សុខា',
+      borrowerNameKh: 'Sokha Chan',
       phone: '012 345 678',
       dueAmountUSD: 459.50,
       dueAmountKHR: 1883950,
@@ -53,7 +53,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       id: 'due-2',
       loanCode: 'LN-SR-0142',
       borrowerName: 'Chhaya Meng',
-      borrowerNameKh: 'ម៉េង ឆាយា',
+      borrowerNameKh: 'Chhaya Meng',
       phone: '098 765 432',
       dueAmountUSD: 310.00,
       dueAmountKHR: 1271000,
@@ -64,7 +64,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       id: 'due-3',
       loanCode: 'LN-BAT-0099',
       borrowerName: 'Dara Rath',
-      borrowerNameKh: 'រ័ត្ន តារា',
+      borrowerNameKh: 'Dara Rath',
       phone: '077 889 900',
       dueAmountUSD: 520.00,
       dueAmountKHR: 2132000,
@@ -75,7 +75,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       id: 'due-4',
       loanCode: 'LN-KPC-0067',
       borrowerName: 'Bopha Pich',
-      borrowerNameKh: 'ពេជ្រ បុប្ផា',
+      borrowerNameKh: 'Bopha Pich',
       phone: '085 223 344',
       dueAmountUSD: 185.00,
       dueAmountKHR: 758500,
@@ -88,7 +88,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const [activityFeed, setActivityFeed] = useState([
     {
       id: 'act-1',
-      borrower: 'Vannak Heng (ហេង វណ្ណៈ)',
+      borrower: 'Vannak Heng',
       amountUSD: 450.00,
       method: 'Bakong KHQR',
       time: '12 mins ago',
@@ -96,7 +96,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     },
     {
       id: 'act-2',
-      borrower: 'Sreymom Keo (កែវ ស្រីមុំ)',
+      borrower: 'Sreymom Keo',
       amountUSD: 620.00,
       method: 'Cash',
       time: '45 mins ago',
@@ -104,7 +104,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     },
     {
       id: 'act-3',
-      borrower: 'Piseth Oeng (អ៊ឹង ពិសិដ្ឋ)',
+      borrower: 'Piseth Oeng',
       amountUSD: 1200.00,
       method: 'Bank Transfer',
       time: '2 hours ago',
@@ -251,7 +251,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div>
               <h2 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
                 <Clock className="w-4 h-4 text-amber-400" />
-                Today's Installments Due (ត្រូវប្រមូលថ្ងៃនេះ)
+                Today's Installments Due
               </h2>
               <p className="text-xs text-slate-400 mt-0.5">
                 Borrowers scheduled to repay today. Quick 1-click collection available.

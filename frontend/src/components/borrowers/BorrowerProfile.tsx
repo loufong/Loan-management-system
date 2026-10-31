@@ -38,7 +38,7 @@ export const BorrowerProfile: React.FC<BorrowerProfileProps> = ({
   const borrower = {
     id: borrowerId,
     nameEn: 'Sokha Chan',
-    nameKh: 'ចាន់ សុខា',
+    nameKh: 'Sokha Chan',
     nationalId: '010892743',
     phone: '012 345 678',
     email: 'sokha.chan@gmail.com',
@@ -99,7 +99,7 @@ export const BorrowerProfile: React.FC<BorrowerProfileProps> = ({
 
   const guarantor = {
     nameEn: 'Vanna Chan',
-    nameKh: 'ចាន់ វណ្ណា',
+    nameKh: 'Vanna Chan',
     relationship: 'Sibling / Business Partner',
     phone: '017 889 911',
     nationalId: '010554921',

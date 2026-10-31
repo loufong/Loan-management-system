@@ -408,7 +408,7 @@ export const BorrowerList: React.FC<BorrowerListProps> = ({
                   type="text"
                   value={newNameKh}
                   onChange={(e) => setNewNameKh(e.target.value)}
-                  placeholder="e.g. ចាន់ សុខា"
+                  placeholder="e.g. Sokha Chan"
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
               </div>

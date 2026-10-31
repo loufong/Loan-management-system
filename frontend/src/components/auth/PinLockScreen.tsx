@@ -141,7 +141,7 @@ export const PinLockScreen: React.FC<PinLockScreenProps> = ({
       } else {
         // Incorrect PIN: Trigger gentle horizontal CSS shake animation & auto-clear
         setIsShaking(true);
-        setErrorMessage('លេខកូដសម្ងាត់មិនត្រឹមត្រូវ (Incorrect 6-digit PIN)');
+        setErrorMessage('Incorrect 6-digit PIN. Please try again.');
         const shakeTimer = setTimeout(() => {
           setIsShaking(false);
           setPin('');
@@ -205,7 +205,7 @@ export const PinLockScreen: React.FC<PinLockScreenProps> = ({
               {roleTag}
             </div>
             <p className="text-xs text-slate-400 pt-2 font-medium">
-              សូមបញ្ចូលលេខកូដសម្ងាត់ ៦ ខ្ទង់ (Enter your 6-digit access PIN)
+              Enter your 6-digit access PIN
             </p>
           </div>
         </div>
@@ -253,7 +253,7 @@ export const PinLockScreen: React.FC<PinLockScreenProps> = ({
             type="button"
             onClick={handleClearAll}
             className="h-13 rounded-2xl bg-slate-950/50 hover:bg-slate-800 border border-slate-800/80 text-[11px] font-bold uppercase tracking-wider text-slate-400 hover:text-white transition-all active:scale-95 flex flex-col items-center justify-center gap-0.5 cursor-pointer select-none"
-            title="Clear All / លុបទាំងអស់"
+            title="Clear All"
           >
             <RotateCcw className="w-4 h-4" />
             <span className="text-[9px]">Clear</span>
@@ -273,7 +273,7 @@ export const PinLockScreen: React.FC<PinLockScreenProps> = ({
             type="button"
             onClick={handleBackspace}
             className="h-13 rounded-2xl bg-slate-950/50 hover:bg-slate-800 border border-slate-800/80 text-slate-400 hover:text-white transition-all active:scale-95 flex items-center justify-center cursor-pointer select-none"
-            title="Backspace / លុបថយក្រោយ"
+            title="Backspace"
           >
             <Delete className="w-5 h-5" />
           </button>
@@ -286,7 +286,7 @@ export const PinLockScreen: React.FC<PinLockScreenProps> = ({
             onClick={onFallbackPassword || signOut}
             className="text-xs text-amber-400 hover:text-amber-300 font-semibold transition hover:underline cursor-pointer block mx-auto"
           >
-            ចូលដោយប្រើពាក្យសម្ងាត់ពេញលេញ (Log in with full password instead)
+            Log in with full password instead
           </button>
 
           <p className="text-[10px] text-slate-500 font-mono">

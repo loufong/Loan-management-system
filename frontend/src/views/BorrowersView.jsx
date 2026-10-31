@@ -101,7 +101,7 @@ export const BorrowersView: React.FC<{ onNavigate?: (tab: string, params?: any) 
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search name (English / ខ្មែរ), National ID, phone..."
+            placeholder="Search name, National ID, phone..."
             className="w-full rounded-2xl bg-slate-900 border border-slate-800 pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
           />
         </div>

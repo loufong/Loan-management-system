@@ -411,7 +411,7 @@ export interface RoleDefinition {
   badge: string;
   description: string;
   color: string;
-  khmerLabel: string;
+  khmerLabel?: string;
   responsibilities: string[];
 }
 

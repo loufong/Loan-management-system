@@ -337,28 +337,28 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
           icon: <Sprout className="w-4 h-4 text-emerald-600" />,
           badgeBg: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
           iconBg: 'bg-emerald-50 border border-emerald-200/60',
-          label: language === 'km' ? 'កសិកម្ម' : 'Agriculture',
+          label: 'Agriculture',
         };
       case 'business':
         return {
           icon: <Briefcase className="w-4 h-4 text-indigo-600" />,
           badgeBg: 'bg-indigo-50 text-indigo-700 border-indigo-200/80',
           iconBg: 'bg-indigo-50 border border-indigo-200/60',
-          label: language === 'km' ? 'អាជីវកម្ម SME' : 'SME Business',
+          label: 'SME Business',
         };
       case 'vehicle':
         return {
           icon: <Car className="w-4 h-4 text-amber-600" />,
           badgeBg: 'bg-amber-50 text-amber-700 border-amber-200/80',
           iconBg: 'bg-amber-50 border border-amber-200/60',
-          label: language === 'km' ? 'យានយន្ត' : 'Vehicle',
+          label: 'Vehicle',
         };
       case 'emergency':
         return {
           icon: <Zap className="w-4 h-4 text-rose-600" />,
           badgeBg: 'bg-rose-50 text-rose-700 border-rose-200/80',
           iconBg: 'bg-rose-50 border border-rose-200/60',
-          label: language === 'km' ? 'បន្ទាន់' : 'Emergency',
+          label: 'Emergency',
         };
       case 'personal':
       default:
@@ -366,7 +366,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
           icon: <Home className="w-4 h-4 text-blue-600" />,
           badgeBg: 'bg-blue-50 text-blue-700 border-blue-200/80',
           iconBg: 'bg-blue-50 border border-blue-200/60',
-          label: language === 'km' ? 'បុគ្គល & ការសិក្សា' : 'Personal & Education',
+          label: 'Personal & Education',
         };
     }
   };
@@ -403,13 +403,11 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                   {t('wizard_apply_title', 'Apply for Credit Facility')}
                 </h1>
                 <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 font-mono">
-                  {language === 'km' ? `ជំហាន ${currentStep} / ៤` : `Step ${currentStep} of 4`}
+                  {`Step ${currentStep} of 4`}
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-1">
-                {language === 'km'
-                  ? 'បំពេញពាក្យស្នើសុំរបស់អ្នកតាម ៤ ជំហានងាយៗ និងរហ័ស'
-                  : 'Fast-track financing application: Facility, Terms, Documents & Verification'}
+                {'Fast-track financing application: Facility, Terms, Documents & Verification'}
               </p>
             </div>
           </div>
@@ -1088,9 +1086,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                 className="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-0 cursor-pointer"
               />
               <span className="text-xs text-slate-700">
-                {language === 'km'
-                  ? 'ខ្ញុំសូមបញ្ជាក់ថាលក្ខខណ្ឌកម្ចី និងឯកសារដែលបានផ្តល់ជូនទាំងអស់គឺពិតជាត្រឹមត្រូវ។'
-                  : 'I confirm that all loan terms and documents provided are accurate.'}
+                {'I confirm that all loan terms and documents provided are accurate.'}
               </span>
             </label>
           </div>
@@ -1139,7 +1135,7 @@ export const LoanApplicationWizard: React.FC<LoanApplicationWizardProps> = ({
                   {isSubmitting ? (
                     <>
                       <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>{language === 'km' ? 'កំពុងដាក់ស្នើ...' : 'Submitting...'}</span>
+                      <span>{'Submitting...'}</span>
                     </>
                   ) : (
                     <>

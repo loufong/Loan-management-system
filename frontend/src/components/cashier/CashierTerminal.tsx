@@ -30,7 +30,7 @@ export const CashierTerminal: React.FC<CashierTerminalProps> = ({
   const [selectedBorrower, setSelectedBorrower] = useState({
     id: 'b-101',
     nameEn: 'Sokha Chan',
-    nameKh: 'ចាន់ សុខា',
+    nameKh: 'Sokha Chan',
     nationalId: '010892743',
     phone: '012 345 678',
     loanCode: 'LN-BKK-0081',
@@ -112,7 +112,7 @@ export const CashierTerminal: React.FC<CashierTerminalProps> = ({
       {/* BORROWER LOOKUP BAR */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl">
         <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
-          Borrower Lookup Bar (ស្វែងរកអតិថិជនតាមលេខទូរស័ព្ទ ឬ អត្តសញ្ញាណប័ណ្ណ)
+          Borrower Lookup Bar (Search borrower by phone or national ID)
         </label>
         <div className="relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -186,7 +186,7 @@ export const CashierTerminal: React.FC<CashierTerminalProps> = ({
           {/* Payment Method Radio Buttons */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
-              Payment Method (វិធីសាស្ត្រទូទាត់)
+              Payment Method
             </label>
             <div className="grid grid-cols-3 gap-3">
               {(['Cash', 'Bakong KHQR', 'Bank Transfer'] as PaymentMethod[]).map(method => (

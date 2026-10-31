@@ -103,34 +103,34 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
 
     const cleanFullName = fullName.trim();
     if (!cleanFullName) {
-      setError(language === 'km' ? 'សូមបញ្ចូលឈ្មោះពេញរបស់អ្នក។' : 'Please enter your full name.');
+      setError('Please enter your full name.');
       return;
     }
 
     const cleanEmail = email.trim();
     if (!cleanEmail || !isEmailValid) {
-      setError(language === 'km' ? 'សូមបញ្ចូលអាសយដ្ឋានអ៊ីមែលត្រឹមត្រូវ (ឧ. name@gmail.com)។' : 'Please enter a valid email address (e.g. name@gmail.com, name@yahoo.com).');
+      setError('Please enter a valid email address (e.g. name@gmail.com, name@yahoo.com).');
       return;
     }
 
     const cleanPhone = phone.trim();
     if (!cleanPhone || cleanPhone.length < 8) {
-      setError(language === 'km' ? 'សូមបញ្ចូលលេខទូរស័ព្ទត្រឹមត្រូវ (យ៉ាងតិច ៨ ខ្ទង់)។' : 'Please enter a valid phone number (at least 8 digits).');
+      setError('Please enter a valid phone number (at least 8 digits).');
       return;
     }
 
     if (password.length < 8) {
-      setError(language === 'km' ? 'ពាក្យសម្ងាត់ត្រូវតែមានយ៉ាងតិច ៨ តួអក្សរ។' : 'Password must be at least 8 characters long.');
+      setError('Password must be at least 8 characters long.');
       return;
     }
 
     if (strengthScore < 3) {
-      setError(language === 'km' ? 'សូមធ្វើឱ្យពាក្យសម្ងាត់កាន់តែរឹងមាំជាមួយអក្សរធំ អក្សរតូច លេខ និងនិមិត្តសញ្ញា។' : 'Please make your password stronger with uppercase, lowercase, numbers, and symbols.');
+      setError('Please make your password stronger with uppercase, lowercase, numbers, and symbols.');
       return;
     }
 
     if (password !== confirmPassword) {
-      setError(language === 'km' ? 'ពាក្យសម្ងាត់មិនត្រូវគ្នាទេ។ សូមបញ្ចូលម្តងទៀតដើម្បីបញ្ជាក់។' : 'Passwords do not match. Please re-enter to confirm.');
+      setError('Passwords do not match. Please re-enter to confirm.');
       return;
     }
 
@@ -154,7 +154,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
 
       onRegisterSuccess(cleanEmail);
     } catch (err: any) {
-      setError(err?.message || (language === 'km' ? 'មិនអាចបង្កើតគណនីបានទេ។ សូមពិនិត្យព័ត៌មានរបស់អ្នក ហើយព្យាយាមម្តងទៀត។' : 'Unable to create account. Please check your details and try again.'));
+      setError(err?.message || ('Unable to create account. Please check your details and try again.'));
     } finally {
       setIsLoading(false);
     }
@@ -215,7 +215,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder={language === 'km' ? 'ឧ. ចាន់ សុខា' : 'e.g. Sokha Chan'}
+                  placeholder={'e.g. Sokha Chan'}
                   required
                   autoFocus
                   className="w-full h-[44px] px-3.5 pl-10 rounded-[6px] bg-white border border-[#E2E8F0] text-[#0F172A] text-[14px] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#94A3B8]"
@@ -229,7 +229,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                   <Sparkles className="w-3 h-3 text-[#2563EB]" />
                   <span>{t('Username', 'Username')}:</span>
                   <span className="font-mono font-medium text-[#0F172A]">
-                    @{autoUsername || (language === 'km' ? 'ឈ្មោះអ្នកប្រើ' : 'username')}
+                    @{autoUsername || ('username')}
                   </span>
                 </div>
                 {!isEditingUsername ? (
@@ -318,7 +318,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder={language === 'km' ? 'ឧ. 012 345 678' : 'e.g. 012 345 678'}
+                  placeholder={'e.g. 012 345 678'}
                   required
                   className="w-full h-[44px] px-3.5 pl-10 rounded-[6px] bg-white border border-[#E2E8F0] text-[#0F172A] text-[14px] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors placeholder:text-[#94A3B8]"
                 />

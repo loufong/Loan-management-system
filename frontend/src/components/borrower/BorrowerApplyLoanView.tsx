@@ -69,24 +69,24 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
   // Product configurations
   const products = {
     PERSONAL: {
-      name: isKhmer ? 'ឥណទានបុគ្គលខ្នាតតូច' : 'Personal Micro-Loan',
-      subtitle: isKhmer ? 'សម្រាប់តម្រូវការទូទៅ និងការសិក្សា' : 'General personal expenses, tuition & lifestyle',
+      name: 'Personal Micro-Loan',
+      subtitle: 'General personal expenses, tuition & lifestyle',
       rate: 6.5,
       minAmount: 500,
       maxAmount: 10000,
       badge: 'NBC Standard',
     },
     SME: {
-      name: isKhmer ? 'ទុនបង្វិលសហគ្រាសធុនតូច' : 'SME Working Capital',
-      subtitle: isKhmer ? 'ពង្រីកអាជីវកម្ម ទិញស្តុក និងឧបករណ៍' : 'Business expansion, inventory restocking & operations',
+      name: 'SME Working Capital',
+      subtitle: 'Business expansion, inventory restocking & operations',
       rate: 9.0,
       minAmount: 2000,
       maxAmount: 20000,
       badge: 'High Ceiling',
     },
     AGRI: {
-      name: isKhmer ? 'ឥណទានកសិកម្ម' : 'Agri-Credit Facility',
-      subtitle: isKhmer ? 'សម្រាប់ជី ឧបករណ៍កសិកម្ម និងដាំដុះ' : 'Seasonal farming inputs, machinery & eco-agronomy',
+      name: 'Agri-Credit Facility',
+      subtitle: 'Seasonal farming inputs, machinery & eco-agronomy',
       rate: 5.5,
       minAmount: 1000,
       maxAmount: 15000,
@@ -264,17 +264,15 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
               <span className="text-slate-500 font-medium">Core Banking</span>
               <span>/</span>
               <span className="font-bold text-emerald-400 uppercase tracking-wider">
-                {isKhmer ? 'ស្នើសុំឥណទានថ្មី' : 'Apply for Loan'}
+                {'Apply for Loan'}
               </span>
             </div>
 
             <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-              {isKhmer ? 'ពាក្យស្នើសុំឥណទានថ្មី' : 'New Credit Facility Application'}
+              {'New Credit Facility Application'}
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 mt-1">
-              {isKhmer
-                ? 'បំពេញព័ត៌មានលម្អិតចំនួន ៣ ជំហាន ដើម្បីទទួលបានការអនុម័តរហ័សស្របតាមស្ដង់ដារ ធនាគារជាតិនៃកម្ពុជា (NBC)'
-                : 'Fast-track institutional financing intake compliant with National Bank of Cambodia lending directives.'}
+              {'Fast-track institutional financing intake compliant with National Bank of Cambodia lending directives.'}
             </p>
           </div>
 

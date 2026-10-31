@@ -116,17 +116,17 @@ export const AccessDeniedPage: React.FC<AccessDeniedPageProps> = ({
           {/* User Profile Context Box */}
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-left text-xs space-y-1.5">
             <div className="flex justify-between">
-              <span className="text-slate-500">{language === 'km' ? 'គណនីបច្ចុប្បន្ន:' : 'Active User:'}</span>
+              <span className="text-slate-500">{'Active User:'}</span>
               <strong className="text-slate-900">{currentUserName}</strong>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">{language === 'km' ? 'តួនាទីសកម្ម:' : 'Current Role:'}</span>
+              <span className="text-slate-500">{'Current Role:'}</span>
               <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 font-semibold text-[10px] uppercase">
                 {currentUserRole}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">{language === 'km' ? 'ការអនុញ្ញាតដែលត្រូវការ:' : 'Required Role:'}</span>
+              <span className="text-slate-500">{'Required Role:'}</span>
               <span className="font-mono text-emerald-700 font-bold">ADMIN / SUPERADMIN</span>
             </div>
           </div>
@@ -149,7 +149,7 @@ export const AccessDeniedPage: React.FC<AccessDeniedPageProps> = ({
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 text-xs font-semibold transition-colors cursor-pointer"
               >
                 <LayoutDashboard className="w-4 h-4" />
-                <span>{language === 'km' ? 'ទៅកាន់ផតថលអតិថិជន (/portal)' : 'Open Borrower Portal (/portal)'}</span>
+                <span>{'Open Borrower Portal (/portal)'}</span>
               </button>
             )}
 
@@ -170,7 +170,7 @@ export const AccessDeniedPage: React.FC<AccessDeniedPageProps> = ({
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5" />
-                {language === 'km' ? 'ជម្រើសអ្នកអភិវឌ្ឍន៍ (Dev Quick Bypass)' : 'Development Quick-Bypass'}
+                {'Development Quick-Bypass'}
               </span>
               <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md font-semibold">
                 Dev Mode
@@ -184,7 +184,7 @@ export const AccessDeniedPage: React.FC<AccessDeniedPageProps> = ({
                 className="w-full p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-98"
               >
                 <ShieldCheck className="w-4 h-4" />
-                <span>{language === 'km' ? 'ប្តូរទៅ Admin ភ្លាមៗ' : 'Switch to Admin Role'}</span>
+                <span>{'Switch to Admin Role'}</span>
               </button>
 
               <button
@@ -200,7 +200,7 @@ export const AccessDeniedPage: React.FC<AccessDeniedPageProps> = ({
                 className="w-full p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-98"
               >
                 <QrCode className="w-4 h-4 text-rose-400" />
-                <span>{language === 'km' ? 'មើលផតថលអតិថិជន' : 'View Borrower Portal'}</span>
+                <span>{'View Borrower Portal'}</span>
               </button>
             </div>
           </div>

@@ -45,7 +45,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
   });
 
   // Language state: 'EN' or 'KH'
-  const [language, setLanguage] = useState<'EN' | 'KH'>('KH');
+  const [language, setLanguage] = useState<'EN' | 'KH'>('EN');
 
   // Interactive States
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -90,9 +90,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
     const trimmedId = employeeIdOrEmail.trim();
     if (!trimmedId || !password) {
       setErrorMessage(
-        language === 'KH'
-          ? 'ព័ត៌មានសម្ងាត់មិនត្រឹមត្រូវ (Invalid staff credentials or inactive account)'
-          : 'Invalid staff credentials or inactive account'
+        'Invalid staff credentials or inactive account.'
       );
       return;
     }
@@ -126,15 +124,11 @@ export const LoginView: React.FC<LoginViewProps> = ({
         localStorage.setItem('apex_lock_until', lockUntil.toString());
         setLockoutRemaining(lockDuration);
         setErrorMessage(
-          language === 'KH'
-            ? 'គណនីត្រូវបានចាក់សោរបណ្តោះអាសន្ន (Account locked. Try again in 60s)'
-            : 'Account locked due to 5 consecutive failed attempts. Please wait 60 seconds.'
+          'Account locked due to 5 consecutive failed attempts. Please wait 60 seconds.'
         );
       } else {
         setErrorMessage(
-          language === 'KH'
-            ? 'ព័ត៌មានសម្ងាត់មិនត្រឹមត្រូវ (Invalid staff credentials or inactive account)'
-            : 'Invalid staff credentials or inactive account.'
+          'Invalid staff credentials or inactive account.'
         );
       }
     } finally {
@@ -177,16 +171,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
             </button>
           )}
 
-          {/* Clean Pill Button to Toggle Language (English / ភាសាខ្មែរ) */}
-          <button
-            type="button"
-            onClick={() => setLanguage((l) => (l === 'KH' ? 'EN' : 'KH'))}
-            className="px-3.5 py-1.5 rounded-full border border-slate-800 bg-slate-900/90 hover:bg-slate-800 text-xs font-bold text-slate-200 hover:text-white transition shadow-sm backdrop-blur-md flex items-center gap-1.5 cursor-pointer active:scale-95"
-            title="Toggle Language / ប្តូរភាសា"
-          >
-            <Globe className="w-3.5 h-3.5 text-amber-400" />
-            <span>{language === 'KH' ? 'English (EN)' : 'ភាសាខ្មែរ'}</span>
-          </button>
+          
         </div>
       </header>
 
@@ -213,7 +198,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 JAM SONG VICH
               </h1>
               <p className="text-xs font-bold text-amber-400 tracking-wide mt-0.5">
-                ប្រព័ន្ធគ្រប់គ្រងឥណទាន • Core Banking System
+                Core Banking System • Loan Management System
               </p>
 
               {/* Security indicator chip underneath */}
@@ -243,9 +228,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
               <div className="flex items-center gap-2.5 text-xs font-semibold">
                 <Clock className="w-4 h-4 text-amber-400 animate-spin shrink-0" />
                 <span>
-                  {language === 'KH'
-                    ? `គណនីត្រូវបានចាក់សោរបណ្តោះអាសន្ន (Account locked. Try again in ${lockoutRemaining}s)`
-                    : `Account locked. Try again in ${lockoutRemaining}s`}
+                  {`Account locked. Try again in ${lockoutRemaining}s`}
                 </span>
               </div>
               {/* Animated progress bar that drains over 60 seconds */}
@@ -263,7 +246,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
             {/* Employee ID / Email Field */}
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-wide">
-                លេខកូដបុគ្គលិក ឬ អ៊ីមែល / Employee ID or Email
+                Employee ID or Email
               </label>
               <div className="relative">
                 <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -284,7 +267,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
             {/* Password Field with Show/Hide Toggle */}
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1.5 tracking-wide">
-                ពាក្យសម្ងាត់ / Password
+                Password
               </label>
               <div className="relative">
                 <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
@@ -328,7 +311,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 onClick={() => setIsHelpdeskOpen(true)}
                 className="text-amber-400 hover:text-amber-300 transition hover:underline font-medium cursor-pointer"
               >
-                {language === 'KH' ? 'ភ្លេចពាក្យសម្ងាត់ / ជំនួយការ IT?' : 'Contact IT Support'}
+                'Contact IT Support'
               </button>
             </div>
 
@@ -342,11 +325,11 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 {isLoading ? (
                   <div className="flex items-center gap-2">
                     <span className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                    <span>កំពុងផ្ទៀងផ្ទាត់... (Verifying Security Tokens)</span>
+                    <span>Verifying Security Credentials...</span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <span>ចូលប្រើប្រព័ន្ធ (Sign In to Core)</span>
+                    <span>Sign In to Core</span>
                     <ArrowRight className="w-4 h-4" />
                   </div>
                 )}

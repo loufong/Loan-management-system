@@ -149,13 +149,13 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
               <span className="text-slate-500 font-medium">Core Banking</span>
               <span>/</span>
               <span className="font-bold text-emerald-400 uppercase tracking-wider">
-                {isKhmer ? 'កាលវិភាគសងប្រាក់' : 'Repayment Schedule'}
+                {'Repayment Schedule'}
               </span>
             </div>
 
             <div className="flex flex-wrap items-center gap-2.5">
               <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                {isKhmer ? 'តារាងកាលវិភាគបង់រំលស់' : 'Amortization Repayment Ledger'}
+                {'Amortization Repayment Ledger'}
               </h1>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
                 LN-2026-6042 • ACTIVE

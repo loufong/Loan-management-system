@@ -921,7 +921,6 @@ export const CORE_ROLE_DEFINITIONS: Record<'MANAGER' | 'CASHIER' | 'BORROWER', R
     description:
       'Full administrative oversight, credit risk underwriting, committee approvals, loan product limits, financial reports, user role administration, and system governance.',
     color: 'bg-indigo-600 text-white',
-    khmerLabel: 'អ្នកគ្រប់គ្រង / អភិបាលប្រព័ន្ធ',
     responsibilities: [
       'Create and manage staff & borrower user accounts',
       'Assign and modify user roles and access privileges',
@@ -939,7 +938,6 @@ export const CORE_ROLE_DEFINITIONS: Record<'MANAGER' | 'CASHIER' | 'BORROWER', R
     description:
       'Front-desk treasury operations, executing loan disbursements to approved borrowers, processing multi-installment repayment waterfalls, and printing digital receipts.',
     color: 'bg-emerald-600 text-white',
-    khmerLabel: 'បេឡាធិការ / អ្នកទទួលប្រាក់',
     responsibilities: [
       'Execute fund disbursements for approved loan contracts',
       'Collect loan repayments across Cash, ABA QR, and Bank Transfer',
@@ -956,7 +954,6 @@ export const CORE_ROLE_DEFINITIONS: Record<'MANAGER' | 'CASHIER' | 'BORROWER', R
     description:
       'Borrower self-service portal for students and faculty to apply for academic loans, view active loan balances, track repayment schedules, and download receipts.',
     color: 'bg-amber-600 text-white',
-    khmerLabel: 'អ្នកខ្ចីប្រាក់ / និស្សិត',
     responsibilities: [
       'Submit new online loan applications with document uploads',
       'View personal 360° borrower profile and credit classification',

@@ -183,7 +183,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
               <div className="flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[11px] font-semibold tracking-wide">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  {isKhmer ? 'វិបផតថលសេវាកម្មកម្ចីស្វ័យប្រវត្តិ' : 'Verified Borrower Self-Service Portal'}
+                  {'Verified Borrower Self-Service Portal'}
                 </span>
                 {currentUser?.borrowerId && (
                   <span className="text-[11px] font-mono text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded-md border border-slate-700/60">
@@ -196,13 +196,11 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
               </div>
 
               <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                {isKhmer ? `សូមស្វាគមន៍, ${displayName}` : `Welcome back, ${displayName}`}
+                {`Welcome back, ${displayName}`}
               </h1>
 
               <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-xl">
-                {isKhmer
-                  ? 'គ្រប់គ្រងកម្ចីសកម្ម ការទូទាត់រំលស់ភ្លាមៗតាម Bakong KHQR និងតាមដានកាលវិភាគសងប្រាក់។'
-                  : 'Manage active credit facilities, settle installments instantly via Bakong KHQR, and monitor repayments.'}
+                {'Manage active credit facilities, settle installments instantly via Bakong KHQR, and monitor repayments.'}
               </p>
             </div>
           </div>
@@ -219,7 +217,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
                 KH
               </div>
               <QrCode className="w-4 h-4 text-white shrink-0" />
-              <span>{isKhmer ? 'បង់ប្រាក់ KHQR' : 'Pay via Bakong KHQR'}</span>
+              <span>{'Pay via Bakong KHQR'}</span>
             </button>
 
             {/* Secondary Action: Apply for Loan */}
@@ -235,7 +233,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
               className="inline-flex items-center justify-center gap-1.5 h-10 px-4.5 rounded-xl bg-slate-800 hover:bg-slate-750 text-white font-semibold text-xs sm:text-sm border border-slate-700 hover:border-slate-600 transition-all cursor-pointer select-none whitespace-nowrap active:scale-[0.98]"
             >
               <Plus className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>{isKhmer ? '+ ស្នើសុំកម្ចីថ្មី' : '+ Apply for Loan'}</span>
+              <span>{'+ Apply for Loan'}</span>
             </button>
 
             {/* Outline Button: Schedule */}
@@ -243,10 +241,10 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
               type="button"
               onClick={() => onNavigate('repayments')}
               className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-xl bg-slate-850 hover:bg-slate-800 text-slate-300 hover:text-white font-medium text-xs sm:text-sm border border-slate-700/80 hover:border-slate-600 shadow-2xs transition-all cursor-pointer select-none whitespace-nowrap active:scale-[0.98]"
-              title={isKhmer ? 'កាលវិភាគសងប្រាក់' : 'Repayment Schedule'}
+              title={'Repayment Schedule'}
             >
               <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
-              <span>{isKhmer ? 'កាលវិភាគ' : 'Schedule'}</span>
+              <span>{'Schedule'}</span>
             </button>
 
             {/* Restart / Reset Data Control */}
@@ -261,7 +259,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
               title={isRestartedToZero ? 'Restore JAM SONG VICH Facility (LN-2026-6042)' : 'Restart All Borrowing Data to Zero'}
             >
               <RotateCcw className={`w-3.5 h-3.5 ${isRestartedToZero ? 'text-emerald-400' : 'text-slate-400'}`} />
-              <span>{isRestartedToZero ? (isKhmer ? 'ផ្ទុកទិន្នន័យ LN-2026-6042' : 'Restore Facility') : (isKhmer ? 'ចាប់ផ្តើមឡើងវិញ' : 'Restart Data')}</span>
+              <span>{isRestartedToZero ? ('Restore Facility') : ('Restart Data')}</span>
             </button>
           </div>
         </div>
@@ -275,18 +273,18 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-4.5 shadow-sm hover:border-slate-700 transition-all flex items-center justify-between group">
           <div className="space-y-1">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              {isKhmer ? 'កម្ចីសកម្ម' : 'Active Facilities'}
+              {'Active Facilities'}
             </span>
             <div className="text-2xl font-bold text-white tracking-tight">{activeFacilitiesCount}</div>
             {activeFacilitiesCount > 0 ? (
               <span className="text-[11px] text-emerald-400 font-medium flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                {isKhmer ? 'គណនីមានសុពលភាព' : 'In Good Standing'}
+                {'In Good Standing'}
               </span>
             ) : (
               <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-slate-500" />
-                {isKhmer ? 'គ្មានកម្ចីសកម្ម' : 'No Active Facilities'}
+                {'No Active Facilities'}
               </span>
             )}
           </div>
@@ -299,13 +297,13 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-4.5 shadow-sm hover:border-slate-700 transition-all flex items-center justify-between group">
           <div className="space-y-1">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              {isKhmer ? 'ទំហំឥណទានសរុប' : 'Total Borrowed'}
+              {'Total Borrowed'}
             </span>
             <div className="text-2xl font-bold text-white tracking-tight font-mono">
               {formatMoney(totalBorrowedVal)}
             </div>
             <span className="text-[11px] text-slate-400">
-              {activeFacilitiesCount} {isKhmer ? 'កិច្ចសន្យាឥណទាន' : 'Total Facilities'}
+              {activeFacilitiesCount} {'Total Facilities'}
             </span>
           </div>
           <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 group-hover:scale-105 transition-transform shadow-inner">
@@ -317,7 +315,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-4.5 shadow-sm hover:border-slate-700 transition-all flex items-center justify-between group">
           <div className="space-y-1">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              {isKhmer ? 'សមតុល្យនៅសល់' : 'Outstanding Balance'}
+              {'Outstanding Balance'}
             </span>
             <div className="text-2xl font-bold text-white tracking-tight font-mono">
               {formatMoney(outstandingBalanceVal)}
@@ -325,8 +323,8 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
             <span className="text-[11px] text-amber-400 font-medium flex items-center gap-1">
               <Clock className="w-3 h-3 text-amber-400" />
               {outstandingBalanceVal > 0
-                ? (isKhmer ? 'ប្រាក់ដើម និងការប្រាក់' : 'Principal & Interest')
-                : (isKhmer ? 'គ្មានសមតុល្យជំពាក់' : 'No Balance Owed')}
+                ? ('Principal & Interest')
+                : ('No Balance Owed')}
             </span>
           </div>
           <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform shadow-inner">
@@ -338,14 +336,14 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-4.5 shadow-sm hover:border-slate-700 transition-all flex items-center justify-between group">
           <div className="space-y-1">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              {isKhmer ? 'បានសងសរុប' : 'Total Repaid'}
+              {'Total Repaid'}
             </span>
             <div className="text-2xl font-bold text-emerald-400 tracking-tight font-mono">
               {formatMoney(totalRepaidVal)}
             </div>
             <span className="text-[11px] text-emerald-400/90 font-medium flex items-center gap-1">
               <TrendingUp className="w-3 h-3 text-emerald-400" />
-              {recentReceipts.length} {isKhmer ? 'វិក្កយបត្របានទូទាត់' : 'Settled Receipts'}
+              {recentReceipts.length} {'Settled Receipts'}
             </span>
           </div>
           <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform shadow-inner">
@@ -377,7 +375,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
                     </span>
                   </div>
                   <p className="text-xs font-mono text-slate-400">
-                    {isKhmer ? 'លេខគណនីឥណទាន:' : 'Loan Account No:'} <strong className="text-white font-mono">{loanNumber}</strong>
+                    {'Loan Account No:'} <strong className="text-white font-mono">{loanNumber}</strong>
                   </p>
                 </div>
 
@@ -401,7 +399,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl bg-slate-950/70 border border-slate-800/80">
                 <div>
                   <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">
-                    {isKhmer ? 'ប្រាក់ដើមដំបូង' : 'Original Principal'}
+                    {'Original Principal'}
                   </span>
                   <div className="text-base font-bold text-white mt-1 font-mono">
                     {formatMoney(principalAmount)}
@@ -409,7 +407,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
                 </div>
                 <div>
                   <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">
-                    {isKhmer ? 'អត្រាការប្រាក់' : 'Interest Rate'}
+                    {'Interest Rate'}
                   </span>
                   <div className="text-base font-bold text-white mt-1 font-mono">
                     {interestRate}% / year
@@ -417,7 +415,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
                 </div>
                 <div>
                   <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">
-                    {isKhmer ? 'រយៈពេលកម្ចី' : 'Loan Term'}
+                    {'Loan Term'}
                   </span>
                   <div className="text-base font-bold text-white mt-1">
                     {loanTerm} Months
@@ -425,7 +423,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
                 </div>
                 <div>
                   <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">
-                    {isKhmer ? 'សមតុល្យនៅសល់' : 'Remaining Balance'}
+                    {'Remaining Balance'}
                   </span>
                   <div className="text-base font-bold text-emerald-400 mt-1 font-mono">
                     {formatMoney(remainingBalance)}
@@ -437,7 +435,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
               <div className="space-y-2">
                 <div className="flex justify-between text-xs font-medium">
                   <span className="text-slate-300">
-                    {isKhmer ? 'វឌ្ឍនភាពនៃការសងឥណទាន' : 'Repayment Completion Progress'} {progressPercent}%
+                    {'Repayment Completion Progress'} {progressPercent}%
                   </span>
                   <span className="font-bold text-emerald-400 font-mono">{progressPercent}%</span>
                 </div>
@@ -448,8 +446,8 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
                   />
                 </div>
                 <div className="flex justify-between text-[11px] text-slate-400 font-mono">
-                  <span>{isKhmer ? 'បានសង:' : 'Paid:'} {formatMoney(totalPaid)}</span>
-                  <span>{isKhmer ? 'សរុបត្រូវសង:' : 'Total Payable:'} {formatMoney(totalPayable)}</span>
+                  <span>{'Paid:'} {formatMoney(totalPaid)}</span>
+                  <span>{'Total Payable:'} {formatMoney(totalPayable)}</span>
                 </div>
               </div>
 
@@ -458,14 +456,14 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
                 <div className="space-y-1.5">
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-red-600/20 text-red-400 border border-red-500/40 text-[10px] font-bold uppercase tracking-wider">
                     <Clock className="w-3 h-3" />
-                    <span>{isKhmer ? 'ការបង់រំលស់បន្ទាប់' : 'NEXT DUE INSTALLMENT'}</span>
+                    <span>{'NEXT DUE INSTALLMENT'}</span>
                   </div>
                   <div className="text-2xl font-black text-white font-mono tracking-tight">
                     {formatMoney(nextDueAmount)}
                   </div>
                   <div className="text-xs text-slate-400 flex flex-wrap items-center gap-2">
                     <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{isKhmer ? 'កាលបរិច្ឆេទកំណត់:' : 'Due Date:'} <strong className="text-slate-200 font-mono">{nextDueDate}</strong></span>
+                    <span>{'Due Date:'} <strong className="text-slate-200 font-mono">{nextDueDate}</strong></span>
                     <span className="text-slate-500">•</span>
                     <span className="text-slate-300">Installment #{nextInstallmentNo} of {loanTerm}</span>
                   </div>
@@ -478,14 +476,14 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
                     className="px-5 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md shadow-red-950/50 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
                   >
                     <QrCode className="w-4 h-4 text-white" />
-                    <span>{isKhmer ? 'ស្កេនបង់ប្រាក់ KHQR' : 'Scan & Pay via KHQR'}</span>
+                    <span>{'Scan & Pay via KHQR'}</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => onNavigate('repayments')}
                     className="px-4 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 font-semibold text-xs transition cursor-pointer text-center"
                   >
-                    {isKhmer ? 'តារាងបង់រំលស់ពេញលេញ' : 'View Full Schedule'}
+                    {'View Full Schedule'}
                   </button>
                 </div>
               </div>
@@ -500,15 +498,13 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
                 <div className="space-y-1.5">
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-xs font-semibold">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>{isKhmer ? 'គ្មានកម្ចីសកម្មនៅឡើយទេ' : 'No Active Credit Facilities'}</span>
+                    <span>{'No Active Credit Facilities'}</span>
                   </div>
                   <h3 className="text-xl font-bold text-white tracking-tight">
-                    {isKhmer ? 'អ្នកមិនទាន់មានកិច្ចសន្យាឥណទានសកម្មទេ' : 'Your Borrowing Record is Fresh & Clean'}
+                    {'Your Borrowing Record is Fresh & Clean'}
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-400 max-w-lg mx-auto leading-relaxed">
-                    {isKhmer
-                      ? 'អ្នកមិនទាន់មានសមតុល្យឥណទានដែលត្រូវសងនៅឡើយទេ។ អ្នកអាចដាក់ពាក្យស្នើសុំកម្ចីផ្ទាល់ខ្លួន កម្ចីអាជីវកម្មខ្នាតតូច ឬកម្ចីកសិកម្មឥឡូវនេះបានភ្លាមៗ។'
-                      : 'You currently have zero outstanding borrowings and zero active installments. Submit a new application to access flexible microfinance credit facilities disbursed directly to your ACLEDA or Bakong wallet.'}
+                    {'You currently have zero outstanding borrowings and zero active installments. Submit a new application to access flexible microfinance credit facilities disbursed directly to your ACLEDA or Bakong wallet.'}
                   </p>
                 </div>
 
@@ -522,7 +518,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs sm:text-sm transition-all shadow-md active:scale-95 cursor-pointer"
                   >
                     <Plus className="w-4 h-4 text-slate-950" />
-                    <span>{isKhmer ? '+ ស្នើសុំកម្ចីឥឡូវនេះ' : '+ Apply for Credit Facility'}</span>
+                    <span>{'+ Apply for Credit Facility'}</span>
                   </button>
                   <button
                     type="button"
@@ -530,7 +526,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
                     className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-300 hover:text-white border border-slate-700 text-xs sm:text-sm font-semibold transition cursor-pointer"
                   >
                     <Calendar className="w-4 h-4 text-slate-400" />
-                    <span>{isKhmer ? 'មើលកាលវិភាគ' : 'View Schedule'}</span>
+                    <span>{'View Schedule'}</span>
                   </button>
                 </div>
               </div>
@@ -540,14 +536,14 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
                 <div className="space-y-1.5">
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider">
                     <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                    <span>{isKhmer ? 'ស្ថានភាពគណនី' : 'ACCOUNT STATUS'}</span>
+                    <span>{'ACCOUNT STATUS'}</span>
                   </div>
                   <div className="text-2xl font-black text-white font-mono tracking-tight">
                     {formatMoney(0)}
                   </div>
                   <div className="text-xs text-slate-400 flex items-center gap-2">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>{isKhmer ? 'គណនីមានសុពលភាពល្អ • គ្មានការទូទាត់ជំពាក់' : 'All accounts in good standing • No installments due'}</span>
+                    <span>{'All accounts in good standing • No installments due'}</span>
                   </div>
                 </div>
 
@@ -560,7 +556,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
                     }}
                     className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-750 text-emerald-400 border border-slate-700 font-semibold text-xs transition cursor-pointer"
                   >
-                    {isKhmer ? '+ ស្នើសុំកម្ចីថ្មី' : '+ Apply for Loan'}
+                    {'+ Apply for Loan'}
                   </button>
                 </div>
               </div>
@@ -572,10 +568,10 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
             <div className="p-5 border-b border-slate-800 flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-bold text-white tracking-tight">
-                  {isKhmer ? 'ប្រវត្តិនៃការទូទាត់' : 'Payment History & Receipts'}
+                  {'Payment History & Receipts'}
                 </h3>
                 <p className="text-[11px] text-slate-400 mt-0.5">
-                  {isKhmer ? 'វិក្កយបត្រផ្លូវការដែលបានបង់រួច' : 'Official payment receipts and settlement ledger'}
+                  {'Official payment receipts and settlement ledger'}
                 </p>
               </div>
               <button
@@ -583,7 +579,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
                 onClick={() => onNavigate('repayments')}
                 className="text-xs text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1 cursor-pointer transition"
               >
-                <span>{isKhmer ? 'មើលទាំងអស់' : 'View All'}</span>
+                <span>{'View All'}</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -592,19 +588,19 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-950/60 border-b border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                   <tr>
-                    <th className="px-5 py-3">{isKhmer ? 'លេខបង្កាន់ដៃ' : 'Receipt No'}</th>
-                    <th className="px-4 py-3">{isKhmer ? 'កាលបរិច្ឆេទ' : 'Date'}</th>
-                    <th className="px-4 py-3">{isKhmer ? 'វិធីសាស្ត្រ' : 'Method'}</th>
-                    <th className="px-4 py-3">{isKhmer ? 'ចំនួនទឹកប្រាក់' : 'Amount'}</th>
-                    <th className="px-4 py-3">{isKhmer ? 'ស្ថានភាព' : 'Status'}</th>
-                    <th className="px-5 py-3 text-right">{isKhmer ? 'សកម្មភាព' : 'Action'}</th>
+                    <th className="px-5 py-3">{'Receipt No'}</th>
+                    <th className="px-4 py-3">{'Date'}</th>
+                    <th className="px-4 py-3">{'Method'}</th>
+                    <th className="px-4 py-3">{'Amount'}</th>
+                    <th className="px-4 py-3">{'Status'}</th>
+                    <th className="px-5 py-3 text-right">{'Action'}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/80">
                   {recentReceipts.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="text-center py-8 text-xs text-slate-500">
-                        {isKhmer ? 'មិនទាន់មានវិក្កយបត្រទូទាត់ទេ' : 'No payment receipts found. Settle installments via Bakong KHQR to view transaction receipts.'}
+                        {'No payment receipts found. Settle installments via Bakong KHQR to view transaction receipts.'}
                       </td>
                     </tr>
                   ) : recentReceipts.map((rec, idx) => (
@@ -637,7 +633,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
                           className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-400 hover:text-emerald-300 hover:underline cursor-pointer"
                         >
                           <Receipt className="w-3.5 h-3.5" />
-                          <span>{isKhmer ? 'វិក្កយបត្រ' : 'Receipt'}</span>
+                          <span>{'Receipt'}</span>
                         </button>
                       </td>
                     </tr>
@@ -668,22 +664,20 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
             </div>
 
             <p className="text-xs text-slate-300 leading-relaxed">
-              {isKhmer
-                ? 'ទូទាត់វិក្កយបត្រឥណទានរបស់អ្នកយ៉ាងរលូនតាមរយៈកម្មវិធីធនាគារចល័តណាមួយក្នុងប្រទេសកម្ពុជា (ACLEDA, ABA, Wing, Canadia, Bakong App) ដោយឥតគិតថ្លៃសេវា។'
-                : 'Settle repayments seamlessly from any supported Cambodian banking app (ACLEDA, ABA, Wing, Canadia, Bakong App) with zero transaction fees.'}
+              {'Settle repayments seamlessly from any supported Cambodian banking app (ACLEDA, ABA, Wing, Canadia, Bakong App) with zero transaction fees.'}
             </p>
 
             <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800 space-y-2 text-xs text-slate-300">
               <div className="flex justify-between items-center">
-                <span className="text-slate-400">{isKhmer ? 'ធនាគារទទួល:' : 'Receiving Bank:'}</span>
+                <span className="text-slate-400">{'Receiving Bank:'}</span>
                 <span className="font-semibold text-white">ACLEDA Bank Plc.</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-400">{isKhmer ? 'ឈ្មោះអាជីវករ:' : 'Merchant:'}</span>
+                <span className="text-slate-400">{'Merchant:'}</span>
                 <span className="font-semibold text-white">JAM SONG VICH LMS</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-400">{isKhmer ? 'រូបិយប័ណ្ណ:' : 'Currency:'}</span>
+                <span className="text-slate-400">{'Currency:'}</span>
                 <span className="font-mono font-bold text-emerald-400">USD & KHR (Dual Currency)</span>
               </div>
             </div>
@@ -694,7 +688,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
               className="w-full py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md shadow-red-950/50 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
             >
               <QrCode className="w-4 h-4 text-white" />
-              <span>{isKhmer ? 'បង្កើតកូដ KHQR ឥឡូវនេះ' : 'Generate Bakong KHQR Now'}</span>
+              <span>{'Generate Bakong KHQR Now'}</span>
             </button>
           </div>
 
@@ -703,7 +697,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <h4 className="text-sm font-bold text-white tracking-tight">
-                  {isKhmer ? 'ពាក្យស្នើសុំកម្ចីរបស់អ្នក' : 'My Applications'}
+                  {'My Applications'}
                 </h4>
                 <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                   {recentApps.length} Active
@@ -714,7 +708,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
                 onClick={() => onNavigate('applications')}
                 className="text-xs text-emerald-400 hover:text-emerald-300 font-semibold hover:underline cursor-pointer"
               >
-                {isKhmer ? 'មើល' : 'View'}
+                {'View'}
               </button>
             </div>
 
@@ -722,7 +716,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
               {recentApps.length === 0 ? (
                 <div className="text-center py-6 px-4 rounded-xl bg-slate-950/40 border border-slate-800/60">
                   <FileText className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                  <p className="text-xs text-slate-400">{isKhmer ? 'មិនមានពាក្យស្នើសុំទេ' : 'No applications submitted'}</p>
+                  <p className="text-xs text-slate-400">{'No applications submitted'}</p>
                   <button
                     type="button"
                     onClick={() => {
@@ -731,7 +725,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
                     }}
                     className="mt-3 text-xs text-emerald-400 hover:text-emerald-300 font-semibold inline-flex items-center gap-1 cursor-pointer"
                   >
-                    <span>{isKhmer ? '+ ស្នើសុំឥណទានថ្មី' : '+ Apply for Credit Facility'}</span>
+                    <span>{'+ Apply for Credit Facility'}</span>
                   </button>
                 </div>
               ) : recentApps.map((app, idx) => (
@@ -758,13 +752,11 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
             <div className="flex items-center gap-2">
               <Building className="w-4 h-4 text-emerald-400" />
               <h5 className="text-xs font-bold text-white uppercase tracking-wider">
-                {isKhmer ? 'ព័ត៌មានគ្រឹះស្ថាន' : 'Institution & Branch Support'}
+                {'Institution & Branch Support'}
               </h5>
             </div>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              {isKhmer
-                ? 'JAM SONG VICH ប្រព័ន្ធគ្រប់គ្រងឥណទាន និងមីក្រូហិរញ្ញវត្ថុផ្លូវការ។ ទំនាក់ទំនងផ្នែកគាំទ្រ៖ (+855) 010 487 718'
-                : 'JAM SONG VICH Core Banking & Microfinance System. For loan restructuring or inquiries, contact credit desk at (+855) 010 487 718.'}
+              {'JAM SONG VICH Core Banking & Microfinance System. For loan restructuring or inquiries, contact credit desk at (+855) 010 487 718.'}
             </p>
           </div>
         </div>

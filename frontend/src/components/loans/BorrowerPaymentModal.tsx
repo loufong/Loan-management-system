@@ -266,18 +266,14 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
     // Strict client-side validation guard: ensure selectedScheduleId is not null/empty
     if (!selectedScheduleId || !currentSchedule) {
       setInlineWarning(
-        language === 'km'
-          ? 'សូមជ្រើសរើសវគ្គបង់រំលស់ជាមុនសិន'
-          : 'Please select an installment period'
+        'Please select an installment period'
       );
       return;
     }
 
     if (loan.status !== 'ACTIVE' && loan.status !== 'OVERDUE') {
       setErrorMessage(
-        language === 'km'
-          ? `មិនអាចបង់ប្រាក់សម្រាប់ឥណទានក្នុងស្ថានភាព '${loan.status}' បានទេ។ ការទូទាត់អាចធ្វើបានតែលើឥណទានសកម្ម (ACTIVE) ឬ ហួសកាលកំណត់ (OVERDUE) ប៉ុណ្ណោះ។`
-          : `Cannot accept payment for loan with status '${loan.status}'. Payments can only be recorded on ACTIVE or OVERDUE loans.`
+        `Cannot accept payment for loan with status '${loan.status}'. Payments can only be recorded on ACTIVE or OVERDUE loans.`
       );
       return;
     }
@@ -285,9 +281,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
     const numericAmount = parseFloat(amountInput);
     if (!amountInput || isNaN(numericAmount) || numericAmount <= 0) {
       setErrorMessage(
-        language === 'km'
-          ? 'ចំនួនទឹកប្រាក់ត្រូវបង់ត្រូវតែធំជាង $0.00'
-          : 'Payment amount must be greater than $0.00.'
+        'Payment amount must be greater than $0.00.'
       );
       return;
     }
@@ -299,9 +293,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
 
     if (numericAmount > remainingOnInstallment + 0.01) {
       setErrorMessage(
-        language === 'km'
-          ? `ចំនួនទឹកប្រាក់បង់លើសពីសមតុល្យនៅសល់នៃការបង់រំលស់នេះ ($${remainingOnInstallment.toFixed(2)})`
-          : `Payment amount exceeds remaining installment balance ($${remainingOnInstallment.toFixed(2)}).`
+        `Payment amount exceeds remaining installment balance ($${remainingOnInstallment.toFixed(2)}).`
       );
       return;
     }
@@ -336,9 +328,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
       console.error('KHQR Generation error:', err);
       setErrorMessage(
         err?.message ||
-          (language === 'km'
-            ? 'មិនអាចបង្កើត KHQR បានទេ សូមពិនិត្យព័ត៌មានរួចព្យាយាមម្តងទៀត។'
-            : 'Could not generate Bakong KHQR. Please verify and try again.')
+          ('Could not generate Bakong KHQR. Please verify and try again.')
       );
     } finally {
       setIsSubmitting(false);
@@ -362,16 +352,14 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
         } else if (statusRes.status === 'EXPIRED') {
           if (pollingRef.current) clearInterval(pollingRef.current);
           setErrorMessage(
-            language === 'km'
-              ? 'ការទូទាត់បានផុតកំណត់។ សូមបង្កើត QR ថ្មី។'
-              : 'Payment session has expired. Please generate a new QR.'
+            'Payment session has expired. Please generate a new QR.'
           );
         } else if (statusRes.status === 'FAILED') {
           if (pollingRef.current) clearInterval(pollingRef.current);
           setErrorMessage(
             statusRes.failureReason ||
               statusRes.message ||
-              (language === 'km' ? 'ការទូទាត់ត្រូវបានបដិសេធ។' : 'Payment verification failed.')
+              ('Payment verification failed.')
           );
         }
       } catch {
@@ -394,29 +382,23 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
       } else if (verifyRes.status === 'EXPIRED') {
         if (pollingRef.current) clearInterval(pollingRef.current);
         setErrorMessage(
-          language === 'km'
-            ? 'ការទូទាត់បានផុតកំណត់។ សូមបង្កើត QR ថ្មី។'
-            : 'Payment session has expired. Please generate a new QR.'
+          'Payment session has expired. Please generate a new QR.'
         );
       } else if (verifyRes.status === 'FAILED') {
         setErrorMessage(
           verifyRes.message ||
-            (language === 'km' ? 'ការទូទាត់មិនជោគជ័យ។' : 'Payment verification failed.')
+            ('Payment verification failed.')
         );
       } else {
         setErrorMessage(
           verifyRes.message ||
-            (language === 'km'
-              ? 'កំពុងរង់ចាំការទូទាត់... សូមស្កេន និងបញ្ជាក់ក្នុងកម្មវិធីធនាគាររបស់អ្នក។'
-              : 'Waiting for payment. Please scan and authorize in your banking application.')
+            ('Waiting for payment. Please scan and authorize in your banking application.')
         );
       }
     } catch (err: any) {
       setErrorMessage(
         err?.message ||
-          (language === 'km'
-            ? 'មិនអាចពិនិត្យស្ថានភាពបានទេ សូមព្យាយាមម្តងទៀត។'
-            : 'Could not verify payment status. Please try again.')
+          ('Could not verify payment status. Please try again.')
       );
     } finally {
       setIsCheckingStatus(false);
@@ -481,10 +463,10 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-bold text-slate-900 tracking-tight">
                   {step === 'SUCCESS'
-                    ? (language === 'km' ? 'បង្កាន់ដៃបង់ប្រាក់' : 'Payment Receipt')
+                    ? ('Payment Receipt')
                     : step === 'SCAN_PAY'
-                    ? (language === 'km' ? 'ស្កេនដើម្បីបង់ប្រាក់' : 'Scan to Pay')
-                    : (language === 'km' ? 'ការបង់ប្រាក់កម្ចី' : 'Loan Payment')}
+                    ? ('Scan to Pay')
+                    : ('Loan Payment')}
                 </h2>
                 <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
                   #{loan.loanNumber || 'LN-2026-0010'}
@@ -516,7 +498,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
             <div className="p-3.5 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-800 flex items-start gap-2.5 animate-in fade-in">
               <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
               <div>
-                <span className="font-bold">{language === 'km' ? 'កំហុស:' : 'Notice:'}</span> {errorMessage}
+                <span className="font-bold">{'Notice:'}</span> {errorMessage}
               </div>
             </div>
           )}
@@ -532,10 +514,8 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                 <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-800 flex items-start gap-2.5">
                   <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-bold">{language === 'km' ? 'ព័ត៌មាន:' : 'Notice:'}</span>{' '}
-                    {language === 'km'
-                      ? `ឥណទាននេះស្ថិតក្នុងស្ថានភាព '${loan.status}' (រង់ចាំការបើកផ្តល់)។ អ្នកអាចបង់ប្រាក់បានបន្ទាប់ពីប្រាក់កម្ចីត្រូវបានបើកផ្តល់រួច។`
-                      : `This loan is currently '${loan.status}'. Repayments will be unlocked once funds have been disbursed.`}
+                    <span className="font-bold">{'Notice:'}</span>{' '}
+                    {`This loan is currently '${loan.status}'. Repayments will be unlocked once funds have been disbursed.`}
                   </div>
                 </div>
               )}
@@ -545,7 +525,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5 text-slate-500" />
-                    <span>{language === 'km' ? 'ជ្រើសរើសវគ្គបង់រំលស់' : 'Select Installment to Pay'}</span>
+                    <span>{'Select Installment to Pay'}</span>
                   </label>
                   {currentSchedule && (
                     <span className="text-[11px] font-medium text-slate-500">
@@ -571,7 +551,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                   >
                     {(loan.schedules || []).length === 0 ? (
                       <option value="">
-                        {language === 'km' ? 'គ្មានកាលវិភាគបង់ប្រាក់' : 'No schedules available'}
+                        {'No schedules available'}
                       </option>
                     ) : (
                       loan.schedules.map((s) => {
@@ -634,7 +614,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <label className="text-xs font-bold text-slate-800">
-                    {language === 'km' ? 'ចំនួនទឹកប្រាក់ត្រូវបង់ ($)' : 'Payment Amount ($)'}
+                    {'Payment Amount ($)'}
                   </label>
                   <span className="text-[11px] font-mono text-slate-500">
                     Max: ${getInstallmentTotalDue(currentSchedule).toFixed(2)}
@@ -659,7 +639,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
               {/* Currency Toggle (High-Contrast Pill Toggle) */}
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-800 block">
-                  {language === 'km' ? 'រូបិយប័ណ្ណទូទាត់' : 'Settlement Currency'}
+                  {'Settlement Currency'}
                 </label>
                 <div className="flex items-center p-1 bg-slate-100 rounded-2xl border border-slate-200/80">
                   <button
@@ -710,7 +690,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
               {/* Optional Notes */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-600">
-                  {language === 'km' ? 'កំណត់សម្គាល់ (ស្រេចចិត្ត)' : 'Payment Notes (Optional)'}
+                  {'Payment Notes (Optional)'}
                 </label>
                 <input
                   type="text"
@@ -728,7 +708,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                   onClick={onClose}
                   className="px-5 py-2.5 rounded-2xl font-semibold text-slate-700 hover:text-slate-950 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
                 >
-                  {language === 'km' ? 'បោះបង់' : 'Cancel'}
+                  {'Cancel'}
                 </button>
                 <button
                   type="submit"
@@ -742,10 +722,10 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                   {isSubmitting ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin text-white" />
-                      <span>{language === 'km' ? 'កំពុងបង្កើត...' : 'Generating KHQR...'}</span>
+                      <span>{'Generating KHQR...'}</span>
                     </>
                   ) : (
-                    <span>{language === 'km' ? 'បង្កើត KHQR & បង់ប្រាក់' : 'Generate KHQR & Pay'}</span>
+                    <span>{'Generate KHQR & Pay'}</span>
                   )}
                 </button>
               </div>
@@ -802,16 +782,14 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
 
                 {/* Customer Instructions */}
                 <p className="text-xs text-slate-600 leading-relaxed px-4">
-                  {language === 'km'
-                    ? 'បើកកម្មវិធី Bakong ឬកម្មវិធីធនាគារណាមួយនៅក្នុងប្រទេសកម្ពុជា (ABA, ACLEDA, Wing) ដើម្បីស្កេនទូទាត់។'
-                    : 'Scan with Bakong, ABA Mobile, ACLEDA, Wing, or any Cambodian banking app.'}
+                  {'Scan with Bakong, ABA Mobile, ACLEDA, Wing, or any Cambodian banking app.'}
                 </p>
 
                 {/* Expiration Countdown Timer */}
                 <div className="flex items-center justify-center gap-2 text-xs text-slate-600 pt-1">
                   <Clock className="w-4 h-4 text-amber-600" />
                   <span>
-                    {language === 'km' ? 'ផុតកំណត់ក្នុងរយៈពេល:' : 'Expires in:'}{' '}
+                    {'Expires in:'}{' '}
                     <strong className="font-mono font-bold text-slate-900">{formatTimer(secondsRemaining)}</strong>
                   </span>
                 </div>
@@ -823,7 +801,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                   <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
                   <div>
                     <span className="font-bold text-slate-900 block text-xs">
-                      {language === 'km' ? 'កំពុងរង់ចាំការទូទាត់...' : 'Waiting for payment...'}
+                      {'Waiting for payment...'}
                     </span>
                     <span className="text-[11px] text-slate-500">
                       Auto-checking settlement network (Check #{pollCount})
@@ -838,7 +816,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                   className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 border border-slate-200 flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${isCheckingStatus ? 'animate-spin' : ''}`} />
-                  <span>{language === 'km' ? 'ពិនិត្យឥឡូវ' : 'Check Payment'}</span>
+                  <span>{'Check Payment'}</span>
                 </button>
               </div>
 
@@ -852,14 +830,14 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                   }}
                   className="text-xs font-medium text-slate-600 hover:text-slate-950 underline cursor-pointer"
                 >
-                  {language === 'km' ? '← កែប្រែចំនួនទឹកប្រាក់' : '← Change amount / installment'}
+                  {'← Change amount / installment'}
                 </button>
                 <button
                   type="button"
                   onClick={onClose}
                   className="text-xs font-bold text-red-600 hover:text-red-700 cursor-pointer"
                 >
-                  {language === 'km' ? 'បិទបង្អួច' : 'Close'}
+                  {'Close'}
                 </button>
               </div>
             </div>
@@ -877,12 +855,10 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                   <CheckCircle2 className="w-7 h-7" />
                 </div>
                 <h3 className="text-base font-bold text-slate-900">
-                  {language === 'km' ? 'ការទូទាត់ជោគជ័យ!' : 'Payment Successful!'}
+                  {'Payment Successful!'}
                 </h3>
                 <p className="text-xs text-slate-600 leading-relaxed max-w-sm mx-auto">
-                  {language === 'km'
-                    ? 'ការទូទាត់របស់អ្នកត្រូវបានផ្ទៀងផ្ទាត់ និងបញ្ជាក់រួចរាល់នៅលើបណ្តាញ Bakong។'
-                    : 'Your installment payment was confirmed and settled on the Bakong interbank network.'}
+                  {'Your installment payment was confirmed and settled on the Bakong interbank network.'}
                 </p>
               </div>
 
@@ -935,14 +911,14 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                   className="px-5 py-2.5 rounded-2xl font-semibold text-slate-700 hover:text-slate-950 bg-slate-100 hover:bg-slate-200 border border-slate-200 flex items-center gap-2 transition-colors cursor-pointer"
                 >
                   <Printer className="w-4 h-4" />
-                  <span>{language === 'km' ? 'បោះពុម្ព' : 'Print Receipt'}</span>
+                  <span>{'Print Receipt'}</span>
                 </button>
                 <button
                   type="button"
                   onClick={onClose}
                   className="px-6 py-2.5 rounded-2xl font-bold text-white bg-slate-950 hover:bg-slate-800 transition-colors shadow-lg shadow-slate-950/20 cursor-pointer"
                 >
-                  {language === 'km' ? 'រួចរាល់' : 'Done'}
+                  {'Done'}
                 </button>
               </div>
             </div>

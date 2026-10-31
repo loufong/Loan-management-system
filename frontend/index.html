@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Jam Song Vich | ប្រព័ន្ធគ្រប់គ្រងឥណទាន (Loan Management System)</title>
-    <meta name="description" content="ប្រព័ន្ធគ្រប់គ្រងឥណទាន Jam Song Vich - Core Banking Ledger, Underwriting, Waterfall Reconciliation, and Cashier Terminal." />
+    <title>Jam Song Vich | Loan Management System</title>
+    <meta name="description" content="Jam Song Vich Loan Management System - Core Banking Ledger, Underwriting, Waterfall Reconciliation, and Cashier Terminal." />
     <link rel="icon" type="image/png" href="logo.png" />
     <link rel="apple-touch-icon" href="logo.png" />
     
@@ -262,7 +262,7 @@
         
         <div class="apex-loader-brand">
           <h1 class="apex-loader-title">JAM SONG VICH</h1>
-          <p class="apex-loader-subtitle">ប្រព័ន្ធគ្រប់គ្រងឥណទាន • Core Banking System</p>
+          <p class="apex-loader-subtitle">Loan Management System • Core Banking System</p>
         </div>
 
         <div class="apex-loader-progress-area">
@@ -270,7 +270,7 @@
             <div class="apex-loader-bar-fill"></div>
           </div>
           <div class="apex-loader-status" id="apex-loader-status-text">
-            កំពុងតភ្ជាប់ប្រព័ន្ធសុវត្ថិភាព... (Connecting Secure Core)
+            Connecting Secure Banking Core...
           </div>
         </div>
 
@@ -285,14 +285,14 @@
         <!-- Automatic Diagnostics & Recovery Panel (Shows if network hangs > 7s or error occurs) -->
         <div class="apex-loader-fallback" id="apex-loader-fallback" style="display: none;">
           <p class="apex-fallback-text" id="apex-fallback-text">
-            ការផ្ទុកចំណាយពេលយូរជាងធម្មតា។ សូមចុចប៊ូតុងខាងក្រោមដើម្បីដំណើរការឡើងវិញ៖
+            Loading is taking longer than expected. Click below to reload:
           </p>
           <div class="apex-fallback-actions">
             <button type="button" class="apex-fallback-btn apex-fallback-btn-primary" onclick="window.location.reload()">
-              ↻ ផ្ទុកឡើងវិញ (Reload)
+              ↻ Reload Application
             </button>
             <button type="button" class="apex-fallback-btn" onclick="try{localStorage.clear();sessionStorage.clear();}catch(e){}window.location.reload(true)">
-              សម្អាត Cache & Reload
+              Clear Cache & Reload
             </button>
           </div>
           <div class="apex-fallback-details" id="apex-fallback-details" style="display: none;"></div>
@@ -308,11 +308,11 @@
         var detailsEl = document.getElementById('apex-fallback-details');
         
         var t1 = setTimeout(function() {
-          if (statusEl) statusEl.textContent = 'កំពុងផ្ទុកទិន្នន័យ & ម៉ូឌុលធនាគារ... (Loading Banking Engine)';
+          if (statusEl) statusEl.textContent = 'Loading Banking Engine & Ledger...';
         }, 1200);
         
         var t2 = setTimeout(function() {
-          if (statusEl) statusEl.textContent = 'កំពុងរៀបចំផ្ទាំងគ្រប់គ្រងឥណទាន... (Initializing Interface)';
+          if (statusEl) statusEl.textContent = 'Initializing Core Banking Portal...';
         }, 2600);
         
         var t3 = setTimeout(function() {

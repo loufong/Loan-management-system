@@ -53,9 +53,9 @@ export const CreateLoanWizard: React.FC<CreateLoanWizardProps> = ({
 
   // Demo borrowers for selection
   const borrowersList = [
-    { id: 'b-101', nameEn: 'Sokha Chan', nameKh: 'ចាន់ សុខា', phone: '012 345 678', nationalId: '010892743', income: 1450 },
-    { id: 'b-102', nameEn: 'Chhaya Meng', nameKh: 'ម៉េង ឆាយា', phone: '098 765 432', nationalId: '090123847', income: 950 },
-    { id: 'b-103', nameEn: 'Dara Rath', nameKh: 'រ័ត្ន តារា', phone: '077 889 900', nationalId: '020485912', income: 1100 }
+    { id: 'b-101', nameEn: 'Sokha Chan', nameKh: 'Sokha Chan', phone: '012 345 678', nationalId: '010892743', income: 1450 },
+    { id: 'b-102', nameEn: 'Chhaya Meng', nameKh: 'Chhaya Meng', phone: '098 765 432', nationalId: '090123847', income: 950 },
+    { id: 'b-103', nameEn: 'Dara Rath', nameKh: 'Dara Rath', phone: '077 889 900', nationalId: '020485912', income: 1100 }
   ];
 
   const selectedBorrower = borrowersList.find(b => b.id === selectedBorrowerId) || borrowersList[0];

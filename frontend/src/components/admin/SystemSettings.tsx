@@ -258,7 +258,7 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
                     }`}
                   >
                     <div className="text-sm font-bold text-[#0F172A]">KHR (៛)</div>
-                    <div className="text-[11px] text-[#64748B] mt-0.5">Khmer Riel (កម្ពុជា)</div>
+                    <div className="text-[11px] text-[#64748B] mt-0.5">Khmer Riel (Cambodia)</div>
                   </button>
                 </div>
               </div>

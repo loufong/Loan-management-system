@@ -103,7 +103,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   interface LayoutNavLink {
     id: string;
     label: string;
-    khLabel: string;
+    khLabel?: string;
     icon: any;
     path: string;
     badge?: number | string;
@@ -111,27 +111,26 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
   const staffNavLinks: LayoutNavLink[] = [
 
-    { id: 'borrowers', label: 'Borrowers', khLabel: 'អតិថិជនកម្ចី', icon: Users, path: '/admin/borrowers' },
-    { id: 'new-application', label: 'New Loan', khLabel: 'ស្នើសុំឥណទានថ្មី', icon: FilePlus2, path: '/admin/applications' },
+    { id: 'borrowers', label: 'Borrowers', icon: Users, path: '/admin/borrowers' },
+    { id: 'new-application', label: 'New Loan', icon: FilePlus2, path: '/admin/applications' },
     {
       id: 'cashier',
       label: 'Repayments / Cashier',
-      khLabel: 'បង់ប្រាក់ / បេឡា',
       icon: Wallet,
       path: '/admin/cashier',
       badge: overdueCount > 0 ? overdueCount : undefined
     },
-    { id: 'reports', label: 'Reports', khLabel: 'របាយការណ៍ហិរញ្ញវត្ថុ', icon: BarChart3, path: '/admin/reports' },
-    { id: 'settings', label: 'Settings', khLabel: 'ការកំណត់ប្រព័ន្ធ', icon: Settings, path: '/admin/settings' },
+    { id: 'reports', label: 'Reports', icon: BarChart3, path: '/admin/reports' },
+    { id: 'settings', label: 'Settings', icon: Settings, path: '/admin/settings' },
   ];
 
   const borrowerNavLinks: LayoutNavLink[] = [
-    { id: 'borrower_dashboard', label: 'My Loans', khLabel: 'កម្ចីរបស់ខ្ញុំ', icon: Wallet, path: '/my-loans' },
-    { id: 'new-application', label: 'Apply for Loan', khLabel: 'ស្នើសុំកម្ចីថ្មី', icon: FilePlus2, path: '/apply-loan' },
-    { id: 'repayments', label: 'Repayment Schedule', khLabel: 'កាលវិភាគសងប្រាក់', icon: Calendar, path: '/repayments' },
-    { id: 'cashier', label: 'Pay Installment', khLabel: 'បង់រំលស់ប្រាក់កម្ចី', icon: Wallet, path: '/payments' },
-    { id: 'profile', label: 'My Profile', khLabel: 'ព័ត៌មានផ្ទាល់ខ្លួន', icon: Shield, path: '/profile' },
-    { id: 'settings', label: 'Settings', khLabel: 'ការកំណត់', icon: Settings, path: '/settings' },
+    { id: 'borrower_dashboard', label: 'My Loans', icon: Wallet, path: '/my-loans' },
+    { id: 'new-application', label: 'Apply for Loan', icon: FilePlus2, path: '/apply-loan' },
+    { id: 'repayments', label: 'Repayment Schedule', icon: Calendar, path: '/repayments' },
+    { id: 'cashier', label: 'Pay Installment', icon: Wallet, path: '/payments' },
+    { id: 'profile', label: 'My Profile', icon: Shield, path: '/profile' },
+    { id: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
   ];
 
   const navLinks: LayoutNavLink[] = isStaff ? staffNavLinks : borrowerNavLinks;

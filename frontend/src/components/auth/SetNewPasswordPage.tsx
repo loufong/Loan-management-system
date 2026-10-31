@@ -55,22 +55,22 @@ export const SetNewPasswordPage: React.FC<SetNewPasswordPageProps> = ({
 
     const cleanEmail = email.trim();
     if (!cleanEmail) {
-      setError(language === 'km' ? 'សូមបញ្ចូលអាសយដ្ឋានអ៊ីមែលដែលបានចុះឈ្មោះ។' : 'Please provide your registered email address.');
+      setError('Please provide your registered email address.');
       return;
     }
 
     if (!resetToken && (!otp || otp.trim().length !== 6)) {
-      setError(language === 'km' ? 'សូមបញ្ចូលលេខកូដផ្ទៀងផ្ទាត់ ៦ ខ្ទង់ដែលបានទទួលក្នុងអ៊ីមែលរបស់អ្នក។' : 'Please enter the 6-digit verification code received in your email.');
+      setError('Please enter the 6-digit verification code received in your email.');
       return;
     }
 
     if (!isPasswordValid) {
-      setError(language === 'km' ? 'ពាក្យសម្ងាត់មិនទាន់បំពេញគ្រប់លក្ខខណ្ឌសុវត្ថិភាពទេ។' : 'Password does not fulfill all security requirements.');
+      setError('Password does not fulfill all security requirements.');
       return;
     }
 
     if (!passwordsMatch) {
-      setError(language === 'km' ? 'ពាក្យសម្ងាត់មិនត្រូវគ្នាទេ។ សូមពិនិត្យម្តងទៀត។' : 'Passwords do not match. Please re-enter.');
+      setError('Passwords do not match. Please re-enter.');
       return;
     }
 
@@ -88,7 +88,7 @@ export const SetNewPasswordPage: React.FC<SetNewPasswordPageProps> = ({
 
       onPasswordResetSuccess();
     } catch (err: any) {
-      setError(err?.message || (language === 'km' ? 'មិនអាចកំណត់ពាក្យសម្ងាត់ឡើងវិញបានទេ។ វគ្គកំណត់ឡើងវិញអាចផុតកំណត់។' : 'Unable to reset password. The reset session may have expired.'));
+      setError(err?.message || ('Unable to reset password. The reset session may have expired.'));
     } finally {
       setIsLoading(false);
     }
@@ -218,16 +218,16 @@ export const SetNewPasswordPage: React.FC<SetNewPasswordPageProps> = ({
             <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px] text-xs space-y-1">
               <div className="grid grid-cols-2 gap-1 text-[11px]">
                 <div className={`flex items-center gap-1 ${hasMinLength ? 'text-[#16A34A]' : 'text-[#64748B]'}`}>
-                  <Check className="w-3 h-3" /> {language === 'km' ? '៨+ តួអក្សរ' : '8+ Characters'}
+                  <Check className="w-3 h-3" /> {'8+ Characters'}
                 </div>
                 <div className={`flex items-center gap-1 ${hasUpperCase ? 'text-[#16A34A]' : 'text-[#64748B]'}`}>
-                  <Check className="w-3 h-3" /> {language === 'km' ? 'អក្សរធំ' : 'Uppercase Letter'}
+                  <Check className="w-3 h-3" /> {'Uppercase Letter'}
                 </div>
                 <div className={`flex items-center gap-1 ${hasLowerCase ? 'text-[#16A34A]' : 'text-[#64748B]'}`}>
-                  <Check className="w-3 h-3" /> {language === 'km' ? 'អក្សរតូច' : 'Lowercase Letter'}
+                  <Check className="w-3 h-3" /> {'Lowercase Letter'}
                 </div>
                 <div className={`flex items-center gap-1 ${hasNumber && hasSpecialChar ? 'text-[#16A34A]' : 'text-[#64748B]'}`}>
-                  <Check className="w-3 h-3" /> {language === 'km' ? 'លេខ & និមិត្តសញ្ញា' : 'Number & Symbol'}
+                  <Check className="w-3 h-3" /> {'Number & Symbol'}
                 </div>
               </div>
             </div>

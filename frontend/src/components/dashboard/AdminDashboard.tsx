@@ -67,7 +67,7 @@ const FALLBACK_WEEK_LOANS: DueThisWeekLoan[] = [
     id: 'ln-w1',
     loanCode: 'LN-BKK-0081',
     borrowerNameEn: 'Sokha Chan',
-    borrowerNameKh: 'ចាន់ សុខា',
+    borrowerNameKh: 'Sokha Chan',
     borrowerPhone: '012 345 678',
     borrowerNationalId: '010892743',
     productName: 'SME Working Capital',
@@ -87,7 +87,7 @@ const FALLBACK_WEEK_LOANS: DueThisWeekLoan[] = [
     id: 'ln-w2',
     loanCode: 'LN-SR-0142',
     borrowerNameEn: 'Chhaya Meng',
-    borrowerNameKh: 'ម៉េង ឆាយា',
+    borrowerNameKh: 'Chhaya Meng',
     borrowerPhone: '098 765 432',
     borrowerNationalId: '090123847',
     productName: 'Agricultural Expansion',
@@ -107,7 +107,7 @@ const FALLBACK_WEEK_LOANS: DueThisWeekLoan[] = [
     id: 'ln-w3',
     loanCode: 'LN-BAT-0099',
     borrowerNameEn: 'Dara Rath',
-    borrowerNameKh: 'រ័ត្ន តារា',
+    borrowerNameKh: 'Dara Rath',
     borrowerPhone: '077 889 900',
     borrowerNationalId: '020485912',
     productName: 'Vehicle Purchase',
@@ -127,7 +127,7 @@ const FALLBACK_WEEK_LOANS: DueThisWeekLoan[] = [
     id: 'ln-w4',
     loanCode: 'LN-KPC-0067',
     borrowerNameEn: 'Bopha Pich',
-    borrowerNameKh: 'ពេជ្រ បុប្ផា',
+    borrowerNameKh: 'Bopha Pich',
     borrowerPhone: '085 223 344',
     borrowerNationalId: '040392817',
     productName: 'Personal Microloan',
@@ -147,7 +147,7 @@ const FALLBACK_WEEK_LOANS: DueThisWeekLoan[] = [
     id: 'ln-w5',
     loanCode: 'LN-TK-0034',
     borrowerNameEn: 'Piseth Oeng',
-    borrowerNameKh: 'អ៊ឹង ពិសិដ្ឋ',
+    borrowerNameKh: 'Piseth Oeng',
     borrowerPhone: '010 998 877',
     borrowerNationalId: '050293841',
     productName: 'Commercial Property',
@@ -167,7 +167,7 @@ const FALLBACK_WEEK_LOANS: DueThisWeekLoan[] = [
     id: 'ln-w6',
     loanCode: 'LN-BKK-0092',
     borrowerNameEn: 'Vannak Heng',
-    borrowerNameKh: 'ហេង វណ្ណៈ',
+    borrowerNameKh: 'Vannak Heng',
     borrowerPhone: '097 554 433',
     borrowerNationalId: '010776543',
     productName: 'SME Working Capital',
@@ -284,7 +284,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           id: l.id,
           loanCode: l.loanNumber || `LN-${l.id.slice(0, 6)}`,
           borrowerNameEn: l.borrowerName || 'Valued Client',
-          borrowerNameKh: 'អតិថិជនកម្ចី',
+          borrowerNameKh: 'Borrower Client',
           borrowerPhone: l.borrowerPhone || '012 345 678',
           borrowerNationalId: l.borrowerId || '010293847',
           productName: l.productName || 'Micro-Loan',
@@ -368,7 +368,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-2 shadow-sm">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>Jam Song Vich • Executive Portfolio Monitor (ផ្ទាំងគ្រប់គ្រងឥណទាន)</span>
+              <span>Jam Song Vich • Executive Portfolio Monitor</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-2.5">
               <Landmark className="w-7 h-7 text-amber-400" />
@@ -436,7 +436,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="absolute -right-6 -bottom-6 w-28 h-28 bg-emerald-500/10 rounded-full blur-xl group-hover:bg-emerald-500/15 transition-all" />
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Total Disbursed (ទំហំបើកផ្តល់)
+                Total Disbursed
               </span>
               <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-sm">
                 <ArrowUpRight className="w-5 h-5" />
@@ -472,7 +472,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="absolute -right-6 -bottom-6 w-28 h-28 bg-cyan-500/10 rounded-full blur-xl group-hover:bg-cyan-500/15 transition-all" />
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Active Borrowers (អតិថិជនសកម្ម)
+                Active Borrowers
               </span>
               <div className="w-10 h-10 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-sm">
                 <Users className="w-5 h-5" />
@@ -499,7 +499,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="absolute -right-6 -bottom-6 w-28 h-28 bg-amber-500/10 rounded-full blur-xl group-hover:bg-amber-500/15 transition-all" />
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Collected This Month (ប្រមូលខែនេះ)
+                Collected This Month
               </span>
               <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-sm">
                 <DollarSign className="w-5 h-5" />
@@ -543,7 +543,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             }`} />
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                PAR 30+ Rate (ហានិភ័យផលប័ត្រ)
+                PAR 30+ Rate
               </span>
               <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shadow-sm ${
                 statsPAR30.rate <= 3.0
@@ -895,7 +895,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               {/* Call Outcome Logging */}
               <div>
                 <label className="block font-semibold text-slate-300 mb-1.5 uppercase tracking-wider text-[10px]">
-                  Call Log & Promise to Pay Notes (កំណត់ចំណាំ)
+                  Call Log & Promise to Pay Notes
                 </label>
                 <textarea
                   rows={3}

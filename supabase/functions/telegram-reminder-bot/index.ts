@@ -148,22 +148,18 @@ serve(async (req) => {
       // Simulated QR generation endpoint or Bakong link
       const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=KHQR-${loanCode}-${item.id}`;
 
-      // Bilingual Telegram Message (Khmer & English)
+      // Telegram Message (English Only)
       const caption = `
-🇰🇭 <b>សេចក្តីជូនដំណឹងអំពីការបង់ប្រាក់ឥណទាន (Repayment Reminder)</b>
+<b>Repayment Reminder - JAM SONG VICH Core Banking</b>
 
-ជំរាបសួរលោក/លោកស្រី <b>${nameKh}</b> (${nameEn})
-សូមរំលឹកអំពីការបង់ប្រាក់ប្រចាំខែសម្រាប់កម្ចីលេខ <b>${loanCode}</b>៖
-
-• <b>ចំនួនទឹកប្រាក់ត្រូវបង់ (Amount Due):</b> ${currency === 'USD' ? `$${Number(amountDue).toFixed(2)}` : `${Math.round(amountDue).toLocaleString()} ៛`} ${currency}
-• <b>កាលបរិច្ឆេទកំណត់ (Due Date):</b> ${dueDate}
-• <b>ដំណាក់កាលបង់ (Installment):</b> #${item.installment_no}
-
-<i>លោកអ្នកអាចស្កេនរូបភាព Bakong KHQR ខាងលើនេះតាមរយៈកម្មវិធី Bakong ឬធនាគារចល័តណាមួយដើម្បីទូទាត់ប្រាក់ភ្លាមៗដោយឥតគិតថ្លៃ។</i>
-
-----------------------------------------
 Dear ${nameEn},
-This is a gentle reminder that your installment for loan <b>${loanCode}</b> is due on <b>${dueDate}</b>. Please scan the Bakong KHQR code above with your mobile banking app to settle instantly.
+This is a gentle reminder that your installment for loan <b>${loanCode}</b> is due on <b>${dueDate}</b>.
+
+• <b>Amount Due:</b> ${currency === 'USD' ? `${Number(amountDue).toFixed(2)}` : `${Math.round(amountDue).toLocaleString()} KHR`}
+• <b>Due Date:</b> ${dueDate}
+• <b>Installment:</b> #${item.installment_no}
+
+Please scan the Bakong KHQR code above with your mobile banking app to settle instantly.
 `.trim();
 
       // Send to borrower (or demo channel)

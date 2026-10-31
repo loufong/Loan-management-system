@@ -86,7 +86,7 @@ export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
   const handleVerify = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!isCodeComplete) {
-      setError(language === 'km' ? 'សូមបញ្ចូលលេខកូដផ្ទៀងផ្ទាត់ទាំង ៦ ខ្ទង់។' : 'Please enter all 6 digits of the verification code.');
+      setError('Please enter all 6 digits of the verification code.');
       return;
     }
 
@@ -106,7 +106,7 @@ export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
       }
     } catch (err: any) {
       setAttemptsRemaining((prev) => Math.max(0, prev - 1));
-      setError(err?.message || (language === 'km' ? 'លេខកូដផ្ទៀងផ្ទាត់មិនត្រឹមត្រូវទេ។ សូមពិនិត្យ ហើយព្យាយាមម្តងទៀត។' : 'Invalid verification code. Please check and try again.'));
+      setError(err?.message || ('Invalid verification code. Please check and try again.'));
     } finally {
       setIsLoading(false);
     }
@@ -121,9 +121,9 @@ export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
       const canonicalPurpose = purpose === 'login_verification' ? 'LOGIN' : purpose;
       await api.resendOtp({ email, purpose: canonicalPurpose });
       setResendCooldown(60);
-      setSuccessNotice(language === 'km' ? 'លេខកូដផ្ទៀងផ្ទាត់ថ្មី ៦ ខ្ទង់ត្រូវបានផ្ញើទៅកាន់អ៊ីមែលរបស់អ្នក។' : 'A fresh 6-digit verification code has been dispatched to your email.');
+      setSuccessNotice('A fresh 6-digit verification code has been dispatched to your email.');
     } catch (err: any) {
-      setError(err?.message || (language === 'km' ? 'មិនអាចផ្ញើលេខកូដម្តងទៀតបានទេ។ សូមព្យាយាមម្តងទៀតនៅពេលក្រោយ។' : 'Failed to resend code. Please try again later.'));
+      setError(err?.message || ('Failed to resend code. Please try again later.'));
     } finally {
       setIsResending(false);
     }
@@ -131,12 +131,12 @@ export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
 
   const getTitle = () => {
     if (purpose === 'login_verification') {
-      return language === 'km' ? 'ការចូលគណនីពីរបីជំហាន' : 'Two-Step Sign In';
+      return 'Two-Step Sign In';
     }
     if (purpose === 'forgot_password') {
-      return language === 'km' ? 'កំណត់ពាក្យសម្ងាត់ឡើងវិញ' : 'Reset Your Password';
+      return 'Reset Your Password';
     }
-    return language === 'km' ? 'ផ្ទៀងផ្ទាត់អ៊ីមែលរបស់អ្នក' : 'Verify Your Email';
+    return 'Verify Your Email';
   };
 
   return (
@@ -161,7 +161,7 @@ export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
               {getTitle()}
             </h2>
             <p className="text-xs text-[#64748B]">
-              {language === 'km' ? 'យើងបានផ្ញើលេខកូដផ្ទៀងផ្ទាត់ ៦ ខ្ទង់ទៅកាន់ ' : 'We sent a 6-digit verification code to '}
+              {'We sent a 6-digit verification code to '}
               <strong className="text-[#0F172A]">{email}</strong>.
             </p>
           </div>
@@ -183,7 +183,7 @@ export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
           <form onSubmit={handleVerify} className="space-y-5">
             <div>
               <label className="block text-[13px] font-medium text-[#0F172A] mb-2 text-center">
-                {language === 'km' ? 'បញ្ចូលលេខកូដ ៦ ខ្ទង់' : 'Enter 6-Digit Code'}
+                {'Enter 6-Digit Code'}
               </label>
 
               <div className="flex items-center justify-between gap-2">
@@ -224,7 +224,7 @@ export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
             <span>
               {resendCooldown > 0 ? (
                 <span className="flex items-center gap-1 font-mono">
-                  <Clock className="w-3.5 h-3.5" /> {language === 'km' ? `ផ្ញើម្តងទៀតក្នុង ${resendCooldown} វិនាទី` : `Resend code in ${resendCooldown} seconds`}
+                  <Clock className="w-3.5 h-3.5" /> {`Resend code in ${resendCooldown} seconds`}
                 </span>
               ) : (
                 <button
@@ -239,7 +239,7 @@ export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
               )}
             </span>
 
-            <span>{attemptsRemaining} {language === 'km' ? 'ដងនៅសល់' : 'attempts left'}</span>
+            <span>{attemptsRemaining} {'attempts left'}</span>
           </div>
 
           <div className="pt-4 border-t border-[#E2E8F0] text-center">

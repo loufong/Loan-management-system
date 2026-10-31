@@ -33,7 +33,7 @@ export interface CashierPaymentFormProps {
 export const CashierPaymentForm: React.FC<CashierPaymentFormProps> = ({
   loanDetails = {
     loanCode: 'LN-BKK-0081',
-    borrowerName: 'Sokha Chan (ចាន់ សុខា)',
+    borrowerName: 'Sokha Chan',
     borrowerPhone: '012 345 678',
     currency: 'USD',
     totalDueUSD: 459.50,

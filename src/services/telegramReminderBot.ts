@@ -99,23 +99,21 @@ export class TelegramReminderBotService {
         // Generate Bakong KHQR for instant payment
         const khqr = await (BakongService as any).generateDynamicKhqr({ amount: Number(amountDue), currency: 'USD', billNumber: 'BILL-' + inst.id.slice(0, 10) });
 
-        // Bilingual Message Template (Khmer & English)
+        // Message Template (English Only)
         const message = `
-🇰🇭 <b>សេចក្តីជូនដំណឹងអំពីការបង់ប្រាក់ឥណទាន (Repayment Reminder)</b>
+<b>Repayment Reminder - JAM SONG VICH Core Banking</b>
 
-ជំរាបសួរលោក/លោកស្រី <b>${borrowerNameKh}</b> (${borrowerNameEn})
-សូមរំលឹកអំពីការបង់ប្រាក់ប្រចាំខែសម្រាប់កម្ចីលេខ <b>${loanCode}</b>៖
+Dear ${borrowerNameEn},
+This is a friendly reminder regarding your monthly loan installment for account <b>${loanCode}</b>:
 
-• <b>ចំនួនទឹកប្រាក់ត្រូវបង់ (Amount Due):</b> $${amountDue.toFixed(2)} USD
-• <b>កាលបរិច្ឆេទកំណត់ (Due Date):</b> ${dueDateStr}
-• <b>ដំណាក់កាលបង់ (Installment):</b> #${inst.installmentNo}
+• <b>Amount Due:</b> ${amountDue.toFixed(2)} USD
+• <b>Due Date:</b> ${dueDateStr}
+• <b>Installment:</b> #${inst.installmentNo}
 
-<i>លោកអ្នកអាចស្កេន Bakong KHQR ខាងក្រោមនេះតាមរយៈកម្មវិធី Bakong ឬ Mobile Banking ដើម្បីទូទាត់ប្រាក់ភ្លាមៗ៖</i>
+<i>You can scan the Bakong KHQR payload below using any mobile banking app to settle instantly:</i>
 <code>${khqr.qr}</code>
 
-----------------------------------------
-Dear ${borrowerNameEn},
-Your loan installment for <b>${loanCode}</b> ($${amountDue.toFixed(2)}) is due on <b>${dueDateStr}</b>. Please settle via Bakong KHQR or Cashier counter.
+Please settle promptly to avoid late penalties. Thank you for banking with JAM SONG VICH.
 `.trim();
 
         // Send to borrower

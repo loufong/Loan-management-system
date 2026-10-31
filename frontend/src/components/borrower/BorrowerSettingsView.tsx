@@ -91,7 +91,7 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
 
   const handleLanguageChange = (lang: 'en' | 'km') => {
     setLanguage(lang as any);
-    showToast(lang === 'km' ? 'ភាសាត្រូវបានប្តូរទៅ ភាសាខ្មែរ' : 'Language updated to English');
+    showToast('Language updated to English');
   };
 
   const handleCurrencyChange = (curr: Currency) => {
@@ -154,12 +154,12 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
             <span className="text-slate-500 font-medium">Core Banking</span>
             <span>/</span>
             <span className="font-bold text-emerald-400 uppercase tracking-wider">
-              {isKhmer ? 'ការកំណត់' : 'Settings'}
+              {'Settings'}
             </span>
           </div>
 
           <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-            {isKhmer ? 'ការកំណត់គណនី & សុវត្ថិភាព' : 'Account Preferences & Security Controls'}
+            {'Account Preferences & Security Controls'}
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
             Configure regional display standards, real-time installment reminders, and institutional authentication credentials.
@@ -202,21 +202,7 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
                 <p className="text-[11px] text-slate-500 mt-1">Official banking Latin typography</p>
               </button>
 
-              <button
-                type="button"
-                onClick={() => handleLanguageChange('km')}
-                className={`p-3.5 rounded-xl border text-left transition cursor-pointer ${
-                  isKhmer
-                    ? 'bg-slate-950 border-emerald-500 ring-1 ring-emerald-500/50 shadow-md'
-                    : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-400'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-white font-sans">ភាសាខ្មែរ (Khmer)</span>
-                  {isKhmer && <Check className="w-4 h-4 text-emerald-400" />}
-                </div>
-                <p className="text-[11px] text-slate-500 mt-1">Standard National Khmer Script</p>
-              </button>
+              
             </div>
           </div>
 

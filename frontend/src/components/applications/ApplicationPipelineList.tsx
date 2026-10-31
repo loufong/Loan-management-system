@@ -80,8 +80,8 @@ export const ApplicationPipelineList: React.FC<ApplicationPipelineListProps> = (
           </div>
           <p className="text-xs text-[#64748B] mt-0.5">
             {currentUserRole === 'USER'
-              ? (language === 'km' ? 'តាមដានពាក្យស្នើសុំកម្ចីរបស់អ្នក ស្ថានភាពពិនិត្យឥណទាន និងដំណើរការអនុម័ត។' : 'Track your submitted loan requests, underwriting review status, and approval progress.')
-              : (language === 'km' ? 'ជួរពិនិត្យឥណទាន ការវិភាគបំណុលធៀបនឹងចំណូល និងលំហូរការងារអនុម័តរបស់គណៈកម្មការ។' : 'Credit origination queue, automated debt-to-income analysis, and committee sign-off workflow.')}
+              ? ('Track your submitted loan requests, underwriting review status, and approval progress.')
+              : ('Credit origination queue, automated debt-to-income analysis, and committee sign-off workflow.')}
           </p>
         </div>
 
@@ -147,7 +147,7 @@ export const ApplicationPipelineList: React.FC<ApplicationPipelineListProps> = (
             <thead>
               <tr>
                 <th>{t('Application ID', 'Application ID')}</th>
-                <th>{currentUserRole === 'USER' ? (language === 'km' ? 'អ្នកស្នើសុំ' : 'Applicant') : t('Applicant Borrower', 'Applicant Borrower')}</th>
+                <th>{currentUserRole === 'USER' ? ('Applicant') : t('Applicant Borrower', 'Applicant Borrower')}</th>
                 <th>{t('Credit Product', 'Credit Product')}</th>
                 <th className="text-right">{t('Requested Capital', 'Requested Capital')}</th>
                 <th>{t('Tenure', 'Tenure')}</th>
@@ -187,7 +187,7 @@ export const ApplicationPipelineList: React.FC<ApplicationPipelineListProps> = (
                         <div>
                           <span className="font-bold text-[#0F172A] block">{app.borrowerName}</span>
                           <span className="text-[11px] text-[#64748B] font-mono">
-                            {language === 'km' ? 'បានដាក់ស្នើ៖' : 'Submitted:'} {app.createdAt}
+                            {'Submitted:'} {app.createdAt}
                           </span>
                         </div>
                       </div>
@@ -237,7 +237,7 @@ export const ApplicationPipelineList: React.FC<ApplicationPipelineListProps> = (
                           onClick={() => onSelectApplication(app.id)}
                           className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[6px] bg-white hover:bg-slate-50 border border-[#E2E8F0] text-[#0F172A] text-xs font-semibold transition-colors cursor-pointer"
                         >
-                          <span>{currentUserRole === 'USER' ? (language === 'km' ? 'មើលលម្អិត' : 'View Details') : (language === 'km' ? 'ពិនិត្យ' : 'Review')}</span>
+                          <span>{currentUserRole === 'USER' ? ('View Details') : ('Review')}</span>
                           <ArrowRight className="w-3 h-3" />
                         </button>
                       </div>

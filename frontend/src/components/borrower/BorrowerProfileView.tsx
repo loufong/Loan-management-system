@@ -72,12 +72,12 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
             <span className="text-slate-500 font-medium">Core Banking</span>
             <span>/</span>
             <span className="font-bold text-emerald-400 uppercase tracking-wider">
-              {isKhmer ? 'ព័ត៌មានផ្ទាល់ខ្លួន' : 'My Profile'}
+              {'My Profile'}
             </span>
           </div>
 
           <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-            {isKhmer ? 'កម្រងព័ត៌មានអតិថិជន & KYC' : 'Borrower KYC Dossier & Credit Profile'}
+            {'Borrower KYC Dossier & Credit Profile'}
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
             Official verified borrower identity records compliant with Credit Bureau Cambodia (CBC) institutional requirements.
@@ -158,12 +158,7 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
 
           <div className="space-y-3 text-xs">
             <div className="p-3 rounded-xl bg-slate-950 border border-slate-850 space-y-0.5">
-              <span className="text-[10px] text-slate-500 uppercase font-mono font-bold">Khmer Full Name</span>
-              <p className="text-sm font-bold text-white font-sans">ចន ណាថាន ដូ</p>
-            </div>
-
-            <div className="p-3 rounded-xl bg-slate-950 border border-slate-850 space-y-0.5">
-              <span className="text-[10px] text-slate-500 uppercase font-mono font-bold">Latin Full Name</span>
+              <span className="text-[10px] text-slate-500 uppercase font-mono font-bold">Full Legal Name</span>
               <p className="text-sm font-bold text-white font-sans">Johnathan Doe</p>
             </div>
 

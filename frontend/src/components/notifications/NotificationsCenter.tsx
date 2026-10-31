@@ -125,7 +125,7 @@ export const NotificationsCenter: React.FC<NotificationsCenterProps> = ({
             <Bell className="w-10 h-10 text-[#94A3B8] mx-auto mb-3" />
             <h3 className="text-sm font-semibold text-[#0F172A]">{t('No notifications', 'No notifications in this filter')}</h3>
             <p className="text-xs text-[#64748B] mt-1">
-              {language === 'km' ? 'អ្នកបានពិនិត្យការជូនដំណឹង និងសារទាំងអស់រួចរាល់ហើយ។' : 'You are all caught up with your dispatches and alerts.'}
+              {'You are all caught up with your dispatches and alerts.'}
             </p>
           </div>
         ) : (

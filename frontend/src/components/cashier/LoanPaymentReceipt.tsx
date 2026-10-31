@@ -58,7 +58,7 @@ export const LoanPaymentReceipt: React.FC<LoanPaymentReceiptProps> = ({
     dateTime: '24 Oct 2026, 10:45 AM',
     branchAddress: 'Building 128, Norodom Blvd, Sangkat Tonle Bassac, Khan Chamkarmon, Phnom Penh',
     borrowerNameEn: 'Sokha Chan',
-    borrowerNameKh: 'ចាន់ សុខា',
+    borrowerNameKh: 'Sokha Chan',
     loanAccountId: 'LN-BKK-0081',
     principalPaidUSD: 396.12,
     interestPaidUSD: 63.38,
@@ -208,7 +208,7 @@ export const LoanPaymentReceipt: React.FC<LoanPaymentReceiptProps> = ({
                 JAM SONG VICH
               </h2>
               <p className="text-[11px] font-bold text-slate-700 tracking-tight">
-                CORE BANKING SYSTEM (ប្រព័ន្ធគ្រប់គ្រងឥណទាន)
+                CORE BANKING SYSTEM (Loan Management System)
               </p>
               <p className="text-[9px] text-slate-500 leading-tight">
                 {selectedReceiptForPreview.branchAddress}
@@ -292,7 +292,7 @@ export const LoanPaymentReceipt: React.FC<LoanPaymentReceiptProps> = ({
               <div>
                 <div className="h-8 border-b border-dashed border-slate-400 mb-1"></div>
                 <span className="text-slate-600 block">Customer Signature</span>
-                <span className="font-bold text-slate-900">ហត្ថលេខាអតិថិជន</span>
+                <span className="font-bold text-slate-900">Borrower Signature</span>
               </div>
             </div>
 
@@ -310,7 +310,7 @@ export const LoanPaymentReceipt: React.FC<LoanPaymentReceiptProps> = ({
             <div>
               <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
                 <FileText className="w-4 h-4 text-emerald-400" />
-                Loan Repayment Ledger & Audit Trail (ប្រវត្តិបង់ប្រាក់)
+                Loan Repayment Ledger & Audit Trail (Payment History)
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">
                 Every past transaction settled for facility {receipt.loanAccountId}.

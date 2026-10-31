@@ -181,26 +181,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
     });
   };
 
-  const formatKhmerDate = (date: Date) => {
-    const KHMER_DAYS = ['អាទិត្យ', 'ច័ន្ទ', 'អង្គារ', 'ពុធ', 'ព្រហស្បតិ៍', 'សុក្រ', 'សៅរ៍'];
-    const KHMER_MONTHS = [
-      'មករា', 'កុម្ភៈ', 'មីនា', 'មេសា', 'ឧសភា', 'មិថុនា',
-      'កក្កដា', 'សីហា', 'កញ្ញា', 'តុលា', 'វិច្ឆិកា', 'ធ្នូ',
-    ];
-    const toKhmerDigits = (num: number) => {
-      const khmerDigits = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
-      return num
-        .toString()
-        .split('')
-        .map((d) => khmerDigits[parseInt(d, 10)] || d)
-        .join('');
-    };
-
-    const dayName = KHMER_DAYS[date.getDay()];
-    const day = toKhmerDigits(date.getDate());
-    const month = KHMER_MONTHS[date.getMonth()];
-    const year = toKhmerDigits(date.getFullYear());
-    return `ថ្ងៃ${dayName} ${day} ${month} ${year}`;
+  const formatEnglishDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   };
 
   // Custom Chart Tooltips

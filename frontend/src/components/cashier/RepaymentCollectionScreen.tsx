@@ -213,19 +213,17 @@ export const RepaymentCollectionScreen: React.FC<RepaymentCollectionScreenProps>
                 <Banknote className="w-5 h-5" />
               </div>
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#0F172A]">
-                {isKhmer ? 'តុបេឡាករ & ការប្រមូលប្រាក់សង' : 'Cashier & Payment Collection Terminal'}
+                {'Cashier & Payment Collection Terminal'}
               </h1>
             </div>
             <p className="text-xs text-[#64748B]">
-              {isKhmer
-                ? 'ស្វែងរកអ្នកខ្ចីតាមលេខទូរស័ព្ទ ឬអត្តសញ្ញាណប័ណ្ណ ដើម្បីប្រមូលការបង់ប្រាក់ និងចេញវិក្កយបត្រ'
-                : 'Search borrower by Phone or National ID to collect repayments and issue printable receipts.'}
+              {'Search borrower by Phone or National ID to collect repayments and issue printable receipts.'}
             </p>
           </div>
 
           <div className="text-right">
             <span className="text-[11px] font-mono text-[#64748B] block">
-              {isKhmer ? 'បេឡាករប្រចាំការ' : 'Active Cashier'}
+              {'Active Cashier'}
             </span>
             <span className="text-xs font-bold text-[#0F172A] font-mono">{cashierName}</span>
           </div>
@@ -235,9 +233,7 @@ export const RepaymentCollectionScreen: React.FC<RepaymentCollectionScreenProps>
       {/* 2. Borrower Quick Search Bar */}
       <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-5 shadow-sm space-y-3">
         <label className="block text-xs font-bold text-[#0F172A] uppercase tracking-wider">
-          {isKhmer
-            ? 'ស្វែងរកអ្នកខ្ចីតាមលេខទូរស័ព្ទ ឬអត្តសញ្ញាណប័ណ្ណ'
-            : 'Find Borrower by Phone Number or National ID'}
+          {'Find Borrower by Phone Number or National ID'}
         </label>
         <div className="relative">
           <Search className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -246,9 +242,7 @@ export const RepaymentCollectionScreen: React.FC<RepaymentCollectionScreenProps>
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={
-              isKhmer
-                ? 'បញ្ចូលលេខទូរស័ព្ទ (ឧទាហរណ៍ 012...) ឬលេខអត្តសញ្ញាណប័ណ្ណ (010...)'
-                : 'Enter Phone Number (e.g. +855 12...) or National ID (010992384)...'
+              'Enter Phone Number (e.g. +855 12...) or National ID (010992384)...'
             }
             className="w-full h-11 pl-10 pr-4 text-xs font-semibold bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#2563EB] transition-colors shadow-sm"
           />
@@ -259,7 +253,7 @@ export const RepaymentCollectionScreen: React.FC<RepaymentCollectionScreenProps>
           <div className="border border-[#E2E8F0] rounded-[6px] overflow-hidden divide-y divide-[#E2E8F0] max-h-56 overflow-y-auto">
             {filteredBorrowers.length === 0 ? (
               <div className="p-3 text-center text-xs text-[#64748B]">
-                {isKhmer ? 'រកមិនឃើញអ្នកខ្ចីត្រូវគ្នានឹងទិន្នន័យនេះទេ' : 'No borrowers matched this phone or national ID.'}
+                {'No borrowers matched this phone or national ID.'}
               </div>
             ) : (
               filteredBorrowers.map((b) => (
@@ -290,7 +284,7 @@ export const RepaymentCollectionScreen: React.FC<RepaymentCollectionScreenProps>
                     </div>
                   </div>
                   <span className="text-xs font-semibold text-[#2563EB] flex items-center gap-1">
-                    <span>{isKhmer ? 'ជ្រើសរើស' : 'Select'}</span>
+                    <span>{'Select'}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </span>
                 </div>
@@ -328,25 +322,25 @@ export const RepaymentCollectionScreen: React.FC<RepaymentCollectionScreenProps>
                 onClick={() => setSelectedBorrowerId('')}
                 className="text-xs text-[#64748B] hover:text-[#0F172A] px-2.5 py-1 rounded-[4px] border border-[#E2E8F0] hover:bg-slate-50 transition-colors cursor-pointer"
               >
-                {isKhmer ? 'ផ្លាស់ប្តូរអ្នកខ្ចី' : 'Change Borrower'}
+                {'Change Borrower'}
               </button>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 text-xs">
               <div>
-                <span className="text-[11px] text-[#64748B] block">{isKhmer ? 'លេខទូរស័ព្ទ' : 'Phone Number'}</span>
+                <span className="text-[11px] text-[#64748B] block">{'Phone Number'}</span>
                 <span className="font-mono font-bold text-[#0F172A]">{selectedBorrower.phone}</span>
               </div>
               <div>
-                <span className="text-[11px] text-[#64748B] block">{isKhmer ? 'អត្តសញ្ញាណប័ណ្ណ' : 'National ID'}</span>
+                <span className="text-[11px] text-[#64748B] block">{'National ID'}</span>
                 <span className="font-mono font-bold text-[#0F172A]">{selectedBorrower.nationalId}</span>
               </div>
               <div>
-                <span className="text-[11px] text-[#64748B] block">{isKhmer ? 'កម្ចីសកម្ម' : 'Active Facilities'}</span>
-                <span className="font-bold text-[#2563EB]">{borrowerLoans.length} {isKhmer ? 'គណនី' : 'Accounts'}</span>
+                <span className="text-[11px] text-[#64748B] block">{'Active Facilities'}</span>
+                <span className="font-bold text-[#2563EB]">{borrowerLoans.length} {'Accounts'}</span>
               </div>
               <div>
-                <span className="text-[11px] text-[#64748B] block">{isKhmer ? 'អាសយដ្ឋាន' : 'Address'}</span>
+                <span className="text-[11px] text-[#64748B] block">{'Address'}</span>
                 <span className="text-[#0F172A] truncate block max-w-xs">{selectedBorrower.address || 'Phnom Penh, Cambodia'}</span>
               </div>
             </div>
@@ -356,12 +350,12 @@ export const RepaymentCollectionScreen: React.FC<RepaymentCollectionScreenProps>
           <div className="space-y-4">
             <h3 className="text-sm font-bold text-[#0F172A] uppercase tracking-wider flex items-center gap-2">
               <Layers className="w-4 h-4 text-[#2563EB]" />
-              <span>{isKhmer ? 'គណនីកម្ចីសកម្ម & កាលវិភាគបង់ប្រាក់បន្ទាប់' : 'Active Loans & Next Installments'}</span>
+              <span>{'Active Loans & Next Installments'}</span>
             </h3>
 
             {borrowerLoans.length === 0 ? (
               <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-8 text-center text-xs text-[#64748B]">
-                {isKhmer ? 'អ្នកខ្ចីនេះមិនទាន់មានគណនីកម្ចីសកម្មទេ' : 'This borrower currently has no active loans.'}
+                {'This borrower currently has no active loans.'}
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-4">
@@ -402,11 +396,11 @@ export const RepaymentCollectionScreen: React.FC<RepaymentCollectionScreenProps>
 
                         <div className="flex items-center gap-4 text-xs font-mono">
                           <div>
-                            <span className="text-[11px] text-[#64748B] mr-1.5">{isKhmer ? 'ប្រាក់ដើម:' : 'Principal:'}</span>
+                            <span className="text-[11px] text-[#64748B] mr-1.5">{'Principal:'}</span>
                             <span className="font-bold text-[#0F172A]">{formatCurrency(loan.principalUSD, currency)}</span>
                           </div>
                           <div>
-                            <span className="text-[11px] text-[#64748B] mr-1.5">{isKhmer ? 'សមតុល្យនៅសល់:' : 'Balance:'}</span>
+                            <span className="text-[11px] text-[#64748B] mr-1.5">{'Balance:'}</span>
                             <span className="font-extrabold text-[#2563EB]">{formatCurrency(loan.outstandingBalanceUSD, currency)}</span>
                           </div>
                         </div>
@@ -432,7 +426,7 @@ export const RepaymentCollectionScreen: React.FC<RepaymentCollectionScreenProps>
                             <div>
                               <div className="flex items-center gap-2">
                                 <span className="font-bold text-xs text-[#0F172A]">
-                                  {isKhmer ? `ការបង់ដំណាក់កាលទី #${nextDueInstallment.installmentNo}` : `Installment #${nextDueInstallment.installmentNo}`}
+                                  {`Installment #${nextDueInstallment.installmentNo}`}
                                 </span>
                                 <span
                                   className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-[3px] ${
@@ -443,9 +437,9 @@ export const RepaymentCollectionScreen: React.FC<RepaymentCollectionScreenProps>
                                 </span>
                               </div>
                               <p className="text-[11px] text-[#64748B] font-mono mt-0.5">
-                                {isKhmer ? 'កាលបរិច្ឆេទកំណត់៖' : 'Due Date:'} {nextDueInstallment.dueDate} •{' '}
-                                {isKhmer ? 'ប្រាក់ដើម៖' : 'Principal:'} {formatCurrency(nextDueInstallment.principalUSD, currency)} +{' '}
-                                {isKhmer ? 'ការប្រាក់៖' : 'Interest:'} {formatCurrency(nextDueInstallment.interestUSD, currency)}
+                                {'Due Date:'} {nextDueInstallment.dueDate} •{' '}
+                                {'Principal:'} {formatCurrency(nextDueInstallment.principalUSD, currency)} +{' '}
+                                {'Interest:'} {formatCurrency(nextDueInstallment.interestUSD, currency)}
                               </p>
                             </div>
                           </div>
@@ -453,7 +447,7 @@ export const RepaymentCollectionScreen: React.FC<RepaymentCollectionScreenProps>
                           <div className="flex items-center gap-4 self-end sm:self-auto">
                             <div className="text-right font-mono">
                               <span className="text-[10px] text-[#64748B] block uppercase tracking-wider">
-                                {isKhmer ? 'ទឹកប្រាក់ត្រូវបង់' : 'Total Due'}
+                                {'Total Due'}
                               </span>
                               <span
                                 className={`text-base font-extrabold ${
@@ -470,14 +464,14 @@ export const RepaymentCollectionScreen: React.FC<RepaymentCollectionScreenProps>
                               className="px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold rounded-[6px] transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm"
                             >
                               <Banknote className="w-3.5 h-3.5" />
-                              <span>{isKhmer ? 'ប្រមូលប្រាក់សង' : 'Collect Repayment'}</span>
+                              <span>{'Collect Repayment'}</span>
                             </button>
                           </div>
                         </div>
                       ) : (
                         <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-[6px] text-xs text-emerald-800 flex items-center gap-2">
                           <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                          <span>{isKhmer ? 'គណនីនេះបានទូទាត់រួចរាល់គ្រប់ដំណាក់កាលហើយ' : 'All scheduled installments on this facility are settled in full.'}</span>
+                          <span>{'All scheduled installments on this facility are settled in full.'}</span>
                         </div>
                       )}
                     </div>
@@ -494,12 +488,10 @@ export const RepaymentCollectionScreen: React.FC<RepaymentCollectionScreenProps>
             <Search className="w-6 h-6" />
           </div>
           <h2 className="text-sm font-bold text-[#0F172A]">
-            {isKhmer ? 'ស្វែងរកអ្នកខ្ចីដើម្បីចាប់ផ្តើម' : 'Search for a borrower to begin payment collection'}
+            {'Search for a borrower to begin payment collection'}
           </h2>
           <p className="text-xs text-[#64748B] max-w-sm mx-auto">
-            {isKhmer
-              ? 'បញ្ចូលលេខទូរស័ព្ទ ឬលេខអត្តសញ្ញាណប័ណ្ណខាងលើ ដើម្បីទាញយកទិន្នន័យកម្ចី និងកាលវិភាគបង់ប្រាក់'
-              : 'Enter a phone number or national ID in the search bar above to fetch loan accounts and installments.'}
+            {'Enter a phone number or national ID in the search bar above to fetch loan accounts and installments.'}
           </p>
         </div>
       )}
@@ -515,7 +507,7 @@ export const RepaymentCollectionScreen: React.FC<RepaymentCollectionScreenProps>
               <div className="flex items-center gap-2">
                 <Banknote className="w-5 h-5 text-[#2563EB]" />
                 <h3 className="text-sm font-bold text-[#0F172A]">
-                  {isKhmer ? 'កត់ត្រាការបង់ប្រាក់សង' : 'Record Loan Repayment'}
+                  {'Record Loan Repayment'}
                 </h3>
               </div>
               <button
@@ -532,16 +524,16 @@ export const RepaymentCollectionScreen: React.FC<RepaymentCollectionScreenProps>
               {/* Loan & Borrower Badge */}
               <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded-[6px] space-y-1">
                 <div className="flex justify-between font-mono">
-                  <span className="text-[#64748B]">{isKhmer ? 'លេខកម្ចី:' : 'Loan Code:'}</span>
+                  <span className="text-[#64748B]">{'Loan Code:'}</span>
                   <span className="font-bold text-[#0F172A]">{activePaymentLoan.loanNumber}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#64748B]">{isKhmer ? 'ឈ្មោះអ្នកខ្ចី:' : 'Borrower:'}</span>
+                  <span className="text-[#64748B]">{'Borrower:'}</span>
                   <span className="font-semibold text-[#0F172A]">{activePaymentLoan.borrowerName}</span>
                 </div>
                 {activeInstallment && (
                   <div className="flex justify-between font-mono">
-                    <span className="text-[#64748B]">{isKhmer ? 'ដំណាក់កាល:' : 'Installment:'}</span>
+                    <span className="text-[#64748B]">{'Installment:'}</span>
                     <span className="font-bold text-[#2563EB]">#{activeInstallment.installmentNo} (Due: {activeInstallment.dueDate})</span>
                   </div>
                 )}
@@ -550,7 +542,7 @@ export const RepaymentCollectionScreen: React.FC<RepaymentCollectionScreenProps>
               {/* Amount to Collect Input */}
               <div className="space-y-1">
                 <label className="block text-xs font-semibold text-[#0F172A]">
-                  {isKhmer ? 'ចំនួនទឹកប្រាក់ទូទាត់' : 'Payment Amount to Collect'}
+                  {'Payment Amount to Collect'}
                 </label>
                 <div className="relative">
                   <div className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-xs text-[#64748B]">
@@ -570,13 +562,13 @@ export const RepaymentCollectionScreen: React.FC<RepaymentCollectionScreenProps>
               {/* Payment Method Selector */}
               <div className="space-y-1.5">
                 <label className="block text-xs font-semibold text-[#0F172A]">
-                  {isKhmer ? 'វិធីសាស្ត្រទូទាត់' : 'Payment Method'}
+                  {'Payment Method'}
                 </label>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { key: 'Cash', label: isKhmer ? 'សាច់ប្រាក់' : 'Cash', icon: Banknote },
+                    { key: 'Cash', label: 'Cash', icon: Banknote },
                     { key: 'Bakong KHQR', label: 'Bakong KHQR', icon: QrCode },
-                    { key: 'Bank Transfer', label: isKhmer ? 'ផ្ទេរប្រាក់' : 'Transfer', icon: Building },
+                    { key: 'Bank Transfer', label: 'Transfer', icon: Building },
                   ].map((m) => {
                     const Icon = m.icon;
                     const isSelected = paymentMethod === m.key;
@@ -603,7 +595,7 @@ export const RepaymentCollectionScreen: React.FC<RepaymentCollectionScreenProps>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-semibold text-[#64748B] mb-1">
-                    {isKhmer ? 'លេខយោងប្រតិបត្តិការ' : 'Reference No.'}
+                    {'Reference No.'}
                   </label>
                   <input
                     type="text"
@@ -614,13 +606,13 @@ export const RepaymentCollectionScreen: React.FC<RepaymentCollectionScreenProps>
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold text-[#64748B] mb-1">
-                    {isKhmer ? 'កំណត់ចំណាំ' : 'Notes'}
+                    {'Notes'}
                   </label>
                   <input
                     type="text"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder={isKhmer ? 'កំណត់ចំណាំបន្ថែម' : 'Remarks'}
+                    placeholder={'Remarks'}
                     className="w-full h-9 px-3 text-xs bg-white border border-[#E2E8F0] rounded-[6px] text-[#0F172A]"
                   />
                 </div>
@@ -634,7 +626,7 @@ export const RepaymentCollectionScreen: React.FC<RepaymentCollectionScreenProps>
                 onClick={() => setActivePaymentLoan(null)}
                 className="px-3.5 py-2 text-xs font-semibold text-[#64748B] hover:text-[#0F172A] border border-[#E2E8F0] rounded-[6px] bg-white cursor-pointer"
               >
-                {isKhmer ? 'បោះបង់' : 'Cancel'}
+                {'Cancel'}
               </button>
               <button
                 type="button"
@@ -643,7 +635,7 @@ export const RepaymentCollectionScreen: React.FC<RepaymentCollectionScreenProps>
                 className="px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white text-xs font-bold rounded-[6px] transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm"
               >
                 <CheckCircle2 className="w-4 h-4" />
-                <span>{isKhmer ? 'បញ្ជាក់ការបង់ប្រាក់' : 'Confirm Repayment'}</span>
+                <span>{'Confirm Repayment'}</span>
               </button>
             </div>
           </div>
@@ -685,7 +677,7 @@ export const RepaymentCollectionScreen: React.FC<RepaymentCollectionScreenProps>
             <div className="px-4 py-3 bg-slate-50 border-b border-[#E2E8F0] flex items-center justify-between no-print">
               <span className="text-xs font-bold text-[#0F172A] flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                {isKhmer ? 'វិក្កយបត្រផ្លូវការ' : 'Official Payment Receipt'}
+                {'Official Payment Receipt'}
               </span>
               <button
                 type="button"
@@ -767,7 +759,7 @@ export const RepaymentCollectionScreen: React.FC<RepaymentCollectionScreenProps>
               {/* Footer Note */}
               <div className="pt-3 text-center text-[10px] text-[#64748B] border-t border-dashed border-[#CBD5E1] space-y-0.5">
                 <p>Thank you for your repayment!</p>
-                <p>អរគុណសម្រាប់ការទូទាត់ប្រាក់សងរបស់អ្នក</p>
+                <p>Thank you for your installment repayment</p>
                 <p className="pt-1 font-mono text-[9px] text-slate-400">Ref: {receiptData.transactionRef}</p>
               </div>
             </div>
@@ -779,7 +771,7 @@ export const RepaymentCollectionScreen: React.FC<RepaymentCollectionScreenProps>
                 onClick={() => setReceiptData(null)}
                 className="px-3.5 py-1.5 text-xs font-semibold text-[#64748B] hover:text-[#0F172A] cursor-pointer"
               >
-                {isKhmer ? 'បិទ' : 'Close'}
+                {'Close'}
               </button>
               <button
                 type="button"
@@ -787,7 +779,7 @@ export const RepaymentCollectionScreen: React.FC<RepaymentCollectionScreenProps>
                 className="px-4 py-2 bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-bold rounded-[6px] transition-colors cursor-pointer flex items-center gap-2 shadow-sm"
               >
                 <Printer className="w-3.5 h-3.5" />
-                <span>{isKhmer ? 'បោះពុម្ពវិក្កយបត្រ' : 'Print Receipt'}</span>
+                <span>{'Print Receipt'}</span>
               </button>
             </div>
           </div>

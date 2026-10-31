@@ -31,12 +31,12 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
 
     const cleanEmail = email.trim();
     if (!cleanEmail) {
-      setError(language === 'km' ? 'សូមបញ្ចូលអាសយដ្ឋានអ៊ីមែលដែលបានចុះឈ្មោះ។' : 'Please provide your registered email address.');
+      setError('Please provide your registered email address.');
       return;
     }
 
     if (!/\S+@\S+\.\S+/.test(cleanEmail)) {
-      setError(language === 'km' ? 'សូមបញ្ចូលអាសយដ្ឋានអ៊ីមែលត្រឹមត្រូវ។' : 'Please enter a valid email address.');
+      setError('Please enter a valid email address.');
       return;
     }
 
@@ -46,7 +46,7 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
       await api.forgotPassword({ email: cleanEmail });
       onOtpSent(cleanEmail);
     } catch (err: any) {
-      setError(err?.message || (language === 'km' ? 'មិនអាចដំណើរការសំណើសុំកំណត់ពាក្យសម្ងាត់ឡើងវិញបានទេ។ សូមព្យាយាមម្តងទៀត។' : 'Unable to process password reset request. Please try again.'));
+      setError(err?.message || ('Unable to process password reset request. Please try again.'));
     } finally {
       setIsLoading(false);
     }

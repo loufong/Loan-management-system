@@ -607,7 +607,7 @@ Apex Loan Management System
                 <tr>
                   <td>
                     <span style="color: #10b981; font-weight: 800; font-size: 18px; letter-spacing: 0.5px;">JAM SONG VICH</span>
-                    <div style="color: #94a3b8; font-size: 11px; margin-top: 2px;">Core Banking System • ប្រព័ន្ធគ្រប់គ្រងឥណទាន</div>
+                    <div style="color: #94a3b8; font-size: 11px; margin-top: 2px;">Core Banking System • Loan Management System</div>
                   </td>
                   <td align="right">
                     <span style="background-color: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 9999px;">

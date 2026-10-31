@@ -607,7 +607,7 @@ export const App: React.FC = () => {
         title: 'Client Borrower',
         department: 'Borrower Self-Service',
         avatar: 'FL',
-        borrowerId: 'BOR-2026-0001',
+        borrowerId: undefined,
         nationalId: '010992384',
         branch: 'Phnom Penh Main Branch',
       };
@@ -1570,6 +1570,7 @@ export const App: React.FC = () => {
             <BorrowerPayInstallmentView
               currentUser={currentUser}
               currency={currency}
+              loans={userDisplayLoans}
               initialAmountUSD={122.50}
               initialInstallmentNo={5}
               onNavigate={handleNavSelection}
@@ -1729,6 +1730,7 @@ export const App: React.FC = () => {
               <BorrowerRepaymentScheduleView
                 currentUser={currentUser}
                 currency={currency}
+                loans={userDisplayLoans}
                 onNavigate={handleNavSelection}
                 onOpenPayInstallment={(cycle, amt) => handleNavSelection('/pay-installment')}
               />

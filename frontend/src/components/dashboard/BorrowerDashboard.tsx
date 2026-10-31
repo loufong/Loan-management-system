@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Wallet,
   Clock,
@@ -45,9 +45,15 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
 }) => {
   const { language } = useLanguage();
   const [selectedLoanId, setSelectedLoanId] = useState<string | null>(null);
-  const [isRestartedToZero] = useState<boolean>(() => {
-    return localStorage.getItem('jam_restart_borrower_zero') !== 'false';
-  });
+
+  // Clear any legacy test restart flags so real account data always determines UI state
+  useEffect(() => {
+    try {
+      localStorage.removeItem('jam_restart_borrower_zero');
+    } catch {
+      // ignore
+    }
+  }, []);
 
   // Currency Formatter: USD or KHR (1 USD = 4,100 KHR)
   const formatMoney = (valUSD: number) => {
@@ -65,61 +71,49 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
     }).format(valUSD);
   };
 
-  const displayName = currentUser?.fullName || currentUser?.name || 'Johnathan Doe';
+  const displayName = currentUser?.fullName || currentUser?.name || 'Client Borrower';
   const userInitials = displayName
     .split(' ')
     .filter(Boolean)
     .map((n) => n[0])
     .join('')
     .slice(0, 2)
-    .toUpperCase() || 'JD';
+    .toUpperCase() || 'CB';
 
-  // Primary active loan account (strictly zero when restarted, otherwise standard JAM SONG VICH facility)
-  const rawLoan = loans && loans.length > 0 ? (loans.find(l => l.id === selectedLoanId) || loans[0]) : null;
-  const primaryLoan = isRestartedToZero ? null : (rawLoan ? {
-    ...rawLoan,
-    loanNumber: rawLoan.loanNumber === 'LN-2026-0001' || rawLoan.loanNumber === 'LN-2026-0042' ? 'LN-2026-6042' : (rawLoan.loanNumber || 'LN-2026-6042'),
-    productName: rawLoan.productName || 'Personal Loan',
-    principalUSD: rawLoan.principalUSD === 3000 ? 6000 : (rawLoan.principalUSD || 6000),
-    outstandingBalanceUSD: (rawLoan.outstandingBalanceUSD === 2306.25 || (rawLoan as any).outstandingBalance === 2306.25) ? 3850 : (rawLoan.outstandingBalanceUSD || 3850),
-    totalPaidUSD: (rawLoan.totalPaidUSD === 761.25 || (rawLoan as any).totalPaid === 761.25) ? 2540 : (rawLoan.totalPaidUSD || 2540),
-    totalRepaymentUSD: 6390,
-  } : {
-    id: 'LN-2026-6042',
-    loanNumber: 'LN-2026-6042',
-    productName: 'Personal Loan',
-    principalUSD: 6000,
-    interestRate: 6.5,
-    termMonths: 12,
-    outstandingBalanceUSD: 3850,
-    totalPaidUSD: 2540,
-    totalRepaymentUSD: 6390,
-    status: 'ACTIVE' as const,
-    schedules: [],
+  // Primary active loan account: STRICTLY derived from actual borrower loans.
+  // When a user has not borrowed money yet (loans is empty or 0 active), primaryLoan is strictly null.
+  const userLoans = Array.isArray(loans) ? loans : [];
+  const activeLoans = userLoans.filter((l) => {
+    const st = (l.status || '').toUpperCase();
+    return st === 'ACTIVE' || st === 'OVERDUE' || st === 'IN_REPAYMENT';
   });
 
-  const facilityType = primaryLoan?.productName || 'Personal Loan';
-  const loanNumber = primaryLoan?.loanNumber || 'LN-2026-6042';
-  const loanStatus = primaryLoan?.status || 'ACTIVE';
-  const principalAmount = primaryLoan?.principalUSD || 6000;
-  const interestRate = primaryLoan?.interestRate || 6.5;
-  const loanTerm = primaryLoan?.termMonths || 12;
-  const remainingBalance = primaryLoan?.outstandingBalanceUSD || 3850;
-  const totalPaid = primaryLoan?.totalPaidUSD || 2540;
-  const totalPayable = primaryLoan?.totalRepaymentUSD || 6390;
-  const progressPercent = Math.min(100, Math.round((totalPaid / totalPayable) * 100)) || 40;
+  const primaryLoan = activeLoans.length > 0
+    ? (activeLoans.find((l) => l.id === selectedLoanId) || activeLoans[0])
+    : null;
 
-  // Next due installment
+  const facilityType = primaryLoan?.productName || '';
+  const loanNumber = primaryLoan?.loanNumber || primaryLoan?.id || '';
+  const loanStatus = primaryLoan?.status || '';
+  const principalAmount = Number(primaryLoan?.principalUSD || (primaryLoan as any)?.principalAmount || 0);
+  const interestRate = Number(primaryLoan?.interestRate || 0);
+  const loanTerm = Number(primaryLoan?.termMonths || 0);
+  const remainingBalance = Number(primaryLoan?.outstandingBalanceUSD || (primaryLoan as any)?.outstandingBalance || 0);
+  const totalPaid = Number(primaryLoan?.totalPaidUSD || (primaryLoan as any)?.totalPaid || 0);
+  const totalPayable = Number(primaryLoan?.totalRepaymentUSD || (principalAmount + Number((primaryLoan as any)?.totalInterestUSD || 0)) || 0);
+  const progressPercent = totalPayable > 0 ? Math.min(100, Math.round((totalPaid / totalPayable) * 100)) : 0;
+
+  // Next due installment (if facility exists)
   const nextSchedule = primaryLoan?.schedules?.find((s) => s.status !== 'PAID') || primaryLoan?.schedules?.[0];
-  const nextDueDate = nextSchedule?.dueDate || (primaryLoan as any)?.nextPaymentDueDate || '2026-09-15';
-  const nextDueAmount = nextSchedule?.remainingAmountUSD || (primaryLoan as any)?.nextPaymentDueAmountUSD || 122.50;
-  const nextInstallmentNo = nextSchedule?.installmentNo || 5;
+  const nextDueDate = nextSchedule?.dueDate || (primaryLoan as any)?.nextPaymentDueDate || '—';
+  const nextDueAmount = Number(nextSchedule?.remainingAmountUSD || (primaryLoan as any)?.nextPaymentDueAmountUSD || 0);
+  const nextInstallmentNo = nextSchedule?.installmentNo || 1;
 
-  // Aggregated financial metrics
-  const activeFacilitiesCount = isRestartedToZero ? 0 : (primaryLoan ? 1 : 0);
-  const totalBorrowedVal = isRestartedToZero ? 0 : (primaryLoan ? principalAmount : 0);
-  const outstandingBalanceVal = isRestartedToZero ? 0 : (primaryLoan ? remainingBalance : 0);
-  const totalRepaidVal = isRestartedToZero ? 0 : (primaryLoan ? totalPaid : 0);
+  // Aggregated financial metrics: strictly calculated from actual loans
+  const activeFacilitiesCount = activeLoans.length;
+  const totalBorrowedVal = userLoans.reduce((sum, l) => sum + Number(l.principalUSD || (l as any)?.principalAmount || 0), 0);
+  const outstandingBalanceVal = activeLoans.reduce((sum, l) => sum + Number(l.outstandingBalanceUSD || (l as any)?.outstandingBalance || 0), 0);
+  const totalRepaidVal = userLoans.reduce((sum, l) => sum + Number(l.totalPaidUSD || (l as any)?.totalPaid || 0), 0);
 
   // Recent applications list
   const recentApps: Partial<LoanApplication>[] = applications || [];
@@ -130,7 +124,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
   const handleOpenKhqr = () => {
     if (primaryLoan) {
       if (onOpenQuickPayment) {
-        onOpenQuickPayment(primaryLoan.id || 'LN-2026-6042', nextInstallmentNo, nextDueAmount);
+        onOpenQuickPayment(primaryLoan.id, nextInstallmentNo, nextDueAmount);
       } else {
         onNavigate('payments');
       }
@@ -205,34 +199,50 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
 
           {/* Action Buttons on the Right */}
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 pt-2 lg:pt-0 shrink-0">
-            {/* Red Primary Button: Pay via Bakong KHQR */}
-            <button
-              type="button"
-              onClick={handleOpenKhqr}
-              className="inline-flex items-center justify-center gap-2 h-10 px-4.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-red-950/40 transition-all cursor-pointer select-none whitespace-nowrap active:scale-[0.98]"
-            >
-              <div className="w-4 h-4 rounded bg-white text-red-600 flex items-center justify-center font-black text-[9px] shrink-0">
-                KH
-              </div>
-              <QrCode className="w-4 h-4 text-white shrink-0" />
-              <span>{'Pay via Bakong KHQR'}</span>
-            </button>
+            {/* Primary Action Button */}
+            {primaryLoan ? (
+              <button
+                type="button"
+                onClick={handleOpenKhqr}
+                className="inline-flex items-center justify-center gap-2 h-10 px-4.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-red-950/40 transition-all cursor-pointer select-none whitespace-nowrap active:scale-[0.98]"
+              >
+                <div className="w-4 h-4 rounded bg-white text-red-600 flex items-center justify-center font-black text-[9px] shrink-0">
+                  KH
+                </div>
+                <QrCode className="w-4 h-4 text-white shrink-0" />
+                <span>{'Pay via Bakong KHQR'}</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  if (onOpenApplyLoan) onOpenApplyLoan();
+                  else onNavigate('new-application');
+                }}
+                className="inline-flex items-center justify-center gap-1.5 h-10 px-4.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs sm:text-sm shadow-md shadow-emerald-950/40 transition-all cursor-pointer select-none whitespace-nowrap active:scale-[0.98]"
+              >
+                <Plus className="w-4 h-4 text-slate-950 shrink-0" />
+                <span>{'+ Apply for Credit Facility'}</span>
+              </button>
+            )}
 
-            {/* Secondary Action: Apply for Loan */}
-            <button
-              type="button"
-              onClick={() => {
-                if (onOpenApplyLoan) {
-                  onOpenApplyLoan();
-                } else {
-                  onNavigate('new-application');
-                }
-              }}
-              className="inline-flex items-center justify-center gap-1.5 h-10 px-4.5 rounded-xl bg-slate-800 hover:bg-slate-750 text-white font-semibold text-xs sm:text-sm border border-slate-700 hover:border-slate-600 transition-all cursor-pointer select-none whitespace-nowrap active:scale-[0.98]"
-            >
-              <Plus className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>{'+ Apply for Loan'}</span>
-            </button>
+            {/* Secondary Action: Apply for Loan (shown when user already has an active loan) */}
+            {primaryLoan && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (onOpenApplyLoan) {
+                    onOpenApplyLoan();
+                  } else {
+                    onNavigate('new-application');
+                  }
+                }}
+                className="inline-flex items-center justify-center gap-1.5 h-10 px-4.5 rounded-xl bg-slate-800 hover:bg-slate-750 text-white font-semibold text-xs sm:text-sm border border-slate-700 hover:border-slate-600 transition-all cursor-pointer select-none whitespace-nowrap active:scale-[0.98]"
+              >
+                <Plus className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>{'+ Apply for Loan'}</span>
+              </button>
+            )}
 
             {/* Outline Button: Schedule */}
             <button

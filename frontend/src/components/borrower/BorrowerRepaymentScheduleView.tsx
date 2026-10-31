@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Calendar,
   Download,
@@ -19,12 +19,13 @@ import {
   Filter,
   Plus,
 } from 'lucide-react';
-import { Currency, UserProfile } from '../../types';
+import { Currency, UserProfile, LoanAccount } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 
 export interface BorrowerRepaymentScheduleViewProps {
   currentUser: UserProfile;
   currency: Currency;
+  loans?: LoanAccount[];
   onNavigate: (route: string) => void;
   onOpenPayInstallment?: (installmentNo?: number, amount?: number) => void;
 }
@@ -46,6 +47,7 @@ interface ScheduleRow {
 export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleViewProps> = ({
   currentUser,
   currency: appCurrency,
+  loans,
   onNavigate,
   onOpenPayInstallment,
 }) => {
@@ -57,7 +59,15 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
   const [selectedReceipt, setSelectedReceipt] = useState<ScheduleRow | null>(null);
 
   const NBC_RATE = 4080;
-  const isRestartedToZero = localStorage.getItem('jam_restart_borrower_zero') !== 'false';
+
+  // Clear any legacy test restart flags so real account data always determines UI state
+  useEffect(() => {
+    try {
+      localStorage.removeItem('jam_restart_borrower_zero');
+    } catch {
+      // ignore
+    }
+  }, []);
 
   // Format currency
   const formatMoney = (valUSD: number) => {
@@ -75,21 +85,34 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
     }).format(valUSD);
   };
 
-  // Full 12-cycle Amortization Ledger for LN-2026-6042
-  const scheduleData: ScheduleRow[] = isRestartedToZero ? [] : [
-    { cycle: 1, dueDate: '2026-05-15', beginningPrincipal: 6000.0, scheduledEMI: 532.5, principal: 500.0, interest: 32.5, lateFees: 0.0, endingBalance: 5500.0, status: 'PAID', txRef: 'BK-88201', paidAt: '2026-05-14 14:22:10' },
-    { cycle: 2, dueDate: '2026-06-15', beginningPrincipal: 5500.0, scheduledEMI: 529.79, principal: 500.0, interest: 29.79, lateFees: 0.0, endingBalance: 5000.0, status: 'PAID', txRef: 'BK-88212', paidAt: '2026-06-15 09:11:45' },
-    { cycle: 3, dueDate: '2026-07-15', beginningPrincipal: 5000.0, scheduledEMI: 527.08, principal: 500.0, interest: 27.08, lateFees: 0.0, endingBalance: 4500.0, status: 'PAID', txRef: 'BK-88225', paidAt: '2026-07-13 16:40:02' },
-    { cycle: 4, dueDate: '2026-08-15', beginningPrincipal: 4500.0, scheduledEMI: 524.38, principal: 650.0, interest: 24.38, lateFees: 0.0, endingBalance: 3850.0, status: 'PAID', txRef: 'BK-88231', paidAt: '2026-08-15 11:05:32' },
-    { cycle: 5, dueDate: '2026-09-15', beginningPrincipal: 3850.0, scheduledEMI: 122.5, principal: 101.65, interest: 20.85, lateFees: 0.0, endingBalance: 3748.35, status: 'DUE_SOON' },
-    { cycle: 6, dueDate: '2026-10-15', beginningPrincipal: 3748.35, scheduledEMI: 520.3, principal: 500.0, interest: 20.3, lateFees: 0.0, endingBalance: 3248.35, status: 'SCHEDULED' },
-    { cycle: 7, dueDate: '2026-11-15', beginningPrincipal: 3248.35, scheduledEMI: 517.6, principal: 500.0, interest: 17.6, lateFees: 0.0, endingBalance: 2748.35, status: 'SCHEDULED' },
-    { cycle: 8, dueDate: '2026-12-15', beginningPrincipal: 2748.35, scheduledEMI: 514.89, principal: 500.0, interest: 14.89, lateFees: 0.0, endingBalance: 2248.35, status: 'SCHEDULED' },
-    { cycle: 9, dueDate: '2027-01-15', beginningPrincipal: 2248.35, scheduledEMI: 512.18, principal: 500.0, interest: 12.18, lateFees: 0.0, endingBalance: 1748.35, status: 'SCHEDULED' },
-    { cycle: 10, dueDate: '2027-02-15', beginningPrincipal: 1748.35, scheduledEMI: 509.47, principal: 500.0, interest: 9.47, lateFees: 0.0, endingBalance: 1248.35, status: 'SCHEDULED' },
-    { cycle: 11, dueDate: '2027-03-15', beginningPrincipal: 1248.35, scheduledEMI: 506.76, principal: 500.0, interest: 6.76, lateFees: 0.0, endingBalance: 748.35, status: 'SCHEDULED' },
-    { cycle: 12, dueDate: '2027-04-15', beginningPrincipal: 748.35, scheduledEMI: 752.4, principal: 748.35, interest: 4.05, lateFees: 0.0, endingBalance: 0.0, status: 'SCHEDULED' },
-  ];
+  // Strictly derive active facility from user's actual loans
+  const userLoans = Array.isArray(loans) ? loans : [];
+  const activeLoans = userLoans.filter((l) => {
+    const st = (l.status || '').toUpperCase();
+    return st === 'ACTIVE' || st === 'OVERDUE' || st === 'IN_REPAYMENT';
+  });
+  const activeLoan = activeLoans.length > 0 ? activeLoans[0] : null;
+  const hasActiveLoan = !!activeLoan;
+
+  // Build schedule data strictly from active loan schedules
+  const scheduleData: ScheduleRow[] = useMemo(() => {
+    if (!hasActiveLoan || !activeLoan || !Array.isArray(activeLoan.schedules) || activeLoan.schedules.length === 0) {
+      return [];
+    }
+    return activeLoan.schedules.map((s, idx) => ({
+      cycle: s.installmentNo || idx + 1,
+      dueDate: s.dueDate || '',
+      beginningPrincipal: Number(s.principalUSD || 0) * (activeLoan.schedules.length - idx),
+      scheduledEMI: Number(s.totalDueUSD || 0),
+      principal: Number(s.principalUSD || 0),
+      interest: Number(s.interestUSD || 0),
+      lateFees: 0.0,
+      endingBalance: Math.max(0, Number(activeLoan.outstandingBalanceUSD || 0) - (Number(s.amountPaidUSD || 0))),
+      status: (s.status === 'PAID' ? 'PAID' : (s.status === 'OVERDUE' ? 'OVERDUE' : (idx === 0 ? 'DUE_SOON' : 'SCHEDULED'))) as any,
+      txRef: (s as any).transactionReference || (s.status === 'PAID' ? `TX-${s.installmentNo}` : undefined),
+      paidAt: (s as any).settledAt || (s.status === 'PAID' ? s.dueDate : undefined),
+    }));
+  }, [hasActiveLoan, activeLoan]);
 
   // Filtered rows
   const filteredSchedule = scheduleData.filter((row) => {
@@ -119,7 +142,7 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', 'LN-2026-6042_Amortization_Ledger.csv');
+    link.setAttribute('download', `${activeLoan?.loanNumber || 'Amortization'}_Ledger.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -160,7 +183,7 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
                 {'Amortization Repayment Ledger'}
               </h1>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                {isRestartedToZero ? 'NO ACTIVE LOANS' : 'LN-2026-6042 • ACTIVE'}
+                {hasActiveLoan ? `${activeLoan?.loanNumber || activeLoan?.id || 'LOAN'} • ACTIVE` : 'NO ACTIVE LOANS'}
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-400 mt-1">
@@ -207,8 +230,12 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 Facility & Rate
               </span>
-              <p className="text-sm font-bold text-white">{isRestartedToZero ? 'No Active Facility' : 'Personal Loan'}</p>
-              <span className="text-xs font-mono text-emerald-400 font-semibold">{isRestartedToZero ? '$0.00 @ 0.0% p.a.' : '$6,000.00 @ 6.5% p.a.'}</span>
+              <p className="text-sm font-bold text-white">{hasActiveLoan ? (activeLoan?.productName || 'Personal Loan') : 'No Active Facility'}</p>
+              <span className="text-xs font-mono text-emerald-400 font-semibold">
+                {hasActiveLoan
+                  ? `${formatMoney(Number(activeLoan?.principalUSD || (activeLoan as any)?.principalAmount || 0))} @ ${Number(activeLoan?.interestRate || 0)}% p.a.`
+                  : '$0.00 @ 0.0% p.a.'}
+              </span>
             </div>
             <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-300">
               <Building className="w-4 h-4 text-emerald-400" />
@@ -221,9 +248,13 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
                 Remaining Principal
               </span>
               <p className="text-base font-bold font-mono text-white">
-                {formatMoney(isRestartedToZero ? 0 : 3850.0)}
+                {formatMoney(hasActiveLoan ? Number(activeLoan?.outstandingBalanceUSD || (activeLoan as any)?.outstandingBalance || 0) : 0)}
               </p>
-              <span className="text-[11px] text-slate-400 font-mono">{isRestartedToZero ? '0 Cycles Remaining' : '8 of 12 Cycles Remaining'}</span>
+              <span className="text-[11px] text-slate-400 font-mono">
+                {hasActiveLoan
+                  ? `${scheduleData.filter((s) => s.status !== 'PAID').length} of ${scheduleData.length} Cycles Remaining`
+                  : '0 Cycles Remaining'}
+              </span>
             </div>
             <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-300">
               <TrendingDown className="w-4 h-4 text-amber-400" />
@@ -236,9 +267,13 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
                 Total Settle-to-Date
               </span>
               <p className="text-base font-bold font-mono text-emerald-400">
-                {formatMoney(isRestartedToZero ? 0 : 2540.0)}
+                {formatMoney(hasActiveLoan ? Number(activeLoan?.totalPaidUSD || (activeLoan as any)?.totalPaid || 0) : 0)}
               </p>
-              <span className="text-[11px] text-slate-400 font-mono">{isRestartedToZero ? '0 Settled Installments (0%)' : '4 Settled Installments (40%)'}</span>
+              <span className="text-[11px] text-slate-400 font-mono">
+                {hasActiveLoan
+                  ? `${scheduleData.filter((s) => s.status === 'PAID').length} Settled Installments`
+                  : '0 Settled Installments (0%)'}
+              </span>
             </div>
             <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
               <CheckCircle2 className="w-4 h-4" />
@@ -260,10 +295,10 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
             </span>
             <div className="flex items-center gap-1.5 ml-2">
               {[
-                { id: 'ALL', label: 'All (12)' },
-                { id: 'PAID', label: 'Paid (4)' },
-                { id: 'DUE_SOON', label: 'Due Soon (1)' },
-                { id: 'SCHEDULED', label: 'Scheduled (7)' },
+                { id: 'ALL', label: `All (${scheduleData.length})` },
+                { id: 'PAID', label: `Paid (${scheduleData.filter((s) => s.status === 'PAID').length})` },
+                { id: 'DUE_SOON', label: `Due Soon (${scheduleData.filter((s) => s.status === 'DUE_SOON').length})` },
+                { id: 'SCHEDULED', label: `Scheduled (${scheduleData.filter((s) => s.status === 'SCHEDULED' || s.status === 'OVERDUE').length})` },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -474,7 +509,7 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
             <div className="space-y-2.5 text-xs font-mono bg-slate-950 p-4 rounded-xl border border-slate-850">
               <div className="flex justify-between text-slate-400">
                 <span className="font-sans">Facility Account</span>
-                <span className="text-white font-bold">LN-2026-6042</span>
+                <span className="text-white font-bold">{activeLoan?.loanNumber || activeLoan?.id || 'NO FACILITY'}</span>
               </div>
               <div className="flex justify-between text-slate-400">
                 <span className="font-sans">Cycle Number</span>

@@ -206,6 +206,24 @@ export class PendingRegistrationService {
   public static async findValidByEmail(email: string): Promise<PendingRegistrationRecord | null> {
     const cleanEmail = this.normalizeEmail(email);
 
+    // If active verified user already exists in PostgreSQL, clear pending and return null
+    try {
+      const activeUser = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { email: { equals: cleanEmail, mode: 'insensitive' } },
+            { username: { equals: cleanEmail, mode: 'insensitive' } }
+          ],
+          emailVerifiedAt: { not: null }
+        }
+      });
+      if (activeUser) {
+        this.memoryStore.delete(cleanEmail);
+        await prisma.pendingRegistration.deleteMany({ where: { email: cleanEmail } }).catch(() => {});
+        return null;
+      }
+    } catch {}
+
     // Try DB
     try {
       const dbRecord = await prisma.pendingRegistration.findFirst({
@@ -243,6 +261,14 @@ export class PendingRegistrationService {
   /**
    * Deletes a pending registration upon successful user creation.
    */
+  public static async deletePendingByEmail(email: string): Promise<void> {
+    const cleanEmail = this.normalizeEmail(email);
+    this.memoryStore.delete(cleanEmail);
+    try {
+      await prisma.pendingRegistration.deleteMany({ where: { email: cleanEmail } });
+    } catch {}
+  }
+
   public static async deletePendingRegistration(id: string, tx?: any): Promise<void> {
     const client = tx || prisma;
 

@@ -448,7 +448,7 @@ async function main() {
   const app1 = await prisma.loanApplication.create({
     data: {
       applicationNo: 'APP-2026-0001',
-      borrowerId: borrower1.id,
+      borrowerId: borrower2.id,
       productId: academicMicroloan.id,
       requestedAmount: new Prisma.Decimal('3000.00'),
       requestedTerm: 6, // 6 months
@@ -809,7 +809,7 @@ async function main() {
     data: {
       loanNumber: 'LN-2026-0001',
       applicationId: app1.id,
-      borrowerId: borrower1.id,
+      borrowerId: borrower2.id,
       productId: academicMicroloan.id,
       principalAmount: new Prisma.Decimal('3000.00'),
       interestRate: new Prisma.Decimal('4.50'),
@@ -1219,7 +1219,7 @@ async function main() {
   await prisma.notification.createMany({
     data: [
       {
-        userId: borrowerUser1.id,
+        userId: borrowerUser2.id,
         title: 'Loan Application Approved',
         message: 'Congratulations! Your loan application APP-2026-0001 has been approved for $3,000.00 at 4.50% APR.',
         isRead: true,
@@ -1227,7 +1227,7 @@ async function main() {
         createdAt: new Date('2026-08-18T16:05:00Z')
       },
       {
-        userId: borrowerUser1.id,
+        userId: borrowerUser2.id,
         title: 'Funds Disbursed',
         message: 'Disbursement of $3,000.00 has been sent to your bank account via ACH transfer (Ref: ACH-TRX-20260901-99201).',
         isRead: true,
@@ -1235,7 +1235,7 @@ async function main() {
         createdAt: new Date('2026-09-01T10:05:00Z')
       },
       {
-        userId: borrowerUser1.id,
+        userId: borrowerUser2.id,
         title: 'Payment Confirmation: REC-2026-0001',
         message: 'We have received your installment payment of $511.25. Thank you!',
         isRead: false,
@@ -1274,7 +1274,7 @@ async function main() {
         action: 'CREATE_LOAN_APPLICATION',
         entityName: 'LoanApplication',
         entityId: app1.id,
-        details: { applicationNo: 'APP-2026-0001', borrowerId: borrower1.id, requestedAmount: 3000 },
+        details: { applicationNo: 'APP-2026-0001', borrowerId: borrower2.id, requestedAmount: 3000 },
         ipAddress: '192.168.10.45',
         timestamp: new Date('2026-08-15T09:30:00Z')
       },

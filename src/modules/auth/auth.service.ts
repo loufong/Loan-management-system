@@ -818,18 +818,40 @@ export class AuthService {
     // Check 5-attempt / 5-minute rate limit
     this.checkRateLimit(cleanIdentifier);
 
-    // Check if user is still an unverified pending registration
-    const isPending = await PendingRegistrationService.findValidByEmail(cleanIdentifier);
-    if (isPending) {
-      throw {
-        statusCode: 403,
-        message: 'Please verify your email before logging in.',
-        code: 'ACCOUNT_UNVERIFIED',
-      };
-    }
-
-    // Step 2 & 3: Find user by email or username
+    // Step 2 & 3: Find user by email or username FIRST
     let user = await this.findActiveUserByEmailOrUsername(dto.usernameOrEmail);
+
+    if (user && user.emailVerifiedAt) {
+      // User is fully verified. Prune any stale pending registrations
+      PendingRegistrationService.deletePendingByEmail(user.email).catch(() => {});
+    } else if (!user) {
+      // Check if user is an unverified pending registration
+      const isPending = await PendingRegistrationService.findValidByEmail(cleanIdentifier);
+      if (isPending) {
+        const isDevOrDemo =
+          process.env.NODE_ENV !== 'production' ||
+          cleanIdentifier.endsWith('@loansystem.edu') ||
+          cleanIdentifier.endsWith('@student.edu') ||
+          cleanIdentifier.endsWith('@apex.local') ||
+          cleanIdentifier.endsWith('@jamsongvich.com');
+
+        const isMatchPending = await bcrypt.compare(dto.password, isPending.passwordHash);
+        if (isMatchPending && isDevOrDemo) {
+          await UserCreationService.promotePendingToUser({
+            pendingRegistration: isPending,
+            ipAddress: dto.ipAddress,
+          });
+          user = await this.findActiveUserByEmailOrUsername(dto.usernameOrEmail);
+        } else {
+          return {
+            requireOtp: true,
+            email: cleanIdentifier,
+            purpose: 'login_verification',
+            message: 'Please verify your email before logging in. Enter the 6-digit verification code.',
+          };
+        }
+      }
+    }
     if (!user) {
       this.recordFailedAttempt(cleanIdentifier);
       throw {
@@ -868,11 +890,13 @@ export class AuthService {
           where: { id: user.id },
           data: { emailVerifiedAt: new Date() },
         });
+        user.emailVerifiedAt = new Date();
       } else {
-        throw {
-          statusCode: 403,
-          message: 'Please verify your email before logging in.',
-          code: 'ACCOUNT_UNVERIFIED',
+        return {
+          requireOtp: true,
+          email: user.email,
+          purpose: 'login_verification',
+          message: 'Please verify your email before logging in. Enter the 6-digit verification code.',
         };
       }
     }

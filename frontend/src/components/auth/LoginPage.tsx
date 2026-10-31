@@ -195,9 +195,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
           {/* Error Notice Banner */}
           {error && (
-            <div className="p-3 bg-rose-50 border border-rose-200 rounded-[6px] flex items-start gap-2.5 text-xs text-rose-700">
-              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 mt-0.5" />
-              <span className="leading-snug">{error}</span>
+            <div className="p-3 bg-rose-50 border border-rose-200 rounded-[6px] flex flex-col gap-2 text-xs text-rose-700">
+              <div className="flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 mt-0.5" />
+                <span className="leading-snug flex-1">{error}</span>
+              </div>
+              {error.toLowerCase().includes('verify') && onRequireOtp && (
+                <button
+                  type="button"
+                  onClick={() => onRequireOtp(usernameOrEmail.trim() || 'user')}
+                  className="mt-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-[4px] self-start transition-colors cursor-pointer"
+                >
+                  <span>{language === 'km' ? 'ផ្ទៀងផ្ទាត់លេខកូដ OTP ឥឡូវនេះ' : 'Enter 6-Digit Verification Code'}</span>
+                </button>
+              )}
             </div>
           )}
 

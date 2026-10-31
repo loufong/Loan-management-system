@@ -59,8 +59,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     avatar: 'SP',
     branch: 'Phnom Penh Main Branch'
   },
-  currentPath = '/admin/dashboard',
-  activeNav: rawActiveNav = 'dashboard',
+  currentPath = '/my-loans',
+  activeNav: rawActiveNav = 'borrower_dashboard',
   activeNavId,
   onNavigate,
   onLogout,
@@ -111,7 +111,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   }
 
   const staffNavLinks: LayoutNavLink[] = [
-    { id: 'dashboard', label: 'Dashboard', khLabel: 'ផ្ទាំងគ្រប់គ្រង', icon: LayoutDashboard, path: '/admin/dashboard' },
+
     { id: 'borrowers', label: 'Borrowers', khLabel: 'អតិថិជនកម្ចី', icon: Users, path: '/admin/borrowers' },
     { id: 'new-application', label: 'New Loan', khLabel: 'ស្នើសុំឥណទានថ្មី', icon: FilePlus2, path: '/admin/applications' },
     {
@@ -236,6 +236,23 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 activeNav === 'borrower-detail' ||
                 activeNav === '/admin/borrowers' ||
                 currentPath === '/admin/borrowers'
+              )) ||
+              (item.id === 'borrower_dashboard' && (
+                activeNav === 'borrower_dashboard' ||
+                activeNav === 'user_dashboard' ||
+                activeNav === 'my-loans' ||
+                activeNav === '/my-loans' ||
+                activeNav === '/portal' ||
+                activeNav === '/' ||
+                currentPath === '/my-loans' ||
+                currentPath === '/portal' ||
+                currentPath === '/'
+              )) ||
+              (item.id === 'new-application' && (
+                activeNav === 'new-application' ||
+                activeNav === 'apply-loan' ||
+                activeNav === '/apply-loan' ||
+                currentPath === '/apply-loan'
               ));
             return (
               <button
@@ -243,12 +260,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 onClick={() => handleNavClick(item.id, item.path)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all relative ${
                   isActive
-                    ? 'bg-gradient-to-r from-emerald-500/20 to-emerald-500/5 text-emerald-400 border border-emerald-500/30 shadow-md shadow-emerald-950/20 font-bold'
+                    ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/20'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                 }`}
                 title={isSidebarCollapsed ? item.label : undefined}
               >
-                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-emerald-400' : 'text-slate-400'}`} />
+                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-slate-950 stroke-[2.5]' : 'text-slate-400'}`} />
                 {!isSidebarCollapsed && (
                   <div className="flex-1 text-left truncate flex items-center justify-between">
                     <span>{language === 'KH' ? item.khLabel : item.label}</span>
@@ -443,14 +460,14 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                     <button
                       key={item.id}
                       onClick={() => handleNavClick(item.id, item.path)}
-                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold ${
+                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                         isActive
-                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                          ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/20'
                           : 'text-slate-400 hover:text-white hover:bg-slate-800'
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <item.icon className="w-4 h-4" />
+                        <item.icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-slate-950 stroke-[2.5]' : 'text-slate-400'}`} />
                         <span>{language === 'KH' ? item.khLabel : item.label}</span>
                       </div>
                       {item.badge && (

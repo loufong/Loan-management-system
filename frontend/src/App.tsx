@@ -437,8 +437,8 @@ export const App: React.FC = () => {
         setActiveTab('change_password');
       } else {
         if (isAdmin) {
-          setActiveTab('dashboard');
-          replaceAppRoute('/admin/dashboard');
+          setActiveTab('borrowers');
+          replaceAppRoute('/admin/borrowers');
         } else {
           setActiveTab('borrower_dashboard');
           replaceAppRoute('/my-loans');
@@ -474,9 +474,9 @@ export const App: React.FC = () => {
       'CHECKER'
     ].includes(userRole);
     if (isStaff) {
-      replaceAppRoute('/admin/dashboard');
-      setCurrentRoute('/admin/dashboard');
-      setActiveTab('dashboard');
+      replaceAppRoute('/admin/borrowers');
+      setCurrentRoute('/admin/borrowers');
+      setActiveTab('borrowers');
     } else {
       replaceAppRoute('/my-loans');
       setCurrentRoute('/my-loans');
@@ -654,6 +654,8 @@ export const App: React.FC = () => {
         return [{ label: 'Executive Dashboard' }, { label: 'Operational Overview', active: true }];
       case 'user_dashboard':
         return [{ label: 'User Portal' }, { label: 'My Dashboard', active: true }];
+      case 'borrower_dashboard':
+        return [{ label: 'Core Banking' }, { label: 'My Loans', active: true }];
       case 'borrowers':
         return [{ label: 'Institutional Registry', onClick: () => handleNavSelection('/admin/borrowers') }, { label: 'Borrowers Directory', active: true }];
       case 'borrower-detail':

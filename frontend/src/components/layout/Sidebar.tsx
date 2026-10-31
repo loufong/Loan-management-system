@@ -48,17 +48,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const getItemLabel = (item: NavItemConfig) => {
     switch (item.id) {
-      case 'user_dashboard':
-      case 'admin_dashboard':
-        return t('nav_dashboard', 'Dashboard');
-      case 'user_applications':
-        return t('nav_my_applications', 'My Applications');
       case 'user_loans':
         return t('nav_my_loans', 'My Loans');
+      case 'user_apply_loan':
+        return t('nav_apply_loan', 'Apply for Loan');
+      case 'user_applications':
+        return t('nav_my_applications', 'My Applications');
       case 'user_repayments':
         return t('nav_repayments', 'Repayment Schedule');
       case 'user_payments':
-        return t('nav_payments', 'Payments');
+        return t('nav_payments', 'Pay Installment');
       case 'user_notifications':
       case 'admin_notifications':
         return t('nav_notifications', 'Notifications');
@@ -153,16 +152,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     onClick={() => handleItemClick(item)}
                     aria-current={active ? 'page' : undefined}
                     className={cn(
-                      'w-full flex items-center gap-3 px-3 py-2 rounded-[6px] text-[13px] transition-colors text-left font-medium cursor-pointer',
+                      'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all text-left cursor-pointer',
                       active
-                        ? 'bg-[#EFF6FF] text-[#2563EB]'
-                        : 'text-[#475569] hover:text-[#0F172A] hover:bg-[#F8FAFC]'
+                        ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/20'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                     )}
                   >
                     <Icon
                       className={cn(
                         'w-[18px] h-[18px] shrink-0 transition-colors',
-                        active ? 'text-[#2563EB]' : 'text-[#64748B]'
+                        active ? 'text-slate-950 stroke-[2.5]' : 'text-slate-400'
                       )}
                     />
                     <span className="truncate">{getItemLabel(item)}</span>

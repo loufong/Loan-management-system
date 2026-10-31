@@ -4,6 +4,8 @@ import {
   Users,
   Package,
   FileText,
+  FilePlus2,
+  Shield,
   Wallet,
   CreditCard,
   AlertTriangle,
@@ -35,19 +37,6 @@ export interface NavSectionConfig {
 
 // 1. ADMIN NAVIGATION STRUCTURE
 export const ADMIN_SECTIONS: NavSectionConfig[] = [
-  {
-    // Top standalone item without section header
-    items: [
-      {
-        id: 'admin_dashboard',
-        label: 'Dashboard',
-        path: '/admin/dashboard',
-        icon: LayoutDashboard,
-        requiredRole: 'ADMIN',
-        aliases: ['/admin', '/admin/dashboard'],
-      },
-    ],
-  },
   {
     sectionTitle: 'LOAN MANAGEMENT',
     items: [
@@ -156,35 +145,23 @@ export const ADMIN_SECTIONS: NavSectionConfig[] = [
 // 2. USER NAVIGATION STRUCTURE
 export const USER_SECTIONS: NavSectionConfig[] = [
   {
-    items: [
-      {
-        id: 'user_dashboard',
-        label: 'Dashboard',
-        path: '/portal',
-        icon: LayoutDashboard,
-        requiredRole: 'USER',
-        aliases: ['/portal', '/dashboard', '/user/dashboard', '/my-loans', '/'],
-      },
-    ],
-  },
-  {
     sectionTitle: 'MY LOANS',
     items: [
       {
-        id: 'user_applications',
-        label: 'My Applications',
-        path: '/applications',
-        icon: FileText,
-        requiredRole: 'USER',
-        aliases: ['/applications', '/user/my_applications', '/user/applications', '/user/apply_loan'],
-      },
-      {
         id: 'user_loans',
         label: 'My Loans',
-        path: '/loans',
+        path: '/my-loans',
         icon: Wallet,
         requiredRole: 'USER',
-        aliases: ['/loans', '/user/my_loans', '/user/loans', '/my-loans'],
+        aliases: ['/my-loans', '/loans', '/user/my_loans', '/user/loans', '/portal', '/dashboard', '/user/dashboard', '/'],
+      },
+      {
+        id: 'user_apply_loan',
+        label: 'Apply for Loan',
+        path: '/apply-loan',
+        icon: FilePlus2,
+        requiredRole: 'USER',
+        aliases: ['/apply-loan', '/applications', '/user/apply_loan', '/user/applications'],
       },
       {
         id: 'user_repayments',
@@ -196,9 +173,9 @@ export const USER_SECTIONS: NavSectionConfig[] = [
       },
       {
         id: 'user_payments',
-        label: 'Payments',
+        label: 'Pay Installment',
         path: '/payments',
-        icon: CreditCard,
+        icon: Wallet,
         requiredRole: 'USER',
         aliases: ['/payments', '/user/payments', '/user/my_repayments'],
       },
@@ -208,20 +185,12 @@ export const USER_SECTIONS: NavSectionConfig[] = [
     sectionTitle: 'ACCOUNT',
     items: [
       {
-        id: 'user_notifications',
-        label: 'Notifications',
-        path: '/notifications',
-        icon: Bell,
-        requiredRole: 'USER',
-        aliases: ['/notifications', '/user/notifications'],
-      },
-      {
         id: 'user_profile',
-        label: 'Profile',
+        label: 'My Profile',
         path: '/profile',
-        icon: User,
+        icon: Shield,
         requiredRole: 'USER',
-        aliases: ['/profile', '/user/profile'],
+        aliases: ['/profile', '/user/profile', '/admin/profile'],
       },
       {
         id: 'user_settings',
@@ -229,7 +198,7 @@ export const USER_SECTIONS: NavSectionConfig[] = [
         path: '/settings',
         icon: Settings,
         requiredRole: 'USER',
-        aliases: ['/settings', '/user/settings', '/settings/change-password', '/change-password'],
+        aliases: ['/settings', '/user/settings'],
       },
     ],
   },

@@ -144,32 +144,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <span>Core Banking Screen</span>
           </button>
 
-          <div className="flex items-center bg-white p-0.5 rounded-[6px] border border-[#E2E8F0] text-xs font-semibold shadow-xs">
-            <button
-              type="button"
-              onClick={() => setLanguage('km')}
-              className={`px-2.5 py-1 rounded-[4px] transition-colors flex items-center justify-center cursor-pointer ${
-                language === 'km'
-                  ? 'bg-[#2563EB] text-white shadow-xs font-bold'
-                  : 'text-[#64748B] hover:text-[#0F172A]'
-              }`}
-              title="ភាសាខ្មែរ (KH)"
-            >
-              <span className="text-[11px] font-bold">KH</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setLanguage('en')}
-              className={`px-2.5 py-1 rounded-[4px] transition-colors flex items-center justify-center cursor-pointer ${
-                language === 'en'
-                  ? 'bg-[#2563EB] text-white shadow-xs font-bold'
-                  : 'text-[#64748B] hover:text-[#0F172A]'
-              }`}
-              title="English (EN)"
-            >
-              <span className="text-[11px] font-bold">EN</span>
-            </button>
-          </div>
+          
         </div>
 
         {/* Institutional Branding Header */}

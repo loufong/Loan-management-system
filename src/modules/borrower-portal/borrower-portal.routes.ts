@@ -24,3 +24,4 @@ borrowerPortalRouter.get('/general-ledger', BorrowerPortalController.listGeneral
 // ==========================================
 borrowerPortalRouter.get('/borrower/loans/active', authenticate, BorrowerPortalController.getActiveLoan);
 borrowerPortalRouter.get('/borrower/schedule', authenticate, BorrowerPortalController.getRepaymentSchedule);
+

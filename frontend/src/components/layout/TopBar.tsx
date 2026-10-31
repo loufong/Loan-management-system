@@ -99,37 +99,8 @@ export const TopBar: React.FC<TopBarProps> = ({
         </h1>
       </div>
 
-      {/* 2. Right: Language Selector + Notification Bell + Profile Menu */}
+      {/* 2. Right: Notification Bell + Profile Menu */}
       <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-        {/* Khmer / English Language Switcher */}
-        <div className="flex items-center bg-slate-100 p-0.5 rounded-[6px] border border-[#E2E8F0] text-xs font-semibold">
-          <button
-            type="button"
-            onClick={() => setLanguage('km')}
-            className={cn(
-              'px-2.5 py-1 rounded-[4px] transition-colors flex items-center justify-center cursor-pointer min-w-[30px]',
-              language === 'km'
-                ? 'bg-white text-[#2563EB] shadow-xs font-bold'
-                : 'text-[#64748B] hover:text-[#0F172A]'
-            )}
-            title="ភាសាខ្មែរ (KH)"
-          >
-            <span className="text-[11px] font-bold">KH</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setLanguage('en')}
-            className={cn(
-              'px-2.5 py-1 rounded-[4px] transition-colors flex items-center justify-center cursor-pointer min-w-[30px]',
-              language === 'en'
-                ? 'bg-white text-[#2563EB] shadow-xs font-bold'
-                : 'text-[#64748B] hover:text-[#0F172A]'
-            )}
-            title="English (EN)"
-          >
-            <span className="text-[11px] font-bold">EN</span>
-          </button>
-        </div>
 
         {/* Notification Bell */}
         <div className="relative" ref={notifRef}>

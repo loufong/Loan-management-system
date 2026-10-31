@@ -75,7 +75,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   const activeNav = activeNavId || rawActiveNav;
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [language, setLanguage] = useState<'EN' | 'KH'>('EN');
   const [activeCurrency, setActiveCurrency] = useState<Currency>(currency);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -214,7 +213,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                   Core Banking System
                 </p>
                 <p className="text-[9px] font-medium text-emerald-400 truncate">
-                  ប្រព័ន្ធគ្រប់គ្រងឥណទាន
+                  Loan Management System
                 </p>
               </div>
             </div>
@@ -257,7 +256,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-slate-950 stroke-[2.5]' : 'text-slate-400'}`} />
                 {!isSidebarCollapsed && (
                   <div className="flex-1 text-left truncate flex items-center justify-between">
-                    <span>{language === 'KH' ? item.khLabel : item.label}</span>
+                    <span>{item.label}</span>
                     {item.badge !== undefined && (
                       <span className="ml-2 px-1.5 py-0.5 text-[10px] font-mono font-bold rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 animate-pulse">
                         {item.badge}
@@ -333,7 +332,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               <span className="text-slate-500 font-medium">Core Banking</span>
               <span>/</span>
               <span className="font-bold text-white capitalize">
-                {language === 'KH' ? currentNav.khLabel : currentNav.label}
+                {currentNav.label}
               </span>
             </div>
           </div>
@@ -356,18 +355,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             </div>
           </div>
 
-          {/* Right Controls: Language Switcher, Currency Indicator, Notifications */}
+          {/* Right Controls: Currency Indicator, Notifications */}
           <div className="flex items-center gap-2 sm:gap-3">
-
-            {/* Language Switcher Toggle */}
-            <button
-              onClick={() => setLanguage(l => l === 'EN' ? 'KH' : 'EN')}
-              className="px-2.5 py-1.5 rounded-xl border border-slate-700/80 bg-slate-800/80 hover:bg-slate-800 text-xs font-semibold text-slate-200 hover:text-white transition flex items-center gap-1.5"
-              title="Toggle Language"
-            >
-              <Globe className="w-3.5 h-3.5 text-emerald-400" />
-              <span>{language === 'EN' ? 'EN | ភាសាខ្មែរ' : 'ភាសាខ្មែរ | EN'}</span>
-            </button>
 
             {/* Currency Filter Indicator Toggle */}
             <button
@@ -447,7 +436,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                     >
                       <div className="flex items-center gap-3">
                         <item.icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-slate-950 stroke-[2.5]' : 'text-slate-400'}`} />
-                        <span>{language === 'KH' ? item.khLabel : item.label}</span>
+                        <span>{item.label}</span>
                       </div>
                       {item.badge && (
                         <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-rose-500/20 text-rose-400 font-bold">

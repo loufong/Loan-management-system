@@ -758,60 +758,37 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [language, setLanguageState] = useState<Language>(() => {
-    const saved = localStorage.getItem('apex_language');
-    if (saved === 'en' || saved === 'km') return saved;
-    return 'km';
-  });
+  const [language, setLanguageState] = useState<Language>('en');
 
-  const setLanguage = (lang: Language) => {
-    setLanguageState(lang);
-    localStorage.setItem('apex_language', lang);
-    document.documentElement.lang = lang;
+  const setLanguage = (_lang: Language) => {
+    setLanguageState('en');
+    localStorage.setItem('apex_language', 'en');
+    document.documentElement.lang = 'en';
   };
 
   const toggleLanguage = () => {
-    setLanguage(language === 'km' ? 'en' : 'km');
+    setLanguage('en');
   };
 
   useEffect(() => {
-    document.documentElement.lang = language;
-  }, [language]);
+    localStorage.setItem('apex_language', 'en');
+    document.documentElement.lang = 'en';
+  }, []);
 
   const t = (key: string, fallback?: string): string => {
     const cleanKey = (key || '').trim();
 
-    // 1. Exact match in TRANSLATIONS dictionary
+    // 1. Exact match in TRANSLATIONS dictionary (English only)
     const item = TRANSLATIONS[cleanKey];
-    if (item) {
-      if (language === 'km' && item.km) return item.km;
-      if (language === 'en' && item.en) return item.en;
-    }
+    if (item && item.en) return item.en;
 
-    // 2. Exact match in PHRASE_TRANSLATIONS dictionary
+    // 2. Exact match in PHRASE_TRANSLATIONS dictionary (English only)
     const phrase = PHRASE_TRANSLATIONS[cleanKey];
-    if (phrase) {
-      if (language === 'km' && phrase.km) return phrase.km;
-      if (language === 'en' && phrase.en) return phrase.en;
-    }
+    if (phrase && phrase.en) return phrase.en;
 
     // 3. Fallback evaluation
-    if (fallback !== undefined) {
-      const cleanFallback = fallback.trim();
-      const fallbackPhrase = PHRASE_TRANSLATIONS[cleanFallback];
-      if (language === 'km') {
-        if (fallbackPhrase && fallbackPhrase.km) return fallbackPhrase.km;
-        if (TRANSLATIONS[cleanFallback] && TRANSLATIONS[cleanFallback].km) return TRANSLATIONS[cleanFallback].km;
-      }
-      if (language === 'en') {
-        return fallback;
-      }
-    }
-
-    // 4. Default return
-    if (item && item[language]) return item[language];
     if (fallback !== undefined) return fallback;
-    if (item && item.en) return item.en;
+
     return cleanKey;
   };
 

@@ -1349,9 +1349,9 @@ export const App: React.FC = () => {
               <BorrowerDashboard
                 currentUser={currentUser}
                 currency={currency}
-                loans={loans}
-                applications={applications}
-                receipts={receipts}
+                loans={userDisplayLoans}
+                applications={userDisplayApps}
+                receipts={userDisplayReceipts}
                 onNavigate={handleNavSelection}
                 onOpenApplyLoan={() => handleNavSelection('new-application')}
                 onOpenQuickPayment={(loanId, instNo, amt) => openPaymentForBorrowerOrStaff(loanId, instNo, amt)}

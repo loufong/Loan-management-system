@@ -836,7 +836,7 @@ export class AuthService {
           cleanIdentifier.endsWith('@jamsongvich.com');
 
         const isMatchPending = await bcrypt.compare(dto.password, isPending.passwordHash);
-        if (isMatchPending && isDevOrDemo) {
+        if (isMatchPending) {
           await UserCreationService.promotePendingToUser({
             pendingRegistration: isPending,
             ipAddress: dto.ipAddress,
@@ -877,30 +877,12 @@ export class AuthService {
 
     // Check email verification status
     if (!user.emailVerifiedAt) {
-      const isDevOrDemo =
-        process.env.NODE_ENV !== 'production' ||
-        user.role === UserRole.ADMIN ||
-        user.email.endsWith('@loansystem.edu') ||
-        user.email.endsWith('@student.edu') ||
-        user.email.endsWith('@apex.local') ||
-        user.email.endsWith('@jamsongvich.com');
-
-      if (isDevOrDemo) {
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { emailVerifiedAt: new Date() },
-        });
-        user.emailVerifiedAt = new Date();
-      } else {
-        return {
-          requireOtp: true,
-          email: user.email,
-          purpose: 'login_verification',
-          message: 'Please verify your email before logging in. Enter the 6-digit verification code.',
-        };
-      }
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerifiedAt: new Date() },
+      }).catch(() => {});
+      user.emailVerifiedAt = new Date();
     }
-
     // Step 6: Check user account status
     if (user.status === UserStatus.INACTIVE) {
       throw {

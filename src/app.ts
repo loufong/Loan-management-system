@@ -19,6 +19,7 @@ import { notificationRouter } from './modules/notifications/notification.routes'
 import { userRouter } from './modules/users/user.routes';
 import { adminRouter } from './modules/admin/admin.routes';
 import { demoRouter } from './modules/demo/demo.routes';
+import { borrowerPortalRouter } from './modules/borrower-portal/borrower-portal.routes';
 import { openApiSpec, renderDocs } from './modules/docs/openapi';
 import { authenticate, verifyToken } from './middlewares/auth.middleware';
 import { checkRole } from './middlewares/rbac.middleware';
@@ -240,6 +241,9 @@ export function createApp(): Application {
 
   // 12. Live Fast-Forward Demo Trigger
   app.use(['/api/demo', '/api/demo'], demoRouter);
+
+  // 13. JAM SONG VICH Core Banking Borrower Portal & Bakong KHQR Services
+  app.use(['/api', '/api/v1'], borrowerPortalRouter);
 
   // SPA Route Fallback for all browser client navigation routes
   app.get(

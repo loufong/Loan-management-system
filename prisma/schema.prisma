@@ -17,6 +17,11 @@ datasource db {
 enum UserRole {
   ADMIN
   USER
+  BORROWER
+  MANAGER
+  LOAN_OFFICER
+  CREDIT_OFFICER
+  CASHIER
 }
 
 enum UserStatus {
@@ -135,12 +140,16 @@ model User {
   role                   UserRole                   @default(USER)
   status                 UserStatus                 @default(ACTIVE)
   emailVerifiedAt        DateTime?                  @map("email_verified_at") @db.Timestamptz(6)
+  emailVerified          Boolean                    @default(true) @map("email_verified")
+  kycStatus              String?                    @default("VERIFIED") @map("kyc_status") @db.VarChar(50)
+  bakongAccountId        String?                    @map("bakong_account_id") @db.VarChar(100)
   createdAt              DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt              DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   // Relations
   userSetting            UserSetting?
   borrowers              Borrower[]
+  loans                  Loan[]                     @relation("UserLoans")
   createdApplications    LoanApplication[]          @relation("ApplicationCreatedBy")
   statusChanges          ApplicationStatusHistory[] @relation("StatusChangedBy")
   reviews                ApplicationReview[]        @relation("ReviewedBy")
@@ -324,6 +333,7 @@ model Loan {
   loanNumber         String             @unique @map("loan_number") @db.VarChar(30) // e.g. LN-2026-0001
   applicationId      String             @unique @map("application_id") @db.Uuid
   borrowerId         String             @map("borrower_id") @db.Uuid
+  userId             String?            @map("user_id") @db.Uuid
   productId          String             @map("product_id") @db.Uuid
   principalAmount    Decimal            @map("principal_amount") @db.Decimal(15, 2)
   interestRate       Decimal            @map("interest_rate") @db.Decimal(5, 2) // annual percentage
@@ -342,6 +352,7 @@ model Loan {
   // Relations
   application        LoanApplication     @relation(fields: [applicationId], references: [id], onDelete: Restrict)
   borrower           Borrower            @relation(fields: [borrowerId], references: [id], onDelete: Restrict)
+  user               User?               @relation("UserLoans", fields: [userId], references: [id], onDelete: SetNull)
   product            LoanProduct         @relation(fields: [productId], references: [id], onDelete: Restrict)
   disbursements      Disbursement[]
   repaymentSchedules RepaymentSchedule[]
@@ -394,6 +405,8 @@ model RepaymentSchedule {
   amountPaid      Decimal        @default(0.00) @map("amount_paid") @db.Decimal(15, 2)
   remainingAmount Decimal        @map("remaining_amount") @db.Decimal(15, 2)
   status          ScheduleStatus @default(UPCOMING)
+  bakongMd5       String?        @map("bakong_md5") @db.VarChar(100)
+  settledAt       DateTime?      @map("settled_at") @db.Timestamptz(6)
   createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -657,4 +670,23 @@ model UserSetting {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_settings")
+}
+
+// ==========================================
+// 21. GENERAL LEDGER ENTITY (DOUBLE-ENTRY ACCOUNTING)
+// ==========================================
+model GeneralLedger {
+  id          String   @id @default(uuid()) @db.Uuid
+  journalId   String   @map("journal_id") @db.VarChar(50)
+  accountCode String   @map("account_code") @db.VarChar(50) // e.g. 1010-BAKONG-CLEARING, 1200-LOANS-RECEIVABLE, 4010-INTEREST-INCOME
+  debit       Decimal  @default(0.00) @db.Decimal(15, 2)
+  credit      Decimal  @default(0.00) @db.Decimal(15, 2)
+  reference   String   @db.VarChar(100)
+  narration   String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([journalId])
+  @@index([accountCode])
+  @@index([reference])
+  @@map("general_ledger")
 }

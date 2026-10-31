@@ -38,6 +38,19 @@ export interface SendPasswordChangedEmailParams {
   firstName?: string;
 }
 
+export interface RepaymentReceiptDetails {
+  borrowerName: string;
+  loanNumber: string;
+  installmentNo: number;
+  totalTenure?: number;
+  amountPaid: number;
+  currency?: 'USD' | 'KHR' | string;
+  transactionRef: string;
+  remainingBalance: number;
+  paidAt?: Date | string;
+  paymentMethod?: string;
+}
+
 export interface EmailSendResult {
   success: boolean;
   messageId?: string;
@@ -545,6 +558,146 @@ If you did not perform this action, please contact your system administrator imm
 
 Regards,
 Apex Loan Management System
+    `.trim();
+
+    return this.dispatchEmail({
+      toEmail,
+      subject,
+      textContent,
+      htmlContent,
+    });
+  }
+
+  /**
+   * Send Official Banking Repayment Receipt (Bakong KHQR Settlement)
+   */
+  public static async sendRepaymentReceipt(
+    toEmail: string,
+    details: RepaymentReceiptDetails
+  ): Promise<EmailSendResult> {
+    const isKHR = details.currency === 'KHR';
+    const amountStr = isKHR
+      ? `${new Intl.NumberFormat('km-KH').format(details.amountPaid)} KHR`
+      : `${Number(details.amountPaid).toFixed(2)}`;
+    const balanceStr = isKHR
+      ? `${new Intl.NumberFormat('km-KH').format(details.remainingBalance)} KHR`
+      : `${Number(details.remainingBalance).toFixed(2)}`;
+    const dateFormatted = details.paidAt
+      ? new Date(details.paidAt).toUTCString()
+      : new Date().toUTCString();
+
+    const subject = `[JAM SONG VICH] Official Payment Receipt: ${details.loanNumber} (Installment #${details.installmentNo})`;
+
+    const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0b1120; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #f8fafc;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #0b1120; padding: 36px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width: 560px; background-color: #0f172a; border: 1px solid #1e293b; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5);">
+          <!-- Top Brand Header -->
+          <tr>
+            <td style="background-color: #020617; padding: 24px 32px; border-bottom: 1px solid #1e293b;">
+              <table width="100%">
+                <tr>
+                  <td>
+                    <span style="color: #10b981; font-weight: 800; font-size: 18px; letter-spacing: 0.5px;">JAM SONG VICH</span>
+                    <div style="color: #94a3b8; font-size: 11px; margin-top: 2px;">Core Banking System • ប្រព័ន្ធគ្រប់គ្រងឥណទាន</div>
+                  </td>
+                  <td align="right">
+                    <span style="background-color: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 9999px;">
+                      SETTLED VIA KHQR
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Receipt Content -->
+          <tr>
+            <td style="padding: 32px;">
+              <h2 style="color: #ffffff; font-size: 20px; font-weight: 700; margin: 0 0 8px 0;">Official Payment Receipt</h2>
+              <p style="color: #94a3b8; font-size: 13px; line-height: 20px; margin: 0 0 24px 0;">
+                Dear <strong>${details.borrowerName}</strong>, your installment repayment has been cleared and settled successfully via NBC Bakong KHQR network.
+              </p>
+
+              <!-- Payment Summary Box -->
+              <table width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #020617; border: 1px solid #1e293b; border-radius: 8px; margin-bottom: 24px; overflow: hidden;">
+                <tr>
+                  <td style="padding: 16px; border-bottom: 1px solid #1e293b; color: #94a3b8; font-size: 12px;">Amount Settled:</td>
+                  <td style="padding: 16px; border-bottom: 1px solid #1e293b; color: #10b981; font-size: 18px; font-weight: 800; font-family: monospace; text-align: right;">${amountStr}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 12px 16px; border-bottom: 1px solid #1e293b; color: #94a3b8; font-size: 12px;">Loan Account No:</td>
+                  <td style="padding: 12px 16px; border-bottom: 1px solid #1e293b; color: #ffffff; font-size: 13px; font-weight: 600; font-family: monospace; text-align: right;">${details.loanNumber}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 12px 16px; border-bottom: 1px solid #1e293b; color: #94a3b8; font-size: 12px;">Installment Cycle:</td>
+                  <td style="padding: 12px 16px; border-bottom: 1px solid #1e293b; color: #ffffff; font-size: 13px; text-align: right;">Cycle #${details.installmentNo}${details.totalTenure ? ` of ${details.totalTenure}` : ''}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 12px 16px; border-bottom: 1px solid #1e293b; color: #94a3b8; font-size: 12px;">Transaction Reference:</td>
+                  <td style="padding: 12px 16px; border-bottom: 1px solid #1e293b; color: #38bdf8; font-size: 12px; font-family: monospace; text-align: right;">${details.transactionRef}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 12px 16px; border-bottom: 1px solid #1e293b; color: #94a3b8; font-size: 12px;">Receiving Bank:</td>
+                  <td style="padding: 12px 16px; border-bottom: 1px solid #1e293b; color: #ffffff; font-size: 13px; text-align: right;">ACLEDA Bank Plc.</td>
+                </tr>
+                <tr>
+                  <td style="padding: 12px 16px; border-bottom: 1px solid #1e293b; color: #94a3b8; font-size: 12px;">Remaining Balance:</td>
+                  <td style="padding: 12px 16px; border-bottom: 1px solid #1e293b; color: #f59e0b; font-size: 14px; font-weight: 700; font-family: monospace; text-align: right;">${balanceStr}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 12px 16px; color: #94a3b8; font-size: 12px;">Settlement Timestamp:</td>
+                  <td style="padding: 12px 16px; color: #cbd5e1; font-size: 12px; text-align: right;">${dateFormatted}</td>
+                </tr>
+              </table>
+
+              <p style="color: #64748b; font-size: 11px; line-height: 16px; margin: 0 0 20px 0;">
+                This electronic advice serves as official proof of payment for Cambodian National Bank and Credit Bureau Cambodia (CBC) compliance. Keep this receipt for your records.
+              </p>
+
+              <hr style="border: 0; border-top: 1px solid #1e293b; margin: 20px 0;" />
+
+              <table width="100%">
+                <tr>
+                  <td style="color: #475569; font-size: 11px;">
+                    JAM SONG VICH Microfinance & Core Banking<br>
+                    Licensed by National Bank of Cambodia
+                  </td>
+                  <td align="right" style="color: #475569; font-size: 11px;">
+                    Support: 010 487 718<br>
+                    support@jamsongvich.com
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `.trim();
+
+    const textContent = `
+JAM SONG VICH - Official Repayment Receipt
+Loan Account: ${details.loanNumber}
+Installment: #${details.installmentNo}
+Borrower: ${details.borrowerName}
+Amount Paid: ${amountStr}
+Remaining Balance: ${balanceStr}
+Transaction Ref: ${details.transactionRef}
+Settled: ${dateFormatted} via NBC Bakong KHQR (ACLEDA Bank Plc.)
+
+Thank you for banking with JAM SONG VICH.
     `.trim();
 
     return this.dispatchEmail({

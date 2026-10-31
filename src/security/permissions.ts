@@ -39,7 +39,52 @@ export enum Permission {
 
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   [UserRole.ADMIN]: Object.values(Permission),
+  [UserRole.MANAGER]: Object.values(Permission),
+  [UserRole.LOAN_OFFICER]: [
+    Permission.BORROWER_READ,
+    Permission.BORROWER_READ_ALL,
+    Permission.BORROWER_CREATE,
+    Permission.BORROWER_UPDATE,
+    Permission.APPLICATION_READ_OWN,
+    Permission.APPLICATION_READ_ALL,
+    Permission.APPLICATION_CREATE_OWN,
+    Permission.APPLICATION_CREATE_ANY,
+    Permission.APPLICATION_REVIEW,
+    Permission.LOAN_READ_OWN,
+    Permission.LOAN_READ_ALL,
+    Permission.PAYMENT_READ_ALL,
+    Permission.DOCUMENT_UPLOAD,
+    Permission.DOCUMENT_VERIFY,
+    Permission.DOCUMENT_READ,
+    Permission.DASHBOARD_VIEW,
+  ],
+  [UserRole.CREDIT_OFFICER]: [
+    Permission.BORROWER_READ_ALL,
+    Permission.APPLICATION_READ_ALL,
+    Permission.APPLICATION_REVIEW,
+    Permission.APPLICATION_APPROVE,
+    Permission.LOAN_READ_ALL,
+    Permission.DOCUMENT_READ,
+    Permission.DASHBOARD_VIEW,
+  ],
+  [UserRole.CASHIER]: [
+    Permission.BORROWER_READ_ALL,
+    Permission.LOAN_READ_ALL,
+    Permission.LOAN_DISBURSE,
+    Permission.PAYMENT_READ_ALL,
+    Permission.PAYMENT_COLLECT,
+    Permission.DASHBOARD_VIEW,
+  ],
   [UserRole.USER]: [
+    Permission.BORROWER_READ,
+    Permission.APPLICATION_READ_OWN,
+    Permission.APPLICATION_CREATE_OWN,
+    Permission.LOAN_READ_OWN,
+    Permission.PAYMENT_READ_OWN,
+    Permission.DOCUMENT_UPLOAD,
+    Permission.DOCUMENT_READ
+  ],
+  [UserRole.BORROWER]: [
     Permission.BORROWER_READ,
     Permission.APPLICATION_READ_OWN,
     Permission.APPLICATION_CREATE_OWN,
@@ -61,5 +106,6 @@ export function roleHasPermission(role: UserRole, permission: Permission): boole
 
 export function isStaffRole(role: UserRole | string | undefined | null): boolean {
   if (!role) return false;
-  return String(role).toUpperCase() === 'ADMIN';
+  const r = String(role).toUpperCase();
+  return ['ADMIN', 'MANAGER', 'LOAN_OFFICER', 'CREDIT_OFFICER', 'CASHIER'].includes(r);
 }

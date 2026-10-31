@@ -355,8 +355,8 @@ export const MOCK_BORROWERS: Borrower[] = [
 
 export const MOCK_LOANS: LoanAccount[] = [
   {
-    id: 'LN-2026-0042',
-    loanNumber: 'LN-2026-0042',
+    id: 'LN-2026-6042',
+    loanNumber: 'LN-2026-6042',
     applicationNo: 'APP-2026-0038',
     borrowerId: 'BOR-2026-0001',
     borrowerName: 'Johnathan Doe',
@@ -729,7 +729,7 @@ export const MOCK_APPLICATIONS: LoanApplication[] = [
 export const MOCK_RECEIPTS: PaymentReceipt[] = [
   {
     receiptNo: 'REC-2026-0042',
-    loanNumber: 'LN-2026-0042',
+    loanNumber: 'LN-2026-6042',
     borrowerId: 'BOR-2026-0001',
     borrowerName: 'Johnathan Doe',
     installmentNo: 4,
@@ -808,7 +808,7 @@ export const MOCK_AUDIT_LOGS: SystemActivityEvent[] = [
     ipAddress: '192.168.1.104',
     amountUSD: 532.50,
     details: {
-      loanNumber: 'LN-2026-0042',
+      loanNumber: 'LN-2026-6042',
       borrower: 'Sokha Chan',
       channel: 'Dynamic QR Code (Bakong)',
       allocation: { principal: 500.0, interest: 32.5, lateFee: 0 }

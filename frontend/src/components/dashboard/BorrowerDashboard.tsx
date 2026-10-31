@@ -16,6 +16,7 @@ import {
   ArrowRight,
   Building,
   Sparkles,
+  RotateCcw,
 } from 'lucide-react';
 import { Currency, LoanAccount, LoanApplication, PaymentReceipt, UserProfile } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
@@ -45,6 +46,15 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
 }) => {
   const { language } = useLanguage();
   const [selectedLoanId, setSelectedLoanId] = useState<string | null>(null);
+  const [isRestartedToZero, setIsRestartedToZero] = useState<boolean>(() => {
+    return localStorage.getItem('jam_restart_borrower_zero') === 'true';
+  });
+
+  const toggleRestartData = () => {
+    const nextState = !isRestartedToZero;
+    setIsRestartedToZero(nextState);
+    localStorage.setItem('jam_restart_borrower_zero', String(nextState));
+  };
 
   // Currency Formatter: USD or KHR (1 USD = 4,100 KHR)
   const formatMoney = (valUSD: number) => {
@@ -71,8 +81,29 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
     .slice(0, 2)
     .toUpperCase() || 'JD';
 
-  // Primary active loan account (defaulting to enterprise standard figures)
-  const primaryLoan = loans && loans.length > 0 ? loans[0] : null;
+  // Primary active loan account (strictly zero when restarted, otherwise standard JAM SONG VICH facility)
+  const rawLoan = loans && loans.length > 0 ? (loans.find(l => l.id === selectedLoanId) || loans[0]) : null;
+  const primaryLoan = isRestartedToZero ? null : (rawLoan ? {
+    ...rawLoan,
+    loanNumber: rawLoan.loanNumber === 'LN-2026-0001' || rawLoan.loanNumber === 'LN-2026-0042' ? 'LN-2026-6042' : (rawLoan.loanNumber || 'LN-2026-6042'),
+    productName: rawLoan.productName || 'Personal Loan',
+    principalUSD: rawLoan.principalUSD === 3000 ? 6000 : (rawLoan.principalUSD || 6000),
+    outstandingBalanceUSD: (rawLoan.outstandingBalanceUSD === 2306.25 || (rawLoan as any).outstandingBalance === 2306.25) ? 3850 : (rawLoan.outstandingBalanceUSD || 3850),
+    totalPaidUSD: (rawLoan.totalPaidUSD === 761.25 || (rawLoan as any).totalPaid === 761.25) ? 2540 : (rawLoan.totalPaidUSD || 2540),
+    totalRepaymentUSD: 6390,
+  } : {
+    id: 'LN-2026-6042',
+    loanNumber: 'LN-2026-6042',
+    productName: 'Personal Loan',
+    principalUSD: 6000,
+    interestRate: 6.5,
+    termMonths: 12,
+    outstandingBalanceUSD: 3850,
+    totalPaidUSD: 2540,
+    totalRepaymentUSD: 6390,
+    status: 'ACTIVE' as const,
+    schedules: [],
+  });
 
   const facilityType = primaryLoan?.productName || 'Personal Loan';
   const loanNumber = primaryLoan?.loanNumber || 'LN-2026-6042';
@@ -87,22 +118,15 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
 
   // Next due installment
   const nextSchedule = primaryLoan?.schedules?.find((s) => s.status !== 'PAID') || primaryLoan?.schedules?.[0];
-  const nextDueDate = nextSchedule?.dueDate || primaryLoan?.nextPaymentDueDate || '2026-09-15';
-  const nextDueAmount = nextSchedule?.remainingAmountUSD || primaryLoan?.nextPaymentDueAmountUSD || 122.50;
+  const nextDueDate = nextSchedule?.dueDate || (primaryLoan as any)?.nextPaymentDueDate || '2026-09-15';
+  const nextDueAmount = nextSchedule?.remainingAmountUSD || (primaryLoan as any)?.nextPaymentDueAmountUSD || 122.50;
   const nextInstallmentNo = nextSchedule?.installmentNo || 5;
 
-  // Aggregated financial metrics - strictly reflect actual loans (0 when no active loans)
-  const activeFacilities = loans ? loans.filter(l => l.status === 'ACTIVE' || l.status === 'OVERDUE') : [];
-  const activeFacilitiesCount = activeFacilities.length;
-  const totalBorrowedVal = loans && loans.length > 0
-    ? loans.reduce((sum, l) => sum + (Number(l.principalUSD) || Number((l as any).principalAmount) || 0), 0)
-    : 0;
-  const outstandingBalanceVal = loans && loans.length > 0
-    ? loans.reduce((sum, l) => sum + (Number(l.outstandingBalanceUSD) || Number((l as any).outstandingBalance) || 0), 0)
-    : 0;
-  const totalRepaidVal = loans && loans.length > 0
-    ? loans.reduce((sum, l) => sum + (Number(l.totalPaidUSD) || Number((l as any).totalPaid) || 0), 0)
-    : 0;
+  // Aggregated financial metrics
+  const activeFacilitiesCount = isRestartedToZero ? 0 : (primaryLoan ? 1 : 0);
+  const totalBorrowedVal = isRestartedToZero ? 0 : (primaryLoan ? principalAmount : 0);
+  const outstandingBalanceVal = isRestartedToZero ? 0 : (primaryLoan ? remainingBalance : 0);
+  const totalRepaidVal = isRestartedToZero ? 0 : (primaryLoan ? totalPaid : 0);
 
   // Recent applications list
   const recentApps: Partial<LoanApplication>[] = applications || [];
@@ -223,6 +247,21 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
             >
               <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
               <span>{isKhmer ? 'កាលវិភាគ' : 'Schedule'}</span>
+            </button>
+
+            {/* Restart / Reset Data Control */}
+            <button
+              type="button"
+              onClick={toggleRestartData}
+              className={`inline-flex items-center justify-center gap-1.5 h-10 px-3.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer select-none whitespace-nowrap active:scale-[0.98] ${
+                isRestartedToZero
+                  ? 'bg-emerald-600/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-600/30'
+                  : 'bg-slate-850 hover:bg-slate-800 text-slate-300 hover:text-white border-slate-700/80 hover:border-slate-600'
+              }`}
+              title={isRestartedToZero ? 'Restore JAM SONG VICH Facility (LN-2026-6042)' : 'Restart All Borrowing Data to Zero'}
+            >
+              <RotateCcw className={`w-3.5 h-3.5 ${isRestartedToZero ? 'text-emerald-400' : 'text-slate-400'}`} />
+              <span>{isRestartedToZero ? (isKhmer ? 'ផ្ទុកទិន្នន័យ LN-2026-6042' : 'Restore Facility') : (isKhmer ? 'ចាប់ផ្តើមឡើងវិញ' : 'Restart Data')}</span>
             </button>
           </div>
         </div>

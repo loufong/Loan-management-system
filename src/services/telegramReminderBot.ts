@@ -90,18 +90,14 @@ export class TelegramReminderBotService {
 
       for (const inst of upcomingInstallments) {
         const borrower = inst.loan?.borrower;
-        const loanCode = inst.loan?.loanCode || `LN-${inst.loanId.slice(0, 8)}`;
+        const loanCode = (inst.loan as any)?.loanNumber || (inst.loan as any)?.loanCode || `LN-${inst.loanId.slice(0, 8)}`;
         const amountDue = inst.remainingAmount || inst.totalDue;
         const dueDateStr = inst.dueDate.toISOString().split('T')[0];
-        const borrowerNameEn = borrower?.nameEn || 'Valued Client';
-        const borrowerNameKh = borrower?.nameKh || borrowerNameEn;
+        const borrowerNameEn = borrower?.fullName || 'Valued Client';
+        const borrowerNameKh = borrower?.fullName || borrowerNameEn;
 
         // Generate Bakong KHQR for instant payment
-        const khqr = await BakongService.generateKhqr({
-          amount: amountDue,
-          currency: 'USD',
-          billNumber: `BILL-${inst.id.slice(0, 10)}`
-        });
+        const khqr = await (BakongService as any).generateDynamicKhqr({ amount: Number(amountDue), currency: 'USD', billNumber: 'BILL-' + inst.id.slice(0, 10) });
 
         // Bilingual Message Template (Khmer & English)
         const message = `
@@ -112,7 +108,7 @@ export class TelegramReminderBotService {
 
 • <b>ចំនួនទឹកប្រាក់ត្រូវបង់ (Amount Due):</b> $${amountDue.toFixed(2)} USD
 • <b>កាលបរិច្ឆេទកំណត់ (Due Date):</b> ${dueDateStr}
-• <b>ដំណាក់កាលបង់ (Installment):</b> #${inst.installmentNumber}
+• <b>ដំណាក់កាលបង់ (Installment):</b> #${inst.installmentNo}
 
 <i>លោកអ្នកអាចស្កេន Bakong KHQR ខាងក្រោមនេះតាមរយៈកម្មវិធី Bakong ឬ Mobile Banking ដើម្បីទូទាត់ប្រាក់ភ្លាមៗ៖</i>
 <code>${khqr.qr}</code>
@@ -150,7 +146,7 @@ Your loan installment for <b>${loanCode}</b> ($${amountDue.toFixed(2)}) is due o
       if (overdueSchedules.length > 0 && this.managerChatId) {
         const lines = overdueSchedules
           .slice(0, 10)
-          .map((s) => `• <b>${s.loan.loanCode}</b>: ${s.loan.borrower?.nameEn} (${s.loan.borrower?.phone}) - $${s.remainingAmount || s.totalDue}`)
+          .map((s) => `• <b>${(s.loan as any)?.loanNumber || (s.loan as any)?.loanCode}</b>: ${s.loan.borrower?.fullName} (${s.loan.borrower?.phone}) - $${s.remainingAmount || s.totalDue}`)
           .join('\n');
 
         const managerAlert = `

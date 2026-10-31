@@ -268,7 +268,7 @@ async function main() {
       productName: 'Education Loan',
       minAmount: new Prisma.Decimal('500.00'),
       maxAmount: new Prisma.Decimal('10000.00'),
-      interestRate: new Prisma.Decimal('4.50'), // 4.5% annual
+      interestRate: new Prisma.Decimal('6.50'), // 4.5% annual
       minTerm: 3,
       maxTerm: 24,
       repaymentFrequency: RepaymentFrequency.MONTHLY,
@@ -277,6 +277,7 @@ async function main() {
     }
   });
 
+  const personalLoan = academicMicroloan;
   const emergencyReliefLoan = await prisma.loanProduct.create({
     data: {
       productName: 'Emergency Loan',
@@ -448,8 +449,8 @@ async function main() {
   const app1 = await prisma.loanApplication.create({
     data: {
       applicationNo: 'APP-2026-0001',
-      borrowerId: borrower2.id,
-      productId: academicMicroloan.id,
+      borrowerId: borrower1.id,
+      productId: personalLoan.id,
       requestedAmount: new Prisma.Decimal('3000.00'),
       requestedTerm: 6, // 6 months
       purpose: 'Payment of Final Semester Lab Fees and Thesis Defense Registration',
@@ -528,7 +529,7 @@ async function main() {
   const app2 = await prisma.loanApplication.create({
     data: {
       applicationNo: 'APP-2026-0002',
-      borrowerId: borrower2.id,
+      borrowerId: borrower1.id,
       productId: emergencyReliefLoan.id,
       requestedAmount: new Prisma.Decimal('1000.00'),
       requestedTerm: 4,
@@ -614,7 +615,7 @@ async function main() {
     data: {
       applicationNo: 'APP-2026-0005',
       borrowerId: borrower5.id,
-      productId: academicMicroloan.id,
+      productId: personalLoan.id,
       requestedAmount: new Prisma.Decimal('2500.00'),
       requestedTerm: 6,
       purpose: 'Conference attendance and publication index fees',
@@ -704,7 +705,7 @@ async function main() {
   const app7 = await prisma.loanApplication.create({
     data: {
       applicationNo: 'APP-2026-0007',
-      borrowerId: borrower2.id,
+      borrowerId: borrower1.id,
       productId: emergencyReliefLoan.id,
       requestedAmount: new Prisma.Decimal('800.00'),
       requestedTerm: 2,
@@ -807,18 +808,18 @@ async function main() {
   // Monthly Installment = $511.25 (Principal: $500.00, Interest: $11.25)
   const loan1 = await prisma.loan.create({
     data: {
-      loanNumber: 'LN-2026-0001',
+      loanNumber: 'LN-2026-6042',
       applicationId: app1.id,
-      borrowerId: borrower2.id,
-      productId: academicMicroloan.id,
-      principalAmount: new Prisma.Decimal('3000.00'),
-      interestRate: new Prisma.Decimal('4.50'),
-      termMonths: 6,
+      borrowerId: borrower1.id,
+      productId: personalLoan.id,
+      principalAmount: new Prisma.Decimal('6000.00'),
+      interestRate: new Prisma.Decimal('6.50'),
+      termMonths: 12,
       repaymentFrequency: RepaymentFrequency.MONTHLY,
-      totalInterest: new Prisma.Decimal('67.50'),
-      totalRepayment: new Prisma.Decimal('3067.50'),
-      totalPaid: new Prisma.Decimal('761.25'), // Paid installment 1 ($511.25) + partial installment 2 ($250.00)
-      outstandingBalance: new Prisma.Decimal('2306.25'),
+      totalInterest: new Prisma.Decimal('390.00'),
+      totalRepayment: new Prisma.Decimal('6390.00'),
+      totalPaid: new Prisma.Decimal('2540.00'),
+      outstandingBalance: new Prisma.Decimal('3850.00'),
       startDate: new Date('2026-09-01'),
       endDate: new Date('2027-03-01'),
       status: LoanStatus.ACTIVE

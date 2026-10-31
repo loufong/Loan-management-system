@@ -1717,6 +1717,82 @@ class ApiService {
       body: JSON.stringify(data),
     });
   }
+
+  // --- EXECUTIVE DATA ANALYTICS & PORTFOLIO INTELLIGENCE ---
+  public async getAnalyticsSummary(params?: { branch?: string; granularity?: string; portfolio?: string }): Promise<any> {
+    try {
+      const q = new URLSearchParams();
+      if (params?.branch) q.append('branch', params.branch);
+      if (params?.granularity) q.append('granularity', params.granularity);
+      if (params?.portfolio) q.append('portfolio', params.portfolio);
+      const queryString = q.toString() ? `?${q.toString()}` : '';
+      return await this.request<any>(`/analytics/portfolio-summary${queryString}`);
+    } catch {
+      return null;
+    }
+  }
+
+  public async getDelinquencyMatrix(): Promise<any> {
+    try {
+      return await this.request<any>('/analytics/delinquency-matrix');
+    } catch {
+      return null;
+    }
+  }
+
+  public async getVintageCohorts(): Promise<any[]> {
+    try {
+      const res = await this.request<any>('/analytics/vintage-cohorts');
+      return Array.isArray(res) ? res : res?.items || [];
+    } catch {
+      return [];
+    }
+  }
+
+  public async getCurrencyExposure(): Promise<any> {
+    try {
+      return await this.request<any>('/analytics/currency-exposure');
+    } catch {
+      return null;
+    }
+  }
+
+  public async getDisbursementRecoveryVelocity(): Promise<any[]> {
+    try {
+      const res = await this.request<any>('/analytics/velocity-t12m');
+      return Array.isArray(res) ? res : res?.items || [];
+    } catch {
+      return [];
+    }
+  }
+
+  public async getSectorCollateralDistribution(): Promise<any> {
+    try {
+      return await this.request<any>('/analytics/sector-collateral');
+    } catch {
+      return null;
+    }
+  }
+
+  public async getBakongAuditLedger(): Promise<any[]> {
+    try {
+      const res = await this.request<any>('/analytics/bakong-audit-ledger');
+      return Array.isArray(res) ? res : res?.items || [];
+    } catch {
+      return [];
+    }
+  }
+
+  public async runStressTestSimulation(scenario: string, customShockPercent?: number): Promise<any> {
+    try {
+      return await this.request<any>('/analytics/stress-test', {
+        method: 'POST',
+        body: JSON.stringify({ scenario, customShockPercent }),
+      });
+    } catch {
+      return null;
+    }
+  }
 }
 
 export const api = new ApiService();

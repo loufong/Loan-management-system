@@ -11,8 +11,11 @@ import {
   Printer,
   ArrowUpDown,
   ShieldAlert,
-  Loader2
+  Loader2,
+  BarChart3,
+  Table
 } from 'lucide-react';
+import { ExecutiveAnalyticsDashboard } from '../analytics/ExecutiveAnalyticsDashboard';
 
 export type { ReportItem };
 
@@ -54,6 +57,9 @@ export const BIReportingStudio: React.FC<BIReportingStudioProps> = ({
 
   const currentRole = (currentUser?.role || '').toLowerCase();
   const isAllowedStaff = ['admin', 'superadmin', 'manager', 'accountant', 'loan_officer', 'credit_officer', 'cashier', 'teller', 'checker'].includes(currentRole) || !currentUser;
+
+  // View Mode: Executive Visual Analytics vs Classic Tabular Regulatory Reports
+  const [viewMode, setViewMode] = useState<'analytics' | 'tabular'>('analytics');
 
   // Top Control Bar State
   const [reportType, setReportType] = useState<
@@ -143,7 +149,41 @@ export const BIReportingStudio: React.FC<BIReportingStudioProps> = ({
 
   return (
     <div className="space-y-6 font-sans">
-      {/* 1. Header */}
+      {/* 0. Top Suite Mode Selector: Executive Analytics vs Tabular Studio */}
+      <div className="flex items-center gap-2 p-1.5 bg-slate-900 border border-slate-800 rounded-xl w-fit">
+        <button
+          onClick={() => setViewMode('analytics')}
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            viewMode === 'analytics'
+              ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+          }`}
+        >
+          <BarChart3 className="w-4 h-4" />
+          <span>Executive Portfolio Intelligence & Surveillance</span>
+          <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-emerald-950/40 text-emerald-300 border border-emerald-500/30">
+            LIVE NBC
+          </span>
+        </button>
+
+        <button
+          onClick={() => setViewMode('tabular')}
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            viewMode === 'tabular'
+              ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+          }`}
+        >
+          <Table className="w-4 h-4" />
+          <span>Tabular Regulatory Reports & CSV Studio</span>
+        </button>
+      </div>
+
+      {viewMode === 'analytics' ? (
+        <ExecutiveAnalyticsDashboard currency={reportCurrency} />
+      ) : (
+        <>
+          {/* 1. Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-[#E2E8F0]">
         <div>
           <div className="flex items-center gap-2.5">
@@ -392,6 +432,8 @@ export const BIReportingStudio: React.FC<BIReportingStudioProps> = ({
           </table>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 };

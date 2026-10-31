@@ -18,6 +18,7 @@ import { reportRouter } from './modules/reports/report.routes';
 import { notificationRouter } from './modules/notifications/notification.routes';
 import { userRouter } from './modules/users/user.routes';
 import { adminRouter } from './modules/admin/admin.routes';
+import { analyticsRouter } from './modules/analytics/analytics.routes';
 import { demoRouter } from './modules/demo/demo.routes';
 import { borrowerPortalRouter } from './modules/borrower-portal/borrower-portal.routes';
 import { openApiSpec, renderDocs } from './modules/docs/openapi';
@@ -233,6 +234,7 @@ export function createApp(): Application {
   // 9. KPI Dashboard & Reports
   app.use(['/api/dashboard', '/api/v1/dashboard'], dashboardRouter);
   app.use(['/api/reports', '/api/v1/reports'], reportRouter);
+  app.use(['/api/analytics', '/api/v1/analytics'], analyticsRouter);
 
   // 10. Notifications & Alerts
   app.use(['/api/notifications', '/api/v1/notifications'], notificationRouter);

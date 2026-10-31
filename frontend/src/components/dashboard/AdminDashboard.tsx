@@ -30,7 +30,8 @@ import {
   FileCheck2,
   RefreshCw,
   SlidersHorizontal,
-  ChevronDown
+  ChevronDown,
+  BarChart3
 } from 'lucide-react';
 import { Currency, LoanAccount, Borrower, LoanApplication, PaymentReceipt, UserProfile } from '../../types';
 import { api } from '../../services/api';
@@ -742,6 +743,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 Bakong Core: <span className="text-emerald-400 font-bold">Connected</span> (42ms)
               </span>
             </div>
+
+            {/* Direct Trigger to Executive Portfolio Intelligence & Risk Engine */}
+            <button
+              onClick={() => onNavigate?.('/admin/analytics')}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-500/15 to-teal-500/15 hover:from-emerald-500/25 hover:to-teal-500/25 border border-emerald-500/30 rounded-xl text-xs font-bold text-emerald-300 shadow-sm transition-all cursor-pointer"
+              title="Open Executive Analytics & Portfolio Intelligence Suite"
+            >
+              <BarChart3 className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Portfolio Intelligence & Risk Engine →</span>
+            </button>
 
             {/* Super Admin Profile Badge */}
             <div className="flex items-center gap-2 px-3 py-1 bg-[#0f172a] border border-[#1e293b] rounded-xl">

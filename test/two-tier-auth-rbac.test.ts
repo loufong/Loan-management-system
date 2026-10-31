@@ -414,7 +414,48 @@ async function runTests() {
 
   console.log('✅ Direct URL navigation verified: unauthenticated -> /login, normal user -> /user/dashboard?denied=true\n');
 
-  console.log('🎉 ALL 14 TWO-TIER AUTHENTICATION & AUTHORIZATION TESTS PASSED PERFECTLY!\n');
+  // =========================================================================
+  // Case 15: Executive Analytics API RBAC Gate & Surveillance Endpoints
+  // =========================================================================
+  console.log('--- TEST 15: Executive Analytics API RBAC Gate & Portfolio Intelligence ---');
+  // 15.1: Unauthenticated request to /api/v1/analytics/portfolio-summary -> 401
+  const resAnalyticsUnauth = await request('GET', '/api/v1/analytics/portfolio-summary');
+  assert.strictEqual(resAnalyticsUnauth.status, 401, 'Unauthenticated query to analytics API must return 401');
+
+  // 15.2: Normal borrower / student user to /api/v1/analytics/portfolio-summary -> 403 Forbidden
+  const resAnalyticsUser = await request('GET', '/api/v1/analytics/portfolio-summary', undefined, {
+    Authorization: `Bearer ${userAToken}`
+  });
+  assert.strictEqual(resAnalyticsUser.status, 403, 'Normal borrower query to analytics API must return 403 Forbidden');
+
+  // 15.3: Super Admin query to /api/v1/analytics/portfolio-summary -> 200 OK
+  const resAnalyticsAdmin = await request('GET', '/api/v1/analytics/portfolio-summary', undefined, {
+    Authorization: `Bearer ${adminLogin.accessToken}`
+  });
+  assert.strictEqual(resAnalyticsAdmin.status, 200, 'Admin query to analytics API must return 200 OK');
+  assert.ok(
+    (resAnalyticsAdmin.body as any).data?.glp?.totalUSD > 0,
+    'Gross Loan Portfolio USD must be calculated'
+  );
+  assert.strictEqual(
+    (resAnalyticsAdmin.body as any).data?.glp?.totalKHR,
+    Math.round((resAnalyticsAdmin.body as any).data?.glp?.totalUSD * 4100),
+    'NBC exchange rate calculation must match 4100 KHR/USD'
+  );
+
+  // 15.4: Stress Test simulation POST -> 200 OK
+  const resStressAdmin = await request('POST', '/api/v1/analytics/stress-test', {
+    scenario: 'MODERATE',
+    defaultShockPercent: 25
+  }, {
+    Authorization: `Bearer ${adminLogin.accessToken}`
+  });
+  assert.strictEqual(resStressAdmin.status, 200, 'Admin running stress test must return 200 OK');
+  assert.ok((resStressAdmin.body as any).data?.simulatedParPercent, 'Simulated PAR must be returned');
+
+  console.log('✅ Executive Analytics RBAC gate verified: unauthenticated 401, borrower 403, admin 200 with macro stress testing\n');
+
+  console.log('🎉 ALL 15 TWO-TIER AUTHENTICATION & AUTHORIZATION TESTS PASSED PERFECTLY!\n');
   process.exit(0);
 }
 

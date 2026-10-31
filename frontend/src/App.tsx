@@ -66,6 +66,7 @@ import { LoanProductsCatalog } from './components/products/LoanProductsCatalog';
 
 // Screen 9: Portfolio Reports & BI Analytics
 import { BIReportingStudio } from './components/reports/BIReportingStudio';
+import { ExecutiveAnalyticsDashboard } from './components/analytics/ExecutiveAnalyticsDashboard';
 
 // Screen 10: System Audit Trail & Immutable Ledger
 import { AuditTrailLedger } from './components/audit/AuditTrailLedger';
@@ -383,6 +384,8 @@ export const App: React.FC = () => {
       // 3. CANONICAL ROUTE DISPATCH
       if (path === '/admin/dashboard' || path === '/admin') {
         setActiveTab('dashboard');
+      } else if (path === '/admin/analytics' || path === '/analytics') {
+        setActiveTab('analytics');
       } else if (path === '/admin/borrowers' || path.startsWith('/admin/borrowers')) {
         setActiveTab('borrowers');
       } else if (path === '/admin/users') {
@@ -741,6 +744,14 @@ export const App: React.FC = () => {
     if (navTarget === 'dashboard' || navTarget === '/dashboard' || navTarget === '/admin/dashboard' || navTarget === '/admin' || navTarget === 'admin') {
       targetPath = isAdmin ? '/admin/dashboard' : '/my-loans';
     } else if (
+      navTarget === 'analytics' ||
+      navTarget === '/admin/analytics' ||
+      navTarget === '/analytics' ||
+      navTarget === 'portfolio_intelligence' ||
+      navTarget === 'risk_engine'
+    ) {
+      targetPath = isAdmin ? '/admin/analytics' : '/my-loans';
+    } else if (
       navTarget === 'borrowers' ||
       navTarget === 'admin_borrowers' ||
       navTarget === 'borrower_directory' ||
@@ -908,6 +919,8 @@ export const App: React.FC = () => {
       setActiveTab('borrowers');
     } else if (targetPath === '/admin/dashboard' || targetPath === '/admin') {
       setActiveTab('dashboard');
+    } else if (targetPath === '/admin/analytics' || targetPath === '/analytics') {
+      setActiveTab('analytics');
     } else if (targetPath === '/portal' || targetPath === '/my-loans') {
       setActiveTab('borrower_dashboard');
     } else if (targetPath === '/dashboard') {
@@ -1616,6 +1629,14 @@ export const App: React.FC = () => {
               onApplyProduct={(prodId) => {
                 setActiveTab('new-application');
               }}
+            />
+          )}
+
+          {/* Executive Data Analytics & Portfolio Intelligence Dashboard (Super Admin Core Banking) */}
+          {activeTab === 'analytics' && (
+            <ExecutiveAnalyticsDashboard
+              currency={currency}
+              onNavigate={handleNavSelection}
             />
           )}
 

@@ -347,6 +347,14 @@ async function runTests() {
     );
   }
   assert.ok(suspendedBlocked, 'Suspended user must be prevented from logging in');
+
+  // Clean up temporary test users so they do not pollute the database
+  await prisma.user.deleteMany({
+    where: {
+      email: { in: ['inactive@example.com', 'suspended@example.com'] },
+    },
+  });
+
   console.log('✅ Inactive and suspended users blocked from logging in with clear status messages\n');
 
   // =========================================================================

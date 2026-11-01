@@ -203,8 +203,6 @@ class ApiService {
       'user': { role: 'BORROWER', status: 'active', name: 'Johnathan Doe', email: 'user@example.com', username: 'user', borrowerId: 'BOR-2026-0001' },
       'johnathan.doe@student.edu': { role: 'BORROWER', status: 'active', name: 'Johnathan Doe', email: 'johnathan.doe@student.edu', username: 'j.doe', borrowerId: 'BOR-2026-0001' },
       'j.doe': { role: 'BORROWER', status: 'active', name: 'Johnathan Doe', email: 'johnathan.doe@student.edu', username: 'j.doe', borrowerId: 'BOR-2026-0001' },
-      'inactive@example.com': { role: 'BORROWER', status: 'inactive', name: 'Inactive User', email: 'inactive@example.com', username: 'inactive' },
-      'suspended@example.com': { role: 'BORROWER', status: 'suspended', name: 'Suspended User', email: 'suspended@example.com', username: 'suspended' },
       ...registeredUsersMap,
     };
 

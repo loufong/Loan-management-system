@@ -210,7 +210,7 @@ export const App: React.FC = () => {
   };
 
   const [currentUser, setCurrentUser] = useState<UserProfile>(() => {
-    if (authUser) {
+    if (authUser && authUser.name !== 'Inactive User' && authUser.email !== 'inactive@example.com') {
       const roleUpper = (authUser.role || 'BORROWER').toUpperCase();
       const isStaff = ['ADMIN', 'SUPER_ADMIN', 'SUPERADMIN', 'MANAGER', 'LOAN_OFFICER', 'CREDIT_OFFICER', 'CASHIER'].includes(roleUpper);
       const nameVal = authUser.name || authUser.fullName || authUser.username || 'User';
@@ -225,10 +225,15 @@ export const App: React.FC = () => {
     }
     return defaultFallbackUser;
   });
-  const [activeRole, setActiveRole] = useState<UserRole>(() => ((authUser?.role || 'BORROWER').toUpperCase()) as UserRole);
+  const [activeRole, setActiveRole] = useState<UserRole>(() => {
+    if (authUser && authUser.name !== 'Inactive User' && authUser.email !== 'inactive@example.com') {
+      return ((authUser?.role || 'BORROWER').toUpperCase()) as UserRole;
+    }
+    return 'ADMIN';
+  });
 
   useEffect(() => {
-    if (authUser) {
+    if (authUser && authUser.name !== 'Inactive User' && authUser.email !== 'inactive@example.com') {
       const roleUpper = (authUser.role || 'BORROWER').toUpperCase();
       const isStaff = ['ADMIN', 'SUPER_ADMIN', 'SUPERADMIN', 'MANAGER', 'LOAN_OFFICER', 'CREDIT_OFFICER', 'CASHIER'].includes(roleUpper);
       const nameVal = authUser.name || authUser.fullName || authUser.username || 'User';
@@ -242,6 +247,9 @@ export const App: React.FC = () => {
       };
       setCurrentUser(scopedUser);
       setActiveRole(roleUpper as UserRole);
+    } else if (authUser && (authUser.name === 'Inactive User' || authUser.email === 'inactive@example.com')) {
+      setCurrentUser(defaultFallbackUser);
+      setActiveRole('ADMIN');
     }
   }, [authUser]);
 

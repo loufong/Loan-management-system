@@ -48,6 +48,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
+        if (parsed.email === 'inactive@example.com' || parsed.name === 'Inactive User' || parsed.status === 'inactive') {
+          try {
+            localStorage.removeItem('apex_user');
+            localStorage.removeItem('apex_token');
+            sessionStorage.removeItem('apex_user');
+            sessionStorage.removeItem('apex_token');
+          } catch {
+            // ignore
+          }
+          return null;
+        }
         // Normalize role to uppercase if present
         if (parsed.role) {
           parsed.role = parsed.role.toUpperCase();

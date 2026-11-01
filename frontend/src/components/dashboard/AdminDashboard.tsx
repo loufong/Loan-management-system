@@ -582,7 +582,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       return sum + val;
     }, 0) || 10100.00;
 
-    const settledReceiptsCount = propReceipts?.length || 0;
+    const settledReceiptsCount = (propReceipts && propReceipts.length > 0)
+      ? propReceipts.length
+      : loanStorageService.getReceipts().length;
 
     return {
       activeCount,
@@ -630,10 +632,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (!selectedLoanForManualPayment) return;
     setIsSubmittingManualPayment(true);
     try {
+      const rec = await loanStorageService.recordPayment({
+        loanId: selectedLoanForManualPayment.loanId,
+        amount: manualPaymentForm.amount,
+        paymentMethod: (manualPaymentForm.paymentMethod === 'BAKONG' ? 'KHQR' : 'Cash') as any,
+        referenceNo: manualPaymentForm.referenceNumber,
+        notes: manualPaymentForm.note || (manualPaymentForm.paymentType === 'REPAYMENT' ? 'Manual Repayment Entry' : 'Interest / Penalty Waiver'),
+        cashierName: 'Super Admin Ledger',
+      });
+
       if (manualPaymentForm.paymentType === 'REPAYMENT') {
         setNotificationBanner({
           type: 'success',
-          message: `Manual Repayment of $${manualPaymentForm.amount.toFixed(2)} recorded for facility ${selectedLoanForManualPayment.loanId}! Journal: Dr 1010-BAKONG / Cr 1200-LOANS-RECEIVABLE.`,
+          message: `Manual Repayment of $${manualPaymentForm.amount.toFixed(2)} recorded for facility ${selectedLoanForManualPayment.loanId}! Receipt #${rec.receiptNo}. Journal: Dr 1010-BAKONG / Cr 1200-LOANS-RECEIVABLE.`,
         });
       } else {
         setNotificationBanner({
@@ -658,12 +669,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (!selectedLoanForRestructure) return;
     setIsRestructuring(true);
     try {
-      await api.restructureLoan(selectedLoanForRestructure.id, {
-        newInterestRateMonthly: restructureForm.newAprPercent / 12,
-        newTermMonths: restructureForm.newTermMonths,
-        reason: restructureForm.reason,
-        gracePeriodMonths: restructureForm.gracePeriodMonths,
-      });
+      try {
+        await api.restructureLoan(selectedLoanForRestructure.id, {
+          newInterestRateMonthly: restructureForm.newAprPercent / 12,
+          newTermMonths: restructureForm.newTermMonths,
+          reason: restructureForm.reason,
+          gracePeriodMonths: restructureForm.gracePeriodMonths,
+        });
+      } catch {
+        await loanStorageService.restructureLoan(selectedLoanForRestructure.loanId, {
+          newAprPercent: restructureForm.newAprPercent,
+          newTermMonths: restructureForm.newTermMonths,
+          reason: restructureForm.reason,
+        });
+      }
       setNotificationBanner({
         type: 'success',
         message: `Facility ${selectedLoanForRestructure.loanId} restructured successfully with zero float-rounding drift.`,
@@ -1410,9 +1429,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <td className="py-3 px-4">
                         <div className="space-y-0.5">
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-white group-hover:text-emerald-300 transition">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onNavigate?.(`/admin/borrowers/${row.borrower.id || row.borrower.clientCode}`);
+                              }}
+                              className="font-bold text-white group-hover:text-emerald-300 hover:underline transition text-left cursor-pointer"
+                              title="Open 360° Borrower Dossier"
+                            >
                               {row.borrower.nameEn}
-                            </span>
+                            </button>
                             <span className="text-[11px] text-slate-400 font-khmer">
                               ({row.borrower.nameKh})
                             </span>
@@ -1429,9 +1456,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       {/* Column 2: Facility & Account */}
                       <td className="py-3 px-4">
                         <div className="space-y-0.5 font-mono">
-                          <span className="font-bold text-white text-xs block">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedLoanForLedger(row);
+                            }}
+                            className="font-bold text-emerald-400 hover:text-emerald-300 hover:underline text-xs block text-left cursor-pointer"
+                            title="Open Amortization Ledger & Audit Drawer"
+                          >
                             {row.loanId}
-                          </span>
+                          </button>
                           <span className="text-[11px] text-slate-300 font-sans block">
                             {row.facility.productName}
                           </span>

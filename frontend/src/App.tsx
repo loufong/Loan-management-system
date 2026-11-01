@@ -67,7 +67,7 @@ import { LoanProductsCatalog } from './components/products/LoanProductsCatalog';
 // Screen 9: Portfolio Reports & BI Analytics
 import { BIReportingStudio } from './components/reports/BIReportingStudio';
 import { ExecutiveAnalyticsDashboard } from './components/analytics/ExecutiveAnalyticsDashboard';
-import { loanStorageService, LEDGER_UPDATE_EVENT } from './services/loanStorageService';
+import { loanStorageService, LEDGER_UPDATE_EVENT, generateAmortizationSchedule } from './services/loanStorageService';
 
 // Screen 10: System Audit Trail & Immutable Ledger
 import { AuditTrailLedger } from './components/audit/AuditTrailLedger';
@@ -394,7 +394,11 @@ export const App: React.FC = () => {
         setActiveTab('dashboard');
       } else if (path === '/admin/analytics' || path === '/analytics') {
         setActiveTab('analytics');
-      } else if (path === '/admin/borrowers' || path.startsWith('/admin/borrowers')) {
+      } else if (path.startsWith('/admin/borrowers/')) {
+        const bId = path.replace('/admin/borrowers/', '');
+        setSelectedBorrowerId(bId);
+        setActiveTab('borrower-detail');
+      } else if (path === '/admin/borrowers') {
         setActiveTab('borrowers');
       } else if (path === '/admin/users') {
         setActiveTab('user_management');
@@ -566,16 +570,19 @@ export const App: React.FC = () => {
         isStaff ? api.getAuditLogs().catch(() => []) : Promise.resolve([]),
         loanStorageService.getAllLoansForAdmin().catch(() => []),
       ]);
-      if (Array.isArray(b)) setBorrowers(b);
+      const unifiedBorrowers = loanStorageService.getBorrowers();
+      const combinedBorrowers = (Array.isArray(b) && b.length > 0) ? b : unifiedBorrowers;
+      setBorrowers(combinedBorrowers);
+
       if (Array.isArray(p) && p.length > 0) setProducts(p);
 
       // Map unified persistent loans to LoanAccount format
       const activeUnifiedLoans = (unifiedLoans || [])
-        .filter((u: any) => u?.facility && (u.facility.status === 'ACTIVE' || u.facility.status === 'OVERDUE'))
+        .filter((u: any) => u?.facility && (u.facility.status === 'ACTIVE' || u.facility.status === 'OVERDUE' || u.facility.status === 'IN_REPAYMENT'))
         .map((u: any) => ({
           id: u.id || `ln-${Date.now()}`,
           loanNumber: u.loanId || u.id || 'LN-2026-0000',
-          borrowerId: u.borrower?.id || 'BOR-2026-8801',
+          borrowerId: u.borrower?.id || 'bor-8801',
           borrowerName: u.borrower?.nameEn || u.borrower?.fullName || 'Client Borrower',
           borrowerAvatar: '',
           productId: u.id,
@@ -594,7 +601,11 @@ export const App: React.FC = () => {
           outstandingBalanceUSD: Number(u.repaymentProgress?.outstandingBalanceUSD || 0),
           totalPaidUSD: Number(u.repaymentProgress?.totalPaidUSD || 0),
           status: (u.facility?.status || 'ACTIVE') as any,
-          schedules: u.schedules || [],
+          schedules: u.schedules || generateAmortizationSchedule(
+            Number(u.principal?.disbursedAmountUSD || 0),
+            Number(u.principal?.aprPercent || 6.5),
+            Number(u.principal?.termMonths || 12)
+          ),
         }));
 
       const apiLoans = Array.isArray(l) ? l : [];
@@ -638,7 +649,9 @@ export const App: React.FC = () => {
       ];
       setApplications(combinedApps as any[]);
 
-      if (Array.isArray(r)) setReceipts(r);
+      const unifiedReceipts = loanStorageService.getReceipts();
+      const combinedReceipts = (Array.isArray(r) && r.length > 0) ? r : unifiedReceipts;
+      setReceipts(combinedReceipts);
       if (Array.isArray(n)) setNotifications(n);
       if (Array.isArray(audits)) setAuditLogs(audits);
     } catch (err) {
@@ -845,6 +858,11 @@ export const App: React.FC = () => {
       navTarget === 'risk_engine'
     ) {
       targetPath = isAdmin ? '/admin/analytics' : '/my-loans';
+    } else if (navTarget.startsWith('/admin/borrowers/')) {
+      const bId = navTarget.replace('/admin/borrowers/', '');
+      setSelectedBorrowerId(bId);
+      setActiveTab('borrower-detail');
+      targetPath = navTarget;
     } else if (
       navTarget === 'borrowers' ||
       navTarget === 'admin_borrowers' ||
@@ -1162,16 +1180,29 @@ export const App: React.FC = () => {
   // Callback Handlers
   const handleRecordPayment = async (paymentInput: any) => {
     try {
-      const receipt = await api.recordPayment({
-        loanId: paymentInput.loanNumber || paymentInput.loanId || selectedLoanId,
-        amount: paymentInput.amountPaidUSD || paymentInput.amount,
-        method: paymentInput.paymentMethod || paymentInput.method || 'CASH',
-        referenceNo: paymentInput.transactionRef || paymentInput.referenceNo,
-        notes: paymentInput.notes || 'Recorded via window cashier POS',
-      });
+      let receipt: any;
+      try {
+        receipt = await api.recordPayment({
+          loanId: paymentInput.loanNumber || paymentInput.loanId || selectedLoanId,
+          amount: paymentInput.amountPaidUSD || paymentInput.amount,
+          method: paymentInput.paymentMethod || paymentInput.method || 'CASH',
+          referenceNo: paymentInput.transactionRef || paymentInput.referenceNo,
+          notes: paymentInput.notes || 'Recorded via window cashier POS',
+        });
+      } catch {
+        receipt = await loanStorageService.recordPayment({
+          loanId: paymentInput.loanNumber || paymentInput.loanId || selectedLoanId,
+          amount: paymentInput.amountPaidUSD || paymentInput.amount,
+          paymentMethod: paymentInput.paymentMethod || paymentInput.method || 'CASH',
+          referenceNo: paymentInput.transactionRef || paymentInput.referenceNo,
+          receiptNo: paymentInput.receiptNo,
+          notes: paymentInput.notes || 'Recorded via window cashier POS',
+          cashierName: currentUser.name || 'Emily Ross (Cashier)',
+        });
+      }
       await reloadAllData();
       setActiveReceiptModal(receipt);
-      alert(`Payment of $${receipt.amountPaidUSD.toFixed(2)} recorded successfully! Receipt #${receipt.receiptNo}`);
+      alert(`Payment of $${(receipt.amountPaidUSD || paymentInput.amount).toFixed(2)} recorded successfully! Receipt #${receipt.receiptNo}`);
     } catch (err: any) {
       console.error('Payment error:', err);
       alert(`Payment failed: ${err.message || 'Error recording payment'}`);
@@ -1575,10 +1606,14 @@ export const App: React.FC = () => {
             <BorrowerDetail
               borrower={activeBorrower}
               loans={loans.filter(
-                (l) => l.borrowerId === activeBorrower.borrowerId || l.borrowerId === activeBorrower.id
+                (l) => l.borrowerId === activeBorrower.borrowerId ||
+                       l.borrowerId === activeBorrower.id ||
+                       (l.borrowerName && activeBorrower.fullName && l.borrowerName.toLowerCase().includes(activeBorrower.fullName.toLowerCase()))
               )}
               receipts={receipts.filter(
-                (r) => r.borrowerId === activeBorrower.borrowerId || r.borrowerId === activeBorrower.id
+                (r) => r.borrowerId === activeBorrower.borrowerId ||
+                       r.borrowerId === activeBorrower.id ||
+                       (r.borrowerName && activeBorrower.fullName && r.borrowerName.toLowerCase().includes(activeBorrower.fullName.toLowerCase()))
               )}
               currency={currency}
               onBack={() => setActiveTab('borrowers')}
@@ -1832,7 +1867,20 @@ export const App: React.FC = () => {
               initialAmountUSD={122.50}
               initialInstallmentNo={5}
               onNavigate={handleNavSelection}
-              onPaymentSettled={() => reloadAllData()}
+              onPaymentSettled={async (receipt) => {
+                if (receipt) {
+                  await loanStorageService.recordPayment({
+                    loanId: (receipt as any).facilityId || (userDisplayLoans[0]?.id || 'ln-001'),
+                    amount: receipt.amountUSD || (receipt as any).amountPaidUSD || 122.5,
+                    paymentMethod: receipt.paymentMethod || 'KHQR',
+                    referenceNo: receipt.transactionReference || (receipt as any).referenceNo,
+                    receiptNo: receipt.receiptNumber || (receipt as any).receiptNo,
+                    notes: 'Settled via Bakong KHQR dynamic gateway',
+                    cashierName: 'Bakong Universal Gateway',
+                  });
+                }
+                await reloadAllData();
+              }}
             />
           )}
 
@@ -2163,6 +2211,16 @@ export const App: React.FC = () => {
           initialAmount={borrowerPaymentTarget.amount}
           onClose={() => setBorrowerPaymentTarget(null)}
           onSuccess={async (receipt) => {
+            await loanStorageService.recordPayment({
+              loanId: receipt.loanNumber || borrowerPaymentTarget.loan.loanNumber || borrowerPaymentTarget.loan.id,
+              amount: receipt.amountPaidUSD,
+              paymentMethod: receipt.paymentMethod,
+              referenceNo: receipt.referenceNo || receipt.transactionRef,
+              receiptNo: receipt.receiptNo,
+              notes: receipt.notes,
+              cashierName: receipt.cashierName,
+              installmentNo: receipt.installmentNo,
+            });
             await reloadAllData();
             setActiveReceiptModal(receipt);
           }}

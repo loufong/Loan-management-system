@@ -227,7 +227,7 @@ export class AdminCoreController {
           if (statusFilter === 'DELINQUENT_1_30' && row.facility.health !== 'WATCHLIST') return false;
           if (statusFilter === 'PAR_30_PLUS' && row.facility.health !== 'DEFAULT_RISK') return false;
           if (statusFilter === 'MATURED' && row.facility.status !== 'COMPLETED') return false;
-          if (statusFilter === 'UNDERWRITING_PENDING' && row.facility.status !== 'PENDING') return false;
+          if (statusFilter === 'UNDERWRITING_PENDING' && (row.facility.status as string) !== 'PENDING' && (row.facility.status as string) !== 'UNDERWRITING_PENDING') return false;
         }
 
         if (search) {

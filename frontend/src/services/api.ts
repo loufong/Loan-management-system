@@ -1663,6 +1663,17 @@ class ApiService {
     }
   }
 
+  public async applyLoan(payload: any): Promise<any> {
+    try {
+      return await this.request<any>('/loans/apply', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    } catch {
+      return null;
+    }
+  }
+
   public async getAdminLoansLedger(params?: { status?: string; search?: string; page?: number; limit?: number }): Promise<any> {
     try {
       const q = new URLSearchParams();

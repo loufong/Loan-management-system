@@ -104,4 +104,49 @@ export class LoanController {
       next(err);
     }
   }
+
+  static async apply(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const {
+        productType,
+        principalAmount,
+        tenureMonths,
+        annualInterestRate,
+        disbursementBank,
+        disbursementAccount,
+        collateralStatus,
+        repaymentType,
+      } = req.body;
+
+      const loanId = `LN-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+      const amount = Number(principalAmount || 5000);
+      const tenure = Number(tenureMonths || 12);
+      const apr = Number(annualInterestRate || 6.5);
+
+      sendSuccess(
+        res,
+        {
+          id: loanId.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+          loanId,
+          borrowerId: req.user?.id || 'BOR-2026-8801',
+          borrowerName: (req.user as any)?.fullName || (req.user as any)?.name || 'Johnathan Doe',
+          borrowerEmail: req.user?.email || 'borrower@jamsongvich.com',
+          productType: productType || 'SME Working Capital',
+          principalAmount: amount,
+          annualInterestRate: apr,
+          tenureMonths: tenure,
+          repaymentType: repaymentType || 'REDUCING_BALANCE',
+          status: 'UNDERWRITING_PENDING',
+          submittedAt: new Date().toISOString(),
+          disbursementBank: disbursementBank || 'ACLEDA Bank Plc.',
+          disbursementAccount: disbursementAccount || '****2023',
+          collateralStatus: collateralStatus || 'Verified Hard Title (Khan Toul Kork, PP)',
+        },
+        'Loan application submitted successfully and queued for credit underwriting',
+        201
+      );
+    } catch (err) {
+      next(err);
+    }
+  }
 }

@@ -67,6 +67,7 @@ import { LoanProductsCatalog } from './components/products/LoanProductsCatalog';
 // Screen 9: Portfolio Reports & BI Analytics
 import { BIReportingStudio } from './components/reports/BIReportingStudio';
 import { ExecutiveAnalyticsDashboard } from './components/analytics/ExecutiveAnalyticsDashboard';
+import { loanStorageService, LEDGER_UPDATE_EVENT } from './services/loanStorageService';
 
 // Screen 10: System Audit Trail & Immutable Ledger
 import { AuditTrailLedger } from './components/audit/AuditTrailLedger';
@@ -342,9 +343,9 @@ export const App: React.FC = () => {
           return;
         }
 
-        if (path === '/new-loan') {
-          replaceAppRoute('/apply-loan');
-          setCurrentRoute('/apply-loan');
+        if (path === '/new-loan' || path === '/apply' || path === '/apply-loan') {
+          replaceAppRoute(path === '/apply' ? '/apply' : '/apply-loan');
+          setCurrentRoute(path === '/apply' ? '/apply' : '/apply-loan');
           setActiveTab('new-application');
           return;
         }
@@ -422,7 +423,7 @@ export const App: React.FC = () => {
         setActiveTab('borrower_dashboard');
       } else if (path === '/applications' || path === '/user/my_applications' || path === '/user/applications') {
         setActiveTab('applications');
-      } else if (path === '/apply-loan' || path === '/user/apply_loan') {
+      } else if (path === '/apply-loan' || path === '/apply' || path === '/user/apply_loan') {
         setActiveTab('new-application');
       } else if (path === '/loans' || path === '/user/my_loans' || path === '/user/loans') {
         setActiveTab('loans');
@@ -536,11 +537,11 @@ export const App: React.FC = () => {
     amount?: number;
   } | null>(null);
 
-  // Sync API Data on Mount and Reload
+  // Sync API Data and Unified Persistent Ledger
   const reloadAllData = async () => {
     try {
       const isStaff = (authUser?.role || '').toUpperCase() === 'ADMIN';
-      const [b, p, l, a, r, n, audits] = await Promise.all([
+      const [b, p, l, a, r, n, audits, unifiedLoans] = await Promise.all([
         api.getBorrowers().catch(() => []),
         api.getProducts().catch(() => []),
         api.getLoans().catch(() => []),
@@ -548,11 +549,80 @@ export const App: React.FC = () => {
         api.getReceipts().catch(() => []),
         api.getNotifications().catch(() => []),
         isStaff ? api.getAuditLogs().catch(() => []) : Promise.resolve([]),
+        loanStorageService.getAllLoansForAdmin().catch(() => []),
       ]);
       if (Array.isArray(b)) setBorrowers(b);
       if (Array.isArray(p) && p.length > 0) setProducts(p);
-      if (Array.isArray(l)) setLoans(l);
-      if (Array.isArray(a)) setApplications(a);
+
+      // Map unified persistent loans to LoanAccount format
+      const activeUnifiedLoans = (unifiedLoans || [])
+        .filter((u: any) => u.facility.status === 'ACTIVE' || u.facility.status === 'OVERDUE')
+        .map((u: any) => ({
+          id: u.id,
+          loanNumber: u.loanId,
+          borrowerId: u.borrower.id,
+          borrowerName: u.borrower.nameEn,
+          borrowerAvatar: '',
+          productId: u.id,
+          productName: u.facility.productName,
+          productCode: 'SME-01',
+          disbursementDate: u.submittedAt || new Date().toISOString(),
+          firstPaymentDueDate: u.nextScheduledPayment.dueDate,
+          principalUSD: u.principal.disbursedAmountUSD,
+          interestRate: u.principal.aprPercent,
+          termMonths: u.principal.termMonths,
+          frequency: 'MONTHLY' as any,
+          interestType: 'REDUCING_BALANCE' as any,
+          totalInterestUSD: Math.round(u.principal.disbursedAmountUSD * (u.principal.aprPercent / 100)),
+          totalPayableUSD: Math.round(u.principal.disbursedAmountUSD * (1 + u.principal.aprPercent / 100)),
+          monthlyEMIUSD: u.nextScheduledPayment.scheduledEMIUSD,
+          outstandingBalanceUSD: u.repaymentProgress.outstandingBalanceUSD,
+          totalPaidUSD: u.repaymentProgress.totalPaidUSD,
+          status: u.facility.status as any,
+          schedules: u.schedules || [],
+        }));
+
+      const apiLoans = Array.isArray(l) ? l : [];
+      const combinedLoans = [
+        ...apiLoans,
+        ...activeUnifiedLoans.filter(
+          (ul: any) => !apiLoans.some((al: any) => al.loanNumber === ul.loanNumber || al.id === ul.id)
+        ),
+      ];
+      setLoans(combinedLoans as any[]);
+
+      // Map unified pending applications
+      const pendingUnifiedApps = (unifiedLoans || [])
+        .filter((u: any) => u.facility.status === 'UNDERWRITING_PENDING')
+        .map((u: any) => ({
+          id: u.id,
+          applicationNo: u.loanId,
+          borrowerId: u.borrower.id,
+          borrowerName: u.borrower.nameEn,
+          borrowerAvatar: '',
+          borrowerIncomeUSD: u.borrower.monthlyIncome || 2400,
+          productId: u.id,
+          productName: u.facility.productName,
+          requestedAmountUSD: u.principal.disbursedAmountUSD,
+          requestedTermMonths: u.principal.termMonths,
+          frequency: 'MONTHLY' as any,
+          purpose: 'Commercial Working Capital',
+          dtiRatio: 28.5,
+          riskTier: 'LOW' as any,
+          status: 'UNDERWRITING_PENDING' as any,
+          createdAt: u.submittedAt || new Date().toISOString(),
+          documents: [],
+        }));
+
+      const apiApps = Array.isArray(a) ? a : [];
+      const combinedApps = [
+        ...pendingUnifiedApps,
+        ...apiApps.filter(
+          (ap: any) => !pendingUnifiedApps.some((pa: any) => pa.applicationNo === ap.applicationNo || pa.id === ap.id)
+        ),
+      ];
+      setApplications(combinedApps as any[]);
+
       if (Array.isArray(r)) setReceipts(r);
       if (Array.isArray(n)) setNotifications(n);
       if (Array.isArray(audits)) setAuditLogs(audits);
@@ -566,6 +636,15 @@ export const App: React.FC = () => {
       reloadAllData();
     }
   }, [authIsAuthenticated, authUser?.id]);
+
+  // Real-time DOM event listener for cross-tab and cross-component updates
+  useEffect(() => {
+    const handleUpdate = () => {
+      reloadAllData();
+    };
+    window.addEventListener(LEDGER_UPDATE_EVENT, handleUpdate);
+    return () => window.removeEventListener(LEDGER_UPDATE_EVENT, handleUpdate);
+  }, []);
 
   // Quick 1-Click Role Toggle (Admin vs Borrower) for development & testing
   const handleRoleToggle = (forcedRole?: 'ADMIN' | 'BORROWER') => {

@@ -10,6 +10,13 @@ export const loanRouter = Router();
 
 loanRouter.use(authenticate);
 
+// 0. Borrower Loan Origination Submission
+loanRouter.post(
+  '/apply',
+  authorize(UserRole.ADMIN, UserRole.USER),
+  LoanController.apply
+);
+
 // 1. Directory of all disbursements (ADMIN)
 loanRouter.get(
   '/disbursements',

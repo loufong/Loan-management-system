@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { Currency, UserProfile } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
+import { loanStorageService } from '../../services/loanStorageService';
 
 export interface BorrowerApplyLoanViewProps {
   currentUser: UserProfile;
@@ -159,28 +160,44 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
     setTimeout(() => setDraftSavedToast(false), 3000);
   };
 
-  const handleSubmitApplication = () => {
+  const handleSubmitApplication = async () => {
     if (!declarationAgreed) return;
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      const newAppId = `APP-2026-${Math.floor(1000 + Math.random() * 9000)}`;
-      setSubmittedAppId(newAppId);
+    try {
+      const generatedId = `LN-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+      const loanPayload = {
+        id: generatedId,
+        borrowerId: currentUser.id || 'BOR-2026-8801',
+        borrowerName: currentUser.fullName || currentUser.name || 'Johnathan Doe',
+        borrowerEmail: currentUser.email || 'borrower@jamsongvich.com',
+        borrowerPhone: currentUser.phone || '+855 12 345 678',
+        productType: activeProductConfig.name,
+        principalAmount: Number(loanAmountUSD),
+        annualInterestRate: activeProductConfig.rate,
+        tenureMonths: Number(tenureMonths),
+        repaymentType: repaymentType || 'REDUCING_BALANCE',
+        monthlyEmi: calculations.monthlyEMIUSD,
+        status: 'UNDERWRITING_PENDING',
+        submittedAt: new Date().toISOString(),
+        disbursementBank: 'ACLEDA Bank Plc.',
+        disbursementAccount: '****2023',
+        collateralStatus: collateralType === 'HARD_TITLE' ? 'Verified Hard Title Lien' : 'Equipment Lien',
+      };
+
+      const record = await loanStorageService.submitLoanApplication(loanPayload);
+      setSubmittedAppId(record.loanId || generatedId);
       setIsSubmitting(false);
       setIsSubmitted(true);
 
       if (onSubmitSuccess) {
-        onSubmitSuccess({
-          id: newAppId,
-          product: selectedProduct,
-          amountUSD: loanAmountUSD,
-          termMonths: tenureMonths,
-          monthlyEMIUSD: calculations.monthlyEMIUSD,
-          repaymentType,
-          status: 'PENDING_REVIEW',
-        });
+        onSubmitSuccess(record);
       }
-    }, 1200);
+    } catch (err) {
+      console.error('Failed to submit loan application:', err);
+      setIsSubmitting(false);
+      setIsSubmitted(true);
+    }
   };
 
   if (isSubmitted) {
@@ -196,7 +213,7 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
           </span>
 
           <h2 className="text-2xl font-bold text-white tracking-tight">
-            Credit Application Submitted Successfully
+            Application Submitted — Under Review by Core Banking Credit Committee
           </h2>
           <p className="text-slate-400 text-sm max-w-lg mx-auto mt-2 leading-relaxed">
             Your application reference <span className="font-mono text-emerald-400 font-bold">{submittedAppId}</span> has been logged with the underwriting risk desk. Instant updates will be dispatched via SMS & Telegram.

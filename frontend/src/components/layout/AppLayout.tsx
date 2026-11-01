@@ -115,63 +115,63 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     icon: any;
     path: string;
     badge?: number | string;
+    dividerBefore?: boolean;
     section?: string;
   }
 
   const staffNavLinks: LayoutNavLink[] = [
     {
       id: 'dashboard',
-      label: 'Overview (Portfolio & Risk KPIs)',
+      label: 'Overview',
       icon: LayoutDashboard,
       path: '/admin/dashboard',
-      section: 'CORE BANKING'
     },
     {
       id: 'approvals',
-      label: 'Loan Underwriting & Approvals',
+      label: 'Loan Approvals',
       icon: ShieldCheck,
       path: '/admin/approvals',
-      badge: pendingApprovalsCount > 0 ? pendingApprovalsCount : undefined
+      badge: pendingApprovalsCount > 0 ? pendingApprovalsCount : undefined,
     },
     {
       id: 'borrowers',
-      label: 'Active Facilities & Borrowers',
+      label: 'Active Facilities',
       icon: Landmark,
       path: '/admin/borrowers',
-      badge: activeFacilitiesCount > 0 ? activeFacilitiesCount : 6
+      badge: activeFacilitiesCount > 0 ? activeFacilitiesCount : 6,
     },
     {
       id: 'cashier',
-      label: 'Repayments & Bakong Ledger',
+      label: 'Repayments & Cashier',
       icon: Wallet,
       path: '/admin/cashier',
-      badge: overdueCount > 0 ? overdueCount : undefined
+      badge: overdueCount > 0 ? overdueCount : undefined,
     },
     {
       id: 'self-apply',
       label: 'Borrow for Myself',
       icon: UserCheck,
       path: '/apply',
-      section: 'EXECUTIVE BORROWING'
+      dividerBefore: true,
     },
     {
       id: 'my-repayments',
       label: 'My Personal Repayments',
       icon: Calendar,
-      path: '/repayments'
+      path: '/repayments',
     },
     {
       id: 'reports',
-      label: 'CBC Reporting & Credit Scoring',
+      label: 'Reports & Credit Scoring',
       icon: BarChart3,
       path: '/admin/reports',
-      section: 'MANAGEMENT & SYSTEM'
+      dividerBefore: true,
     },
     {
       id: 'settings',
-      label: 'System Audit Logs & Staff Permissions',
+      label: 'Settings & Audit Logs',
       icon: Settings,
-      path: '/admin/settings'
+      path: '/admin/settings',
     },
   ];
 
@@ -261,7 +261,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       {/* ========================================================================= */}
       <aside
         className={`hidden md:flex flex-col bg-slate-900 border-r border-slate-800 transition-all duration-300 relative z-30 ${
-          isSidebarCollapsed ? 'w-20' : 'w-64'
+          isSidebarCollapsed ? 'w-20' : 'w-68'
         }`}
       >
         {/* Brand Header */}
@@ -312,33 +312,43 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             const isActive = isItemActive(item);
             return (
               <React.Fragment key={item.id}>
+                {item.dividerBefore && !isSidebarCollapsed && (
+                  <div className="my-2 mx-1 border-t border-slate-800/80" />
+                )}
                 {item.section && !isSidebarCollapsed && (
-                  <div className="pt-3 pb-1 px-3 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500">
+                  <div className="pt-2.5 pb-1 px-3 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500">
                     {item.section}
                   </div>
                 )}
                 <button
                   onClick={() => handleNavClick(item.id, item.path)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all relative ${
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all relative group cursor-pointer ${
                     isActive
-                      ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/20'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                      ? 'bg-slate-800 text-white font-semibold border border-slate-700/60 shadow-sm'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/40 border border-transparent'
                   }`}
                   title={isSidebarCollapsed ? item.label : undefined}
                 >
-                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-slate-950 stroke-[2.5]' : 'text-slate-400'}`} />
+                  <Icon className={`w-4 h-4 shrink-0 transition-colors ${isActive ? 'text-emerald-400' : 'text-slate-400 group-hover:text-slate-200'}`} />
                   {!isSidebarCollapsed && (
-                    <div className="flex-1 text-left truncate flex items-center justify-between">
-                      <span>{item.label}</span>
+                    <div className="flex-1 text-left flex items-center justify-between min-w-0">
+                      <span className="truncate pr-2">{item.label}</span>
                       {item.badge !== undefined && (
-                        <span className="ml-2 px-1.5 py-0.5 text-[10px] font-mono font-bold rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 animate-pulse">
+                        <span className={`shrink-0 ml-auto px-2 py-0.5 text-[10px] font-mono font-bold rounded-full ${
+                          isActive
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                            : 'bg-rose-500/15 text-rose-300 border border-rose-500/25'
+                        }`}>
                           {item.badge}
                         </span>
                       )}
                     </div>
                   )}
+                  {isActive && (
+                    <span className="absolute left-0 top-2 bottom-2 w-1 bg-emerald-400 rounded-r-full shadow-sm shadow-emerald-400" />
+                  )}
                   {isSidebarCollapsed && item.badge !== undefined && (
-                    <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-slate-900" />
+                    <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-slate-900" />
                   )}
                 </button>
               </React.Fragment>
@@ -500,25 +510,32 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                   const isActive = isItemActive(item);
                   return (
                     <React.Fragment key={item.id}>
+                      {item.dividerBefore && (
+                        <div className="my-2 mx-1 border-t border-slate-800/80" />
+                      )}
                       {item.section && (
-                        <div className="pt-3 pb-1 px-3 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500">
+                        <div className="pt-2.5 pb-1 px-3 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500">
                           {item.section}
                         </div>
                       )}
                       <button
                         onClick={() => handleNavClick(item.id, item.path)}
-                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                        className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
                           isActive
-                            ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/20'
-                            : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                            ? 'bg-slate-800 text-white font-semibold border border-slate-700/60 shadow-sm'
+                            : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
                         }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <item.icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-slate-950 stroke-[2.5]' : 'text-slate-400'}`} />
-                          <span>{item.label}</span>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <item.icon className={`w-4 h-4 shrink-0 transition-colors ${isActive ? 'text-emerald-400' : 'text-slate-400'}`} />
+                          <span className="truncate">{item.label}</span>
                         </div>
-                        {item.badge && (
-                          <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-rose-500/20 text-rose-400 font-bold">
+                        {item.badge !== undefined && (
+                          <span className={`shrink-0 ml-2 px-2 py-0.5 text-[10px] font-mono font-bold rounded-full ${
+                            isActive
+                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                              : 'bg-rose-500/15 text-rose-300 border border-rose-500/25'
+                          }`}>
                             {item.badge}
                           </span>
                         )}

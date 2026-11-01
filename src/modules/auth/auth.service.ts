@@ -1326,6 +1326,7 @@ export class AuthService {
 
     return {
       ...user,
+      name: user.fullName || user.username,
       firstName: user.fullName ? user.fullName.split(' ')[0] : user.username,
       lastName: user.fullName && user.fullName.includes(' ') ? user.fullName.split(' ').slice(1).join(' ') : '',
       emailVerified: user.emailVerifiedAt !== null,

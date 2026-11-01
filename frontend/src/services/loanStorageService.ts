@@ -479,9 +479,12 @@ class LoanStorageService {
   public async getAllLoansForAdmin(): Promise<UnifiedLoanRecord[]> {
     // Attempt backend fetch
     try {
+      const activeToken = typeof window !== 'undefined'
+        ? (localStorage.getItem('apex_token') || localStorage.getItem('token') || '')
+        : '';
       const res = await fetch('/api/v1/admin/loans', {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+          Authorization: `Bearer ${activeToken}`,
         },
       });
       if (res.ok) {
@@ -490,7 +493,7 @@ class LoanStorageService {
         if (Array.isArray(serverItems) && serverItems.length > 0) {
           // Merge server items with local newly applied items to prevent dropping local submissions
           const local = this.getStorage();
-          const pendingLocals = local.filter((l) => l.facility.status === 'UNDERWRITING_PENDING');
+          const pendingLocals = local.filter((l) => l?.facility?.status === 'UNDERWRITING_PENDING');
           const merged = [...pendingLocals, ...serverItems.filter((s: any) => !pendingLocals.some((p) => p.loanId === s.loanId))];
           return merged;
         }
@@ -507,12 +510,12 @@ class LoanStorageService {
    */
   public async getUnderwritingQueue(): Promise<any[]> {
     const all = await this.getAllLoansForAdmin();
-    const pending = all.filter((l) => l.facility.status === 'UNDERWRITING_PENDING');
+    const pending = (all || []).filter((l) => l?.facility?.status === 'UNDERWRITING_PENDING');
 
     return pending.map((l) => ({
       id: l.id,
       applicationNumber: l.loanId,
-      borrowerName: l.borrower.nameEn,
+      borrowerName: l?.borrower?.nameEn || 'Client',
       borrowerPhone: l.borrower.phone,
       borrowerEmail: l.borrower.email,
       declaredIncomeUSD: l.borrower.monthlyIncome || 2400,
@@ -603,3 +606,4 @@ class LoanStorageService {
 }
 
 export const loanStorageService = new LoanStorageService();
+

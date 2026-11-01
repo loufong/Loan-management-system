@@ -213,8 +213,11 @@ export const App: React.FC = () => {
     if (authUser) {
       const roleUpper = (authUser.role || 'BORROWER').toUpperCase();
       const isStaff = ['ADMIN', 'SUPER_ADMIN', 'SUPERADMIN', 'MANAGER', 'LOAN_OFFICER', 'CREDIT_OFFICER', 'CASHIER'].includes(roleUpper);
+      const nameVal = authUser.name || authUser.fullName || authUser.username || 'User';
       return {
         ...authUser,
+        name: nameVal,
+        fullName: authUser.fullName || nameVal,
         role: roleUpper as UserRole,
         title: isStaff ? (authUser.title || 'System Administrator') : 'Verified Borrower',
         department: isStaff ? (authUser.department || 'Executive Administration') : 'Client Services',
@@ -228,8 +231,11 @@ export const App: React.FC = () => {
     if (authUser) {
       const roleUpper = (authUser.role || 'BORROWER').toUpperCase();
       const isStaff = ['ADMIN', 'SUPER_ADMIN', 'SUPERADMIN', 'MANAGER', 'LOAN_OFFICER', 'CREDIT_OFFICER', 'CASHIER'].includes(roleUpper);
+      const nameVal = authUser.name || authUser.fullName || authUser.username || 'User';
       const scopedUser: UserProfile = {
         ...authUser,
+        name: nameVal,
+        fullName: authUser.fullName || nameVal,
         role: roleUpper as UserRole,
         title: isStaff ? (authUser.title || 'System Administrator') : 'Verified Borrower',
         department: isStaff ? (authUser.department || 'Executive Administration') : 'Client Services',
@@ -556,29 +562,29 @@ export const App: React.FC = () => {
 
       // Map unified persistent loans to LoanAccount format
       const activeUnifiedLoans = (unifiedLoans || [])
-        .filter((u: any) => u.facility.status === 'ACTIVE' || u.facility.status === 'OVERDUE')
+        .filter((u: any) => u?.facility && (u.facility.status === 'ACTIVE' || u.facility.status === 'OVERDUE'))
         .map((u: any) => ({
-          id: u.id,
-          loanNumber: u.loanId,
-          borrowerId: u.borrower.id,
-          borrowerName: u.borrower.nameEn,
+          id: u.id || `ln-${Date.now()}`,
+          loanNumber: u.loanId || u.id || 'LN-2026-0000',
+          borrowerId: u.borrower?.id || 'BOR-2026-8801',
+          borrowerName: u.borrower?.nameEn || u.borrower?.fullName || 'Client Borrower',
           borrowerAvatar: '',
           productId: u.id,
-          productName: u.facility.productName,
+          productName: u.facility?.productName || 'Credit Facility',
           productCode: 'SME-01',
           disbursementDate: u.submittedAt || new Date().toISOString(),
-          firstPaymentDueDate: u.nextScheduledPayment.dueDate,
-          principalUSD: u.principal.disbursedAmountUSD,
-          interestRate: u.principal.aprPercent,
-          termMonths: u.principal.termMonths,
+          firstPaymentDueDate: u.nextScheduledPayment?.dueDate || new Date().toISOString().split('T')[0],
+          principalUSD: Number(u.principal?.disbursedAmountUSD || 0),
+          interestRate: Number(u.principal?.aprPercent || 0),
+          termMonths: Number(u.principal?.termMonths || 12),
           frequency: 'MONTHLY' as any,
           interestType: 'REDUCING_BALANCE' as any,
-          totalInterestUSD: Math.round(u.principal.disbursedAmountUSD * (u.principal.aprPercent / 100)),
-          totalPayableUSD: Math.round(u.principal.disbursedAmountUSD * (1 + u.principal.aprPercent / 100)),
-          monthlyEMIUSD: u.nextScheduledPayment.scheduledEMIUSD,
-          outstandingBalanceUSD: u.repaymentProgress.outstandingBalanceUSD,
-          totalPaidUSD: u.repaymentProgress.totalPaidUSD,
-          status: u.facility.status as any,
+          totalInterestUSD: Math.round(Number(u.principal?.disbursedAmountUSD || 0) * (Number(u.principal?.aprPercent || 0) / 100)),
+          totalPayableUSD: Math.round(Number(u.principal?.disbursedAmountUSD || 0) * (1 + Number(u.principal?.aprPercent || 0) / 100)),
+          monthlyEMIUSD: Number(u.nextScheduledPayment?.scheduledEMIUSD || 0),
+          outstandingBalanceUSD: Number(u.repaymentProgress?.outstandingBalanceUSD || 0),
+          totalPaidUSD: Number(u.repaymentProgress?.totalPaidUSD || 0),
+          status: (u.facility?.status || 'ACTIVE') as any,
           schedules: u.schedules || [],
         }));
 
@@ -593,18 +599,18 @@ export const App: React.FC = () => {
 
       // Map unified pending applications
       const pendingUnifiedApps = (unifiedLoans || [])
-        .filter((u: any) => u.facility.status === 'UNDERWRITING_PENDING')
+        .filter((u: any) => u?.facility && u.facility.status === 'UNDERWRITING_PENDING')
         .map((u: any) => ({
-          id: u.id,
-          applicationNo: u.loanId,
-          borrowerId: u.borrower.id,
-          borrowerName: u.borrower.nameEn,
+          id: u.id || `app-${Date.now()}`,
+          applicationNo: u.loanId || u.id || 'APP-2026-0000',
+          borrowerId: u.borrower?.id || 'BOR-2026-8801',
+          borrowerName: u.borrower?.nameEn || u.borrower?.fullName || 'Client Borrower',
           borrowerAvatar: '',
-          borrowerIncomeUSD: u.borrower.monthlyIncome || 2400,
+          borrowerIncomeUSD: Number(u.borrower?.monthlyIncome || 2400),
           productId: u.id,
-          productName: u.facility.productName,
-          requestedAmountUSD: u.principal.disbursedAmountUSD,
-          requestedTermMonths: u.principal.termMonths,
+          productName: u.facility?.productName || 'Credit Facility',
+          requestedAmountUSD: Number(u.principal?.disbursedAmountUSD || 0),
+          requestedTermMonths: Number(u.principal?.termMonths || 12),
           frequency: 'MONTHLY' as any,
           purpose: 'Commercial Working Capital',
           dtiRatio: 28.5,

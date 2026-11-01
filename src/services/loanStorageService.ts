@@ -510,7 +510,7 @@ export class LoanStorageService {
           const serverItems = data?.data?.items || data?.items;
           if (Array.isArray(serverItems) && serverItems.length > 0) {
             const local = this.getStorage();
-            const pendingLocals = local.filter((l) => l.facility.status === 'UNDERWRITING_PENDING');
+            const pendingLocals = local.filter((l) => l?.facility?.status === 'UNDERWRITING_PENDING');
             const merged = [...pendingLocals, ...serverItems.filter((s: any) => !pendingLocals.some((p) => p.loanId === s.loanId))];
             return merged;
           }
@@ -528,7 +528,7 @@ export class LoanStorageService {
    */
   public async getUnderwritingQueue(): Promise<any[]> {
     const all = await this.getAllLoansForAdmin();
-    const pending = all.filter((l) => l.facility.status === 'UNDERWRITING_PENDING');
+    const pending = (all || []).filter((l) => l?.facility?.status === 'UNDERWRITING_PENDING');
 
     return pending.map((l) => ({
       id: l.id,

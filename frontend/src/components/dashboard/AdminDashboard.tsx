@@ -221,7 +221,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         : [];
       
       const combined = serverItems.length > 0
-        ? [...localLoans.filter((l) => l.facility.status === 'UNDERWRITING_PENDING'), ...serverItems]
+        ? [...localLoans.filter((l) => l?.facility && l.facility.status === 'UNDERWRITING_PENDING'), ...serverItems]
         : localLoans;
 
       setLoansLedger(combined as any[]);
@@ -456,26 +456,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     let source = baseSource;
     if (activeTab === 'UNDERWRITING_PENDING') {
       source = source.filter(
-        (row: any) => row.facility.status === 'UNDERWRITING_PENDING' || row.facility.status === 'PENDING'
+        (row: any) => row?.facility && (row.facility.status === 'UNDERWRITING_PENDING' || row.facility.status === 'PENDING')
       );
     } else if (activeTab === 'ACTIVE') {
-      source = source.filter((row: any) => row.facility.status === 'ACTIVE');
+      source = source.filter((row: any) => row?.facility?.status === 'ACTIVE');
     } else if (activeTab === 'DELINQUENT_1_30') {
-      source = source.filter((row: any) => row.facility.health === 'WATCHLIST');
+      source = source.filter((row: any) => row?.facility?.health === 'WATCHLIST');
     } else if (activeTab === 'PAR_30_PLUS') {
-      source = source.filter((row: any) => row.facility.health === 'DEFAULT_RISK');
+      source = source.filter((row: any) => row?.facility?.health === 'DEFAULT_RISK');
     } else if (activeTab === 'MATURED') {
-      source = source.filter((row: any) => row.facility.status === 'COMPLETED' || row.facility.status === 'MATURED');
+      source = source.filter((row: any) => row?.facility && (row.facility.status === 'COMPLETED' || row.facility.status === 'MATURED'));
     }
 
     if (globalSearch) {
       const q = globalSearch.toLowerCase();
       source = source.filter(
         (row: any) =>
-          row.borrower.nameEn.toLowerCase().includes(q) ||
-          row.borrower.clientCode.toLowerCase().includes(q) ||
-          row.loanId.toLowerCase().includes(q) ||
-          row.borrower.phone.includes(q)
+          row?.borrower?.nameEn?.toLowerCase().includes(q) ||
+          row?.borrower?.clientCode?.toLowerCase().includes(q) ||
+          row?.loanId?.toLowerCase().includes(q) ||
+          row?.borrower?.phone?.includes(q)
       );
     }
     return source as EnrichedLoanRow[];
@@ -483,7 +483,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // Dynamically calculate GLP and active count from ledger
   const activeFacilities = useMemo(() => {
-    return loansLedger.filter((l: any) => l.facility.status === 'ACTIVE' || l.facility.status === 'OVERDUE');
+    return loansLedger.filter((l: any) => l?.facility && (l.facility.status === 'ACTIVE' || l.facility.status === 'OVERDUE'));
   }, [loansLedger]);
 
   const dynamicGlpUSD = useMemo(() => {

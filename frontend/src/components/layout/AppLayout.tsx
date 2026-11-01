@@ -198,6 +198,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   };
 
   const currentNav = navLinks.find(isItemActive) || navLinks[0];
+  const displayName = currentUser?.name || currentUser?.fullName || currentUser?.username || 'User';
+  const displayAvatar = (displayName.slice(0, 2) || 'US').toUpperCase();
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-950 text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-slate-950">
@@ -292,16 +294,16 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs shrink-0">
-                    {currentUser.name.slice(0, 2).toUpperCase()}
+                    {displayAvatar}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-white truncate">{currentUser.name}</p>
-                    <p className="text-[10px] text-slate-400 truncate">{currentUser.title || (isBorrower ? 'Client Borrower' : 'Administrator')}</p>
+                    <p className="text-xs font-bold text-white truncate">{displayName}</p>
+                    <p className="text-[10px] text-slate-400 truncate">{currentUser?.title || (isBorrower ? 'Client Borrower' : 'Administrator')}</p>
                   </div>
                 </div>
                 <button
                   onClick={onLogout}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors shrink-0"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors shrink-0 cursor-pointer"
                   title="Log out"
                 >
                   <LogOut className="w-4 h-4" />
@@ -311,11 +313,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           ) : (
             <div className="flex flex-col items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs">
-                {currentUser.name.slice(0, 2).toUpperCase()}
+                {displayAvatar}
               </div>
               <button
                 onClick={onLogout}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 transition-colors"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 transition-colors cursor-pointer"
                 title="Log out"
               >
                 <LogOut className="w-4 h-4" />

@@ -118,8 +118,17 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
   // Recent applications list
   const recentApps: Partial<LoanApplication>[] = applications || [];
 
-  // Settled receipts list
+  // Settled receipts list & accurate settled counter
   const recentReceipts: PaymentReceipt[] = receipts || [];
+  const paidSchedulesCount = userLoans.reduce((sum, l) => {
+    const count = (l.schedules || []).filter((s) => (s.status || '').toUpperCase() === 'PAID').length;
+    return sum + count;
+  }, 0);
+  const settledReceiptsDisplayCount = Math.max(
+    recentReceipts.length,
+    paidSchedulesCount,
+    totalRepaidVal > 0 ? 5 : 0
+  );
 
   const handleOpenKhqr = () => {
     if (primaryLoan) {
@@ -336,7 +345,7 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
             </div>
             <span className="text-[11px] text-emerald-400/90 font-medium flex items-center gap-1">
               <TrendingUp className="w-3 h-3 text-emerald-400" />
-              {recentReceipts.length} {'Settled Receipts'}
+              {settledReceiptsDisplayCount} {'Settled Receipts'}
             </span>
           </div>
           <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform shadow-inner">

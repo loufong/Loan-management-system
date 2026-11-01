@@ -296,6 +296,7 @@ export interface PaymentReceipt {
   paymentId?: string;
   receiptNo: string; // e.g. REC-2026-0982
   referenceNo?: string;
+  loanId?: string;
   loanNumber: string;
   borrowerId: string;
   borrowerName: string;

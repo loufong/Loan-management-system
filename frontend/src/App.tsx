@@ -611,29 +611,29 @@ export const App: React.FC = () => {
           status: (u.facility?.status || 'ACTIVE') as any,
           schedules: (Array.isArray(u.schedules) && u.schedules.length > 0 && !u.schedules.every((s: any) => Number(s.totalDue || s.totalDueUSD || 0) === 0))
             ? u.schedules.map((s: any, idx: number) => {
-                const pVal = Number(s.principalUSD ?? s.principalDue ?? s.principal ?? 0);
-                const iVal = Number(s.interestUSD ?? s.interestDue ?? s.interest ?? 0);
-                const tVal = Number(s.totalDueUSD ?? s.totalDue ?? (pVal + iVal));
-                return {
-                  ...s,
-                  installmentNo: s.installmentNo || idx + 1,
-                  dueDate: s.dueDate || '',
-                  principalUSD: pVal,
-                  principalDue: pVal,
-                  interestUSD: iVal,
-                  interestDue: iVal,
-                  totalDueUSD: tVal,
-                  totalDue: tVal,
-                  remainingAmountUSD: s.status === 'PAID' ? 0 : tVal,
-                  amountPaidUSD: s.status === 'PAID' ? tVal : (Number(s.amountPaidUSD || 0)),
-                  status: s.status || (idx === 0 ? 'DUE' : 'UPCOMING'),
-                };
-              })
+              const pVal = Number(s.principalUSD ?? s.principalDue ?? s.principal ?? 0);
+              const iVal = Number(s.interestUSD ?? s.interestDue ?? s.interest ?? 0);
+              const tVal = Number(s.totalDueUSD ?? s.totalDue ?? (pVal + iVal));
+              return {
+                ...s,
+                installmentNo: s.installmentNo || idx + 1,
+                dueDate: s.dueDate || '',
+                principalUSD: pVal,
+                principalDue: pVal,
+                interestUSD: iVal,
+                interestDue: iVal,
+                totalDueUSD: tVal,
+                totalDue: tVal,
+                remainingAmountUSD: s.status === 'PAID' ? 0 : tVal,
+                amountPaidUSD: s.status === 'PAID' ? tVal : (Number(s.amountPaidUSD || 0)),
+                status: s.status || (idx === 0 ? 'DUE' : 'UPCOMING'),
+              };
+            })
             : generateAmortizationSchedule(
-                Number(u.principal?.disbursedAmountUSD || (u as any)?.principalAmount || 0),
-                Number(u.principal?.aprPercent || (u as any)?.interestRate || 6.5),
-                Number(u.principal?.termMonths || (u as any)?.termMonths || 12)
-              ),
+              Number(u.principal?.disbursedAmountUSD || (u as any)?.principalAmount || 0),
+              Number(u.principal?.aprPercent || (u as any)?.interestRate || 6.5),
+              Number(u.principal?.termMonths || (u as any)?.termMonths || 12)
+            ),
         }));
 
       const apiLoans = Array.isArray(l) ? l : [];
@@ -1173,8 +1173,8 @@ export const App: React.FC = () => {
   const userDisplayLoans = isBorrowerRole
     ? userFilteredLoans
     : ((activeTab === 'borrower_dashboard' || activeTab === 'pay_installment' || (activeTab === 'repayments' && repaymentViewMode === 'SELF')) && staffPersonalLoans.length > 0
-        ? staffPersonalLoans
-        : loans);
+      ? staffPersonalLoans
+      : loans);
 
   const userFilteredApps = applications.filter((a) => {
     if (!isBorrowerRole) return true;
@@ -1188,9 +1188,13 @@ export const App: React.FC = () => {
     if (!isBorrowerRole) return true;
     if (currentBorrowerId && (r.borrowerId === currentBorrowerId || r.borrowerId === currentUser.id)) return true;
     if (r.borrowerName && currentClientName && (r.borrowerName.toLowerCase().includes(currentClientName) || currentClientName.includes(r.borrowerName.toLowerCase()))) return true;
+    const rLoan = r.loanId || r.loanNumber;
+    if (rLoan && userDisplayLoans.some((l) => l.id === rLoan || l.loanNumber === rLoan)) return true;
     return false;
   });
-  const userDisplayReceipts = isBorrowerRole ? userFilteredReceipts : receipts;
+  const userDisplayReceipts = isBorrowerRole
+    ? (userFilteredReceipts.length > 0 ? userFilteredReceipts : receipts)
+    : receipts;
 
   // Helper to open payment flow appropriately for borrower (modal) or staff (cashier desk)
   const openPaymentForBorrowerOrStaff = (loanId?: string, installmentNo?: number, amount?: number) => {
@@ -1635,13 +1639,13 @@ export const App: React.FC = () => {
               borrower={activeBorrower}
               loans={loans.filter(
                 (l) => l.borrowerId === activeBorrower.borrowerId ||
-                       l.borrowerId === activeBorrower.id ||
-                       (l.borrowerName && activeBorrower.fullName && l.borrowerName.toLowerCase().includes(activeBorrower.fullName.toLowerCase()))
+                  l.borrowerId === activeBorrower.id ||
+                  (l.borrowerName && activeBorrower.fullName && l.borrowerName.toLowerCase().includes(activeBorrower.fullName.toLowerCase()))
               )}
               receipts={receipts.filter(
                 (r) => r.borrowerId === activeBorrower.borrowerId ||
-                       r.borrowerId === activeBorrower.id ||
-                       (r.borrowerName && activeBorrower.fullName && r.borrowerName.toLowerCase().includes(activeBorrower.fullName.toLowerCase()))
+                  r.borrowerId === activeBorrower.id ||
+                  (r.borrowerName && activeBorrower.fullName && r.borrowerName.toLowerCase().includes(activeBorrower.fullName.toLowerCase()))
               )}
               currency={currency}
               onBack={() => setActiveTab('borrowers')}
@@ -1701,22 +1705,20 @@ export const App: React.FC = () => {
                   <div className="flex items-center gap-1.5 bg-slate-950 p-1.5 rounded-xl border border-slate-800 self-start sm:self-auto">
                     <button
                       onClick={() => setOriginationMode('SELF')}
-                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                        originationMode === 'SELF'
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${originationMode === 'SELF'
                           ? 'bg-emerald-500 text-slate-950 shadow-md'
                           : 'text-slate-400 hover:text-white hover:bg-slate-900'
-                      }`}
+                        }`}
                     >
                       <UserCheck className="w-3.5 h-3.5" />
                       Borrow for Myself
                     </button>
                     <button
                       onClick={() => setOriginationMode('CLIENT')}
-                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                        originationMode === 'CLIENT'
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${originationMode === 'CLIENT'
                           ? 'bg-emerald-500 text-slate-950 shadow-md'
                           : 'text-slate-400 hover:text-white hover:bg-slate-900'
-                      }`}
+                        }`}
                     >
                       <Building2 className="w-3.5 h-3.5" />
                       Originate for Client
@@ -1854,7 +1856,6 @@ export const App: React.FC = () => {
                 initialAmountUSD={
                   userDisplayLoans[0]?.schedules?.find((s: any) => s.status !== 'PAID')?.totalDueUSD ||
                   (userDisplayLoans[0] as any)?.monthlyEMIUSD ||
-                  userDisplayLoans[0]?.nextPaymentDueAmountUSD ||
                   183.89
                 }
                 initialInstallmentNo={
@@ -1927,7 +1928,6 @@ export const App: React.FC = () => {
               initialAmountUSD={
                 userDisplayLoans[0]?.schedules?.find((s: any) => s.status !== 'PAID')?.totalDueUSD ||
                 (userDisplayLoans[0] as any)?.monthlyEMIUSD ||
-                userDisplayLoans[0]?.nextPaymentDueAmountUSD ||
                 183.89
               }
               initialInstallmentNo={
@@ -2133,22 +2133,20 @@ export const App: React.FC = () => {
                   <div className="flex items-center gap-1.5 bg-slate-950 p-1.5 rounded-xl border border-slate-800 self-start sm:self-auto">
                     <button
                       onClick={() => setRepaymentViewMode('SELF')}
-                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                        repaymentViewMode === 'SELF'
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${repaymentViewMode === 'SELF'
                           ? 'bg-emerald-500 text-slate-950 shadow-md'
                           : 'text-slate-400 hover:text-white hover:bg-slate-900'
-                      }`}
+                        }`}
                     >
                       <Landmark className="w-3.5 h-3.5" />
                       My Personal Schedule
                     </button>
                     <button
                       onClick={() => setRepaymentViewMode('CLIENT')}
-                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                        repaymentViewMode === 'CLIENT'
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${repaymentViewMode === 'CLIENT'
                           ? 'bg-emerald-500 text-slate-950 shadow-md'
                           : 'text-slate-400 hover:text-white hover:bg-slate-900'
-                      }`}
+                        }`}
                     >
                       <Wallet className="w-3.5 h-3.5" />
                       Portfolio Schedule

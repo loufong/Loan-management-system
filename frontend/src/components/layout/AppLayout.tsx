@@ -138,7 +138,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       label: 'Active Facilities',
       icon: Landmark,
       path: '/admin/borrowers',
-      badge: activeFacilitiesCount > 0 ? activeFacilitiesCount : 6,
     },
     {
       id: 'cashier',

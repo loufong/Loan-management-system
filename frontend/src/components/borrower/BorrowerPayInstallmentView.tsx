@@ -94,15 +94,24 @@ export const BorrowerPayInstallmentView: React.FC<BorrowerPayInstallmentViewProp
     remainingTenureMonths: (activeLoan.schedules?.filter((s) => s.status !== 'PAID').length) || 1,
     currentCycleNo: nextSchedule?.installmentNo || initialInstallmentNo || 1,
     nextCycleDueDate: nextSchedule?.dueDate || (activeLoan as any)?.nextPaymentDueDate || '2026-11-15',
-    nextCycleAmountUSD: Number(
-      nextSchedule?.remainingAmountUSD ||
-      (nextSchedule as any)?.totalDueUSD ||
-      (nextSchedule as any)?.totalDue ||
-      (activeLoan as any)?.monthlyEMIUSD ||
-      (activeLoan as any)?.nextPaymentDueAmountUSD ||
-      initialAmountUSD ||
-      0
-    ),
+    nextCycleAmountUSD: (() => {
+      const explicit = Number(
+        nextSchedule?.remainingAmountUSD ||
+        (nextSchedule as any)?.totalDueUSD ||
+        (nextSchedule as any)?.totalDue ||
+        (activeLoan as any)?.monthlyEMIUSD ||
+        (activeLoan as any)?.nextPaymentDueAmountUSD ||
+        initialAmountUSD ||
+        0
+      );
+      if (explicit > 0) return explicit;
+      const p = Number(activeLoan.principalUSD || (activeLoan as any)?.principalAmount || 1000);
+      const r = (Number(activeLoan.interestRate || 6.5) / 100) / 12;
+      const t = Number(activeLoan.termMonths || 12);
+      return r > 0
+        ? Math.round(((p * r * Math.pow(1 + r, t)) / (Math.pow(1 + r, t) - 1)) * 100) / 100
+        : Math.round((p / t) * 100) / 100;
+    })(),
     linkedAccount: {
       bankName: 'ACLEDA Bank Plc.',
       accountNumberMasked: '****-****-2026',

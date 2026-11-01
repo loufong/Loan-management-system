@@ -762,7 +762,7 @@ export const App: React.FC = () => {
       case 'pay_installment':
         return [{ label: 'Core Banking' }, { label: isBorrowerRole ? 'Pay Installment' : 'Cashier Desk', active: true }];
       case 'borrowers':
-        return [{ label: 'Institutional Registry', onClick: () => handleNavSelection('/admin/borrowers') }, { label: 'Borrowers Directory', active: true }];
+        return [{ label: 'Core Banking', onClick: () => handleNavSelection('/admin/borrowers') }, { label: 'Active Facilities & Borrowers', active: true }];
       case 'borrower-detail':
         return [{ label: 'Borrowers', onClick: () => handleNavSelection('/admin/borrowers') }, { label: `360° Dossier (${selectedBorrowerId})`, active: true }];
       case 'applications':
@@ -1371,6 +1371,19 @@ export const App: React.FC = () => {
     );
   }
 
+  const activeFacilitiesCount = loans.filter((l: any) => {
+    const st = ((l.status || l.facility?.status) || '').toUpperCase();
+    return st === 'ACTIVE' || st === 'IN_REPAYMENT' || st === 'OVERDUE';
+  }).length || 6;
+  const overdueLoansCount = loans.filter((l: any) => {
+    const st = ((l.status || l.facility?.status) || '').toUpperCase();
+    return st === 'OVERDUE' || (l.daysOverdue && l.daysOverdue > 0);
+  }).length;
+  const pendingApprovalsCount = applications.filter((a: any) => {
+    const st = (a.status || '').toUpperCase();
+    return st === 'SUBMITTED' || st === 'PENDING' || st === 'UNDER_REVIEW';
+  }).length || 5;
+
   return (
     <>
       <AppLayout
@@ -1389,6 +1402,9 @@ export const App: React.FC = () => {
         onSearchOpen={() => setSearchModalOpen(true)}
         notifications={notifications}
         onMarkNotificationRead={handleMarkNotificationRead}
+        activeFacilitiesCount={activeFacilitiesCount}
+        overdueCount={overdueLoansCount}
+        pendingApprovalsCount={pendingApprovalsCount}
       >
         <div className="h-full">
           {/* Point 4: Access Denied Banner when unauthorized access is rejected */}
@@ -1489,6 +1505,8 @@ export const App: React.FC = () => {
                   borrowers={borrowers}
                   applications={applications}
                   receipts={receipts}
+                  focusMode="OVERVIEW"
+                  initialViewMode="LEDGER"
                 />
               );
             }
@@ -1522,8 +1540,21 @@ export const App: React.FC = () => {
             />
           )}
 
-          {/* SCREEN 1: Borrowers Directory & 360° Dossier */}
-          {(activeTab === 'borrowers' || activeTab === 'admin_borrowers' || activeTab === 'borrower_directory') && (
+          {/* SCREEN 1: Active Facilities & Borrowers Control Center */}
+          {isStaffRole && (activeTab === 'borrowers' || activeTab === 'admin_borrowers' || activeTab === 'borrower_directory') && (
+            <AdminDashboard
+              currency={currency}
+              onNavigate={handleNavSelection}
+              loans={loans}
+              borrowers={borrowers}
+              applications={applications}
+              receipts={receipts}
+              focusMode="FACILITIES"
+              initialViewMode="LEDGER"
+            />
+          )}
+
+          {!isStaffRole && (activeTab === 'borrowers' || activeTab === 'admin_borrowers' || activeTab === 'borrower_directory') && (
             <BorrowerList
               borrowers={borrowers}
               currency={currency}

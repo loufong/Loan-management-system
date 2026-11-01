@@ -32,12 +32,14 @@ import {
   SlidersHorizontal,
   ChevronDown,
   BarChart3,
-  Banknote
+  Banknote,
+  Users
 } from 'lucide-react';
 import { Currency, LoanAccount, Borrower, LoanApplication, PaymentReceipt, UserProfile } from '../../types';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { loanStorageService, UnifiedLoanRecord, LEDGER_UPDATE_EVENT } from '../../services/loanStorageService';
+import { BorrowerList } from '../borrowers/BorrowerList';
 
 export interface AdminDashboardProps {
   currency?: Currency;
@@ -46,6 +48,8 @@ export interface AdminDashboardProps {
   borrowers?: Borrower[];
   applications?: LoanApplication[];
   receipts?: PaymentReceipt[];
+  focusMode?: 'OVERVIEW' | 'FACILITIES';
+  initialViewMode?: 'LEDGER' | 'UNDERWRITING' | 'RECONCILIATION';
 }
 
 type PeriodScope = 'Today' | 'MTD' | 'QTD' | 'YTD';
@@ -101,6 +105,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   borrowers: propBorrowers = [],
   applications: propApplications = [],
   receipts: propReceipts = [],
+  focusMode = 'OVERVIEW',
+  initialViewMode = 'LEDGER',
 }) => {
   const { user } = useAuth();
 
@@ -114,7 +120,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [currencyMode, setCurrencyMode] = useState<CurrencyMode>(initialCurrency === 'KHR' ? 'KHR' : 'USD');
   const [globalSearch, setGlobalSearch] = useState('');
   const [activeTab, setActiveTab] = useState<TableFilterTab>('ALL');
-  const [viewMode, setViewMode] = useState<'LEDGER' | 'UNDERWRITING' | 'RECONCILIATION'>('LEDGER');
+  const [viewMode, setViewMode] = useState<'LEDGER' | 'UNDERWRITING' | 'RECONCILIATION'>(initialViewMode);
+  const [facilitySubTab, setFacilitySubTab] = useState<'TABLE' | 'BORROWERS'>('TABLE');
+
+  useEffect(() => {
+    if (initialViewMode) setViewMode(initialViewMode);
+  }, [initialViewMode]);
 
   // Live Backend Data State
   const [portfolioSummary, setPortfolioSummary] = useState<any>(null);
@@ -878,7 +889,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </h1>
                 <span className="text-slate-600 font-mono text-xs">|</span>
                 <span className="text-xs font-semibold text-slate-300">
-                  Core Banking / Super Admin Ledger
+                  {focusMode === 'FACILITIES' ? 'Active Facilities & Borrowers Ledger' : 'Core Banking / Super Admin Ledger'}
                 </span>
                 <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -1090,174 +1101,237 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* ========================================================================= */}
       {/* 3. EXECUTIVE KPI RIBBON (Commercial Banking Metrics - Deliverable 2)       */}
       {/* ========================================================================= */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Metric 1: Gross Loan Portfolio (GLP) */}
-        <div className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl p-4 shadow-xl relative overflow-hidden group hover:border-slate-700 transition">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400">
-              Gross Loan Portfolio (GLP)
-            </span>
-            <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-              +8.4% QoQ
-            </span>
+      {focusMode !== 'FACILITIES' && (
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Metric 1: Gross Loan Portfolio (GLP) */}
+          <div className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl p-4 shadow-xl relative overflow-hidden group hover:border-slate-700 transition">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400">
+                Gross Loan Portfolio (GLP)
+              </span>
+              <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                +8.4% QoQ
+              </span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <p className="text-xl sm:text-2xl font-black font-mono text-emerald-400">
+                {fmt(dynamicGlpUSD)}
+              </p>
+            </div>
+            <div className="mt-2 pt-2 border-t border-[#1e293b] flex items-center justify-between text-[10px] text-slate-500 font-mono">
+              <span>Across {activeFacilities.length > 0 ? activeFacilities.length : 118} Active Facilities</span>
+              <span>100% NBC Collateralized</span>
+            </div>
           </div>
-          <div className="flex items-baseline gap-2">
-            <p className="text-xl sm:text-2xl font-black font-mono text-emerald-400">
-              {fmt(dynamicGlpUSD)}
-            </p>
-          </div>
-          <div className="mt-2 pt-2 border-t border-[#1e293b] flex items-center justify-between text-[10px] text-slate-500 font-mono">
-            <span>Across {activeFacilities.length > 0 ? activeFacilities.length : 118} Active Facilities</span>
-            <span>100% NBC Collateralized</span>
-          </div>
-        </div>
 
-        {/* Metric 2: Total Portfolio at Risk (PAR 30+) */}
-        <div className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl p-4 shadow-xl relative overflow-hidden group hover:border-slate-700 transition">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400">
-              Portfolio at Risk (PAR 30+)
-            </span>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              ● NBC Compliant (&lt; 3.0%)
-            </span>
+          {/* Metric 2: Total Portfolio at Risk (PAR 30+) */}
+          <div className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl p-4 shadow-xl relative overflow-hidden group hover:border-slate-700 transition">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400">
+                Portfolio at Risk (PAR 30+)
+              </span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                ● NBC Compliant (&lt; 3.0%)
+              </span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <p className="text-xl sm:text-2xl font-black font-mono text-amber-300">
+                {fmt(portfolioSummary?.par30?.amountUSD || 28400.00)}
+              </p>
+              <span className="text-xs font-mono font-bold text-amber-400/80">
+                ({portfolioSummary?.par30?.ratio || 2.0}%)
+              </span>
+            </div>
+            <div className="mt-2 pt-2 border-t border-[#1e293b] flex items-center justify-between text-[10px] text-slate-500 font-mono">
+              <span>Regulatory Ceiling: 3.00%</span>
+              <span>4 Delinquent Facilities</span>
+            </div>
           </div>
-          <div className="flex items-baseline gap-2">
-            <p className="text-xl sm:text-2xl font-black font-mono text-amber-300">
-              {fmt(portfolioSummary?.par30?.amountUSD || 28400.00)}
-            </p>
-            <span className="text-xs font-mono font-bold text-amber-400/80">
-              ({portfolioSummary?.par30?.ratio || 2.0}%)
-            </span>
-          </div>
-          <div className="mt-2 pt-2 border-t border-[#1e293b] flex items-center justify-between text-[10px] text-slate-500 font-mono">
-            <span>Regulatory Ceiling: 3.00%</span>
-            <span>4 Delinquent Facilities</span>
-          </div>
-        </div>
 
-        {/* Metric 3: Bakong Clearing Account Liquidity */}
-        <div className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl p-4 shadow-xl relative overflow-hidden group hover:border-slate-700 transition">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400">
-              Bakong Clearing Liquidity
-            </span>
-            <span className="text-[10px] font-mono text-slate-400 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-ping" />
-              Real-Time RTGS
-            </span>
+          {/* Metric 3: Bakong Clearing Account Liquidity */}
+          <div className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl p-4 shadow-xl relative overflow-hidden group hover:border-slate-700 transition">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400">
+                Bakong Clearing Liquidity
+              </span>
+              <span className="text-[10px] font-mono text-slate-400 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-ping" />
+                Real-Time RTGS
+              </span>
+            </div>
+            <div className="space-y-0.5">
+              <p className="text-lg font-black font-mono text-white">
+                {fmt(portfolioSummary?.bakongLiquidity?.usdBalance || 95400.00, 'USD')}
+              </p>
+              <p className="text-xs font-mono font-bold text-amber-400">
+                {fmt(125000000 / KHR_RATE, 'KHR')} (៛ 125,000,000)
+              </p>
+            </div>
+            <div className="mt-2 pt-2 border-t border-[#1e293b] flex items-center justify-between text-[10px] text-slate-500 font-mono">
+              <span>ACLEDA Settlement Account</span>
+              <span>Buffer: 100% Liquid</span>
+            </div>
           </div>
-          <div className="space-y-0.5">
-            <p className="text-lg font-black font-mono text-white">
-              {fmt(portfolioSummary?.bakongLiquidity?.usdBalance || 95400.00, 'USD')}
-            </p>
-            <p className="text-xs font-mono font-bold text-amber-400">
-              {fmt(125000000 / KHR_RATE, 'KHR')} (៛ 125,000,000)
-            </p>
-          </div>
-          <div className="mt-2 pt-2 border-t border-[#1e293b] flex items-center justify-between text-[10px] text-slate-500 font-mono">
-            <span>ACLEDA Settlement Account</span>
-            <span>Buffer: 100% Liquid</span>
-          </div>
-        </div>
 
-        {/* Metric 4: Pending Underwriting */}
-        <div className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl p-4 shadow-xl relative overflow-hidden group hover:border-slate-700 transition">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400">
-              Pending Underwriting
-            </span>
-            <span className="text-[10px] font-mono font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
-              Awaiting Sign-off
-            </span>
+          {/* Metric 4: Pending Underwriting */}
+          <div className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl p-4 shadow-xl relative overflow-hidden group hover:border-slate-700 transition">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400">
+                Pending Underwriting
+              </span>
+              <span className="text-[10px] font-mono font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                Awaiting Sign-off
+              </span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <p className="text-xl sm:text-2xl font-black font-mono text-white">
+                5 Applications
+              </p>
+            </div>
+            <div className="mt-2 pt-2 border-t border-[#1e293b] flex items-center justify-between text-[10px] text-slate-500 font-mono">
+              <span>DTI & CBC Scored</span>
+              <button
+                onClick={() => setViewMode('UNDERWRITING')}
+                className="text-emerald-400 hover:text-emerald-300 font-bold underline cursor-pointer"
+              >
+                Open Queue →
+              </button>
+            </div>
           </div>
-          <div className="flex items-baseline gap-2">
-            <p className="text-xl sm:text-2xl font-black font-mono text-white">
-              5 Applications
-            </p>
-          </div>
-          <div className="mt-2 pt-2 border-t border-[#1e293b] flex items-center justify-between text-[10px] text-slate-500 font-mono">
-            <span>DTI & CBC Scored</span>
-            <button
-              onClick={() => setViewMode('UNDERWRITING')}
-              className="text-emerald-400 hover:text-emerald-300 font-bold underline cursor-pointer"
-            >
-              Open Queue →
-            </button>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ========================================================================= */}
       {/* 4. WORKBENCH SUB-VIEW SWITCHER                                            */}
       {/* ========================================================================= */}
-      <div className="flex items-center justify-between gap-3 border-b border-[#1e293b] pb-2">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setViewMode('LEDGER')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
-              viewMode === 'LEDGER'
-                ? 'bg-slate-800 text-white border border-slate-700 shadow'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Facility Management Table</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-950 font-mono text-slate-400">
-              {displayLedger.length}
-            </span>
-          </button>
-
-          <button
-            onClick={() => setViewMode('UNDERWRITING')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
-              viewMode === 'UNDERWRITING'
-                ? 'bg-slate-800 text-white border border-slate-700 shadow'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900'
-            }`}
-          >
-            <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-            <span>Underwriting Origination Queue</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-500/20 text-amber-300 font-mono font-bold">
-              {underwritingQueue.length} Pending
-            </span>
-          </button>
-
-          <button
-            onClick={() => setViewMode('RECONCILIATION')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
-              viewMode === 'RECONCILIATION'
-                ? 'bg-slate-800 text-white border border-slate-700 shadow'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900'
-            }`}
-          >
-            <RefreshCw className="w-3.5 h-3.5 text-teal-400" />
-            <span>Bakong KHQR Reconciliation Feed</span>
-            {reconciliationFeed?.anomaly?.hasAnomaly && (
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-rose-500/20 text-rose-300 font-mono font-bold animate-pulse">
-                1 Mismatch
+      {focusMode === 'FACILITIES' ? (
+        <div className="flex items-center justify-between gap-3 border-b border-[#1e293b] pb-2">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setFacilitySubTab('TABLE')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                facilitySubTab === 'TABLE'
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Active Facilities Table</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-950 font-mono text-emerald-400 font-bold">
+                {displayLedger.length}
               </span>
-            )}
-          </button>
-        </div>
+            </button>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={fetchDashboardData}
-            disabled={isLoading}
-            className="p-2 rounded-xl bg-[#0f172a] hover:bg-slate-800 border border-[#1e293b] text-slate-400 hover:text-white text-xs font-mono transition flex items-center gap-1.5"
-            title="Refresh Ledger"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-emerald-400' : ''}`} />
-            <span className="hidden sm:inline text-[11px]">Synced {lastUpdated}</span>
-          </button>
+            <button
+              onClick={() => setFacilitySubTab('BORROWERS')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                facilitySubTab === 'BORROWERS'
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5 text-blue-400" />
+              <span>Borrower Dossiers Directory</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-950 font-mono text-blue-400 font-bold">
+                {propBorrowers.length > 0 ? propBorrowers.length : 6}
+              </span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={fetchDashboardData}
+              disabled={isLoading}
+              className="p-2 rounded-xl bg-[#0f172a] hover:bg-slate-800 border border-[#1e293b] text-slate-400 hover:text-white text-xs font-mono transition flex items-center gap-1.5 cursor-pointer"
+              title="Refresh Ledger"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-emerald-400' : ''}`} />
+              <span className="hidden sm:inline text-[11px]">Synced {lastUpdated}</span>
+            </button>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="flex items-center justify-between gap-3 border-b border-[#1e293b] pb-2">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setViewMode('LEDGER')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                viewMode === 'LEDGER'
+                  ? 'bg-slate-800 text-white border border-slate-700 shadow'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Facility Management Table</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-950 font-mono text-slate-400">
+                {displayLedger.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setViewMode('UNDERWRITING')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                viewMode === 'UNDERWRITING'
+                  ? 'bg-slate-800 text-white border border-slate-700 shadow'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900'
+              }`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+              <span>Underwriting Origination Queue</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-500/20 text-amber-300 font-mono font-bold">
+                {underwritingQueue.length} Pending
+              </span>
+            </button>
+
+            <button
+              onClick={() => setViewMode('RECONCILIATION')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                viewMode === 'RECONCILIATION'
+                  ? 'bg-slate-800 text-white border border-slate-700 shadow'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900'
+              }`}
+            >
+              <RefreshCw className="w-3.5 h-3.5 text-teal-400" />
+              <span>Bakong KHQR Reconciliation Feed</span>
+              {reconciliationFeed?.anomaly?.hasAnomaly && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-rose-500/20 text-rose-300 font-mono font-bold animate-pulse">
+                  1 Mismatch
+                </span>
+              )}
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={fetchDashboardData}
+              disabled={isLoading}
+              className="p-2 rounded-xl bg-[#0f172a] hover:bg-slate-800 border border-[#1e293b] text-slate-400 hover:text-white text-xs font-mono transition flex items-center gap-1.5 cursor-pointer"
+              title="Refresh Ledger"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-emerald-400' : ''}`} />
+              <span className="hidden sm:inline text-[11px]">Synced {lastUpdated}</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* When in FACILITIES mode and BORROWERS sub-tab selected */}
+      {focusMode === 'FACILITIES' && facilitySubTab === 'BORROWERS' && (
+        <section className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl shadow-2xl p-4 overflow-hidden">
+          <BorrowerList
+            borrowers={propBorrowers}
+            currency={currencyMode === 'KHR' ? 'KHR' : 'USD'}
+            currentUserRole="ADMIN"
+            onSelectBorrower={(id) => onNavigate?.(`/admin/borrowers/${id}`)}
+            onOpenCreateApplication={() => onNavigate?.('/apply')}
+          />
+        </section>
+      )}
 
       {/* ========================================================================= */}
       {/* 5. VIEW 1: BORROWER & LOAN FACILITY TABLE (Main Centerpiece Deliverable 3)*/}
       {/* ========================================================================= */}
-      {viewMode === 'LEDGER' && (
+      {viewMode === 'LEDGER' && (focusMode !== 'FACILITIES' || facilitySubTab === 'TABLE') && (
         <section className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl shadow-2xl overflow-hidden">
           {/* Controls Strip */}
           <div className="p-4 border-b border-[#1e293b] flex flex-col md:flex-row md:items-center justify-between gap-3">

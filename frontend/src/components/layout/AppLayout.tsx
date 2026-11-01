@@ -38,6 +38,8 @@ export interface AppLayoutProps {
   currency?: Currency;
   onToggleCurrency?: (currency: Currency) => void;
   overdueCount?: number;
+  activeFacilitiesCount?: number;
+  pendingApprovalsCount?: number;
   unreadNotificationsCount?: number;
   branchName?: string;
   breadcrumbs?: any[];
@@ -70,7 +72,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   onLogout,
   currency = 'USD',
   onToggleCurrency,
-  overdueCount = 6,
+  overdueCount = 0,
+  activeFacilitiesCount = 6,
+  pendingApprovalsCount = 5,
   unreadNotificationsCount = 3,
   currentRole,
   onRoleSwitch,
@@ -115,20 +119,60 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   }
 
   const staffNavLinks: LayoutNavLink[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard', section: 'CORE BANKING' },
-    { id: 'borrowers', label: 'Borrowers', icon: Users, path: '/admin/borrowers' },
-    { id: 'new-application', label: 'Client Loan Pipeline', icon: FileText, path: '/admin/applications' },
+    {
+      id: 'dashboard',
+      label: 'Overview (Portfolio & Risk KPIs)',
+      icon: LayoutDashboard,
+      path: '/admin/dashboard',
+      section: 'CORE BANKING'
+    },
+    {
+      id: 'approvals',
+      label: 'Loan Underwriting & Approvals',
+      icon: ShieldCheck,
+      path: '/admin/approvals',
+      badge: pendingApprovalsCount > 0 ? pendingApprovalsCount : undefined
+    },
+    {
+      id: 'borrowers',
+      label: 'Active Facilities & Borrowers',
+      icon: Landmark,
+      path: '/admin/borrowers',
+      badge: activeFacilitiesCount > 0 ? activeFacilitiesCount : 6
+    },
     {
       id: 'cashier',
-      label: 'Cashier Desk (Clients)',
-      icon: Landmark,
+      label: 'Repayments & Bakong Ledger',
+      icon: Wallet,
       path: '/admin/cashier',
       badge: overdueCount > 0 ? overdueCount : undefined
     },
-    { id: 'self-apply', label: 'Borrow for Myself', icon: UserCheck, path: '/apply', section: 'EXECUTIVE BORROWING' },
-    { id: 'my-repayments', label: 'My Personal Repayments', icon: Wallet, path: '/repayments' },
-    { id: 'reports', label: 'Reports', icon: BarChart3, path: '/admin/reports', section: 'MANAGEMENT & SYSTEM' },
-    { id: 'settings', label: 'Settings', icon: Settings, path: '/admin/settings' },
+    {
+      id: 'self-apply',
+      label: 'Borrow for Myself',
+      icon: UserCheck,
+      path: '/apply',
+      section: 'EXECUTIVE BORROWING'
+    },
+    {
+      id: 'my-repayments',
+      label: 'My Personal Repayments',
+      icon: Calendar,
+      path: '/repayments'
+    },
+    {
+      id: 'reports',
+      label: 'CBC Reporting & Credit Scoring',
+      icon: BarChart3,
+      path: '/admin/reports',
+      section: 'MANAGEMENT & SYSTEM'
+    },
+    {
+      id: 'settings',
+      label: 'System Audit Logs & Staff Permissions',
+      icon: Settings,
+      path: '/admin/settings'
+    },
   ];
 
   const borrowerNavLinks: LayoutNavLink[] = [

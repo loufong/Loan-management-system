@@ -78,7 +78,7 @@ import { UserRoleManagement } from './components/admin/UserRoleManagement';
 // Screen 12: System Settings & Policies
 import { SystemSettings } from './components/admin/SystemSettings';
 
-import { Search, X, DollarSign, FileText, User, CreditCard, Shield, AlertCircle } from 'lucide-react';
+import { Search, X, DollarSign, FileText, User, CreditCard, Shield, AlertCircle, UserCheck, Building2, Landmark, Wallet } from 'lucide-react';
 import { api } from './services/api';
 import { AccessDeniedPage } from './components/common/AccessDeniedPage';
 import { LoginPage } from './components/auth/LoginPage';
@@ -374,13 +374,14 @@ export const App: React.FC = () => {
         }
 
         if (path === '/new-loan') {
-          replaceAppRoute('/admin/applications');
-          setCurrentRoute('/admin/applications');
+          setOriginationMode('SELF');
+          replaceAppRoute('/apply');
+          setCurrentRoute('/apply');
           setActiveTab('new-application');
           return;
         }
 
-        if (path === '/access-denied' || path === '/portal' || path === '/my-loans') {
+        if (path === '/access-denied' || path === '/portal') {
           replaceAppRoute('/admin/dashboard');
           setCurrentRoute('/admin/dashboard');
           setActiveTab('dashboard');
@@ -428,14 +429,18 @@ export const App: React.FC = () => {
       } else if (path === '/portal' || path === '/my-loans') {
         setActiveTab('borrower_dashboard');
       } else if (path === '/applications' || path === '/user/my_applications' || path === '/user/applications') {
+        setOriginationMode('CLIENT');
         setActiveTab('applications');
       } else if (path === '/apply-loan' || path === '/apply' || path === '/user/apply_loan') {
+        setOriginationMode('SELF');
         setActiveTab('new-application');
       } else if (path === '/loans' || path === '/user/my_loans' || path === '/user/loans') {
         setActiveTab('loans');
       } else if (path === '/repayments' || path === '/user/repayment_schedule' || path === '/user/repayments') {
+        setRepaymentViewMode('SELF');
         setActiveTab('repayments');
       } else if (path === '/payments' || path === '/user/payments' || path === '/user/my_repayments') {
+        setRepaymentViewMode('CLIENT');
         setActiveTab('cashier');
       } else if (path === '/notifications' || path === '/user/notifications') {
         setActiveTab('notifications');
@@ -532,6 +537,10 @@ export const App: React.FC = () => {
   const [selectedBorrowerId, setSelectedBorrowerId] = useState<string>('BOR-2026-0001');
   const [selectedApplicationId, setSelectedApplicationId] = useState<string>('APP-2026-0014');
   const [selectedLoanId, setSelectedLoanId] = useState<string>('LN-2026-0042');
+
+  // Super Admin / Staff Dual-Mode Operation (Self-Borrowing vs Client Portfolio)
+  const [originationMode, setOriginationMode] = useState<'SELF' | 'CLIENT'>('CLIENT');
+  const [repaymentViewMode, setRepaymentViewMode] = useState<'SELF' | 'CLIENT'>('CLIENT');
 
   // Modals
   const [searchModalOpen, setSearchModalOpen] = useState<boolean>(false);
@@ -869,10 +878,24 @@ export const App: React.FC = () => {
     ) {
       targetPath = '/admin/products';
     } else if (
+      navTarget === 'self-apply' ||
+      navTarget === 'apply_self' ||
+      navTarget === '/apply'
+    ) {
+      setOriginationMode('SELF');
+      targetPath = '/apply';
+    } else if (
+      navTarget === 'my-repayments' ||
+      navTarget === 'my_repayments'
+    ) {
+      setRepaymentViewMode('SELF');
+      targetPath = '/repayments';
+    } else if (
       navTarget === 'applications' ||
       navTarget === 'admin_applications' ||
       navTarget === '/admin/applications'
     ) {
+      setOriginationMode('CLIENT');
       targetPath = isAdmin ? '/admin/applications' : '/applications';
     } else if (navTarget === 'my_applications' || navTarget === '/applications') {
       targetPath = '/applications';
@@ -1094,7 +1117,18 @@ export const App: React.FC = () => {
     if (l.borrowerName && currentClientName && (l.borrowerName.toLowerCase().includes(currentClientName) || currentClientName.includes(l.borrowerName.toLowerCase()))) return true;
     return false;
   });
-  const userDisplayLoans = isBorrowerRole ? userFilteredLoans : loans;
+
+  const staffPersonalLoans = loans.filter((l) => {
+    if (l.borrowerId === currentUser.id || (currentBorrowerId && l.borrowerId === currentBorrowerId)) return true;
+    if (l.borrowerName && currentClientName && (l.borrowerName.toLowerCase().includes(currentClientName) || currentClientName.includes(l.borrowerName.toLowerCase()))) return true;
+    return false;
+  });
+
+  const userDisplayLoans = isBorrowerRole
+    ? userFilteredLoans
+    : ((activeTab === 'borrower_dashboard' || activeTab === 'pay_installment' || (activeTab === 'repayments' && repaymentViewMode === 'SELF')) && staffPersonalLoans.length > 0
+        ? staffPersonalLoans
+        : loans);
 
   const userFilteredApps = applications.filter((a) => {
     if (!isBorrowerRole) return true;
@@ -1547,24 +1581,75 @@ export const App: React.FC = () => {
           )}
 
           {activeTab === 'new-application' && (
-            isBorrowerRole ? (
-              <BorrowerApplyLoanView
-                currentUser={currentUser}
-                currency={currency}
-                onNavigate={handleNavSelection}
-                onSubmitSuccess={() => reloadAllData()}
-              />
-            ) : (
-              <LoanApplicationWizard
-                borrowers={borrowers}
-                products={products}
-                currency={currency}
-                currentUser={currentUser}
-                currentUserRole={activeRole}
-                onCancel={() => handleNavSelection('applications')}
-                onSubmitApplication={handleApplicationSubmit}
-              />
-            )
+            <div className="space-y-4">
+              {isStaffRole && (
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+                      {originationMode === 'SELF' ? <UserCheck className="w-5 h-5" /> : <Building2 className="w-5 h-5" />}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-bold text-white uppercase tracking-wider">
+                          {originationMode === 'SELF' ? 'Executive Self-Borrowing Application' : 'Client Loan Origination Wizard'}
+                        </p>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                          {originationMode === 'SELF' ? 'Borrow for Myself' : 'Originate for Client'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-400">
+                        {originationMode === 'SELF'
+                          ? `Apply for a personal credit facility under your Super Admin profile (${currentUser.name || 'System Administrator'}). Directly enters Underwriting Queue.`
+                          : 'Issue a new credit facility on behalf of a registered borrower in the customer database.'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-slate-950 p-1.5 rounded-xl border border-slate-800 self-start sm:self-auto">
+                    <button
+                      onClick={() => setOriginationMode('SELF')}
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                        originationMode === 'SELF'
+                          ? 'bg-emerald-500 text-slate-950 shadow-md'
+                          : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                      }`}
+                    >
+                      <UserCheck className="w-3.5 h-3.5" />
+                      Borrow for Myself
+                    </button>
+                    <button
+                      onClick={() => setOriginationMode('CLIENT')}
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                        originationMode === 'CLIENT'
+                          ? 'bg-emerald-500 text-slate-950 shadow-md'
+                          : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                      }`}
+                    >
+                      <Building2 className="w-3.5 h-3.5" />
+                      Originate for Client
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {(!isStaffRole || originationMode === 'SELF') ? (
+                <BorrowerApplyLoanView
+                  currentUser={currentUser}
+                  currency={currency}
+                  onNavigate={handleNavSelection}
+                  onSubmitSuccess={() => reloadAllData()}
+                />
+              ) : (
+                <LoanApplicationWizard
+                  borrowers={borrowers}
+                  products={products}
+                  currency={currency}
+                  currentUser={currentUser}
+                  currentUserRole={activeRole}
+                  onCancel={() => handleNavSelection('applications')}
+                  onSubmitApplication={handleApplicationSubmit}
+                />
+              )}
+            </div>
           )}
 
           {/* SCREEN 3: Credit Review Queue & DTI Risk Workbench */}
@@ -1667,15 +1752,44 @@ export const App: React.FC = () => {
 
           {/* SCREEN 6: Cashier Desk & Payment Collection Terminal */}
           {activeTab === 'cashier' && (
-            <CashierPaymentTerminal
-              loans={isBorrowerRole ? userDisplayLoans : loans}
-              receipts={isBorrowerRole ? userDisplayReceipts : receipts}
-              currency={currency}
-              cashierName={currentUser.name}
-              currentUserRole={activeRole}
-              onRecordPayment={handleRecordPayment}
-              initialSelectedLoanId={selectedLoanId}
-            />
+            <div className="space-y-4">
+              {isStaffRole && (
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+                      <Landmark className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-white">
+                        Looking to pay your own personal loan installment?
+                      </p>
+                      <p className="text-[11px] text-slate-400">
+                        This is the institutional Cashier Desk for collecting client payments. Switch to view your personal schedule and pay with Bakong KHQR.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setRepaymentViewMode('SELF');
+                      handleNavSelection('my-repayments');
+                    }}
+                    className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition flex items-center gap-1.5 self-start sm:self-auto cursor-pointer shadow"
+                  >
+                    <Wallet className="w-3.5 h-3.5" />
+                    Pay My Personal Installment →
+                  </button>
+                </div>
+              )}
+              <CashierPaymentTerminal
+                loans={isBorrowerRole ? userDisplayLoans : loans}
+                receipts={isBorrowerRole ? userDisplayReceipts : receipts}
+                currency={currency}
+                cashierName={currentUser.name}
+                currentUserRole={activeRole}
+                onRecordPayment={handleRecordPayment}
+                initialSelectedLoanId={selectedLoanId}
+              />
+            </div>
           )}
 
           {/* SCREEN: Dedicated Borrower Pay Installment (Bakong KHQR) */}
@@ -1847,22 +1961,73 @@ export const App: React.FC = () => {
 
           {/* SCREEN 17: User Repayment Schedule */}
           {activeTab === 'repayments' && (
-            isBorrowerRole ? (
-              <BorrowerRepaymentScheduleView
-                currentUser={currentUser}
-                currency={currency}
-                loans={userDisplayLoans}
-                onNavigate={handleNavSelection}
-                onOpenPayInstallment={(cycle, amt) => handleNavSelection('/pay-installment')}
-              />
-            ) : (
-              <UserRepaymentsView
-                loans={loans}
-                currentUser={currentUser}
-                currency={currency}
-                onOpenPaymentForLoan={(loanId, instNo, amt) => openPaymentForBorrowerOrStaff(loanId, instNo, amt)}
-              />
-            )
+            <div className="space-y-4">
+              {isStaffRole && (
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-400 flex items-center justify-center font-bold">
+                      {repaymentViewMode === 'SELF' ? <Landmark className="w-5 h-5" /> : <Wallet className="w-5 h-5" />}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-bold text-white uppercase tracking-wider">
+                          {repaymentViewMode === 'SELF' ? 'My Personal Repayment Schedule & Bakong Settlement' : 'Portfolio Loan Repayments & Ledger'}
+                        </p>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/20 text-teal-400 border border-teal-500/30">
+                          {repaymentViewMode === 'SELF' ? 'Personal Account' : 'Institutional Ledger'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-400">
+                        {repaymentViewMode === 'SELF'
+                          ? `Review your personal 12-month installment schedule (${currentUser.name || 'System Administrator'}) and settle installments with Bakong KHQR.`
+                          : 'Monitor customer repayment cycles, overdue aging buckets, and collection journals across all facilities.'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-slate-950 p-1.5 rounded-xl border border-slate-800 self-start sm:self-auto">
+                    <button
+                      onClick={() => setRepaymentViewMode('SELF')}
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                        repaymentViewMode === 'SELF'
+                          ? 'bg-emerald-500 text-slate-950 shadow-md'
+                          : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                      }`}
+                    >
+                      <Landmark className="w-3.5 h-3.5" />
+                      My Personal Schedule
+                    </button>
+                    <button
+                      onClick={() => setRepaymentViewMode('CLIENT')}
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                        repaymentViewMode === 'CLIENT'
+                          ? 'bg-emerald-500 text-slate-950 shadow-md'
+                          : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                      }`}
+                    >
+                      <Wallet className="w-3.5 h-3.5" />
+                      Portfolio Schedule
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {(!isStaffRole || repaymentViewMode === 'SELF') ? (
+                <BorrowerRepaymentScheduleView
+                  currentUser={currentUser}
+                  currency={currency}
+                  loans={userDisplayLoans}
+                  onNavigate={handleNavSelection}
+                  onOpenPayInstallment={(cycle, amt) => handleNavSelection('/pay-installment')}
+                />
+              ) : (
+                <UserRepaymentsView
+                  loans={loans}
+                  currentUser={currentUser}
+                  currency={currency}
+                  onOpenPaymentForLoan={(loanId, instNo, amt) => openPaymentForBorrowerOrStaff(loanId, instNo, amt)}
+                />
+              )}
+            </div>
           )}
         </div>
       </AppLayout>

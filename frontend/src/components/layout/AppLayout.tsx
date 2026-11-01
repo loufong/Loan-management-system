@@ -21,7 +21,9 @@ import {
   Building2,
   AlertTriangle,
   ShieldCheck,
-  Landmark
+  Landmark,
+  UserCheck,
+  FileText
 } from 'lucide-react';
 import { Currency, UserProfile } from '../../types';
 
@@ -109,20 +111,23 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     icon: any;
     path: string;
     badge?: number | string;
+    section?: string;
   }
 
   const staffNavLinks: LayoutNavLink[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard' },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/admin/dashboard', section: 'CORE BANKING' },
     { id: 'borrowers', label: 'Borrowers', icon: Users, path: '/admin/borrowers' },
-    { id: 'new-application', label: 'New Loan', icon: FilePlus2, path: '/admin/applications' },
+    { id: 'new-application', label: 'Client Loan Pipeline', icon: FileText, path: '/admin/applications' },
     {
       id: 'cashier',
-      label: 'Repayments / Cashier',
-      icon: Wallet,
+      label: 'Cashier Desk (Clients)',
+      icon: Landmark,
       path: '/admin/cashier',
       badge: overdueCount > 0 ? overdueCount : undefined
     },
-    { id: 'reports', label: 'Reports', icon: BarChart3, path: '/admin/reports' },
+    { id: 'self-apply', label: 'Borrow for Myself', icon: UserCheck, path: '/apply', section: 'EXECUTIVE BORROWING' },
+    { id: 'my-repayments', label: 'My Personal Repayments', icon: Wallet, path: '/repayments' },
+    { id: 'reports', label: 'Reports', icon: BarChart3, path: '/admin/reports', section: 'MANAGEMENT & SYSTEM' },
     { id: 'settings', label: 'Settings', icon: Settings, path: '/admin/settings' },
   ];
 
@@ -171,11 +176,15 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         ['/my-loans', '/portal', '/'].includes(currentPath);
     }
     if (item.id === 'new-application') {
-      return ['new-application', 'apply-loan', '/apply-loan', 'apply', '/apply', 'applications', '/admin/applications'].includes(activeNav) ||
-        ['/apply-loan', '/apply', '/admin/applications'].includes(currentPath);
+      return ['new-application', 'applications', '/admin/applications'].includes(activeNav) ||
+        currentPath === '/admin/applications';
     }
-    if (item.id === 'repayments') {
-      return ['repayments', '/repayments', 'repayment-schedule', '/repayment-schedule', 'user_repayments'].includes(activeNav) ||
+    if (item.id === 'self-apply') {
+      return ['self-apply', 'apply_self', '/apply', '/apply-loan', 'apply-loan'].includes(activeNav) ||
+        ['/apply', '/apply-loan'].includes(currentPath);
+    }
+    if (item.id === 'repayments' || item.id === 'my-repayments') {
+      return ['repayments', 'my-repayments', '/repayments', 'repayment-schedule', '/repayment-schedule', 'user_repayments'].includes(activeNav) ||
         ['/repayments', '/repayment-schedule'].includes(currentPath);
     }
     if (item.id === 'cashier') {
@@ -258,31 +267,37 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             const Icon = item.icon;
             const isActive = isItemActive(item);
             return (
-              <button
-                key={item.id}
-                onClick={() => handleNavClick(item.id, item.path)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all relative ${
-                  isActive
-                    ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/20'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                }`}
-                title={isSidebarCollapsed ? item.label : undefined}
-              >
-                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-slate-950 stroke-[2.5]' : 'text-slate-400'}`} />
-                {!isSidebarCollapsed && (
-                  <div className="flex-1 text-left truncate flex items-center justify-between">
-                    <span>{item.label}</span>
-                    {item.badge !== undefined && (
-                      <span className="ml-2 px-1.5 py-0.5 text-[10px] font-mono font-bold rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 animate-pulse">
-                        {item.badge}
-                      </span>
-                    )}
+              <React.Fragment key={item.id}>
+                {item.section && !isSidebarCollapsed && (
+                  <div className="pt-3 pb-1 px-3 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500">
+                    {item.section}
                   </div>
                 )}
-                {isSidebarCollapsed && item.badge !== undefined && (
-                  <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-slate-900" />
-                )}
-              </button>
+                <button
+                  onClick={() => handleNavClick(item.id, item.path)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all relative ${
+                    isActive
+                      ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/20'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                  }`}
+                  title={isSidebarCollapsed ? item.label : undefined}
+                >
+                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-slate-950 stroke-[2.5]' : 'text-slate-400'}`} />
+                  {!isSidebarCollapsed && (
+                    <div className="flex-1 text-left truncate flex items-center justify-between">
+                      <span>{item.label}</span>
+                      {item.badge !== undefined && (
+                        <span className="ml-2 px-1.5 py-0.5 text-[10px] font-mono font-bold rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 animate-pulse">
+                          {item.badge}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {isSidebarCollapsed && item.badge !== undefined && (
+                    <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-slate-900" />
+                  )}
+                </button>
+              </React.Fragment>
             );
           })}
         </nav>
@@ -436,29 +451,35 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                 </button>
               </div>
 
-              <div className="space-y-1 flex-1">
+              <div className="space-y-1 flex-1 overflow-y-auto">
                 {navLinks.map(item => {
                   const isActive = isItemActive(item);
                   return (
-                    <button
-                      key={item.id}
-                      onClick={() => handleNavClick(item.id, item.path)}
-                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                        isActive
-                          ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/20'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <item.icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-slate-950 stroke-[2.5]' : 'text-slate-400'}`} />
-                        <span>{item.label}</span>
-                      </div>
-                      {item.badge && (
-                        <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-rose-500/20 text-rose-400 font-bold">
-                          {item.badge}
-                        </span>
+                    <React.Fragment key={item.id}>
+                      {item.section && (
+                        <div className="pt-3 pb-1 px-3 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500">
+                          {item.section}
+                        </div>
                       )}
-                    </button>
+                      <button
+                        onClick={() => handleNavClick(item.id, item.path)}
+                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                          isActive
+                            ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/20'
+                            : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <item.icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-slate-950 stroke-[2.5]' : 'text-slate-400'}`} />
+                          <span>{item.label}</span>
+                        </div>
+                        {item.badge && (
+                          <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-rose-500/20 text-rose-400 font-bold">
+                            {item.badge}
+                          </span>
+                        )}
+                      </button>
+                    </React.Fragment>
                   );
                 })}
               </div>

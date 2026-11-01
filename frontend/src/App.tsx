@@ -609,11 +609,31 @@ export const App: React.FC = () => {
           outstandingBalanceUSD: Number(u.repaymentProgress?.outstandingBalanceUSD || 0),
           totalPaidUSD: Number(u.repaymentProgress?.totalPaidUSD || 0),
           status: (u.facility?.status || 'ACTIVE') as any,
-          schedules: u.schedules || generateAmortizationSchedule(
-            Number(u.principal?.disbursedAmountUSD || 0),
-            Number(u.principal?.aprPercent || 6.5),
-            Number(u.principal?.termMonths || 12)
-          ),
+          schedules: (Array.isArray(u.schedules) && u.schedules.length > 0 && !u.schedules.every((s: any) => Number(s.totalDue || s.totalDueUSD || 0) === 0))
+            ? u.schedules.map((s: any, idx: number) => {
+                const pVal = Number(s.principalUSD ?? s.principalDue ?? s.principal ?? 0);
+                const iVal = Number(s.interestUSD ?? s.interestDue ?? s.interest ?? 0);
+                const tVal = Number(s.totalDueUSD ?? s.totalDue ?? (pVal + iVal));
+                return {
+                  ...s,
+                  installmentNo: s.installmentNo || idx + 1,
+                  dueDate: s.dueDate || '',
+                  principalUSD: pVal,
+                  principalDue: pVal,
+                  interestUSD: iVal,
+                  interestDue: iVal,
+                  totalDueUSD: tVal,
+                  totalDue: tVal,
+                  remainingAmountUSD: s.status === 'PAID' ? 0 : tVal,
+                  amountPaidUSD: s.status === 'PAID' ? tVal : (Number(s.amountPaidUSD || 0)),
+                  status: s.status || (idx === 0 ? 'DUE' : 'UPCOMING'),
+                };
+              })
+            : generateAmortizationSchedule(
+                Number(u.principal?.disbursedAmountUSD || (u as any)?.principalAmount || 0),
+                Number(u.principal?.aprPercent || (u as any)?.interestRate || 6.5),
+                Number(u.principal?.termMonths || (u as any)?.termMonths || 12)
+              ),
         }));
 
       const apiLoans = Array.isArray(l) ? l : [];

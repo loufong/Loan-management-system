@@ -94,7 +94,15 @@ export const BorrowerPayInstallmentView: React.FC<BorrowerPayInstallmentViewProp
     remainingTenureMonths: (activeLoan.schedules?.filter((s) => s.status !== 'PAID').length) || 1,
     currentCycleNo: nextSchedule?.installmentNo || initialInstallmentNo || 1,
     nextCycleDueDate: nextSchedule?.dueDate || (activeLoan as any)?.nextPaymentDueDate || '2026-11-15',
-    nextCycleAmountUSD: Number(nextSchedule?.remainingAmountUSD || (activeLoan as any)?.nextPaymentDueAmountUSD || initialAmountUSD || 0),
+    nextCycleAmountUSD: Number(
+      nextSchedule?.remainingAmountUSD ||
+      (nextSchedule as any)?.totalDueUSD ||
+      (nextSchedule as any)?.totalDue ||
+      (activeLoan as any)?.monthlyEMIUSD ||
+      (activeLoan as any)?.nextPaymentDueAmountUSD ||
+      initialAmountUSD ||
+      0
+    ),
     linkedAccount: {
       bankName: 'ACLEDA Bank Plc.',
       accountNumberMasked: '****-****-2026',

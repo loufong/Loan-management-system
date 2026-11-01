@@ -99,15 +99,24 @@ export function generateAmortizationSchedule(principal: number, aprPercent: numb
       : Math.round((emi - interestDue) * 100) / 100;
     const totalDue = Math.round((principalDue + interestDue) * 100) / 100;
 
+    const startingBalance = remainingPrincipal;
     remainingPrincipal = Math.max(0, Math.round((remainingPrincipal - principalDue) * 100) / 100);
 
     schedules.push({
       installmentNo: i,
       dueDate: dueDate.toISOString().split('T')[0],
       totalDue,
+      totalDueUSD: totalDue,
       principalDue,
+      principalUSD: principalDue,
       interestDue,
+      interestUSD: interestDue,
+      startingBalance,
+      beginningPrincipal: startingBalance,
       remainingBalance: remainingPrincipal,
+      remainingAmountUSD: totalDue,
+      endingBalance: remainingPrincipal,
+      amountPaidUSD: 0,
       status: (i === 1 ? 'DUE' : 'UPCOMING') as 'PAID' | 'DUE' | 'UPCOMING',
     });
   }
@@ -495,6 +504,60 @@ const INITIAL_SEED_RECEIPTS: PaymentReceipt[] = [
 
 class LoanStorageService {
   /**
+   * Sanitizes unified loan records ensuring schedules have non-zero calculations
+   */
+  public sanitizeRecord(r: UnifiedLoanRecord): UnifiedLoanRecord {
+    if (!r) return r;
+    const origPrincipal = Number(
+      r.principal?.disbursedAmountUSD || (r as any).principalAmount || (r as any).outstandingBalanceUSD || 0
+    );
+    const apr = Number(r.principal?.aprPercent || (r as any).annualInterestRate || (r as any).interestRate || 6.5);
+    const term = Number(r.principal?.termMonths || (r as any).tenureMonths || (r as any).termMonths || 12);
+
+    let schedules = r.schedules;
+    const hasZeroSchedules = !Array.isArray(schedules) || schedules.length === 0 || schedules.every((s: any) => 
+      Number(s.totalDue || s.totalDueUSD || 0) === 0 && Number(s.principalDue || s.principalUSD || 0) === 0
+    );
+
+    if (hasZeroSchedules && origPrincipal > 0) {
+      schedules = generateAmortizationSchedule(origPrincipal, apr, term);
+    } else if (Array.isArray(schedules)) {
+      let runningBal = origPrincipal;
+      schedules = schedules.map((s: any, idx: number) => {
+        const principalDue = Number(s.principalUSD ?? s.principalDue ?? s.principal ?? 0);
+        const interestDue = Number(s.interestUSD ?? s.interestDue ?? s.interest ?? 0);
+        const totalDue = Number(s.totalDueUSD ?? s.totalDue ?? s.totalAmount ?? (principalDue + interestDue));
+        const startBal = Number(s.beginningPrincipal ?? s.startingBalance ?? runningBal);
+        const endBal = Number(s.endingBalance ?? s.remainingBalance ?? Math.max(0, startBal - principalDue));
+        runningBal = endBal;
+
+        return {
+          ...s,
+          installmentNo: s.installmentNo || idx + 1,
+          dueDate: s.dueDate || '',
+          principalDue,
+          principalUSD: principalDue,
+          interestDue,
+          interestUSD: interestDue,
+          totalDue,
+          totalDueUSD: totalDue,
+          startingBalance: startBal,
+          beginningPrincipal: startBal,
+          remainingBalance: endBal,
+          remainingAmountUSD: s.status === 'PAID' ? 0 : totalDue,
+          endingBalance: endBal,
+          amountPaidUSD: s.status === 'PAID' ? totalDue : (Number(s.amountPaidUSD || 0)),
+        };
+      });
+    }
+
+    return {
+      ...r,
+      schedules,
+    };
+  }
+
+  /**
    * Safe localStorage accessor with seed fallback
    */
   private getStorage(): UnifiedLoanRecord[] {
@@ -510,7 +573,7 @@ class LoanStorageService {
         localStorage.setItem(UNIFIED_LEDGER_KEY, JSON.stringify(INITIAL_SEED_LOANS));
         return INITIAL_SEED_LOANS;
       }
-      return parsed;
+      return parsed.map((item: any) => this.sanitizeRecord(item));
     } catch {
       return INITIAL_SEED_LOANS;
     }

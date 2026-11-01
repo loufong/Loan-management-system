@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { Currency, UserProfile, LoanAccount } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
+import { generateAmortizationSchedule } from '../../services/loanStorageService';
 
 export interface BorrowerRepaymentScheduleViewProps {
   currentUser: UserProfile;
@@ -94,24 +95,76 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
   const activeLoan = activeLoans.length > 0 ? activeLoans[0] : null;
   const hasActiveLoan = !!activeLoan;
 
-  // Build schedule data strictly from active loan schedules
+  // Build schedule data strictly from active loan schedules with automatic reducing balance recovery
   const scheduleData: ScheduleRow[] = useMemo(() => {
-    if (!hasActiveLoan || !activeLoan || !Array.isArray(activeLoan.schedules) || activeLoan.schedules.length === 0) {
+    if (!hasActiveLoan || !activeLoan) {
       return [];
     }
-    return activeLoan.schedules.map((s, idx) => ({
-      cycle: s.installmentNo || idx + 1,
-      dueDate: s.dueDate || '',
-      beginningPrincipal: Number(s.principalUSD || 0) * (activeLoan.schedules.length - idx),
-      scheduledEMI: Number(s.totalDueUSD || 0),
-      principal: Number(s.principalUSD || 0),
-      interest: Number(s.interestUSD || 0),
-      lateFees: 0.0,
-      endingBalance: Math.max(0, Number(activeLoan.outstandingBalanceUSD || 0) - (Number(s.amountPaidUSD || 0))),
-      status: (s.status === 'PAID' ? 'PAID' : (s.status === 'OVERDUE' ? 'OVERDUE' : (idx === 0 ? 'DUE_SOON' : 'SCHEDULED'))) as any,
-      txRef: (s as any).transactionReference || (s.status === 'PAID' ? `TX-${s.installmentNo}` : undefined),
-      paidAt: (s as any).settledAt || (s.status === 'PAID' ? s.dueDate : undefined),
-    }));
+
+    const origPrincipal = Number(
+      activeLoan.principalUSD || (activeLoan as any)?.principalAmount || (activeLoan as any)?.principal?.disbursedAmountUSD || activeLoan.outstandingBalanceUSD || 0
+    );
+    const apr = Number(activeLoan.interestRate || (activeLoan as any)?.principal?.aprPercent || 6.5);
+    const term = Number(activeLoan.termMonths || (activeLoan as any)?.principal?.termMonths || (activeLoan.schedules?.length || 12));
+
+    const rawSchedules = Array.isArray(activeLoan.schedules) && activeLoan.schedules.length > 0
+      ? activeLoan.schedules
+      : generateAmortizationSchedule(origPrincipal, apr, term);
+
+    // Reference amortization table to guarantee accurate calculations even if stored items had zero values
+    const referenceAmort = generateAmortizationSchedule(origPrincipal, apr, term);
+
+    let runningPrincipal = origPrincipal;
+
+    return rawSchedules.map((s: any, idx: number) => {
+      const cycle = s.installmentNo || idx + 1;
+      const refRow = referenceAmort[idx] || referenceAmort[referenceAmort.length - 1];
+
+      // Principal, interest and EMI: extract or fallback to reference
+      const principalRaw = Number(s.principalUSD ?? s.principalDue ?? s.principal ?? 0);
+      const interestRaw = Number(s.interestUSD ?? s.interestDue ?? s.interest ?? 0);
+      const emiRaw = Number(s.totalDueUSD ?? s.totalDue ?? s.totalAmount ?? 0);
+
+      const principal = principalRaw > 0 ? principalRaw : (refRow?.principalDue || 0);
+      const interest = interestRaw > 0 ? interestRaw : (refRow?.interestDue || 0);
+      const scheduledEMI = emiRaw > 0 ? emiRaw : (principal + interest);
+
+      const beginningPrincipal = s.beginningPrincipal !== undefined && Number(s.beginningPrincipal) > 0
+        ? Number(s.beginningPrincipal)
+        : (s.startingBalance !== undefined && Number(s.startingBalance) > 0
+          ? Number(s.startingBalance)
+          : (refRow?.startingBalance ?? runningPrincipal));
+
+      const endingBalance = s.endingBalance !== undefined && Number(s.endingBalance) >= 0
+        ? Number(s.endingBalance)
+        : (s.remainingBalance !== undefined && Number(s.remainingBalance) >= 0
+          ? Number(s.remainingBalance)
+          : (refRow?.remainingBalance ?? Math.max(0, beginningPrincipal - principal)));
+
+      runningPrincipal = endingBalance;
+
+      const isPaid = s.status === 'PAID';
+      const isOverdue = s.status === 'OVERDUE';
+      const status: 'PAID' | 'DUE_SOON' | 'SCHEDULED' | 'OVERDUE' = isPaid
+        ? 'PAID'
+        : isOverdue
+        ? 'OVERDUE'
+        : (idx === 0 || s.status === 'DUE' ? 'DUE_SOON' : 'SCHEDULED');
+
+      return {
+        cycle,
+        dueDate: s.dueDate || refRow?.dueDate || '',
+        beginningPrincipal,
+        scheduledEMI,
+        principal,
+        interest,
+        lateFees: Number(s.lateFees || s.lateFeeAccruedUSD || 0),
+        endingBalance,
+        status,
+        txRef: (s as any).transactionReference || (s as any).txRef || (isPaid ? `TX-${cycle}` : undefined),
+        paidAt: (s as any).settledAt || (s as any).paidAt || (isPaid ? s.dueDate : undefined),
+      };
+    });
   }, [hasActiveLoan, activeLoan]);
 
   // Filtered rows
@@ -317,7 +370,7 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
           </div>
 
           <div className="text-[11px] font-mono text-slate-400 flex items-center gap-2">
-            <span>Interest Formula: <strong>NBC Reducing Balance (6.5%)</strong></span>
+            <span>Interest Formula: <strong>NBC Reducing Balance ({Number(activeLoan?.interestRate || 6.5)}% p.a.)</strong></span>
           </div>
         </div>
 
@@ -513,7 +566,7 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
               </div>
               <div className="flex justify-between text-slate-400">
                 <span className="font-sans">Cycle Number</span>
-                <span className="text-white font-bold">Installment #{selectedReceipt.cycle} of 12</span>
+                <span className="text-white font-bold">Installment #{selectedReceipt.cycle} of {scheduleData.length || 12}</span>
               </div>
               <div className="flex justify-between text-slate-400">
                 <span className="font-sans">Settled Timestamp</span>

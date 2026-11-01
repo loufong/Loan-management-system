@@ -451,9 +451,9 @@ export const App: React.FC = () => {
       } else if (path === '/repayments' || path === '/user/repayment_schedule' || path === '/user/repayments') {
         setRepaymentViewMode('SELF');
         setActiveTab('repayments');
-      } else if (path === '/payments' || path === '/user/payments' || path === '/user/my_repayments') {
+      } else if (path === '/payments' || path === '/user/payments' || path === '/user/my_repayments' || path === '/pay-installment') {
         setRepaymentViewMode('CLIENT');
-        setActiveTab('cashier');
+        setActiveTab('pay_installment');
       } else if (path === '/notifications' || path === '/user/notifications') {
         setActiveTab('notifications');
       } else if (path === '/profile' || path === '/user/profile') {
@@ -1846,44 +1846,76 @@ export const App: React.FC = () => {
 
           {/* SCREEN 6: Cashier Desk & Payment Collection Terminal */}
           {activeTab === 'cashier' && (
-            <div className="space-y-4">
-              {isStaffRole && (
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
-                      <Landmark className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-white">
-                        Looking to pay your own personal loan installment?
-                      </p>
-                      <p className="text-[11px] text-slate-400">
-                        This is the institutional Cashier Desk for collecting client payments. Switch to view your personal schedule and pay with Bakong KHQR.
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setRepaymentViewMode('SELF');
-                      handleNavSelection('my-repayments');
-                    }}
-                    className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition flex items-center gap-1.5 self-start sm:self-auto cursor-pointer shadow"
-                  >
-                    <Wallet className="w-3.5 h-3.5" />
-                    Pay My Personal Installment →
-                  </button>
-                </div>
-              )}
-              <CashierPaymentTerminal
-                loans={isBorrowerRole ? userDisplayLoans : loans}
-                receipts={isBorrowerRole ? userDisplayReceipts : receipts}
+            isBorrowerRole ? (
+              <BorrowerPayInstallmentView
+                currentUser={currentUser}
                 currency={currency}
-                cashierName={currentUser.name}
-                currentUserRole={activeRole}
-                onRecordPayment={handleRecordPayment}
-                initialSelectedLoanId={selectedLoanId}
+                loans={userDisplayLoans}
+                initialAmountUSD={
+                  userDisplayLoans[0]?.schedules?.find((s: any) => s.status !== 'PAID')?.totalDueUSD ||
+                  (userDisplayLoans[0] as any)?.monthlyEMIUSD ||
+                  userDisplayLoans[0]?.nextPaymentDueAmountUSD ||
+                  183.89
+                }
+                initialInstallmentNo={
+                  userDisplayLoans[0]?.schedules?.find((s: any) => s.status !== 'PAID')?.installmentNo || 1
+                }
+                onNavigate={handleNavSelection}
+                onPaymentSettled={async (receipt) => {
+                  if (receipt) {
+                    await loanStorageService.recordPayment({
+                      loanId: (receipt as any).facilityId || (receipt as any).loanAccountId || (userDisplayLoans[0]?.id || 'ln-001'),
+                      amount: receipt.settledAmountUSD || receipt.amountUSD || (receipt as any).amountPaidUSD || 183.89,
+                      paymentMethod: receipt.paymentMethod || 'KHQR',
+                      referenceNo: receipt.transactionReference || (receipt as any).referenceNo,
+                      receiptNo: receipt.receiptNumber || (receipt as any).receiptNo,
+                      notes: 'Settled via Bakong KHQR dynamic gateway',
+                      cashierName: 'Bakong Universal Gateway',
+                    });
+                  }
+                  await reloadAllData();
+                }}
               />
-            </div>
+            ) : (
+              <div className="space-y-4">
+                {isStaffRole && (
+                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+                        <Landmark className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-white">
+                          Looking to pay your own personal loan installment?
+                        </p>
+                        <p className="text-[11px] text-slate-400">
+                          This is the institutional Cashier Desk for collecting client payments. Switch to view your personal schedule and pay with Bakong KHQR.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setRepaymentViewMode('SELF');
+                        handleNavSelection('my-repayments');
+                      }}
+                      className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition flex items-center gap-1.5 self-start sm:self-auto cursor-pointer shadow"
+                    >
+                      <Wallet className="w-3.5 h-3.5" />
+                      Pay My Personal Installment →
+                    </button>
+                  </div>
+                )}
+                <CashierPaymentTerminal
+                  loans={isBorrowerRole ? userDisplayLoans : loans}
+                  receipts={isBorrowerRole ? userDisplayReceipts : receipts}
+                  currency={currency}
+                  cashierName={currentUser.name}
+                  currentUserRole={activeRole}
+                  onRecordPayment={handleRecordPayment}
+                  initialSelectedLoanId={selectedLoanId}
+                />
+              </div>
+            )
           )}
 
           {/* SCREEN: Dedicated Borrower Pay Installment (Bakong KHQR) */}
@@ -1892,14 +1924,21 @@ export const App: React.FC = () => {
               currentUser={currentUser}
               currency={currency}
               loans={userDisplayLoans}
-              initialAmountUSD={122.50}
-              initialInstallmentNo={5}
+              initialAmountUSD={
+                userDisplayLoans[0]?.schedules?.find((s: any) => s.status !== 'PAID')?.totalDueUSD ||
+                (userDisplayLoans[0] as any)?.monthlyEMIUSD ||
+                userDisplayLoans[0]?.nextPaymentDueAmountUSD ||
+                183.89
+              }
+              initialInstallmentNo={
+                userDisplayLoans[0]?.schedules?.find((s: any) => s.status !== 'PAID')?.installmentNo || 1
+              }
               onNavigate={handleNavSelection}
               onPaymentSettled={async (receipt) => {
                 if (receipt) {
                   await loanStorageService.recordPayment({
-                    loanId: (receipt as any).facilityId || (userDisplayLoans[0]?.id || 'ln-001'),
-                    amount: receipt.amountUSD || (receipt as any).amountPaidUSD || 122.5,
+                    loanId: (receipt as any).facilityId || (receipt as any).loanAccountId || (userDisplayLoans[0]?.id || 'ln-001'),
+                    amount: receipt.settledAmountUSD || receipt.amountUSD || (receipt as any).amountPaidUSD || 183.89,
                     paymentMethod: receipt.paymentMethod || 'KHQR',
                     referenceNo: receipt.transactionReference || (receipt as any).referenceNo,
                     receiptNo: receipt.receiptNumber || (receipt as any).receiptNo,

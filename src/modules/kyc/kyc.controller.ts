@@ -64,6 +64,19 @@ export class KycController {
         data: uploadResult,
       });
     } catch (err: any) {
+      if (
+        err.message?.includes('Invalid file type') ||
+        err.message?.includes('exceeds') ||
+        err.message?.includes('cannot be empty')
+      ) {
+        res.status(400).json({
+          success: false,
+          error: 'INVALID_FILE_REQUEST',
+          message: err.message,
+        });
+        return;
+      }
+
       // High-resilience sandbox fallback so upload flow is never blocked
       const fallbackFilename = req.body?.originalFilename || 'document.png';
       const fallbackExt = (fallbackFilename.split('.').pop() || 'png').toLowerCase();

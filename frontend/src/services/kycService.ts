@@ -365,6 +365,26 @@ class FrontendKycService {
   }
 
   /**
+   * Approves a single document as VERIFIED
+   */
+  public async approveDocument(documentType: KycDocType): Promise<void> {
+    await this.simulateStatus(documentType, 'VERIFIED');
+  }
+
+  /**
+   * Approves all documents as VERIFIED
+   */
+  public async approveAllDocuments(): Promise<void> {
+    const localDocs = this.getLocalDocuments();
+    localDocs.forEach((d) => {
+      d.status = 'VERIFIED';
+      d.verifiedAt = new Date().toISOString();
+      d.rejectionReason = null;
+    });
+    this.saveLocalDocuments(localDocs);
+  }
+
+  /**
    * Reset all 3 documents to verified state
    */
   public resetToVerified(): void {

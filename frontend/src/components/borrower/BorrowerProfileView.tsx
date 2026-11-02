@@ -223,8 +223,34 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
     await loadKyc();
   };
 
+  const handleApproveDocument = async (docType: KycDocType) => {
+    await kycService.approveDocument(docType);
+    await loadKyc();
+    if (previewDoc && previewDoc.documentType === docType) {
+      setPreviewDoc(null);
+    }
+  };
+
+  const handleRejectDocument = async (docType: KycDocType, reason?: string) => {
+    await kycService.simulateStatus(
+      docType,
+      'REJECTED',
+      reason || 'Document does not meet National Bank of Cambodia compliance standards. Please re-upload.'
+    );
+    await loadKyc();
+    if (previewDoc && previewDoc.documentType === docType) {
+      setPreviewDoc(null);
+    }
+  };
+
+  const handleApproveAll = async () => {
+    await kycService.approveAllDocuments();
+    await loadKyc();
+  };
+
   const verifiedCount = kycSummary?.verifiedCount ?? 3;
   const isBorrowingUnlocked = kycSummary?.isEligibleToBorrow ?? true;
+  const pendingCount = (kycSummary?.documents || []).filter((d) => d.status === 'PENDING_REVIEW').length;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 font-sans text-slate-100">
@@ -375,6 +401,38 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
           </div>
         )}
 
+        {/* Pending Review Queue Banner with One-Click Fast-Track Approval */}
+        {pendingCount > 0 && (
+          <div className="p-4 rounded-xl bg-gradient-to-r from-amber-950/60 via-slate-900 to-emerald-950/40 border border-amber-500/40 text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg animate-fade-in">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0 mt-0.5">
+                <Clock className="w-5 h-5" />
+              </div>
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-white text-xs">
+                    Underwriting Review Desk: {pendingCount} Document{pendingCount > 1 ? 's' : ''} Awaiting Approval
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    PENDING OFFICER SIGN-OFF
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-300 max-w-xl leading-relaxed">
+                  Documents are queued for Credit Committee due diligence. Authorized compliance officers can review each document or fast-track verify all 3 to immediately unlock borrowing.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleApproveAll}
+              className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-emerald-500/20 cursor-pointer shrink-0 flex items-center justify-center gap-1.5 self-start sm:self-center"
+            >
+              <BadgeCheck className="w-4 h-4" />
+              <span>Approve All (Fast-Track)</span>
+            </button>
+          </div>
+        )}
+
         {/* 3 Document Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {(kycSummary?.documents || []).map((doc) => {
@@ -461,29 +519,42 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
                   )}
                 </div>
 
-                {/* Action Buttons: View & Upload */}
-                <div className="mt-4 pt-3 border-t border-slate-850 grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPreviewDoc(doc)}
-                    className="py-2 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-[11px] font-semibold text-slate-300 hover:text-white flex items-center justify-center gap-1.5 transition cursor-pointer"
-                  >
-                    <Eye className="w-3.5 h-3.5 text-slate-400" />
-                    <span>View Doc</span>
-                  </button>
+                {/* Action Buttons: View, Replace & Quick Officer Approve */}
+                <div className="mt-4 pt-3 border-t border-slate-850 space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPreviewDoc(doc)}
+                      className="py-2 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-[11px] font-semibold text-slate-300 hover:text-white flex items-center justify-center gap-1.5 transition cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5 text-slate-400" />
+                      <span>View Doc</span>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => handleOpenUploadModal(doc.documentType, doc.referenceNumber)}
-                    className={`py-2 rounded-xl border text-[11px] font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer ${
-                      isRejected || isPending
-                        ? 'bg-amber-500/15 hover:bg-amber-500/25 border-amber-500/30 text-amber-300 font-bold'
-                        : 'bg-slate-900 hover:bg-slate-850 border-slate-800 text-slate-300 hover:text-white'
-                    }`}
-                  >
-                    <FileUp className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{isRejected ? 'Re-upload' : 'Replace'}</span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenUploadModal(doc.documentType, doc.referenceNumber)}
+                      className={`py-2 rounded-xl border text-[11px] font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                        isRejected || isPending
+                          ? 'bg-amber-500/15 hover:bg-amber-500/25 border-amber-500/30 text-amber-300 font-bold'
+                          : 'bg-slate-900 hover:bg-slate-850 border-slate-800 text-slate-300 hover:text-white'
+                      }`}
+                    >
+                      <FileUp className="w-3.5 h-3.5 text-slate-400" />
+                      <span>{isRejected ? 'Re-upload' : 'Replace'}</span>
+                    </button>
+                  </div>
+
+                  {isPending && (
+                    <button
+                      type="button"
+                      onClick={() => handleApproveDocument(doc.documentType)}
+                      className="w-full py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-bold text-[11px] flex items-center justify-center gap-1.5 transition cursor-pointer"
+                    >
+                      <BadgeCheck className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Approve as Verified</span>
+                    </button>
+                  )}
                 </div>
               </div>
             );
@@ -582,6 +653,42 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
               </div>
             </div>
 
+            {/* Compliance Decision Box for Pending Document */}
+            {previewDoc.status === 'PENDING_REVIEW' && (
+              <div className="p-3.5 rounded-xl bg-slate-950 border border-amber-500/30 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                    Compliance & Underwriting Decision:
+                  </span>
+                  <span className="text-[10px] font-mono text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 font-bold">
+                    PENDING OFFICER SIGN-OFF
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Review the uploaded document scan and approve it to satisfy National Bank of Cambodia regulatory customer due diligence requirements.
+                </p>
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => handleApproveDocument(previewDoc.documentType)}
+                    className="flex-1 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wider transition flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-emerald-500/20"
+                  >
+                    <BadgeCheck className="w-4 h-4" />
+                    <span>Approve as Verified</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRejectDocument(previewDoc.documentType)}
+                    className="px-4 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 font-bold text-xs transition flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    <span>Reject</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center justify-between pt-2">
               <a
                 href={previewDoc.viewUrl || '#'}
@@ -596,7 +703,7 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
               <button
                 type="button"
                 onClick={() => setPreviewDoc(null)}
-                className="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wider transition cursor-pointer"
+                className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs uppercase tracking-wider transition cursor-pointer"
               >
                 Close Viewer
               </button>

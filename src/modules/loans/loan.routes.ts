@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { LoanController } from './loan.controller';
 import { authenticate } from '../../middlewares/auth.middleware';
 import { authorize } from '../../middlewares/rbac.middleware';
+import { verifyKycBorrowEligibility } from '../../middlewares/kyc-guard.middleware';
 import { UserRole } from '@prisma/client';
 
 import { PaymentController } from '../payments/payment.controller';
@@ -10,10 +11,11 @@ export const loanRouter = Router();
 
 loanRouter.use(authenticate);
 
-// 0. Borrower Loan Origination Submission
+// 0. Borrower Loan Origination Submission (Protected by Regulatory KYC Guard)
 loanRouter.post(
   '/apply',
   authorize(UserRole.ADMIN, UserRole.USER),
+  verifyKycBorrowEligibility,
   LoanController.apply
 );
 

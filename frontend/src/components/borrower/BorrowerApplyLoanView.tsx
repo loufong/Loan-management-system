@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   FilePlus2,
   CheckCircle2,
@@ -19,10 +19,13 @@ import {
   BadgeCheck,
   Building,
   Sparkles,
+  Lock,
+  AlertTriangle,
 } from 'lucide-react';
 import { Currency, UserProfile } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 import { loanStorageService } from '../../services/loanStorageService';
+import { kycService, FrontendKycSummary } from '../../services/kycService';
 
 export interface BorrowerApplyLoanViewProps {
   currentUser: UserProfile;
@@ -66,6 +69,38 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [submittedAppId, setSubmittedAppId] = useState<string>('');
   const [draftSavedToast, setDraftSavedToast] = useState<boolean>(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+
+  // Regulatory KYC Guard State
+  const [kycSummary, setKycSummary] = useState<FrontendKycSummary | null>(null);
+  const [kycLoading, setKycLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchKyc = async () => {
+      try {
+        setKycLoading(true);
+        const data = await kycService.getKycStatus(currentUser.id || 'BOR-2026-8801');
+        if (isMounted) setKycSummary(data);
+      } catch (err) {
+        console.error('Failed to query KYC status for borrower:', err);
+      } finally {
+        if (isMounted) setKycLoading(false);
+      }
+    };
+    fetchKyc();
+
+    const handleKycUpdate = () => {
+      fetchKyc();
+    };
+    window.addEventListener('kyc_status_updated', handleKycUpdate);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('kyc_status_updated', handleKycUpdate);
+    };
+  }, [currentUser.id]);
+
+  const isBorrowingLocked = !kycLoading && kycSummary !== null && !kycSummary.isEligibleToBorrow;
 
   // Product configurations
   const products = {
@@ -162,7 +197,16 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
 
   const handleSubmitApplication = async () => {
     if (!declarationAgreed) return;
+
+    if (isBorrowingLocked) {
+      setSubmissionError(
+        `Regulatory Borrowing Lock Active: ${kycSummary?.verifiedCount ?? 0} of 3 KYC documents verified. In accordance with National Bank of Cambodia lending directives, all 3 mandatory KYC documents must be verified before origination.`
+      );
+      return;
+    }
+
     setIsSubmitting(true);
+    setSubmissionError(null);
 
     try {
       const generatedId = `LN-2026-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -193,10 +237,12 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
       if (onSubmitSuccess) {
         onSubmitSuccess(record);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to submit loan application:', err);
       setIsSubmitting(false);
-      setIsSubmitted(true);
+      setSubmissionError(
+        err?.message || 'Regulatory lock or server rejection occurred while transmitting credit application.'
+      );
     }
   };
 
@@ -360,6 +406,68 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
           })}
         </div>
       </div>
+
+      {/* ========================================================================= */}
+      {/* REGULATORY KYC BORROWING LOCK ALERT BANNER                                */}
+      {/* ========================================================================= */}
+      {isBorrowingLocked && (
+        <div className="bg-gradient-to-r from-rose-950/70 via-slate-900 to-amber-950/60 border border-rose-500/40 rounded-2xl p-5 shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-rose-500/5 rounded-full blur-2xl pointer-events-none" />
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400 shrink-0 mt-0.5">
+                <Lock className="w-5 h-5" />
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-sm font-bold text-white tracking-tight">
+                    Regulatory Borrowing Lock Active (NBC Article 42 Compliance)
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                    {kycSummary?.verifiedCount ?? 0} of 3 Verified
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+                  National Bank of Cambodia lending directives mandate that borrowers must have all three statutory regulatory KYC documents verified prior to originating credit facilities or drawing funds.
+                </p>
+
+                {/* Individual Document Status Chips */}
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  {kycSummary?.documents.map((doc) => (
+                    <span
+                      key={doc.documentType}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-semibold border ${
+                        doc.status === 'VERIFIED'
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                          : doc.status === 'PENDING_REVIEW'
+                          ? 'bg-amber-500/10 text-amber-300 border-amber-500/30'
+                          : 'bg-rose-500/10 text-rose-300 border-rose-500/30'
+                      }`}
+                    >
+                      {doc.status === 'VERIFIED' ? (
+                        <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                      ) : (
+                        <AlertCircle className="w-3 h-3 text-rose-400" />
+                      )}
+                      <span className="font-medium text-slate-300">{doc.title}:</span>
+                      <span className="font-mono font-bold uppercase">{doc.status.replace('_', ' ')}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => onNavigate('profile')}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-slate-950 font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-rose-500/20 shrink-0 cursor-pointer self-start md:self-center"
+            >
+              <span>Complete KYC Vault</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main Grid: Form Workflows (8 Cols) + Real-Time EMI Simulator (4 Cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -823,18 +931,29 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
                 </label>
               </div>
 
+              {/* Submission Error Banner */}
+              {submissionError && (
+                <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-3 text-rose-300 text-xs">
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="text-white block mb-0.5">Application Submission Blocked</strong>
+                    <span>{submissionError}</span>
+                  </div>
+                </div>
+              )}
+
               {/* Step 3 Actions */}
-              <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+              <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <button
                   type="button"
                   onClick={() => setCurrentStep(2)}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white bg-slate-950 border border-slate-800 hover:border-slate-700 transition-all cursor-pointer"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white bg-slate-950 border border-slate-800 hover:border-slate-700 transition-all cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   Back
                 </button>
 
-                <div className="flex items-center gap-2">
+                <div className="w-full sm:w-auto flex items-center justify-end gap-2.5">
                   <button
                     type="button"
                     onClick={handleSaveDraft}
@@ -844,28 +963,48 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
                     Save Draft
                   </button>
 
-                  <button
-                    type="button"
-                    disabled={!declarationAgreed || isSubmitting}
-                    onClick={handleSubmitApplication}
-                    className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer ${
-                      declarationAgreed && !isSubmitting
-                        ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-emerald-500/20 active:scale-[0.98]'
-                        : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-750'
-                    }`}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                        <span>Transmitting Application...</span>
-                      </>
-                    ) : (
-                      <>
-                        <BadgeCheck className="w-4 h-4" />
-                        <span>Submit Credit Application</span>
-                      </>
+                  <div className="relative group">
+                    <button
+                      type="button"
+                      disabled={!declarationAgreed || isSubmitting || isBorrowingLocked}
+                      onClick={handleSubmitApplication}
+                      className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer ${
+                        declarationAgreed && !isSubmitting && !isBorrowingLocked
+                          ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-emerald-500/20 active:scale-[0.98]'
+                          : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-750'
+                      }`}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                          <span>Transmitting Application...</span>
+                        </>
+                      ) : isBorrowingLocked ? (
+                        <>
+                          <Lock className="w-4 h-4 text-rose-400" />
+                          <span>Borrowing Locked ({kycSummary?.verifiedCount ?? 0}/3 KYC)</span>
+                        </>
+                      ) : (
+                        <>
+                          <BadgeCheck className="w-4 h-4" />
+                          <span>Submit Credit Application</span>
+                        </>
+                      )}
+                    </button>
+
+                    {/* Tooltip on disabled button */}
+                    {isBorrowingLocked && (
+                      <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block w-72 p-3 bg-slate-950 text-slate-200 text-[11px] rounded-xl border border-rose-500/40 shadow-2xl z-30 pointer-events-none">
+                        <div className="font-bold text-rose-400 mb-1 flex items-center gap-1.5">
+                          <Lock className="w-3.5 h-3.5" />
+                          Borrowing Action Blocked
+                        </div>
+                        <p className="text-slate-300 leading-relaxed">
+                          All 3 mandatory regulatory documents (National ID, Proof of Residence, Employment Contract) must be verified prior to credit application submission.
+                        </p>
+                      </div>
                     )}
-                  </button>
+                  </div>
                 </div>
               </div>
             </div>

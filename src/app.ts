@@ -19,6 +19,7 @@ import { notificationRouter } from './modules/notifications/notification.routes'
 import { userRouter } from './modules/users/user.routes';
 import { adminRouter } from './modules/admin/admin.routes';
 import { analyticsRouter } from './modules/analytics/analytics.routes';
+import { kycRouter } from './modules/kyc/kyc.routes';
 import { demoRouter } from './modules/demo/demo.routes';
 import { borrowerPortalRouter } from './modules/borrower-portal/borrower-portal.routes';
 import { openApiSpec, renderDocs } from './modules/docs/openapi';
@@ -245,7 +246,10 @@ export function createApp(): Application {
   // 12. Live Fast-Forward Demo Trigger
   app.use(['/api/demo', '/api/demo'], demoRouter);
 
-  // 13. JAM SONG VICH Core Banking Borrower Portal & Bakong KHQR Services
+  // 13. Regulatory KYC Document Vault & Verification Guard
+  app.use(['/api/kyc', '/api/v1/kyc'], kycRouter);
+
+  // 14. JAM SONG VICH Core Banking Borrower Portal & Bakong KHQR Services
   app.use(['/api', '/api/v1'], borrowerPortalRouter);
 
   // SPA Route Fallback for all browser client navigation routes

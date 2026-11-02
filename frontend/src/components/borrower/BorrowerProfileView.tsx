@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   User,
   ShieldCheck,
@@ -19,9 +19,25 @@ import {
   Landmark,
   BadgeCheck,
   Lock,
+  UploadCloud,
+  FileText,
+  AlertTriangle,
+  Clock,
+  RotateCcw,
+  Check,
+  FileUp,
+  FileWarning,
+  Sparkles,
 } from 'lucide-react';
 import { Currency, UserProfile } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
+import {
+  kycService,
+  FrontendKycDocument,
+  FrontendKycSummary,
+  KycDocType,
+  KycStatus,
+} from '../../services/kycService';
 
 export interface BorrowerProfileViewProps {
   currentUser: UserProfile;
@@ -35,10 +51,23 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
   onNavigate,
 }) => {
   const { language } = useLanguage();
-  const isKhmer = language === 'km' || (language as string) === 'KH';
-
   const [activeCurrency, setActiveCurrency] = useState<Currency>(appCurrency || 'USD');
-  const [selectedDocPreview, setSelectedDocPreview] = useState<string | null>(null);
+
+  // KYC Live State
+  const [kycSummary, setKycSummary] = useState<FrontendKycSummary | null>(null);
+  const [isLoadingKyc, setIsLoadingKyc] = useState<boolean>(true);
+
+  // Modal States
+  const [previewDoc, setPreviewDoc] = useState<FrontendKycDocument | null>(null);
+  const [uploadTargetDocType, setUploadTargetDocType] = useState<KycDocType | null>(null);
+
+  // Upload Form State
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [refNumberInput, setRefNumberInput] = useState<string>('');
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const NBC_RATE = 4080;
 
@@ -60,15 +89,137 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
   const displayName = currentUser?.fullName || currentUser?.name || 'Johnathan Doe';
   const clientId = currentUser?.borrowerId || 'BOR-2026-8801';
 
+  const loadKyc = async () => {
+    try {
+      const summary = await kycService.getKycStatus(clientId);
+      setKycSummary(summary);
+    } catch (err) {
+      console.warn('Failed to load KYC status:', err);
+    } finally {
+      setIsLoadingKyc(false);
+    }
+  };
+
+  useEffect(() => {
+    loadKyc();
+
+    const handleUpdate = () => {
+      loadKyc();
+    };
+    window.addEventListener('kyc_status_updated', handleUpdate);
+    return () => window.removeEventListener('kyc_status_updated', handleUpdate);
+  }, [clientId]);
+
+  // Handle Drag & Drop / File Select
+  const handleFileSelect = (file: File) => {
+    setUploadError(null);
+
+    // 1. Validate File Size: Max 10MB
+    const MAX_BYTES = 10 * 1024 * 1024;
+    if (file.size > MAX_BYTES) {
+      setUploadError(`File size (${(file.size / (1024 * 1024)).toFixed(2)}MB) exceeds maximum regulatory limit of 10MB.`);
+      setSelectedFile(null);
+      return;
+    }
+
+    // 2. Validate MIME Type: PDF, JPG, PNG
+    const validMimes = ['application/pdf', 'image/jpeg', 'image/png'];
+    if (!validMimes.includes(file.type.toLowerCase())) {
+      setUploadError(`Invalid format "${file.type}". Regulatory standards accept .pdf, .jpg, and .png only.`);
+      setSelectedFile(null);
+      return;
+    }
+
+    setSelectedFile(file);
+  };
+
+  const handleOpenUploadModal = (docType: KycDocType, currentRef?: string) => {
+    setUploadTargetDocType(docType);
+    setSelectedFile(null);
+    setUploadError(null);
+    setUploadProgress(0);
+    setRefNumberInput(currentRef || (
+      docType === 'NATIONAL_ID'
+        ? 'NID-KH-010992384'
+        : docType === 'PROOF_OF_RESIDENCE'
+        ? 'RES-PP-99401'
+        : 'EMP-CORP-2026'
+    ));
+  };
+
+  const handleExecuteUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uploadTargetDocType || !selectedFile) {
+      setUploadError('Please select a valid document file to upload.');
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError(null);
+    setUploadProgress(20);
+
+    try {
+      // 1. Request pre-signed S3/R2 upload URL
+      const uploadPlan = await kycService.requestUploadUrl({
+        documentType: uploadTargetDocType,
+        originalFilename: selectedFile.name,
+        mimeType: selectedFile.type,
+        fileSizeBytes: selectedFile.size,
+        userId: clientId,
+      });
+
+      setUploadProgress(50);
+
+      // 2. Transmit binary stream to cloud storage URL
+      await kycService.uploadToStorage(uploadPlan.uploadUrl, selectedFile, uploadPlan.headers);
+
+      setUploadProgress(85);
+
+      // 3. Confirm document upload -> Status transitions to PENDING_REVIEW
+      await kycService.confirmUpload({
+        documentType: uploadTargetDocType,
+        fileKey: uploadPlan.fileKey,
+        originalFilename: selectedFile.name,
+        referenceNumber: refNumberInput.trim() || `REF-${Date.now().toString().slice(-6)}`,
+        fileSizeBytes: selectedFile.size,
+        mimeType: selectedFile.type,
+        userId: clientId,
+      });
+
+      setUploadProgress(100);
+      await loadKyc();
+      setUploadTargetDocType(null);
+      setSelectedFile(null);
+    } catch (err: any) {
+      setUploadError(err.message || 'Document upload failed. Please try again.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Simulation Controls for Testing
+  const handleSimulateStatus = async (docType: KycDocType, status: KycStatus, reason?: string) => {
+    await kycService.simulateStatus(docType, status, reason);
+    await loadKyc();
+  };
+
+  const handleResetKyc = async () => {
+    kycService.resetToVerified();
+    await loadKyc();
+  };
+
+  const verifiedCount = kycSummary?.verifiedCount ?? 3;
+  const isBorrowingUnlocked = kycSummary?.isEligibleToBorrow ?? true;
+
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6 font-sans text-slate-100">
       {/* ========================================================================= */}
       {/* 1. HEADER SECTION & IDENTITY CARD                                         */}
       {/* ========================================================================= */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm space-y-6">
         <div>
           {/* Breadcrumb Trail */}
-          <div className="flex items-center gap-2 text-xs text-slate-400 mb-1.5">
+          <div className="flex items-center gap-2 text-xs text-slate-400 mb-1.5 font-mono">
             <span className="text-slate-500 font-medium">Core Banking</span>
             <span>/</span>
             <span className="font-bold text-emerald-400 uppercase tracking-wider">
@@ -80,7 +231,7 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
             {'Borrower KYC Dossier & Credit Profile'}
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Official verified borrower identity records compliant with Credit Bureau Cambodia (CBC) institutional requirements.
+            Official verified borrower identity records compliant with Credit Bureau Cambodia (CBC) and National Bank of Cambodia (NBC) regulatory standards.
           </p>
         </div>
 
@@ -102,304 +253,476 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
             </div>
 
             <div className="space-y-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">
-                  {displayName}
-                </h2>
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                  <BadgeCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  Verified Borrower
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-lg sm:text-xl font-bold text-white">{displayName}</h2>
+                <span className="px-2 py-0.5 text-[10px] font-mono font-bold rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  {clientId}
+                </span>
+                <span className="px-2 py-0.5 text-[10px] font-mono font-bold rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  PHNOM PENH MAIN
                 </span>
               </div>
-
-              <p className="text-xs font-mono text-slate-400 flex items-center gap-2">
-                <span>Client ID: <strong className="text-white">{clientId}</strong></span>
+              <p className="text-xs text-slate-400 font-medium">
+                SME Commercial Merchant • Verified National ID holder
+              </p>
+              <div className="flex items-center gap-3 pt-1 text-[11px] text-slate-400">
+                <span className="flex items-center gap-1">
+                  <Phone className="w-3 h-3 text-slate-500" />
+                  +855 12 345 678
+                </span>
                 <span>•</span>
-                <span className="text-slate-400">NBC Regulatory Status: <strong className="text-emerald-400">Class 1 Good Standing</strong></span>
-              </p>
-              <p className="text-[11px] text-slate-500">
-                Member of Jam Song Vich Microfinance Institution since March 2025
-              </p>
+                <span className="flex items-center gap-1">
+                  <Mail className="w-3 h-3 text-slate-500" />
+                  {currentUser?.email || 'borrower@jamsongvich.com'}
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Quick Credit Status & Actions */}
+          <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => onNavigate('settings')}
-              className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-850 text-white font-semibold text-xs border border-slate-700 transition"
+              onClick={() => onNavigate('apply')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm ${
+                isBorrowingUnlocked
+                  ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-emerald-500/20'
+                  : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700/60'
+              }`}
+              title={isBorrowingUnlocked ? 'Apply for loan facility' : 'Locked: 3 of 3 KYC documents required'}
             >
-              Account Preferences
-            </button>
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wider transition shadow-md shadow-emerald-500/20"
-            >
-              Print Dossier
+              {isBorrowingUnlocked ? (
+                <>
+                  <Award className="w-4 h-4" />
+                  <span>Apply for Loan</span>
+                </>
+              ) : (
+                <>
+                  <Lock className="w-4 h-4 text-amber-400" />
+                  <span>Borrowing Locked ({verifiedCount}/3)</span>
+                </>
+              )}
             </button>
           </div>
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. INFORMATION GRID (3 SUB-SECTIONS)                                      */}
+      {/* 2. REGULATORY KYC DOCUMENTS (CORE SECTION)                                */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Section 1: Personal & Contact Details */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center gap-2 pb-3 border-b border-slate-800">
-            <User className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-              1. Personal & Contact Details
-            </h3>
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm space-y-5">
+        {/* Section Header with Dynamic Counter */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <FileCheck className="w-5 h-5 text-emerald-400" />
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
+                Verified Regulatory KYC Documents
+              </h3>
+            </div>
+            <p className="text-xs text-slate-400">
+              National Bank of Cambodia mandatory customer due diligence (CDD). All 3 documents must be in <strong className="text-emerald-400 font-mono">VERIFIED</strong> status to unlock credit origination.
+            </p>
           </div>
 
-          <div className="space-y-3 text-xs">
-            <div className="p-3 rounded-xl bg-slate-950 border border-slate-850 space-y-0.5">
-              <span className="text-[10px] text-slate-500 uppercase font-mono font-bold">Full Legal Name</span>
-              <p className="text-sm font-bold text-white font-sans">Johnathan Doe</p>
-            </div>
-
-            <div className="p-3 rounded-xl bg-slate-950 border border-slate-850 space-y-0.5">
-              <span className="text-[10px] text-slate-500 uppercase font-mono font-bold">National ID Card Number</span>
-              <p className="text-sm font-mono font-bold text-slate-200">010••••89</p>
-              <span className="text-[10px] text-emerald-400 font-mono">● Verified with Ministry of Interior</span>
-            </div>
-
-            <div className="p-3 rounded-xl bg-slate-950 border border-slate-850 space-y-0.5">
-              <span className="text-[10px] text-slate-500 uppercase font-mono font-bold">Primary Phone (Bakong Linked)</span>
-              <p className="text-sm font-mono font-bold text-slate-200">+855 12 ••• 789</p>
-            </div>
-
-            <div className="p-3 rounded-xl bg-slate-950 border border-slate-850 space-y-0.5">
-              <span className="text-[10px] text-slate-500 uppercase font-mono font-bold">Residential Address</span>
-              <p className="text-xs text-slate-300 leading-relaxed font-sans">
-                No. 42, St. 315, Sangkat Boeng Kak II, Khan Toul Kork, Phnom Penh, Cambodia
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Section 2: Financial & Credit Scoring */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center gap-2 pb-3 border-b border-slate-800">
-            <Award className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-              2. Financial & Credit Scoring
-            </h3>
-          </div>
-
-          <div className="space-y-4">
-            {/* Credit Bureau Cambodia (CBC) Score Card */}
-            <div className="p-4 rounded-xl bg-slate-950 border border-emerald-500/30 space-y-3 relative overflow-hidden">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
-                  Credit Bureau Cambodia (CBC)
-                </span>
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                  Grade A Prime
-                </span>
-              </div>
-
-              {/* Gauge Score Display */}
-              <div className="text-center py-2">
-                <p className="text-3xl font-black font-mono text-emerald-400">
-                  745 <span className="text-sm text-slate-500 font-normal">/ 850</span>
-                </p>
-                <p className="text-xs text-white font-semibold mt-1">Excellent Repayment Track Record</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">Zero defaults across 36 historical cycles</p>
-              </div>
-
-              {/* Gauge Scale Bar */}
-              <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden flex">
-                <div className="h-full bg-rose-500 w-[20%]" title="Poor (< 550)" />
-                <div className="h-full bg-amber-500 w-[25%]" title="Fair (550 - 650)" />
-                <div className="h-full bg-teal-500 w-[25%]" title="Good (650 - 720)" />
-                <div className="h-full bg-emerald-500 w-[30%]" title="Prime (720 - 850)" />
-              </div>
-              <div className="flex justify-between text-[9px] font-mono text-slate-500">
-                <span>300 (Subprime)</span>
-                <span>850 (Prime)</span>
-              </div>
-            </div>
-
-            {/* Active Borrowing Limit Ceiling Card */}
-            <div className="p-4 rounded-xl bg-slate-950 border border-slate-850 space-y-2">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold block">
-                Active Approved Borrowing Limit
+          {/* Dynamic 3-of-3 Status Pill */}
+          {isBorrowingUnlocked ? (
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 self-start sm:self-auto shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-xs font-mono font-bold">3 of 3 Verified</span>
+              <span className="text-[10px] font-sans px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-200">
+                BORROWING ACTIVE
               </span>
-              <p className="text-xl font-mono font-black text-white">
-                {formatMoney(15000.0)} <span className="text-xs font-normal text-slate-400">Available</span>
-              </p>
-              <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
-                <div className="h-full bg-emerald-500 rounded-full" style={{ width: '60%' }} />
-              </div>
-              <div className="flex justify-between text-[10px] font-mono text-slate-400">
-                <span>Drawn: $6,000.00</span>
-                <span>Ceiling: $20,000.00</span>
-              </div>
             </div>
-          </div>
+          ) : (
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 self-start sm:self-auto shadow-sm animate-pulse">
+              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+              <span className="text-xs font-mono font-bold">{verifiedCount} of 3 Verified</span>
+              <span className="text-[10px] font-sans px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 font-bold border border-rose-500/30">
+                BORROWING LOCKED
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Section 3: Linked Settlement Accounts */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center gap-2 pb-3 border-b border-slate-800">
-            <Landmark className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-              3. Linked Settlement Accounts
-            </h3>
-          </div>
-
-          <div className="space-y-3">
-            {/* Account 1: ACLEDA */}
-            <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-850 space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center">
-                    AC
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-white">ACLEDA Bank Plc.</h4>
-                    <span className="text-[10px] text-slate-400 font-mono">Account: •••• 2023</span>
-                  </div>
-                </div>
-                <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                  PRIMARY
-                </span>
-              </div>
-              <p className="text-[10px] text-slate-500">
-                Designated direct disbursement destination and automated debit clearing account.
-              </p>
-            </div>
-
-            {/* Account 2: Bakong */}
-            <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-850 space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded bg-red-600 text-white font-black text-[9px] flex items-center justify-center">
-                    KH
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-white">NBC Bakong Wallet</h4>
-                    <span className="text-[10px] text-slate-400 font-mono">jamsongvich@nbc</span>
-                  </div>
-                </div>
-                <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-slate-800 text-slate-300">
-                  INSTANT
-                </span>
-              </div>
-              <p className="text-[10px] text-slate-500">
-                Connected for instant KHQR generation and push payment confirmations.
+        {/* Locked Warning Alert Banner if < 3 verified */}
+        {!isBorrowingUnlocked && (
+          <div className="p-4 rounded-xl bg-amber-950/40 border border-amber-500/30 text-amber-200 flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+            <div className="text-xs space-y-1">
+              <span className="font-bold text-white block">
+                Regulatory Borrowing Lock Active (NBC Prakas on Credit Risk B-7-018)
+              </span>
+              <p className="text-amber-300/90 leading-relaxed">
+                Credit origination and disbursements are restricted. You currently have {verifiedCount} of 3 verified regulatory KYC documents. Please upload the required documents below to clear compliance review.
               </p>
             </div>
           </div>
-        </div>
-      </div>
+        )}
 
-      {/* ========================================================================= */}
-      {/* 3. KYC DOCUMENTS ATTACHED                                                 */}
-      {/* ========================================================================= */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-          <div className="flex items-center gap-2">
-            <FileCheck className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-              Verified Regulatory KYC Documents
-            </h3>
-          </div>
-          <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-            3 of 3 Verified
-          </span>
-        </div>
+        {/* 3 Document Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {(kycSummary?.documents || []).map((doc) => {
+            const isVerified = doc.status === 'VERIFIED';
+            const isPending = doc.status === 'PENDING_REVIEW';
+            const isRejected = doc.status === 'REJECTED';
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {[
-            {
-              title: 'National ID Card (Front & Back)',
-              docId: 'NID-KH-010992384',
-              file: 'national_id_verified.pdf',
-              date: 'Verified 2026-03-12',
-            },
-            {
-              title: 'Proof of Residence (Family Book / Soft Title)',
-              docId: 'RES-PP-99401',
-              file: 'soft_title_card_khan_toul_kork.pdf',
-              date: 'Verified 2026-03-12',
-            },
-            {
-              title: 'Employment & Income Contract',
-              docId: 'EMP-CORP-2026',
-              file: 'employment_contract_senior_dev.pdf',
-              date: 'Verified 2026-03-14',
-            },
-          ].map((doc, idx) => (
-            <div
-              key={idx}
-              className="p-4 rounded-xl bg-slate-950 border border-slate-850 hover:border-slate-750 transition flex flex-col justify-between"
-            >
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono text-emerald-400 font-bold flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                    VERIFIED
-                  </span>
-                  <span className="text-[9px] text-slate-500 font-mono">{doc.docId}</span>
-                </div>
-                <h4 className="text-xs font-bold text-white pt-1">{doc.title}</h4>
-                <p className="text-[11px] text-slate-400 font-mono truncate">{doc.file}</p>
-                <p className="text-[10px] text-slate-500">{doc.date}</p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setSelectedDocPreview(doc.title)}
-                className="mt-3 w-full py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] font-semibold text-slate-300 hover:text-white flex items-center justify-center gap-1.5 transition cursor-pointer"
+            return (
+              <div
+                key={doc.documentType}
+                className={`p-5 rounded-2xl bg-slate-950 border transition-all flex flex-col justify-between relative overflow-hidden group ${
+                  isVerified
+                    ? 'border-slate-800 hover:border-emerald-500/40'
+                    : isRejected
+                    ? 'border-rose-500/40 bg-rose-950/10'
+                    : 'border-amber-500/40 bg-amber-950/10'
+                }`}
               >
-                <Eye className="w-3.5 h-3.5 text-slate-400" />
-                <span>View Document</span>
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
+                {/* Status Indicator Bar at Top */}
+                <div
+                  className={`absolute top-0 left-0 right-0 h-1 ${
+                    isVerified
+                      ? 'bg-emerald-500'
+                      : isRejected
+                      ? 'bg-rose-500'
+                      : 'bg-amber-400 animate-pulse'
+                  }`}
+                />
 
-      {/* Modal: Document Preview */}
-      {selectedDocPreview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative space-y-4">
+                <div className="space-y-3">
+                  {/* Card Header: Status Tag + Reference ID */}
+                  <div className="flex items-center justify-between gap-2">
+                    {isVerified && (
+                      <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20 flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                        VERIFIED
+                      </span>
+                    )}
+
+                    {isPending && (
+                      <span className="text-[10px] font-mono font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20 flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-amber-400" />
+                        PENDING REVIEW
+                      </span>
+                    )}
+
+                    {isRejected && (
+                      <span className="text-[10px] font-mono font-bold text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-md border border-rose-500/20 flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3 text-rose-400" />
+                        REJECTED
+                      </span>
+                    )}
+
+                    <span className="text-[10px] font-mono font-bold text-slate-400 bg-slate-900 px-2 py-0.5 rounded-md border border-slate-800">
+                      {doc.referenceNumber}
+                    </span>
+                  </div>
+
+                  {/* Document Title & File Details */}
+                  <div>
+                    <h4 className="text-sm font-bold text-white tracking-tight">{doc.title}</h4>
+                    <p className="text-[11px] text-slate-400 font-mono truncate mt-0.5 flex items-center gap-1">
+                      <FileText className="w-3 h-3 text-slate-500 shrink-0" />
+                      <span className="truncate">{doc.originalFilename}</span>
+                    </p>
+                    <p className="text-[10px] text-slate-500 font-mono mt-1">
+                      {isVerified
+                        ? `Approved: ${doc.verifiedAt?.slice(0, 10) || '2026-03-12'}`
+                        : `Uploaded: ${doc.uploadedAt?.slice(0, 10)}`} • {(doc.fileSizeBytes / (1024 * 1024)).toFixed(1)}MB
+                    </p>
+                  </div>
+
+                  {/* Rejection Notice if rejected */}
+                  {isRejected && (
+                    <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-[11px] space-y-1">
+                      <span className="font-bold flex items-center gap-1">
+                        <FileWarning className="w-3.5 h-3.5 text-rose-400" />
+                        Compliance Notice:
+                      </span>
+                      <p className="text-[10px] text-rose-200/90 leading-tight">
+                        {doc.rejectionReason || 'Document did not meet regulatory standards. Please re-upload a clear copy.'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Action Buttons: View & Upload */}
+                <div className="mt-4 pt-3 border-t border-slate-850 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPreviewDoc(doc)}
+                    className="py-2 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-[11px] font-semibold text-slate-300 hover:text-white flex items-center justify-center gap-1.5 transition cursor-pointer"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-slate-400" />
+                    <span>View Doc</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleOpenUploadModal(doc.documentType, doc.referenceNumber)}
+                    className={`py-2 rounded-xl border text-[11px] font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                      isRejected || isPending
+                        ? 'bg-amber-500/15 hover:bg-amber-500/25 border-amber-500/30 text-amber-300 font-bold'
+                        : 'bg-slate-900 hover:bg-slate-850 border-slate-800 text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    <FileUp className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{isRejected ? 'Re-upload' : 'Replace'}</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Reviewer / Sandbox Testing Toolset */}
+        <div className="mt-6 pt-4 border-t border-slate-800/80 bg-slate-950/50 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-emerald-400" />
+            <span className="text-xs font-bold text-white">KYC Borrowing Lock Demonstration Tools:</span>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               type="button"
-              onClick={() => setSelectedDocPreview(null)}
-              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              onClick={() =>
+                handleSimulateStatus(
+                  'PROOF_OF_RESIDENCE',
+                  'REJECTED',
+                  'Commune administrative stamp missing or expired beyond 6 months.'
+                )
+              }
+              className="px-2.5 py-1 text-[11px] font-mono font-semibold rounded-lg bg-rose-500/10 text-rose-300 border border-rose-500/30 hover:bg-rose-500/20 cursor-pointer transition"
+            >
+              Simulate Rejection (Lock Borrowing)
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleSimulateStatus('EMPLOYMENT_INCOME_CONTRACT', 'PENDING_REVIEW')}
+              className="px-2.5 py-1 text-[11px] font-mono font-semibold rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/30 hover:bg-amber-500/20 cursor-pointer transition"
+            >
+              Simulate Pending (2/3 Locked)
+            </button>
+
+            <button
+              type="button"
+              onClick={handleResetKyc}
+              className="px-2.5 py-1 text-[11px] font-mono font-bold rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 cursor-pointer transition flex items-center gap-1"
+            >
+              <RotateCcw className="w-3 h-3" />
+              Reset to 3 of 3 Verified
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 3. MODAL: PRE-SIGNED ENCRYPTED DOCUMENT VIEWER                            */}
+      {/* ========================================================================= */}
+      {previewDoc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl p-6 shadow-2xl relative space-y-4 text-slate-100">
+            <button
+              type="button"
+              onClick={() => setPreviewDoc(null)}
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
 
             <div className="flex items-center gap-2.5 pb-2 border-b border-slate-800">
               <FileCheck className="w-5 h-5 text-emerald-400" />
-              <h3 className="text-sm font-bold text-white tracking-tight">{selectedDocPreview}</h3>
+              <div>
+                <h3 className="text-sm font-bold text-white tracking-tight">{previewDoc.title}</h3>
+                <span className="text-[11px] font-mono text-slate-400">Ref: {previewDoc.referenceNumber}</span>
+              </div>
             </div>
 
-            <div className="p-8 rounded-xl bg-slate-950 border border-slate-850 text-center space-y-3">
-              <ShieldCheck className="w-12 h-12 text-emerald-400 mx-auto" />
-              <p className="text-xs text-white font-bold">Encrypted KYC Document Storage</p>
+            {/* Document Digital Security Watermark Card */}
+            <div className="p-6 rounded-2xl bg-slate-950 border border-slate-800 text-center space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <p className="text-xs text-white font-bold">256-Bit SSL Cloud Encrypted Vault</p>
               <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
-                This document is digitally watermarked, encrypted with AES-256 GCM, and held in compliance with National Bank of Cambodia regulatory retention standards.
+                This document is stored in an encrypted private bucket, digitally watermarked, and retrieved via an authentic short-lived pre-signed URL (Valid for 15 minutes).
               </p>
+
+              <div className="p-3 bg-slate-900/80 rounded-xl border border-slate-800 font-mono text-left text-[11px] text-slate-300 space-y-1">
+                <div><span className="text-slate-500">File:</span> {previewDoc.originalFilename}</div>
+                <div><span className="text-slate-500">Object Key:</span> {previewDoc.fileKey}</div>
+                <div><span className="text-slate-500">Status:</span> <span className="text-emerald-400 font-bold">{previewDoc.status}</span></div>
+                <div className="truncate"><span className="text-slate-500">Signed URL:</span> {previewDoc.viewUrl}</div>
+              </div>
             </div>
 
-            <div className="flex justify-end pt-2">
+            <div className="flex items-center justify-between pt-2">
+              <a
+                href={previewDoc.viewUrl || '#'}
+                target="_blank"
+                rel="noreferrer"
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-200 font-semibold text-xs transition inline-flex items-center gap-1.5"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Open in Secure Tab</span>
+              </a>
+
               <button
                 type="button"
-                onClick={() => setSelectedDocPreview(null)}
+                onClick={() => setPreviewDoc(null)}
                 className="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wider transition cursor-pointer"
               >
-                Done
+                Close Viewer
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 4. MODAL: REAL FILE UPLOAD DROPZONE (10MB LIMIT & MIME VALIDATION)          */}
+      {/* ========================================================================= */}
+      {uploadTargetDocType && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative space-y-4 text-slate-100">
+            <button
+              type="button"
+              disabled={isUploading}
+              onClick={() => setUploadTargetDocType(null)}
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-2.5 pb-2 border-b border-slate-800">
+              <UploadCloud className="w-5 h-5 text-emerald-400" />
+              <div>
+                <h3 className="text-sm font-bold text-white tracking-tight">
+                  Upload Regulatory KYC Document
+                </h3>
+                <span className="text-[11px] font-mono text-emerald-400 font-semibold">
+                  {uploadTargetDocType}
+                </span>
+              </div>
+            </div>
+
+            {uploadError && (
+              <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-300 flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                <span>{uploadError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleExecuteUpload} className="space-y-4 text-xs">
+              {/* Reference ID Input */}
+              <div>
+                <label className="block font-semibold text-slate-300 mb-1.5 font-mono">
+                  Official Document Reference Number:
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={refNumberInput}
+                  onChange={(e) => setRefNumberInput(e.target.value)}
+                  placeholder="e.g. NID-KH-010992384"
+                  className="w-full h-10 px-3.5 bg-slate-950 border border-slate-800 rounded-xl font-mono text-white text-xs focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              {/* Drag & Drop Zone */}
+              <div>
+                <label className="block font-semibold text-slate-300 mb-1.5 font-mono">
+                  Document File (.pdf, .jpg, .png up to 10MB):
+                </label>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,image/jpeg,image/png"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileSelect(file);
+                  }}
+                />
+
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const file = e.dataTransfer.files?.[0];
+                    if (file) handleFileSelect(file);
+                  }}
+                  className={`p-6 border-2 border-dashed rounded-2xl text-center cursor-pointer transition-all ${
+                    selectedFile
+                      ? 'border-emerald-500/60 bg-emerald-500/5'
+                      : 'border-slate-800 hover:border-emerald-500/40 bg-slate-950/60'
+                  }`}
+                >
+                  {selectedFile ? (
+                    <div className="space-y-1">
+                      <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
+                      <p className="text-sm font-bold text-white">{selectedFile.name}</p>
+                      <p className="text-[11px] font-mono text-emerald-400">
+                        {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • {selectedFile.type}
+                      </p>
+                      <p className="text-[10px] text-slate-500 pt-1">Click to replace file</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      <UploadCloud className="w-8 h-8 text-slate-500 mx-auto mb-2" />
+                      <p className="text-xs font-bold text-white">
+                        Click or drag & drop document file here
+                      </p>
+                      <p className="text-[11px] text-slate-500">
+                        Strict 10MB ceiling • 256-bit SSL encrypted transit
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Progress Bar during upload */}
+              {isUploading && (
+                <div className="space-y-1.5 pt-1">
+                  <div className="flex justify-between text-[11px] font-mono text-slate-400">
+                    <span>Uploading to encrypted vault...</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-500 transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  disabled={isUploading}
+                  onClick={() => setUploadTargetDocType(null)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white bg-slate-950 border border-slate-800"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={isUploading || !selectedFile}
+                  className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition ${
+                    isUploading || !selectedFile
+                      ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                      : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-md shadow-emerald-500/20 cursor-pointer'
+                  }`}
+                >
+                  {isUploading ? 'Encrypting & Transmitting...' : 'Upload & Submit for Review'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
@@ -408,4 +731,3 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
 };
 
 export default BorrowerProfileView;
-

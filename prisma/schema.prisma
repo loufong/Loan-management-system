@@ -158,6 +158,8 @@ model User {
   disbursements          Disbursement[]             @relation("DisbursedBy")
   receivedPayments       Payment[]                  @relation("PaymentReceivedBy")
   uploadedDocuments      LoanDocument[]             @relation("DocumentUploadedBy")
+  kycDocuments           UserKycDocument[]          @relation("UserKycDocuments")
+  verifiedKycDocuments   UserKycDocument[]          @relation("VerifiedKycDocuments")
   notifications          Notification[]
   auditLogs              AuditLog[]
   refreshTokens          RefreshToken[]
@@ -690,4 +692,48 @@ model GeneralLedger {
   @@index([accountCode])
   @@index([reference])
   @@map("general_ledger")
+}
+
+
+// ==========================================
+// 22. REGULATORY KYC DOCUMENT VAULT
+// ==========================================
+enum KycDocumentType {
+  NATIONAL_ID
+  PROOF_OF_RESIDENCE
+  EMPLOYMENT_INCOME_CONTRACT
+}
+
+enum KycVerificationStatus {
+  MISSING
+  PENDING_REVIEW
+  VERIFIED
+  REJECTED
+}
+
+model UserKycDocument {
+  id               String                @id @default(uuid()) @db.Uuid
+  userId           String                @map("user_id") @db.Uuid
+  documentType     KycDocumentType       @map("document_type")
+  fileKey          String                @map("file_key") @db.VarChar(500)
+  originalFilename String                @map("original_filename") @db.VarChar(255)
+  fileSizeBytes    BigInt                @map("file_size_bytes")
+  mimeType         String                @map("mime_type") @db.VarChar(100)
+  referenceNumber  String                @map("reference_number") @db.VarChar(100)
+  status           KycVerificationStatus @default(PENDING_REVIEW)
+  verifiedAt       DateTime?             @map("verified_at") @db.Timestamptz(6)
+  verifiedBy       String?               @map("verified_by") @db.Uuid
+  rejectionReason  String?               @map("rejection_reason") @db.Text
+  uploadedAt       DateTime              @default(now()) @map("uploaded_at") @db.Timestamptz(6)
+  updatedAt        DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  user             User                  @relation("UserKycDocuments", fields: [userId], references: [id], onDelete: Cascade)
+  verifier         User?                 @relation("VerifiedKycDocuments", fields: [verifiedBy], references: [id], onDelete: SetNull)
+
+  @@unique([userId, documentType], name: "uq_user_document_type")
+  @@index([userId])
+  @@index([status])
+  @@index([referenceNumber])
+  @@map("user_kyc_documents")
 }

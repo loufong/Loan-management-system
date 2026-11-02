@@ -7,6 +7,7 @@
  */
 
 import { Borrower, PaymentReceipt } from '../types';
+import { kycService } from './kycService';
 
 export const UNIFIED_LEDGER_KEY = 'JAM_SONG_VICH_UNIFIED_LEDGER';
 export const UNIFIED_RECEIPTS_KEY = 'JAM_SONG_VICH_RECEIPTS_LEDGER';
@@ -643,6 +644,14 @@ class LoanStorageService {
     disbursementAccount?: string;
     collateralStatus?: string;
   }): Promise<UnifiedLoanRecord> {
+    // 0. Enforce Regulatory Borrowing Guard
+    const kycSummary = await kycService.getKycStatus(payload.borrowerId);
+    if (!kycSummary.isEligibleToBorrow) {
+      throw new Error(
+        `Regulatory Borrowing Lock Active: Borrowers must have all 3 mandatory KYC documents verified prior to credit application origination. Currently verified: ${kycSummary.verifiedCount} of 3.`
+      );
+    }
+
     const loanId = payload.id || `LN-2026-${Math.floor(1000 + Math.random() * 9000)}`;
     const principal = Number(payload.principalAmount || 5000);
     const apr = Number(payload.annualInterestRate || 6.5);
@@ -709,21 +718,31 @@ class LoanStorageService {
 
     // Online Mode API attempt
     try {
+      const authToken = localStorage.getItem('apex_token') || sessionStorage.getItem('apex_token') || localStorage.getItem('token') || '';
       const response = await fetch('/api/v1/loans/apply', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+          Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify(payload),
       });
+
+      if (response.status === 403) {
+        const errJson = await response.json().catch(() => ({}));
+        throw new Error(errJson.message || 'Regulatory Borrowing Lock Active: Borrowers must have all 3 mandatory KYC documents verified.');
+      }
+
       if (response.ok) {
         const json = await response.json();
         if (json?.data?.id) {
           newRecord.id = json.data.id;
         }
       }
-    } catch {
+    } catch (apiErr: any) {
+      if (apiErr?.message?.includes('Regulatory Borrowing Lock')) {
+        throw apiErr;
+      }
       // Fallback seamlessly to local unified ledger
     }
 

@@ -37,7 +37,10 @@ export interface PreSignedReadResult {
 export const ALLOWED_KYC_MIME_TYPES = [
   'application/pdf',
   'image/jpeg',
+  'image/jpg',
   'image/png',
+  'image/webp',
+  'image/pjpeg',
 ];
 
 export const MAX_KYC_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 Megabytes

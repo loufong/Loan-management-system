@@ -159,11 +159,13 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
     setUploadProgress(20);
 
     try {
+      const mime = selectedFile.type || (selectedFile.name.endsWith('.pdf') ? 'application/pdf' : selectedFile.name.endsWith('.png') ? 'image/png' : 'image/jpeg');
+
       // 1. Request pre-signed S3/R2 upload URL
       const uploadPlan = await kycService.requestUploadUrl({
         documentType: uploadTargetDocType,
         originalFilename: selectedFile.name,
-        mimeType: selectedFile.type,
+        mimeType: mime,
         fileSizeBytes: selectedFile.size,
         userId: clientId,
       });
@@ -182,7 +184,7 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
         originalFilename: selectedFile.name,
         referenceNumber: refNumberInput.trim() || `REF-${Date.now().toString().slice(-6)}`,
         fileSizeBytes: selectedFile.size,
-        mimeType: selectedFile.type,
+        mimeType: mime,
         userId: clientId,
       });
 
@@ -541,9 +543,19 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
 
             {/* Document Digital Security Watermark Card */}
             <div className="p-6 rounded-2xl bg-slate-950 border border-slate-800 text-center space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto">
-                <ShieldCheck className="w-6 h-6" />
-              </div>
+              {previewDoc.viewUrl && (previewDoc.mimeType?.startsWith('image/') || previewDoc.originalFilename?.match(/\.(jpg|jpeg|png|webp)$/i)) ? (
+                <div className="max-h-60 overflow-hidden rounded-xl border border-slate-800 bg-slate-900/60 p-2 flex items-center justify-center">
+                  <img
+                    src={previewDoc.viewUrl}
+                    alt={previewDoc.title}
+                    className="max-h-56 max-w-full object-contain rounded-lg shadow-md"
+                  />
+                </div>
+              ) : (
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto">
+                  <ShieldCheck className="w-6 h-6" />
+                </div>
+              )}
               <p className="text-xs text-white font-bold">256-Bit SSL Cloud Encrypted Vault</p>
               <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
                 This document is stored in an encrypted private bucket, digitally watermarked, and retrieved via an authentic short-lived pre-signed URL (Valid for 15 minutes).

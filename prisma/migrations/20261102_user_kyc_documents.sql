@@ -60,3 +60,4 @@ COMMENT ON COLUMN "user_kyc_documents"."document_type" IS 'Regulatory document c
 COMMENT ON COLUMN "user_kyc_documents"."file_key" IS 'Private encrypted object key in AWS S3 or Cloudflare R2 bucket';
 COMMENT ON COLUMN "user_kyc_documents"."reference_number" IS 'Official government or corporate reference ID (e.g. NID-KH-010992384, RES-PP-99401, EMP-CORP-2026)';
 COMMENT ON COLUMN "user_kyc_documents"."status" IS 'Verification status: MISSING, PENDING_REVIEW, VERIFIED, REJECTED. Borrowing requires 3 of 3 VERIFIED.';
+

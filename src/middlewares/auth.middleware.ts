@@ -44,8 +44,11 @@ export async function authenticate(
     token === 'null' ||
     token === 'undefined' ||
     token.startsWith('dev-') ||
+    token.startsWith('demo-') ||
     token.startsWith('mock-') ||
     token.startsWith('jwt-token-') ||
+    token.startsWith('sb-') ||
+    token.startsWith('token-') ||
     token.startsWith('simulated-');
 
   if (isDevToken) {

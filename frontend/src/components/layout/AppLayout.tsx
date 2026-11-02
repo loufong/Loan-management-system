@@ -22,7 +22,6 @@ import {
   AlertTriangle,
   ShieldCheck,
   Landmark,
-  UserCheck,
   FileText
 } from 'lucide-react';
 import { Currency, UserProfile } from '../../types';
@@ -145,19 +144,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       icon: Wallet,
       path: '/admin/cashier',
       badge: overdueCount > 0 ? overdueCount : undefined,
-    },
-    {
-      id: 'self-apply',
-      label: 'Borrow for Myself',
-      icon: UserCheck,
-      path: '/apply',
-      dividerBefore: true,
-    },
-    {
-      id: 'my-repayments',
-      label: 'My Personal Repayments',
-      icon: Calendar,
-      path: '/repayments',
     },
     {
       id: 'reports',

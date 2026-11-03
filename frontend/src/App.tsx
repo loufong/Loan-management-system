@@ -83,7 +83,6 @@ import { api } from './services/api';
 import { AccessDeniedPage } from './components/common/AccessDeniedPage';
 import { LoginPage } from './components/auth/LoginPage';
 import { RegisterPage } from './components/auth/RegisterPage';
-import { OtpVerificationPage } from './components/auth/OtpVerificationPage';
 import { ForgotPasswordPage } from './components/auth/ForgotPasswordPage';
 import { SetNewPasswordPage } from './components/auth/SetNewPasswordPage';
 import { ChangePasswordPage } from './components/auth/ChangePasswordPage';
@@ -100,7 +99,7 @@ import { useAuth } from './context/AuthContext';
 import { useLanguage } from './context/LanguageContext';
 
 
-type AuthView = 'login' | 'register' | 'otp_verify' | 'forgot_password' | 'set_new_password';
+type AuthView = 'login' | 'register' | 'forgot_password' | 'set_new_password';
 
 // GitHub Pages & Static Environment Route Helpers
 // GitHub Pages & Static Environment Route Helpers (HashRouter & Path Dual Support)
@@ -296,11 +295,10 @@ export const App: React.FC = () => {
       if (!authIsAuthenticated || !authUser) {
         if (path === '/register') setAuthView('register');
         else if (path === '/forgot-password') setAuthView('forgot_password');
-        else if (path === '/verify-otp' || path === '/verify-email') setAuthView('otp_verify');
         else if (path === '/reset-password') setAuthView('set_new_password');
         else {
           setAuthView('login');
-          if (path.startsWith('/admin') || path.startsWith('/user') || path.startsWith('/settings') || path === '/portal' || path === '/my-loans') {
+          if (path.startsWith('/admin') || path.startsWith('/user') || path.startsWith('/settings') || path === '/portal' || path === '/my-loans' || path === '/verify-otp' || path === '/verify-email') {
             replaceAppRoute('/login');
           }
         }
@@ -1319,11 +1317,14 @@ export const App: React.FC = () => {
     if (authView === 'register') {
       return (
         <RegisterPage
-          onRegisterSuccess={(email) => {
-            setAuthEmail(email);
-            setAuthOtpPurpose('register_verification');
-            setAuthView('otp_verify');
-            pushAppRoute('/verify-email');
+          onRegisterSuccess={(email, user, token) => {
+            if (user && token) {
+              handleLoginSuccess(user, token, true);
+            } else {
+              setAuthNotice('Account registered successfully! Welcome to Jam Song Vich.');
+              setAuthView('login');
+              pushAppRoute('/login');
+            }
           }}
           onNavigateToLogin={() => {
             setAuthNotice(null);
@@ -1334,52 +1335,13 @@ export const App: React.FC = () => {
       );
     }
 
-    if (authView === 'otp_verify') {
-      return (
-        <OtpVerificationPage
-          email={authEmail}
-          purpose={authOtpPurpose}
-          onVerificationSuccess={(resetToken, verifiedUser, verifiedToken) => {
-            if (authOtpPurpose === 'login_verification') {
-              if (verifiedUser && verifiedToken) {
-                handleLoginSuccess(verifiedUser, verifiedToken, true);
-              } else {
-                setAuthNotice('Login verified successfully. Please sign in.');
-                setAuthView('login');
-                pushAppRoute('/login');
-              }
-            } else if (authOtpPurpose === 'register_verification') {
-              setAuthNotice('Email verified successfully! Your account is now active. Please sign in.');
-              setAuthView('login');
-              pushAppRoute('/login');
-            } else if (authOtpPurpose === 'forgot_password' && resetToken) {
-              setAuthResetToken(resetToken);
-              setAuthView('set_new_password');
-              pushAppRoute('/reset-password');
-            }
-          }}
-          onNavigateBack={() => {
-            const backView =
-              authOtpPurpose === 'register_verification'
-                ? 'register'
-                : authOtpPurpose === 'login_verification'
-                  ? 'login'
-                  : 'forgot_password';
-            setAuthView(backView);
-            pushAppRoute(backView === 'register' ? '/register' : backView === 'forgot_password' ? '/forgot-password' : '/login');
-          }}
-        />
-      );
-    }
-
     if (authView === 'forgot_password') {
       return (
         <ForgotPasswordPage
           onOtpSent={(email) => {
             setAuthEmail(email);
-            setAuthOtpPurpose('forgot_password');
-            setAuthView('otp_verify');
-            pushAppRoute('/verify-otp');
+            setAuthView('set_new_password');
+            pushAppRoute('/reset-password');
           }}
           onNavigateToLogin={() => {
             setAuthNotice(null);
@@ -1412,12 +1374,6 @@ export const App: React.FC = () => {
     return (
       <LoginPage
         onLoginSuccess={handleLoginSuccess}
-        onRequireOtp={(email) => {
-          setAuthEmail(email);
-          setAuthOtpPurpose('login_verification');
-          setAuthView('otp_verify');
-          pushAppRoute('/verify-otp');
-        }}
         onNavigateToRegister={() => {
           setAuthNotice(null);
           setAuthView('register');

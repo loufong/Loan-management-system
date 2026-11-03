@@ -30,7 +30,6 @@ export const SetNewPasswordPage: React.FC<SetNewPasswordPageProps> = ({
 }) => {
   const { language, setLanguage, t } = useLanguage();
   const [email, setEmail] = useState(initialEmail);
-  const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -59,11 +58,6 @@ export const SetNewPasswordPage: React.FC<SetNewPasswordPageProps> = ({
       return;
     }
 
-    if (!resetToken && (!otp || otp.trim().length !== 6)) {
-      setError('Please enter the 6-digit verification code received in your email.');
-      return;
-    }
-
     if (!isPasswordValid) {
       setError('Password does not fulfill all security requirements.');
       return;
@@ -80,8 +74,6 @@ export const SetNewPasswordPage: React.FC<SetNewPasswordPageProps> = ({
       await api.resetPassword({
         email: cleanEmail,
         resetToken: resetToken || undefined,
-        otp: otp ? otp.trim() : undefined,
-        code: otp ? otp.trim() : undefined,
         newPassword,
         confirmPassword,
       });
@@ -145,26 +137,6 @@ export const SetNewPasswordPage: React.FC<SetNewPasswordPageProps> = ({
               </div>
             </div>
 
-            {!resetToken && (
-              <div>
-                <label className="block text-[13px] font-medium text-[#0F172A] mb-1.5">
-                  {t('Verification Code', '6-Digit Verification Code (OTP)')}
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={6}
-                    required
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
-                    placeholder="123456"
-                    className="w-full h-[40px] px-3.5 pl-10 font-mono tracking-widest bg-white border border-[#E2E8F0] rounded-[6px] text-[14px] text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
-                  />
-                  <KeyRound className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-              </div>
-            )}
 
             <div>
               <label className="block text-[13px] font-medium text-[#0F172A] mb-1.5">

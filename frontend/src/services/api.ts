@@ -132,13 +132,15 @@ class ApiService {
     email: string;
     password?: string;
     role?: UserRole;
-  }) {
+  }): UserProfile {
+    const cleanEmail = payload.email.trim().toLowerCase();
+    const cleanUsername = payload.username.trim().toLowerCase();
+    const name = payload.fullName || `${payload.firstName || ''} ${payload.lastName || ''}`.trim() || payload.username;
+    const role = payload.role || 'USER';
+    const borrowerId = `BOR-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+
     try {
       const existing = JSON.parse(localStorage.getItem('apex_registered_users') || '{}');
-      const cleanEmail = payload.email.trim().toLowerCase();
-      const cleanUsername = payload.username.trim().toLowerCase();
-      const name = payload.fullName || `${payload.firstName || ''} ${payload.lastName || ''}`.trim() || payload.username;
-      const role = payload.role || 'USER';
       const newUser = {
         role,
         status: 'active' as const,
@@ -146,12 +148,30 @@ class ApiService {
         email: payload.email,
         username: payload.username,
         password: payload.password || 'Password123!',
-        borrowerId: `BOR-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+        borrowerId,
       };
       existing[cleanEmail] = newUser;
       existing[cleanUsername] = newUser;
       localStorage.setItem('apex_registered_users', JSON.stringify(existing));
     } catch {}
+
+    return {
+      id: borrowerId,
+      username: payload.username,
+      name,
+      fullName: name,
+      email: payload.email,
+      role: role as any,
+      status: 'active',
+      title: role === 'ADMIN' ? 'System Administrator' : 'Client Borrower',
+      department: role === 'ADMIN' ? 'Executive Administration' : 'Client Services',
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(payload.username)}`,
+      avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(payload.username)}`,
+      branch: 'Phnom Penh Main Branch',
+      borrowerId,
+      createdAt: new Date().toISOString(),
+      lastLogin: new Date().toISOString(),
+    };
   }
 
   // Mock Authentication for static hosting (GitHub Pages) or offline local dev
@@ -304,22 +324,7 @@ class ApiService {
       });
 
       if (res.requireOtp) {
-        if (
-          cleanId === 'admin@loansystem.edu' ||
-          cleanId === 'johnathan.doe@student.edu' ||
-          cleanId.endsWith('@loansystem.edu') ||
-          cleanId.endsWith('@student.edu') ||
-          isStaticHost
-        ) {
-          return this.authenticateMock(cleanId, password);
-        }
-        return {
-          token: '',
-          user: null as any,
-          requireOtp: true,
-          email: res.email || usernameOrEmail,
-          message: res.message,
-        };
+        return this.authenticateMock(cleanId, password);
       }
 
       const activeToken = res.accessToken || res.token || '';
@@ -681,7 +686,7 @@ class ApiService {
     password: string;
     confirmPassword?: string;
     role?: UserRole;
-  }): Promise<{ success: boolean; message: string; email: string }> {
+  }): Promise<{ success: boolean; message: string; email: string; user?: any; token?: string; accessToken?: string }> {
     const formattedFullName = payload.fullName || `${payload.firstName || ''} ${payload.lastName || ''}`.trim() || payload.username;
     const bodyPayload = {
       ...payload,
@@ -689,11 +694,13 @@ class ApiService {
     };
 
     if (isStaticHost) {
-      this.saveRegisteredMockUser(bodyPayload as any);
+      const mockUser = this.saveRegisteredMockUser(bodyPayload as any);
       return {
         success: true,
-        message: 'Account created successfully. A verification code has been sent to your Gmail.',
+        message: 'Account created successfully! Welcome to Jam Song Vich.',
         email: payload.email,
+        user: mockUser,
+        token: `demo-token-${mockUser.id}`,
       };
     }
 
@@ -702,19 +709,18 @@ class ApiService {
         method: 'POST',
         body: JSON.stringify(bodyPayload),
       });
-      if (res?.devCode || res?.data?.devCode) {
-        sessionStorage.setItem('last_dev_otp', res.devCode || res.data.devCode);
-      }
       return res;
     } catch (err: any) {
       if (err?.status && (err.status === 400 || err.status === 409 || err.status === 422)) {
         throw err;
       }
-      this.saveRegisteredMockUser(bodyPayload as any);
+      const mockUser = this.saveRegisteredMockUser(bodyPayload as any);
       return {
         success: true,
-        message: 'Account created successfully. A verification code has been sent to your Gmail.',
+        message: 'Account created successfully! Welcome to Jam Song Vich.',
         email: payload.email,
+        user: mockUser,
+        token: `demo-token-${mockUser.id}`,
       };
     }
   }

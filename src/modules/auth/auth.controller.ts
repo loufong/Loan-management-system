@@ -221,14 +221,15 @@ export class AuthController {
         });
         return;
       }
+      const loginUser = (result as any).user || {};
       res.status(200).json({
         success: true,
         message: 'Login successful',
         user: {
-          id: result.user.id,
-          name: result.user.name,
-          email: result.user.email,
-          role: result.user.role,
+          id: loginUser.id,
+          name: loginUser.name,
+          email: loginUser.email,
+          role: loginUser.role,
         },
         token: result.token,
         accessToken: result.accessToken,

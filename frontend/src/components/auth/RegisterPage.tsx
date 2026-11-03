@@ -16,10 +16,11 @@ import {
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { useLanguage } from '../../context/LanguageContext';
+import { UserProfile } from '../../types';
 import logoImg from '../../assets/logo-transparent.png';
 
 interface RegisterPageProps {
-  onRegisterSuccess: (email: string) => void;
+  onRegisterSuccess: (email: string, user?: UserProfile, token?: string) => void;
   onNavigateToLogin: () => void;
 }
 
@@ -152,7 +153,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
         confirmPassword,
       });
 
-      onRegisterSuccess(cleanEmail);
+      onRegisterSuccess(cleanEmail, res?.user, res?.token || res?.accessToken);
     } catch (err: any) {
       setError(err?.message || ('Unable to create account. Please check your details and try again.'));
     } finally {

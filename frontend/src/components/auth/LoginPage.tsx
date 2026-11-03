@@ -19,7 +19,6 @@ import { api } from '../../services/api';
 
 interface LoginPageProps {
   onLoginSuccess: (user: UserProfile, token: string, rememberMe: boolean) => void;
-  onRequireOtp?: (email: string) => void;
   onNavigateToRegister: () => void;
   onNavigateToForgotPassword: () => void;
   successNotice?: string | null;
@@ -28,7 +27,6 @@ interface LoginPageProps {
 
 export const LoginPage: React.FC<LoginPageProps> = ({
   onLoginSuccess,
-  onRequireOtp,
   onNavigateToRegister,
   onNavigateToForgotPassword,
   successNotice,
@@ -97,12 +95,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     try {
       // Step 2 to Step 9 handled through auth service with exact status checks & generic invalid messages
       const loginResult = await login(identifier, password, rememberMe);
-      if (loginResult?.requireOtp) {
-        if (onRequireOtp) {
-          onRequireOtp(loginResult.email || identifier);
-        }
-        return;
-      }
       const activeToken =
         localStorage.getItem('apex_token') ||
         sessionStorage.getItem('apex_token') ||
@@ -182,20 +174,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
           {/* Error Notice Banner */}
           {error && (
-            <div className="p-3 bg-rose-50 border border-rose-200 rounded-[6px] flex flex-col gap-2 text-xs text-rose-700">
-              <div className="flex items-start gap-2.5">
-                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 mt-0.5" />
-                <span className="leading-snug flex-1">{error}</span>
-              </div>
-              {error.toLowerCase().includes('verify') && onRequireOtp && (
-                <button
-                  type="button"
-                  onClick={() => onRequireOtp(usernameOrEmail.trim() || 'user')}
-                  className="mt-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-[4px] self-start transition-colors cursor-pointer"
-                >
-                  <span>{'Enter 6-Digit Verification Code'}</span>
-                </button>
-              )}
+            <div className="p-3 bg-rose-50 border border-rose-200 rounded-[6px] flex items-start gap-2.5 text-xs text-rose-700">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 mt-0.5" />
+              <span className="leading-snug flex-1">{error}</span>
             </div>
           )}
 

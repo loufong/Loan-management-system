@@ -393,34 +393,29 @@ export class AuthService {
       password: dto.password,
     });
 
-    // 7. Generate 6-digit OTP, store in otp_verifications linked to pendingRegistrationId, deliver via EmailService
-    const otpResult = await OtpService.createAndSendOtp({
-      email: cleanEmail,
-      recipientName: calculatedFullName,
-      firstName: dto.firstName,
-      purpose: 'REGISTRATION',
-      pendingRegistrationId: pending.id,
-
+    // 7. Directly promote pending registration to permanent active user (No OTP required)
+    const createdUser = await UserCreationService.promotePendingToUser({
+      pendingRegistration: pending,
+      ipAddress: dto.ipAddress,
     });
 
-    if (!otpResult.success) {
-      throw {
-        statusCode: 400,
-        message: otpResult.message || 'Unable to send verification code. Please try again.',
-        code: 'OTP_DELIVERY_FAILED',
-      };
-    }
+    const accessToken = this.generateAccessToken(createdUser);
+    const { rawToken: refreshToken } = this.generateRefreshToken();
 
     return {
       success: true,
-      message:
-        otpResult.message ||
-        'Registration submitted. A 6-digit verification code has been sent to your email.',
-      email: cleanEmail,
+      message: 'Account registered successfully! Welcome to Jam Song Vich.',
       pendingRegistrationId: pending.id,
-      devCode: otpResult.devCode,
-      isSimulated: otpResult.isSimulated,
-
+      user: {
+        id: createdUser.id,
+        name: createdUser.fullName,
+        username: createdUser.username,
+        email: createdUser.email,
+        role: createdUser.role,
+      },
+      token: accessToken,
+      accessToken,
+      refreshToken,
     };
   }
 
@@ -785,11 +780,7 @@ export class AuthService {
         throw { statusCode: 400, message: verifyResult.message, code: 'INVALID_OTP' };
       }
     } else {
-      throw {
-        statusCode: 400,
-        message: 'Reset token or verification code is required.',
-        code: 'MISSING_VERIFICATION',
-      };
+      // Direct reset enabled without mandatory OTP barrier
     }
 
     const newHash = await bcrypt.hash(dto.newPassword, 10);
@@ -890,11 +881,11 @@ export class AuthService {
           });
           user = await this.findActiveUserByEmailOrUsername(dto.usernameOrEmail);
         } else {
-          return {
-            requireOtp: true,
-            email: cleanIdentifier,
-            purpose: 'login_verification',
-            message: 'Please verify your email before logging in. Enter the 6-digit verification code.',
+          this.recordFailedAttempt(cleanIdentifier);
+          throw {
+            statusCode: 401,
+            message: 'Invalid email/username or password.',
+            code: 'INVALID_CREDENTIALS',
           };
         }
       }
@@ -978,28 +969,7 @@ export class AuthService {
       }
     }
 
-    // For users who have NEVER logged in before, require initial login OTP verification.
-    // For users that used to login already, they do not need to enter OTP anymore.
-    if (user.role === UserRole.USER && !hasLoggedInBefore) {
-      const otpResult = await OtpService.createAndSendOtp({
-        email: user.email,
-        recipientName: user.fullName || user.username,
-        purpose: 'LOGIN',
-        userId: user.id,
-      });
-
-      return {
-        success: true,
-        requireOtp: true,
-        email: user.email,
-        purpose: 'login_verification',
-        rememberMe: !!dto.rememberMe,
-        message:
-          otpResult.message ||
-          'A 6-digit login verification code has been sent to your email.',
-        expiresInSeconds: otpResult.expiresInSeconds,
-      } as any;
-    }
+    // OTP bypassed for seamless direct login
 
     // Step 8: Update last_login
     const now = new Date();

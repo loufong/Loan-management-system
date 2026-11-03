@@ -75,8 +75,8 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
             </h2>
             <p className="text-xs text-[#64748B]">
               {t(
-                'Enter your registered email address to receive a 6-digit verification code.',
-                'Enter your registered email address to receive a 6-digit verification code.'
+                'Enter your registered email address to set a new secure password.',
+                'Enter your registered email address to set a new secure password.'
               )}
             </p>
           </div>
@@ -114,10 +114,10 @@ export const ForgotPasswordPage: React.FC<ForgotPasswordPageProps> = ({
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin text-white" />
-                  <span>{t('Sending code...', 'Sending code...')}</span>
+                  <span>{t('Processing...', 'Processing...')}</span>
                 </>
               ) : (
-                <span>{t('Send Reset Code', 'Send Reset Code')}</span>
+                <span>{t('Continue to Set New Password', 'Continue to Set New Password')}</span>
               )}
             </button>
           </form>

@@ -11,17 +11,24 @@ $tree = (git write-tree).Trim()
 Remove-Item $tempIndex -Force
 Remove-Item env:GIT_INDEX_FILE
 
+Write-Host "Fetching latest gh-pages branch..."
+try {
+    git fetch origin gh-pages
+} catch {
+    Write-Warning "Could not fetch origin gh-pages: $_"
+}
+
 $parent = (git rev-parse origin/gh-pages).Trim()
-$commit = (git commit-tree $tree -p $parent -m "deploy: smooth loading screen and latest core banking assets").Trim()
+$commit = (git commit-tree $tree -p $parent -m "deploy: remove OTP page and enable seamless direct auth").Trim()
 git update-ref refs/heads/gh-pages $commit
 Write-Host "Created gh-pages commit: $commit"
 
 Write-Host "Pushing to origin gh-pages..."
-git push origin gh-pages:gh-pages
+git push origin gh-pages:gh-pages --force
 
 try {
     Write-Host "Pushing to tonghengkeo gh-pages..."
-    git push tonghengkeo gh-pages:gh-pages
+    git push tonghengkeo gh-pages:gh-pages --force
 } catch {
     Write-Warning "tonghengkeo remote push skipped: $_"
 }

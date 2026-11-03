@@ -273,12 +273,12 @@ export class EmailService {
     const { toEmail, recipientName, otpCode } = params;
     const displayName = recipientName ? recipientName.split(' ')[0] : 'Valued User';
 
-    const subject = 'Verify Your Apex Loan Management System Account';
+    const subject = `[JAM SONG VICH] Your Verification Code: ${otpCode}`;
 
     const textContent = `
 Hello ${displayName},
 
-Thank you for registering with Apex Loan Management System.
+Thank you for registering with JAM SONG VICH Core Banking & Loan Management System.
 
 Your verification code is:
 
@@ -289,7 +289,7 @@ This code will expire in 10 minutes.
 If you did not create this account, please ignore this email.
 
 Regards,
-Apex Loan Management System
+JAM SONG VICH Core Banking System
     `.trim();
 
     const htmlContent = `
@@ -300,59 +300,60 @@ Apex Loan Management System
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${subject}</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0f172a;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f8fafc; padding: 32px 16px;">
+<body style="margin: 0; padding: 0; background-color: #0b1120; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #f8fafc;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #0b1120; padding: 32px 16px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width: 520px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width: 520px; background-color: #0f172a; border: 1px solid #1e293b; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);">
           <tr>
-            <td style="background-color: #0f172a; padding: 24px 32px; text-align: left;">
-              <span style="display: inline-block; background-color: #2563eb; color: #ffffff; font-weight: bold; font-size: 13px; padding: 4px 8px; border-radius: 4px; letter-spacing: 0.5px;">Apex LMS</span>
-              <h1 style="color: #ffffff; font-size: 18px; font-weight: 700; margin: 12px 0 0 0; letter-spacing: -0.2px;">Verify Your Apex LMS Account</h1>
+            <td style="background-color: #020617; padding: 24px 32px; border-bottom: 1px solid #1e293b; text-align: left;">
+              <span style="display: inline-block; background-color: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; font-weight: 800; font-size: 13px; padding: 4px 10px; border-radius: 9999px; letter-spacing: 0.5px;">JAM SONG VICH</span>
+              <h1 style="color: #ffffff; font-size: 18px; font-weight: 700; margin: 12px 0 0 0; letter-spacing: -0.2px;">Verify Your Account</h1>
+              <div style="color: #94a3b8; font-size: 11px; margin-top: 4px;">Loan Management & Core Banking System</div>
             </td>
           </tr>
           <tr>
             <td style="padding: 32px;">
-              <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 22px; color: #0f172a;">
+              <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 22px; color: #f8fafc;">
                 Hello <strong>${displayName}</strong>,
               </p>
               
-              <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 22px; color: #334155;">
-                Thank you for registering with Apex Loan Management System.
+              <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 22px; color: #94a3b8;">
+                Thank you for registering with JAM SONG VICH Core Banking. Please use the verification code below to verify your email address:
               </p>
 
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin: 20px 0;">
                 <tr>
-                  <td align="center" style="background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 20px;">
-                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #64748b; margin-bottom: 6px;">
-                      Your verification code is:
+                  <td align="center" style="background-color: #020617; border: 1px solid #10b981; border-radius: 8px; padding: 24px;">
+                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #10b981; margin-bottom: 8px;">
+                      Your 6-Digit Verification Code
                     </div>
-                    <div style="font-family: 'Courier New', Courier, monospace; font-size: 34px; font-weight: 800; letter-spacing: 8px; color: #0f172a;">
+                    <div style="font-family: 'Courier New', Courier, monospace; font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #ffffff;">
                       ${otpCode}
                     </div>
-                    <div style="font-size: 12px; color: #2563eb; font-weight: 600; margin-top: 8px;">
-                      This code will expire in 10 minutes.
+                    <div style="font-size: 12px; color: #34d399; font-weight: 600; margin-top: 10px;">
+                      ● Valid for 10 minutes
                     </div>
                   </td>
                 </tr>
               </table>
 
-              <p style="margin: 20px 0 0 0; font-size: 13px; line-height: 20px; color: #64748b;">
-                If you did not create this account, please ignore this email.
+              <p style="margin: 20px 0 0 0; font-size: 12px; line-height: 18px; color: #64748b;">
+                If you did not request this verification code, please ignore this email or contact security support.
               </p>
 
-              <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0 16px 0;" />
+              <hr style="border: 0; border-top: 1px solid #1e293b; margin: 24px 0 16px 0;" />
 
-              <p style="margin: 0; font-size: 13px; line-height: 18px; color: #475569;">
+              <p style="margin: 0; font-size: 12px; line-height: 18px; color: #94a3b8;">
                 Regards,<br>
-                <strong>Apex Loan Management System</strong>
+                <strong style="color: #ffffff;">JAM SONG VICH Core Banking Security Desk</strong>
               </p>
             </td>
           </tr>
           <tr>
-            <td style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 14px 32px; text-align: center;">
-              <p style="margin: 0; font-size: 11px; color: #94a3b8;">
-                This is a secure automated message. Please do not reply directly to this email.
+            <td style="background-color: #020617; border-top: 1px solid #1e293b; padding: 14px 32px; text-align: center;">
+              <p style="margin: 0; font-size: 11px; color: #64748b;">
+                National Bank of Cambodia Regulated Core Banking System • Automated Dispatch
               </p>
             </td>
           </tr>
@@ -379,14 +380,14 @@ Apex Loan Management System
     const { toEmail, recipientName, otpCode } = params;
     const displayName = recipientName ? recipientName.split(' ')[0] : 'Valued User';
 
-    const subject = 'Reset Your Apex LMS Password';
+    const subject = `[JAM SONG VICH] Password Reset Code: ${otpCode}`;
 
     const textContent = `
 Hello ${displayName},
 
-We received a request to reset your password.
+We received a request to reset your JAM SONG VICH account password.
 
-Your password reset code is:
+Your verification code is:
 
 ${otpCode}
 
@@ -395,7 +396,7 @@ This code will expire in 10 minutes.
 If you did not request this password reset, please ignore this email.
 
 Regards,
-Apex Loan Management System
+JAM SONG VICH Core Banking Security Desk
     `.trim();
 
     const htmlContent = `
@@ -406,46 +407,69 @@ Apex Loan Management System
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${subject}</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0f172a;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f8fafc; padding: 32px 16px;">
+<body style="margin: 0; padding: 0; background-color: #0b1120; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #f8fafc;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #0b1120; padding: 32px 16px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width: 520px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width: 520px; background-color: #0f172a; border: 1px solid #1e293b; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);">
           <tr>
-            <td style="background-color: #0f172a; padding: 24px 32px; text-align: left;">
-              <span style="display: inline-block; background-color: #2563eb; color: #ffffff; font-weight: bold; font-size: 13px; padding: 4px 8px; border-radius: 4px; letter-spacing: 0.5px;">Apex LMS</span>
-              <h1 style="color: #ffffff; font-size: 18px; font-weight: 700; margin: 12px 0 0 0; letter-spacing: -0.2px;">Reset Your Apex LMS Password</h1>
+            <td style="background-color: #020617; padding: 24px 32px; border-bottom: 1px solid #1e293b; text-align: left;">
+              <span style="display: inline-block; background-color: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399; font-weight: 800; font-size: 13px; padding: 4px 10px; border-radius: 9999px; letter-spacing: 0.5px;">JAM SONG VICH</span>
+              <h1 style="color: #ffffff; font-size: 18px; font-weight: 700; margin: 12px 0 0 0; letter-spacing: -0.2px;">Password Reset Request</h1>
+              <div style="color: #94a3b8; font-size: 11px; margin-top: 4px;">Loan Management & Core Banking System</div>
             </td>
           </tr>
           <tr>
             <td style="padding: 32px;">
-              <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 22px; color: #0f172a;">
+              <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 22px; color: #f8fafc;">
                 Hello <strong>${displayName}</strong>,
               </p>
               
-              <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 22px; color: #334155;">
-                We received a request to reset your password.
+              <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 22px; color: #94a3b8;">
+                We received a request to reset your password. Use the authorization code below to establish a new password:
               </p>
 
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin: 20px 0;">
                 <tr>
-                  <td align="center" style="background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 20px;">
-                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #64748b; margin-bottom: 6px;">
-                      Your password reset code is:
+                  <td align="center" style="background-color: #020617; border: 1px solid #10b981; border-radius: 8px; padding: 24px;">
+                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #10b981; margin-bottom: 8px;">
+                      Password Reset Code
                     </div>
-                    <div style="font-family: 'Courier New', Courier, monospace; font-size: 34px; font-weight: 800; letter-spacing: 8px; color: #0f172a;">
+                    <div style="font-family: 'Courier New', Courier, monospace; font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #ffffff;">
                       ${otpCode}
                     </div>
-                    <div style="font-size: 12px; color: #2563eb; font-weight: 600; margin-top: 8px;">
-                      This code will expire in 10 minutes.
+                    <div style="font-size: 12px; color: #34d399; font-weight: 600; margin-top: 10px;">
+                      ● Valid for 10 minutes
                     </div>
                   </td>
                 </tr>
               </table>
 
-              <p style="margin: 20px 0 0 0; font-size: 13px; line-height: 20px; color: #64748b;">
-                If you did not request this password reset, please ignore this email.
+              <p style="margin: 20px 0 0 0; font-size: 12px; line-height: 18px; color: #64748b;">
+                If you did not request this password reset, your account remains secure and you may safely disregard this message.
               </p>
+
+              <hr style="border: 0; border-top: 1px solid #1e293b; margin: 24px 0 16px 0;" />
+
+              <p style="margin: 0; font-size: 12px; line-height: 18px; color: #94a3b8;">
+                Regards,<br>
+                <strong style="color: #ffffff;">JAM SONG VICH Core Banking Security Desk</strong>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color: #020617; border-top: 1px solid #1e293b; padding: 14px 32px; text-align: center;">
+              <p style="margin: 0; font-size: 11px; color: #64748b;">
+                National Bank of Cambodia Regulated Core Banking System • Automated Dispatch
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
 
               <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0 16px 0;" />
 

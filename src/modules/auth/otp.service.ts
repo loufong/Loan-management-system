@@ -26,6 +26,8 @@ export interface SendOtpResult {
   success: boolean;
   message: string;
   expiresInSeconds: number;
+  devCode?: string;
+  isSimulated?: boolean;
 }
 
 export class OtpService {
@@ -235,6 +237,8 @@ export class OtpService {
         ? `Verification code generated. (Dev Code: ${otpCode})`
         : 'Verification code sent successfully to your email.',
       expiresInSeconds: 600,
+      devCode: isDev || emailResult.isSimulated || !emailResult.success ? otpCode : undefined,
+      isSimulated: !!(emailResult.isSimulated || !emailResult.success),
     };
   }
 

@@ -698,10 +698,14 @@ class ApiService {
     }
 
     try {
-      return await this.request('/auth/register', {
+      const res: any = await this.request('/auth/register', {
         method: 'POST',
         body: JSON.stringify(bodyPayload),
       });
+      if (res?.devCode || res?.data?.devCode) {
+        sessionStorage.setItem('last_dev_otp', res.devCode || res.data.devCode);
+      }
+      return res;
     } catch (err: any) {
       if (err?.status && (err.status === 400 || err.status === 409 || err.status === 422)) {
         throw err;
@@ -769,10 +773,14 @@ class ApiService {
     }
 
     try {
-      return await this.request('/auth/resend-otp', {
+      const res: any = await this.request('/auth/resend-otp', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
+      if (res?.devCode || res?.data?.devCode) {
+        sessionStorage.setItem('last_dev_otp', res.devCode || res.data.devCode);
+      }
+      return res;
     } catch (err: any) {
       if (err?.status && (err.status === 400 || err.status === 429)) {
         throw err;

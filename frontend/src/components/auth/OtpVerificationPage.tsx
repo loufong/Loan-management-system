@@ -38,6 +38,7 @@ export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
 
   const [resendCooldown, setResendCooldown] = useState<number>(60);
   const [attemptsRemaining, setAttemptsRemaining] = useState<number>(5);
+  const [devCode, setDevCode] = useState<string | null>(() => sessionStorage.getItem('last_dev_otp'));
 
   useEffect(() => {
     inputRefs.current[0]?.focus();
@@ -120,6 +121,7 @@ export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
     try {
       const canonicalPurpose = purpose === 'login_verification' ? 'LOGIN' : purpose;
       await api.resendOtp({ email, purpose: canonicalPurpose });
+      setDevCode(sessionStorage.getItem('last_dev_otp'));
       setResendCooldown(60);
       setSuccessNotice('A fresh 6-digit verification code has been dispatched to your email.');
     } catch (err: any) {
@@ -170,6 +172,31 @@ export const OtpVerificationPage: React.FC<OtpVerificationPageProps> = ({
             <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-[6px] flex items-center gap-2 text-xs text-emerald-800">
               <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
               <span>{successNotice}</span>
+            </div>
+          )}
+
+          {devCode && (
+            <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-[6px] text-xs text-amber-900 space-y-1.5 shadow-sm">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-bold flex items-center gap-1.5 text-amber-800">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                  Development Mode OTP
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const chars = devCode.split('').slice(0, 6);
+                    setDigits(chars);
+                    inputRefs.current[5]?.focus();
+                  }}
+                  className="px-2.5 py-1 rounded bg-amber-600 hover:bg-amber-700 text-white font-mono text-[11px] font-bold transition cursor-pointer shrink-0"
+                >
+                  Auto-fill ({devCode})
+                </button>
+              </div>
+              <p className="text-[11px] text-amber-800/90 leading-relaxed">
+                Live email delivery requires a real Google App Password in <code className="bg-amber-100/80 px-1 py-0.5 rounded font-mono font-semibold">.env</code>. Until then, use the generated development code above.
+              </p>
             </div>
           )}
 

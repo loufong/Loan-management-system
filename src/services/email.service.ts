@@ -153,9 +153,10 @@ export class EmailService {
       pass === 'your_gmail_app_password' ||
       pass === 'your-gmail-app-password' ||
       pass === 'your-16-character-google-app-password' ||
-      pass === 'YOUR_GOOGLE_APP_PASSWORD' ||
-      pass === 'MY_GOOGLE_APP_PASSWORD' ||
-      pass.includes('placeholder');
+      pass === 'your-16-digit-google-app-password' ||
+      pass.includes('google-app-password') ||
+      pass.includes('placeholder') ||
+      pass.includes('your-');
 
     return !isPlaceholder;
   }

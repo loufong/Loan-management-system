@@ -400,6 +400,7 @@ export class AuthService {
       firstName: dto.firstName,
       purpose: 'REGISTRATION',
       pendingRegistrationId: pending.id,
+
     });
 
     if (!otpResult.success) {
@@ -417,6 +418,9 @@ export class AuthService {
         'Registration submitted. A 6-digit verification code has been sent to your email.',
       email: cleanEmail,
       pendingRegistrationId: pending.id,
+      devCode: otpResult.devCode,
+      isSimulated: otpResult.isSimulated,
+
     };
   }
 
@@ -660,8 +664,10 @@ export class AuthService {
 
       return {
         success: true,
-        message: 'A fresh 6-digit OTP code has been sent to your email.',
+        message: otpResult.message || 'A fresh 6-digit OTP code has been sent to your email.',
         expiresInSeconds: otpResult.expiresInSeconds,
+        devCode: otpResult.devCode,
+        isSimulated: otpResult.isSimulated,
       };
     }
 
@@ -702,10 +708,12 @@ export class AuthService {
     }
 
     return {
-      success: true,
-      message: 'A fresh 6-digit OTP code has been sent to your email.',
-      expiresInSeconds: otpResult.expiresInSeconds,
-    };
+        success: true,
+        message: otpResult.message || 'A fresh 6-digit OTP code has been sent to your email.',
+        expiresInSeconds: otpResult.expiresInSeconds,
+        devCode: otpResult.devCode,
+        isSimulated: otpResult.isSimulated,
+      };
   }
 
   /**

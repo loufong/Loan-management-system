@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LoanApplication, UserRole, Currency } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
+import { kycVaultStorage } from '../../services/kycVaultStorage';
 
 export interface CreditReviewApprovalProps {
   application: LoanApplication;
@@ -26,6 +27,59 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
   const [activeDocTab, setActiveDocTab] = useState<'ID' | 'INCOME' | 'STATEMENT'>('ID');
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [rotation, setRotation] = useState<number>(0);
+  const [realDocUrls, setRealDocUrls] = useState<{ id?: string; income?: string; statement?: string }>({});
+
+  useEffect(() => {
+    const loadRealDocs = async () => {
+      const candidateIds = [application.borrowerId, application.id, 'BOR-2026-8801', 'BOR-2026-0001'].filter(Boolean) as string[];
+      let idUrl: string | undefined;
+      let incomeUrl: string | undefined;
+      let statementUrl: string | undefined;
+
+      for (const cid of candidateIds) {
+        if (!idUrl) {
+          idUrl =
+            (await kycVaultStorage.getFile(cid, 'NATIONAL_ID_FRONT')) ||
+            (await kycVaultStorage.getFile(cid, 'NATIONAL_ID')) ||
+            localStorage.getItem(`kyc_file_${cid}_NATIONAL_ID_FRONT`) ||
+            localStorage.getItem(`kyc_file_${cid}_NATIONAL_ID`) ||
+            localStorage.getItem('kyc_photo_NATIONAL_ID_FRONT') ||
+            localStorage.getItem('kyc_photo_NATIONAL_ID') ||
+            undefined;
+        }
+        if (!incomeUrl) {
+          incomeUrl =
+            (await kycVaultStorage.getFile(cid, 'LOAN_SALARY_SLIP')) ||
+            (await kycVaultStorage.getFile(cid, 'EMPLOYMENT_INCOME_CONTRACT')) ||
+            localStorage.getItem(`kyc_file_${cid}_LOAN_SALARY_SLIP`) ||
+            undefined;
+          if (!incomeUrl) {
+            try {
+              const loanDocs = JSON.parse(localStorage.getItem(`JAM_LOAN_DOCS_${cid}`) || '{}');
+              if (loanDocs.salarySlip?.dataUrl) incomeUrl = loanDocs.salarySlip.dataUrl;
+            } catch {}
+          }
+        }
+        if (!statementUrl) {
+          statementUrl =
+            (await kycVaultStorage.getFile(cid, 'LOAN_COLLATERAL_DOC')) ||
+            (await kycVaultStorage.getFile(cid, 'PROOF_OF_RESIDENCE')) ||
+            localStorage.getItem(`kyc_file_${cid}_LOAN_COLLATERAL_DOC`) ||
+            undefined;
+          if (!statementUrl) {
+            try {
+              const loanDocs = JSON.parse(localStorage.getItem(`JAM_LOAN_DOCS_${cid}`) || '{}');
+              if (loanDocs.collateralDoc?.dataUrl) statementUrl = loanDocs.collateralDoc.dataUrl;
+            } catch {}
+          }
+        }
+      }
+
+      setRealDocUrls({ id: idUrl, income: incomeUrl, statement: statementUrl });
+    };
+
+    loadRealDocs();
+  }, [application.borrowerId, application.id]);
 
   // Accordion Toggles
   const [personalInfoOpen, setPersonalInfoOpen] = useState(true);
@@ -255,10 +309,10 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
                   <img
                     src={
                       activeDocTab === 'ID'
-                        ? 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=600&auto=format&fit=crop&q=80'
+                        ? realDocUrls.id || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=600&auto=format&fit=crop&q=80'
                         : activeDocTab === 'INCOME'
-                        ? 'https://images.unsplash.com/photo-1450133064473-71024230f91b?w=600&auto=format&fit=crop&q=80'
-                        : 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600&auto=format&fit=crop&q=80'
+                        ? realDocUrls.income || 'https://images.unsplash.com/photo-1450133064473-71024230f91b?w=600&auto=format&fit=crop&q=80'
+                        : realDocUrls.statement || 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600&auto=format&fit=crop&q=80'
                     }
                     alt="Document Preview"
                     style={{ transform: `scale(${zoomLevel}) rotate(${rotation}deg)`, transition: 'transform 0.15s ease' }}

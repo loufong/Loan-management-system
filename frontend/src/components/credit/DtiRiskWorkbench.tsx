@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LoanApplication, Currency, UserRole } from '../../types';
 import { Badge } from '../common/Badge';
 import { MoneyText } from '../common/MoneyText';
+import { kycVaultStorage } from '../../services/kycVaultStorage';
 import {
   ArrowLeft,
   ChevronDown,
@@ -65,6 +66,56 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
   const [activeEvidenceDoc, setActiveEvidenceDoc] = useState<'paySlip' | 'idCard' | 'bankStatement'>('paySlip');
   const [docZoom, setDocZoom] = useState(1);
   const [docRotation, setDocRotation] = useState(0);
+  const [realEvidenceUrls, setRealEvidenceUrls] = useState<{ idCard?: string; paySlip?: string; bankStmt?: string }>({});
+
+  useEffect(() => {
+    const loadRealEvidence = async () => {
+      const candidateIds = [application?.borrowerId, application?.id, 'BOR-2026-8801', 'BOR-2026-0001'].filter(Boolean) as string[];
+      let idCard: string | undefined;
+      let paySlip: string | undefined;
+      let bankStmt: string | undefined;
+
+      for (const cid of candidateIds) {
+        if (!idCard) {
+          idCard =
+            (await kycVaultStorage.getFile(cid, 'NATIONAL_ID_FRONT')) ||
+            (await kycVaultStorage.getFile(cid, 'NATIONAL_ID')) ||
+            localStorage.getItem(`kyc_file_${cid}_NATIONAL_ID_FRONT`) ||
+            localStorage.getItem('kyc_photo_NATIONAL_ID_FRONT') ||
+            localStorage.getItem('kyc_photo_NATIONAL_ID') ||
+            undefined;
+        }
+        if (!paySlip) {
+          paySlip =
+            (await kycVaultStorage.getFile(cid, 'LOAN_SALARY_SLIP')) ||
+            (await kycVaultStorage.getFile(cid, 'EMPLOYMENT_INCOME_CONTRACT')) ||
+            localStorage.getItem(`kyc_file_${cid}_LOAN_SALARY_SLIP`) ||
+            undefined;
+          if (!paySlip) {
+            try {
+              const ld = JSON.parse(localStorage.getItem(`JAM_LOAN_DOCS_${cid}`) || '{}');
+              if (ld.salarySlip?.dataUrl) paySlip = ld.salarySlip.dataUrl;
+            } catch {}
+          }
+        }
+        if (!bankStmt) {
+          bankStmt =
+            (await kycVaultStorage.getFile(cid, 'LOAN_COLLATERAL_DOC')) ||
+            (await kycVaultStorage.getFile(cid, 'PROOF_OF_RESIDENCE')) ||
+            localStorage.getItem(`kyc_file_${cid}_LOAN_COLLATERAL_DOC`) ||
+            undefined;
+          if (!bankStmt) {
+            try {
+              const ld = JSON.parse(localStorage.getItem(`JAM_LOAN_DOCS_${cid}`) || '{}');
+              if (ld.collateralDoc?.dataUrl) bankStmt = ld.collateralDoc.dataUrl;
+            } catch {}
+          }
+        }
+      }
+      setRealEvidenceUrls({ idCard, paySlip, bankStmt });
+    };
+    loadRealEvidence();
+  }, [application?.borrowerId, application?.id]);
 
   // Recommendation Form State
   const [recommendation, setRecommendation] = useState<
@@ -455,10 +506,10 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
                   <img
                     src={
                       activeEvidenceDoc === 'paySlip'
-                        ? 'https://images.unsplash.com/photo-1450133064473-71024230f91b?w=700&auto=format&fit=crop&q=80'
+                        ? realEvidenceUrls.paySlip || 'https://images.unsplash.com/photo-1450133064473-71024230f91b?w=700&auto=format&fit=crop&q=80'
                         : activeEvidenceDoc === 'idCard'
-                        ? 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=700&auto=format&fit=crop&q=80'
-                        : 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=700&auto=format&fit=crop&q=80'
+                        ? realEvidenceUrls.idCard || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=700&auto=format&fit=crop&q=80'
+                        : realEvidenceUrls.bankStmt || 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=700&auto=format&fit=crop&q=80'
                     }
                     alt="Document Preview"
                     className="max-h-full max-w-full object-contain rounded-[4px]"

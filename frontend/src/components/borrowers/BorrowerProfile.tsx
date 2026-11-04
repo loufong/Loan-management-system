@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   User,
   Phone,
@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { CurrencyDisplay } from '../common/CurrencyDisplay';
 import { StatusBadge } from '../common/StatusBadge';
+import { kycVaultStorage } from '../../services/kycVaultStorage';
 
 export interface BorrowerProfileProps {
   borrowerId?: string;
@@ -73,13 +74,39 @@ export const BorrowerProfile: React.FC<BorrowerProfileProps> = ({
     { id: 'pay-3', date: '2026-07-15', amountUSD: 459.50, method: 'Bank Transfer', ref: 'ABA-88231', status: 'Paid' }
   ];
 
+  const [realIdPhoto, setRealIdPhoto] = useState<string>('');
+  const [realCollateralPhoto, setRealCollateralPhoto] = useState<string>('');
+
+  useEffect(() => {
+    const loadRealPhotos = async () => {
+      const candidateIds = [borrowerId, 'BOR-2026-8801', 'BOR-2026-0001'].filter(Boolean);
+      for (const cid of candidateIds) {
+        if (!realIdPhoto) {
+          const idPhoto =
+            (await kycVaultStorage.getFile(cid, 'NATIONAL_ID_FRONT')) ||
+            (await kycVaultStorage.getFile(cid, 'NATIONAL_ID')) ||
+            localStorage.getItem('kyc_photo_NATIONAL_ID_FRONT') ||
+            localStorage.getItem('kyc_photo_NATIONAL_ID');
+          if (idPhoto) setRealIdPhoto(idPhoto);
+        }
+        if (!realCollateralPhoto) {
+          const colPhoto =
+            (await kycVaultStorage.getFile(cid, 'LOAN_COLLATERAL_DOC')) ||
+            (await kycVaultStorage.getFile(cid, 'PROOF_OF_RESIDENCE'));
+          if (colPhoto) setRealCollateralPhoto(colPhoto);
+        }
+      }
+    };
+    loadRealPhotos();
+  }, [borrowerId]);
+
   const collateralDocs = [
     {
       id: 'doc-1',
       title: 'National Cambodian ID Card (Front & Back)',
       category: 'Identity Proof',
       uploadedAt: '12 Jan 2026',
-      preview: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=400&q=80'
+      preview: realIdPhoto || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=400&q=80'
     },
     {
       id: 'doc-2',
@@ -93,7 +120,7 @@ export const BorrowerProfile: React.FC<BorrowerProfileProps> = ({
       title: 'Residential Property Hard Title Deed',
       category: 'Real Estate Title',
       uploadedAt: '15 Jan 2026',
-      preview: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=400&q=80'
+      preview: realCollateralPhoto || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=400&q=80'
     }
   ];
 

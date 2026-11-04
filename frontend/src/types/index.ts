@@ -189,10 +189,15 @@ export interface BorrowerKYCDocument {
   type: 'NATIONAL_ID' | 'SALARY_SLIP' | 'BANK_STATEMENT' | 'EMPLOYMENT_CONTRACT' | 'COLLATERAL_TITLE';
   title: string;
   fileName: string;
+  backFileName?: string;
   fileSize: string;
   uploadedAt: string;
   status: 'VERIFIED' | 'PENDING' | 'REJECTED';
   previewUrl: string;
+  backPreviewUrl?: string;
+  mimeType?: string;
+  backMimeType?: string;
+  isRealUpload?: boolean;
 }
 
 export interface Borrower {

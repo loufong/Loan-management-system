@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   LayoutDashboard,
   Users,
@@ -22,9 +22,16 @@ import {
   AlertTriangle,
   ShieldCheck,
   Landmark,
-  FileText
+  FileText,
+  CheckCheck,
+  Clock,
+  CheckCircle2,
+  Check,
+  Trash2,
+  ExternalLink
 } from 'lucide-react';
-import { Currency, UserProfile } from '../../types';
+import { Currency, UserProfile, NotificationItem } from '../../types';
+import { notificationStorageService, formatRelativeTime } from '../../services/notificationStorageService';
 
 export interface AppLayoutProps {
   children: React.ReactNode;
@@ -46,8 +53,9 @@ export interface AppLayoutProps {
   onRoleSwitch?: (role: any) => void;
   onRoleToggle?: () => void;
   onSearchOpen?: () => void;
-  notifications?: any[];
+  notifications?: NotificationItem[];
   onMarkNotificationRead?: (id: string) => void;
+  onMarkAllNotificationsRead?: () => void;
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({
@@ -74,7 +82,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   overdueCount = 0,
   activeFacilitiesCount = 6,
   pendingApprovalsCount = 5,
-  unreadNotificationsCount = 3,
+  unreadNotificationsCount: rawUnreadCount,
+  notifications: propNotifications,
+  onMarkNotificationRead,
+  onMarkAllNotificationsRead,
   currentRole,
   onRoleSwitch,
   onRoleToggle
@@ -86,26 +97,102 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  // Sync external currency prop
-  useEffect(() => {
-    if (currency) setActiveCurrency(currency);
-  }, [currency]);
-
-  // Handle Cmd+K / Ctrl+K keyboard shortcut
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        setIsSearchOpen(prev => !prev);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
   const userRole = (currentUser?.role || currentRole || 'ADMIN').toUpperCase();
   const isBorrower = ['BORROWER', 'CLIENT', 'USER'].includes(userRole);
   const isStaff = !isBorrower;
+
+  // Real-time Notification State & Dropdown Controller
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notifFilter, setNotifFilter] = useState<'ALL' | 'UNREAD' | 'PAYMENTS' | 'KYC'>('ALL');
+  const notifDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Initialize notifications from storage service or props
+  const [items, setItems] = useState<NotificationItem[]>(() => {
+    if (propNotifications && propNotifications.length > 0) {
+      return propNotifications;
+    }
+    return notificationStorageService.getNotifications(isBorrower);
+  });
+
+  // Sync when propNotifications change
+  useEffect(() => {
+    if (propNotifications && propNotifications.length > 0) {
+      setItems(propNotifications);
+    }
+  }, [propNotifications]);
+
+  // Subscribe to real-time notification changes across components and tabs
+  useEffect(() => {
+    const unsub = notificationStorageService.subscribe((updated) => {
+      setItems(updated);
+    });
+    return unsub;
+  }, []);
+
+  // Close notifications dropdown on outside click or Escape key
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (notifDropdownRef.current && !notifDropdownRef.current.contains(e.target as Node)) {
+        setNotificationsOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setNotificationsOpen(false);
+      }
+    };
+    if (notificationsOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [notificationsOpen]);
+
+  // Dynamic unread count (falls back to items calculation)
+  const unreadNotificationsCount = items.filter(n => !n.isRead).length;
+
+  const handleMarkOne = (id: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    notificationStorageService.markAsRead(id);
+    setItems(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+    onMarkNotificationRead?.(id);
+  };
+
+  const handleMarkAll = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    notificationStorageService.markAllAsRead();
+    setItems(prev => prev.map(n => ({ ...n, isRead: true })));
+    onMarkAllNotificationsRead?.();
+  };
+
+  const handleClearAll = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    notificationStorageService.clearAll();
+    setItems([]);
+  };
+
+  const handleNotificationClick = (item: NotificationItem) => {
+    if (!item.isRead) {
+      handleMarkOne(item.id);
+    }
+    setNotificationsOpen(false);
+    if (item.actionUrl) {
+      onNavigate?.(item.actionUrl);
+    } else if (item.linkId) {
+      onNavigate?.(item.linkId);
+    }
+  };
+
+  // Filtered notifications for the dropdown
+  const filteredNotifications = items.filter((n) => {
+    if (notifFilter === 'UNREAD') return !n.isRead;
+    if (notifFilter === 'PAYMENTS') return n.category === 'PAYMENT_DUE' || n.category === 'OVERDUE';
+    if (notifFilter === 'KYC') return n.category === 'APPROVAL' || n.category === 'DISBURSEMENT' || n.category === 'SYSTEM';
+    return true;
+  });
 
   interface LayoutNavLink {
     id: string;
@@ -441,16 +528,244 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               <span>{activeCurrency === 'USD' ? 'USD | KHR' : 'KHR | USD'}</span>
             </button>
 
-            {/* Notification Bell with Indicator Dot */}
-            <button
-              className="relative p-2 rounded-xl border border-slate-800 bg-slate-850 hover:bg-slate-800 text-slate-300 hover:text-white transition"
-              title="Notifications"
-            >
-              <Bell className="w-4 h-4" />
-              {unreadNotificationsCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-slate-900 animate-pulse" />
+            {/* Notification Bell with Indicator Dot & Interactive Dropdown Flyout */}
+            <div className="relative" ref={notifDropdownRef}>
+              <button
+                onClick={() => setNotificationsOpen(prev => !prev)}
+                className={`relative p-2 rounded-xl border transition cursor-pointer ${
+                  notificationsOpen
+                    ? 'border-emerald-500/60 bg-slate-800 text-white shadow-lg shadow-emerald-500/10'
+                    : 'border-slate-800 bg-slate-850 hover:bg-slate-800 text-slate-300 hover:text-white'
+                }`}
+                title="Notifications & Dispatches"
+                aria-label="Notifications"
+                aria-expanded={notificationsOpen}
+              >
+                <Bell className="w-4 h-4" />
+                {unreadNotificationsCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-slate-900 animate-pulse" />
+                )}
+              </button>
+
+              {/* Flyout Dropdown Menu */}
+              {notificationsOpen && (
+                <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-[410px] max-w-[420px] rounded-2xl bg-slate-900/98 backdrop-blur-xl border border-slate-700/80 shadow-2xl shadow-black/80 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                  {/* Top Bar Header */}
+                  <div className="px-4 py-3 bg-slate-950/70 border-b border-slate-800/80 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center text-emerald-400">
+                        <Bell className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-white tracking-wide">
+                            Institutional Notifications
+                          </span>
+                          {unreadNotificationsCount > 0 ? (
+                            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                              {unreadNotificationsCount} new
+                            </span>
+                          ) : (
+                            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-slate-800 text-slate-400 border border-slate-700">
+                              All caught up
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      {unreadNotificationsCount > 0 && (
+                        <button
+                          onClick={handleMarkAll}
+                          className="px-2 py-1 rounded-lg text-[11px] font-medium text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 border border-emerald-500/20 transition flex items-center gap-1 cursor-pointer"
+                          title="Mark all notifications as read"
+                        >
+                          <CheckCheck className="w-3 h-3" />
+                          <span>Mark all read</span>
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setNotificationsOpen(false)}
+                        className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+                        title="Close"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Filter Subtabs */}
+                  <div className="px-3 py-2 bg-slate-900/90 border-b border-slate-800/60 flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+                    {[
+                      { key: 'ALL', label: `All (${items.length})` },
+                      { key: 'UNREAD', label: `Unread (${unreadNotificationsCount})` },
+                      { key: 'PAYMENTS', label: 'Payments' },
+                      { key: 'KYC', label: 'KYC & System' },
+                    ].map(tab => (
+                      <button
+                        key={tab.key}
+                        onClick={() => setNotifFilter(tab.key as any)}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-medium whitespace-nowrap transition cursor-pointer ${
+                          notifFilter === tab.key
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
+                            : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Notifications List */}
+                  <div className="max-h-[340px] overflow-y-auto divide-y divide-slate-800/60">
+                    {filteredNotifications.length === 0 ? (
+                      <div className="py-10 px-4 text-center">
+                        <div className="w-10 h-10 rounded-full bg-slate-800/80 border border-slate-700 mx-auto mb-2 flex items-center justify-center text-slate-400">
+                          <Bell className="w-4 h-4" />
+                        </div>
+                        <p className="text-xs font-semibold text-slate-300">No notifications in this filter</p>
+                        <p className="text-[11px] text-slate-500 mt-1">
+                          You're all set! New alerts and regulatory updates will arrive here in real time.
+                        </p>
+                      </div>
+                    ) : (
+                      filteredNotifications.map(item => {
+                        const isOverdue = item.category === 'OVERDUE';
+                        const isPayment = item.category === 'PAYMENT_DUE';
+                        const isKyc = item.category === 'APPROVAL';
+                        const isDisbursed = item.category === 'DISBURSEMENT';
+
+                        return (
+                          <div
+                            key={item.id}
+                            onClick={() => handleNotificationClick(item)}
+                            className={`p-3 sm:p-3.5 transition flex items-start gap-3 cursor-pointer group hover:bg-slate-800/60 ${
+                              !item.isRead ? 'bg-slate-850/90' : 'bg-transparent'
+                            }`}
+                          >
+                            {/* Category Icon Badge */}
+                            <div className="pt-0.5 shrink-0">
+                              {isOverdue && (
+                                <div className="w-7 h-7 rounded-lg bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400">
+                                  <AlertTriangle className="w-3.5 h-3.5" />
+                                </div>
+                              )}
+                              {isPayment && (
+                                <div className="w-7 h-7 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                                  <Clock className="w-3.5 h-3.5" />
+                                </div>
+                              )}
+                              {isKyc && (
+                                <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                </div>
+                              )}
+                              {isDisbursed && (
+                                <div className="w-7 h-7 rounded-lg bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-teal-400">
+                                  <Coins className="w-3.5 h-3.5" />
+                                </div>
+                              )}
+                              {!isOverdue && !isPayment && !isKyc && !isDisbursed && (
+                                <div className="w-7 h-7 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                                  <Bell className="w-3.5 h-3.5" />
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Notification Copy */}
+                            <div className="flex-1 min-w-0 space-y-1">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <h4 className="text-xs font-bold text-white group-hover:text-emerald-300 transition truncate">
+                                    {item.title}
+                                  </h4>
+                                  {!item.isRead && (
+                                    <span className="w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-emerald-950 shrink-0 animate-pulse" />
+                                  )}
+                                </div>
+                                <span className="text-[10px] text-slate-400 font-mono whitespace-nowrap shrink-0">
+                                  {formatRelativeTime(item.timestamp)}
+                                </span>
+                              </div>
+
+                              <p className="text-[11px] text-slate-300 leading-relaxed line-clamp-2">
+                                {item.message}
+                              </p>
+
+                              <div className="flex items-center justify-between gap-2 pt-1">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  {isOverdue && (
+                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-rose-500/15 text-rose-300 border border-rose-500/30">
+                                      Critical Overdue
+                                    </span>
+                                  )}
+                                  {isPayment && (
+                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                                      Installment Due
+                                    </span>
+                                  )}
+                                  {isKyc && (
+                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                                      KYC Verified
+                                    </span>
+                                  )}
+                                  {isDisbursed && (
+                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-teal-500/15 text-teal-300 border border-teal-500/30">
+                                      Disbursement
+                                    </span>
+                                  )}
+                                  {item.linkId && (
+                                    <span className="text-[10px] text-emerald-400 group-hover:underline flex items-center gap-0.5 font-medium">
+                                      Action <ChevronRight className="w-2.5 h-2.5" />
+                                    </span>
+                                  )}
+                                </div>
+
+                                {!item.isRead && (
+                                  <button
+                                    onClick={(e) => handleMarkOne(item.id, e)}
+                                    className="p-1 rounded text-slate-400 hover:text-emerald-400 hover:bg-slate-750 transition text-[10px] flex items-center gap-0.5 cursor-pointer"
+                                    title="Mark as read"
+                                  >
+                                    <Check className="w-3 h-3" />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+
+                  {/* Dropdown Footer */}
+                  <div className="px-3.5 py-2.5 bg-slate-950/80 border-t border-slate-800/80 flex items-center justify-between text-xs">
+                    <button
+                      onClick={() => {
+                        setNotificationsOpen(false);
+                        onNavigate?.('/notifications');
+                      }}
+                      className="text-[11px] font-medium text-emerald-400 hover:text-emerald-300 hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>View Notification Center</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </button>
+
+                    {items.length > 0 && (
+                      <button
+                        onClick={handleClearAll}
+                        className="text-[11px] text-slate-500 hover:text-rose-400 flex items-center gap-1 transition cursor-pointer"
+                        title="Clear all alerts"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        <span>Clear All</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
               )}
-            </button>
+            </div>
 
             {/* Authenticated User Badge with Avatar: Johnathan Doe • Client Borrower */}
             <div className="hidden sm:flex items-center gap-2.5 pl-3 border-l border-slate-800">

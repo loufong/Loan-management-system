@@ -68,6 +68,7 @@ import { LoanProductsCatalog } from './components/products/LoanProductsCatalog';
 import { BIReportingStudio } from './components/reports/BIReportingStudio';
 import { ExecutiveAnalyticsDashboard } from './components/analytics/ExecutiveAnalyticsDashboard';
 import { loanStorageService, LEDGER_UPDATE_EVENT, generateAmortizationSchedule } from './services/loanStorageService';
+import { notificationStorageService, NOTIFICATIONS_UPDATE_EVENT } from './services/notificationStorageService';
 
 // Screen 10: System Audit Trail & Immutable Ledger
 import { AuditTrailLedger } from './components/audit/AuditTrailLedger';
@@ -540,7 +541,9 @@ export const App: React.FC = () => {
   const [loans, setLoans] = useState<LoanAccount[]>([]);
   const [applications, setApplications] = useState<LoanApplication[]>([]);
   const [receipts, setReceipts] = useState<PaymentReceipt[]>([]);
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>(() => {
+    return notificationStorageService.getNotifications(true);
+  });
   const [auditLogs, setAuditLogs] = useState<SystemActivityEvent[]>([]);
 
   // Selected Entity Keys
@@ -680,7 +683,9 @@ export const App: React.FC = () => {
       const unifiedReceipts = loanStorageService.getReceipts();
       const combinedReceipts = (Array.isArray(r) && r.length > 0) ? r : unifiedReceipts;
       setReceipts(combinedReceipts);
-      if (Array.isArray(n)) setNotifications(n);
+      const storedNotifs = notificationStorageService.getNotifications(!isStaff);
+      const combinedNotifs = (Array.isArray(n) && n.length > 0) ? n : storedNotifs;
+      setNotifications(combinedNotifs);
       if (Array.isArray(audits)) setAuditLogs(audits);
     } catch (err) {
       console.warn('API hydration error:', err);
@@ -700,6 +705,14 @@ export const App: React.FC = () => {
     };
     window.addEventListener(LEDGER_UPDATE_EVENT, handleUpdate);
     return () => window.removeEventListener(LEDGER_UPDATE_EVENT, handleUpdate);
+  }, []);
+
+  // Real-time DOM event listener for notifications
+  useEffect(() => {
+    const unsub = notificationStorageService.subscribe((updated) => {
+      setNotifications(updated);
+    });
+    return unsub;
   }, []);
 
   // Quick 1-Click Role Toggle (Admin vs Borrower) for development & testing
@@ -781,9 +794,17 @@ export const App: React.FC = () => {
   }, []);
 
   const handleMarkNotificationRead = (id: string) => {
+    notificationStorageService.markAsRead(id);
+    api.markNotificationRead(id).catch(() => {});
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
     );
+  };
+
+  const handleMarkAllNotificationsRead = async () => {
+    await api.markAllNotificationsRead().catch(() => {});
+    notificationStorageService.markAllAsRead();
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
   };
 
   // Breadcrumbs builder
@@ -1423,6 +1444,7 @@ export const App: React.FC = () => {
         onSearchOpen={() => setSearchModalOpen(true)}
         notifications={notifications}
         onMarkNotificationRead={handleMarkNotificationRead}
+        onMarkAllNotificationsRead={handleMarkAllNotificationsRead}
         activeFacilitiesCount={activeFacilitiesCount}
         overdueCount={overdueLoansCount}
         pendingApprovalsCount={pendingApprovalsCount}
@@ -2009,15 +2031,14 @@ export const App: React.FC = () => {
               notifications={notifications}
               currentUserRole={activeRole}
               onMarkRead={handleMarkNotificationRead}
-              onMarkAllRead={async () => {
-                await api.markAllNotificationsRead().catch(() => { });
-                setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-              }}
+              onMarkAllRead={handleMarkAllNotificationsRead}
               onNavigateToAction={(linkId, category) => {
                 if (linkId) {
-                  if (category === 'PAYMENT_DUE' || category === 'OVERDUE') {
+                  if (linkId.startsWith('/')) {
+                    handleNavSelection(linkId);
+                  } else if (category === 'PAYMENT_DUE' || category === 'OVERDUE') {
                     setSelectedLoanId(linkId);
-                    handleNavSelection(currentUser.role === 'admin' ? '/admin/payments' : '/payments');
+                    handleNavSelection(isBorrowerRole ? '/repayments' : (currentUser.role === 'admin' ? '/admin/payments' : '/payments'));
                   } else if (category === 'APPROVAL') {
                     setSelectedApplicationId(linkId);
                     handleNavSelection('/admin/approvals');

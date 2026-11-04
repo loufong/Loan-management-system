@@ -54,6 +54,13 @@ export const NotificationsCenter: React.FC<NotificationsCenterProps> = ({
             {t('Approval', 'Approval')}
           </span>
         );
+      case 'DISBURSEMENT':
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-teal-50 text-teal-700 border border-teal-200">
+            <CheckCircle2 className="w-3 h-3" />
+            {t('Disbursement', 'Disbursement')}
+          </span>
+        );
       default:
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-50 text-slate-700 border border-slate-200">
@@ -162,13 +169,15 @@ export const NotificationsCenter: React.FC<NotificationsCenterProps> = ({
                   <p className="text-xs text-[#475569] leading-relaxed">{item.message}</p>
                   <div className="flex items-center gap-3 pt-1 text-[11px] text-[#64748B]">
                     <span>
-                      {new Date(item.timestamp).toLocaleString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                      {isNaN(new Date(item.timestamp).getTime())
+                        ? item.timestamp
+                        : new Date(item.timestamp).toLocaleString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
                     </span>
                     {item.linkId && (
                       <span className="font-mono text-[#2563EB] hover:underline">

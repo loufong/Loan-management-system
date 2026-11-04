@@ -375,10 +375,12 @@ export interface NotificationItem {
   id: string;
   title: string;
   message: string;
-  category: 'PAYMENT_DUE' | 'OVERDUE' | 'APPROVAL';
+  category: 'PAYMENT_DUE' | 'OVERDUE' | 'APPROVAL' | 'DISBURSEMENT' | 'SYSTEM' | string;
   timestamp: string;
   isRead: boolean;
   linkId?: string;
+  actionUrl?: string;
+  actionLabel?: string;
 }
 
 export interface SystemActivityEvent {

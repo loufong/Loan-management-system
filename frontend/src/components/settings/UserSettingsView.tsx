@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Currency, UserProfile } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { api } from '../../services/api';
 import {
   User,
   Mail,
@@ -366,7 +367,7 @@ export const UserSettingsView: React.FC<UserSettingsViewProps> = ({
     return s;
   })();
 
-  const handleSavePassword = (e: React.FormEvent) => {
+  const handleSavePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setPassError(null);
     if (!currPass) {
@@ -382,11 +383,20 @@ export const UserSettingsView: React.FC<UserSettingsViewProps> = ({
       return;
     }
 
-    setShowPassModal(false);
-    setCurrPass('');
-    setNewPass('');
-    setConfirmPass('');
-    showToast('Password updated successfully. Please use your new password next time.', 'success');
+    try {
+      const res = await api.changePassword({
+        currentPassword: currPass,
+        newPassword: newPass,
+        confirmPassword: confirmPass,
+      });
+      setShowPassModal(false);
+      setCurrPass('');
+      setNewPass('');
+      setConfirmPass('');
+      showToast(res.message || 'Password updated successfully. Please use your new password next time.', 'success');
+    } catch (err: any) {
+      setPassError(err?.message || err?.error || 'Failed to update password. Please check your credentials.');
+    }
   };
 
   // Custom Apple / Banking style Toggle Switch Component

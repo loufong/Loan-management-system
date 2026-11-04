@@ -42,6 +42,7 @@ import {
   KycDocType,
   KycStatus,
 } from '../../services/kycService';
+import { kycVaultStorage } from '../../services/kycVaultStorage';
 
 export interface BorrowerProfileViewProps {
   currentUser: UserProfile;
@@ -165,21 +166,24 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
     setUploadError(null);
     setUploadProgress(20);
 
-    // Save uploaded photo dataURL to session storage for instant preview in viewer
-    if (selectedFile.type.startsWith('image/') || selectedFile.name.match(/\.(png|jpg|jpeg|webp)$/i)) {
-      try {
-        const cachedPhotoDataUrl = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
-          reader.onerror = () => resolve('');
-          reader.readAsDataURL(selectedFile);
+    // Save uploaded file permanently to IndexedDB + LocalStorage vault
+    let cachedFileDataUrl = '';
+    try {
+      cachedFileDataUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(selectedFile);
+      });
+      if (cachedFileDataUrl) {
+        await kycVaultStorage.saveFile(clientId, uploadTargetDocType, cachedFileDataUrl, {
+          fileName: selectedFile.name,
+          mimeType: selectedFile.type || 'image/png',
+          fileSize: selectedFile.size,
         });
-        if (cachedPhotoDataUrl) {
-          try {
-            sessionStorage.setItem(`kyc_photo_${uploadTargetDocType}`, cachedPhotoDataUrl);
-          } catch {}
-        }
-      } catch {}
+      }
+    } catch (cacheErr) {
+      console.warn('KYC vault caching note:', cacheErr);
     }
 
     try {
@@ -223,6 +227,7 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
         fileSizeBytes: selectedFile.size,
         mimeType: mime,
         userId: clientId,
+        viewUrl: cachedFileDataUrl || undefined,
       });
 
       setUploadProgress(100);
@@ -236,12 +241,17 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
     }
   };
 
-  const handleOpenPreview = (doc: FrontendKycDocument) => {
+  const handleOpenPreview = async (doc: FrontendKycDocument) => {
     setIdCardSide('front');
     setIsPhotoZoomed(false);
-    const cachedPhoto = sessionStorage.getItem(`kyc_photo_${doc.documentType}`);
-    if (cachedPhoto) {
-      setPreviewDoc({ ...doc, viewUrl: cachedPhoto });
+
+    // Retrieve from permanent vault (IndexedDB / LocalStorage)
+    const storedFile =
+      (await kycVaultStorage.getFile(clientId, doc.documentType)) ||
+      (doc.viewUrl && (doc.viewUrl.startsWith('data:') || doc.viewUrl.startsWith('blob:')) ? doc.viewUrl : null);
+
+    if (storedFile) {
+      setPreviewDoc({ ...doc, viewUrl: storedFile });
       setPhotoViewMode('scan');
     } else {
       setPreviewDoc(doc);
@@ -263,17 +273,17 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
 
   // Simulation Controls for Testing
   const handleSimulateStatus = async (docType: KycDocType, status: KycStatus, reason?: string) => {
-    await kycService.simulateStatus(docType, status, reason);
+    await kycService.simulateStatus(docType, status, reason, clientId);
     await loadKyc();
   };
 
   const handleResetKyc = async () => {
-    kycService.resetToVerified();
+    kycService.resetToVerified(clientId);
     await loadKyc();
   };
 
   const handleApproveDocument = async (docType: KycDocType) => {
-    await kycService.approveDocument(docType);
+    await kycService.approveDocument(docType, clientId);
     await loadKyc();
     if (previewDoc && previewDoc.documentType === docType) {
       setPreviewDoc(null);
@@ -284,7 +294,8 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
     await kycService.simulateStatus(
       docType,
       'REJECTED',
-      reason || 'Document does not meet National Bank of Cambodia compliance standards. Please re-upload.'
+      reason || 'Document does not meet National Bank of Cambodia compliance standards. Please re-upload.',
+      clientId
     );
     await loadKyc();
     if (previewDoc && previewDoc.documentType === docType) {
@@ -799,20 +810,28 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
                 {/* Scanned Photo Box Stage */}
                 <div className="overflow-x-auto overflow-y-hidden py-3 px-1 flex items-center justify-center min-h-[300px] bg-slate-950/90 rounded-xl border border-slate-900">
                   {hasUploadedPhoto && photoViewMode === 'scan' ? (
-                    /* User Uploaded Photo */
+                    /* User Uploaded Photo or PDF Document */
                     <div
                       className={`relative transition-all duration-300 ${
-                        isPhotoZoomed ? 'max-w-2xl' : 'max-w-md'
+                        isPhotoZoomed ? 'max-w-3xl' : 'max-w-md'
                       } w-full rounded-xl overflow-hidden border border-slate-700/80 shadow-2xl bg-slate-900 p-1 flex items-center justify-center`}
                     >
-                      <img
-                        src={previewDoc.viewUrl}
-                        alt={previewDoc.title}
-                        className="w-full max-h-[380px] object-contain rounded-lg shadow-md"
-                      />
+                      {previewDoc.viewUrl && (previewDoc.mimeType === 'application/pdf' || previewDoc.viewUrl.startsWith('data:application/pdf') || previewDoc.originalFilename?.toLowerCase().endsWith('.pdf')) ? (
+                        <iframe
+                          src={previewDoc.viewUrl}
+                          title={previewDoc.title}
+                          className="w-full h-[380px] rounded-lg border-0 bg-white"
+                        />
+                      ) : (
+                        <img
+                          src={previewDoc.viewUrl}
+                          alt={previewDoc.title}
+                          className="w-full max-h-[380px] object-contain rounded-lg shadow-md"
+                        />
+                      )}
                       <div className="absolute bottom-3 right-3 bg-slate-950/85 backdrop-blur-sm border border-emerald-500/30 text-[10px] font-mono text-emerald-400 px-2 py-0.5 rounded shadow flex items-center gap-1 font-bold">
                         <Check className="w-3 h-3 text-emerald-400" />
-                        AUTHENTIC UPLOADED PHOTO
+                        AUTHENTIC UPLOADED DOCUMENT
                       </div>
                     </div>
                   ) : previewDoc.documentType === 'NATIONAL_ID' ? (

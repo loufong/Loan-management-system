@@ -5,6 +5,8 @@
  * ====================================================================
  */
 
+import { kycVaultStorage } from './kycVaultStorage';
+
 export type KycDocType =
   | 'NATIONAL_ID'
   | 'PROOF_OF_RESIDENCE'
@@ -99,22 +101,32 @@ const DEFAULT_DOCUMENTS: FrontendKycDocument[] = [
 class FrontendKycService {
   private uploadedBlobCache = new Map<string, string>();
 
-  private getLocalDocuments(): FrontendKycDocument[] {
+  public getLocalDocuments(userId?: string): FrontendKycDocument[] {
+    const cleanUserId = (userId || 'BOR-2026-8801').trim();
     try {
+      const rawUser = localStorage.getItem(`JAM_KYC_DOCS_${cleanUserId}`);
+      if (rawUser) {
+        const parsed = JSON.parse(rawUser);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
     } catch {}
-    this.saveLocalDocuments(DEFAULT_DOCUMENTS);
+    this.saveLocalDocuments(DEFAULT_DOCUMENTS, cleanUserId);
     return DEFAULT_DOCUMENTS;
   }
 
-  private saveLocalDocuments(docs: FrontendKycDocument[]): void {
+  public saveLocalDocuments(docs: FrontendKycDocument[], userId?: string): void {
+    const cleanUserId = (userId || 'BOR-2026-8801').trim();
     try {
+      localStorage.setItem(`JAM_KYC_DOCS_${cleanUserId}`, JSON.stringify(docs));
       localStorage.setItem(STORAGE_KEY, JSON.stringify(docs));
     } catch {}
+    kycVaultStorage.saveDocuments(cleanUserId, docs);
     window.dispatchEvent(new CustomEvent('kyc_status_updated'));
   }
 
@@ -122,36 +134,78 @@ class FrontendKycService {
    * Retrieves complete KYC status and documents
    */
   public async getKycStatus(userId?: string): Promise<FrontendKycSummary> {
+    const cleanUserId = (userId || 'BOR-2026-8801').trim();
+    const localDocs = this.getLocalDocuments(cleanUserId);
+
     try {
       const token = localStorage.getItem('apex_token') || sessionStorage.getItem('apex_token');
-      const res = await fetch(`/api/v1/kyc/status${userId ? `?userId=${encodeURIComponent(userId)}` : ''}`, {
+      const res = await fetch(`/api/v1/kyc/status${cleanUserId ? `?userId=${encodeURIComponent(cleanUserId)}` : ''}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (res.ok) {
         const json = await res.json();
-        if (json.data) {
-          this.saveLocalDocuments(json.data.documents);
-          return json.data;
+        if (json?.data?.documents) {
+          // Intelligently merge server documents with local uploaded documents
+          // NEVER let default seed documents overwrite real user uploads!
+          const mergedDocs: FrontendKycDocument[] = json.data.documents.map((serverDoc: FrontendKycDocument) => {
+            const matchingLocal = localDocs.find((l) => l.documentType === serverDoc.documentType);
+            if (!matchingLocal) return serverDoc;
+
+            const isUserCustomUpload =
+              matchingLocal.originalFilename &&
+              !matchingLocal.originalFilename.includes('_verified.pdf') &&
+              !matchingLocal.originalFilename.includes('_senior_dev.pdf') &&
+              !matchingLocal.originalFilename.includes('_khan_toul_kork.pdf');
+
+            if (isUserCustomUpload) {
+              return {
+                ...serverDoc,
+                originalFilename: matchingLocal.originalFilename,
+                referenceNumber: matchingLocal.referenceNumber || serverDoc.referenceNumber,
+                fileSizeBytes: matchingLocal.fileSizeBytes || serverDoc.fileSizeBytes,
+                mimeType: matchingLocal.mimeType || serverDoc.mimeType,
+                uploadedAt: matchingLocal.uploadedAt || serverDoc.uploadedAt,
+                status: matchingLocal.status || serverDoc.status,
+                verifiedAt: matchingLocal.verifiedAt || serverDoc.verifiedAt,
+                rejectionReason: matchingLocal.rejectionReason,
+                viewUrl: matchingLocal.viewUrl || serverDoc.viewUrl,
+              };
+            }
+            return matchingLocal || serverDoc;
+          });
+
+          this.saveLocalDocuments(mergedDocs, cleanUserId);
+
+          const verifiedCount = mergedDocs.filter((d) => d.status === 'VERIFIED').length;
+          const totalRequired = 3;
+          return {
+            userId: cleanUserId,
+            verifiedCount,
+            totalRequired,
+            isEligibleToBorrow: verifiedCount === totalRequired,
+            statusText: `${verifiedCount} of ${totalRequired} Verified`,
+            missingOrPending: mergedDocs.filter((d) => d.status !== 'VERIFIED').map((d) => d.documentType),
+            documents: mergedDocs,
+          };
         }
       }
     } catch {
       // Offline fallback
     }
 
-    const docs = this.getLocalDocuments();
-    const verifiedCount = docs.filter((d) => d.status === 'VERIFIED').length;
+    const verifiedCount = localDocs.filter((d) => d.status === 'VERIFIED').length;
     const totalRequired = 3;
     const isEligibleToBorrow = verifiedCount === totalRequired;
-    const missingOrPending = docs.filter((d) => d.status !== 'VERIFIED').map((d) => d.documentType);
+    const missingOrPending = localDocs.filter((d) => d.status !== 'VERIFIED').map((d) => d.documentType);
 
     return {
-      userId: userId || 'BOR-2026-8801',
+      userId: cleanUserId,
       verifiedCount,
       totalRequired,
       isEligibleToBorrow,
       statusText: `${verifiedCount} of ${totalRequired} Verified`,
       missingOrPending,
-      documents: docs,
+      documents: localDocs,
     };
   }
 
@@ -271,7 +325,9 @@ class FrontendKycService {
     fileSizeBytes: number;
     mimeType: string;
     userId?: string;
+    viewUrl?: string;
   }): Promise<FrontendKycDocument> {
+    const cleanUserId = (params.userId || 'BOR-2026-8801').trim();
     const token = localStorage.getItem('apex_token') || sessionStorage.getItem('apex_token');
     let confirmedDoc: FrontendKycDocument | null = null;
 
@@ -291,16 +347,18 @@ class FrontendKycService {
       }
     } catch {}
 
-    const localDocs = this.getLocalDocuments();
+    const localDocs = this.getLocalDocuments(cleanUserId);
     const idx = localDocs.findIndex((d) => d.documentType === params.documentType);
 
-    const blobUrl =
+    const persistentUrl =
+      params.viewUrl ||
+      (await kycVaultStorage.getFile(cleanUserId, params.documentType)) ||
       this.uploadedBlobCache.get(params.fileKey) ||
       this.uploadedBlobCache.get(params.originalFilename);
 
-    const updatedDoc: FrontendKycDocument = confirmedDoc || {
-      id: idx >= 0 ? localDocs[idx].id : `kyc-${Date.now()}`,
-      userId: params.userId || 'BOR-2026-8801',
+    const updatedDoc: FrontendKycDocument = {
+      id: confirmedDoc?.id || (idx >= 0 ? localDocs[idx].id : `kyc-${Date.now()}`),
+      userId: cleanUserId,
       documentType: params.documentType,
       title:
         params.documentType === 'NATIONAL_ID'
@@ -317,12 +375,8 @@ class FrontendKycService {
       verifiedAt: null,
       rejectionReason: null,
       uploadedAt: new Date().toISOString(),
-      viewUrl: blobUrl || `https://storage.jamsongvich.com/vault/${params.fileKey}?token=sig-${Date.now()}`,
+      viewUrl: persistentUrl || `https://storage.jamsongvich.com/vault/${params.fileKey}?token=sig-${Date.now()}`,
     };
-
-    if (blobUrl) {
-      updatedDoc.viewUrl = blobUrl;
-    }
 
     if (idx >= 0) {
       localDocs[idx] = updatedDoc;
@@ -330,7 +384,7 @@ class FrontendKycService {
       localDocs.push(updatedDoc);
     }
 
-    this.saveLocalDocuments(localDocs);
+    this.saveLocalDocuments(localDocs, cleanUserId);
     return updatedDoc;
   }
 
@@ -340,8 +394,10 @@ class FrontendKycService {
   public async simulateStatus(
     documentType: KycDocType,
     status: KycStatus,
-    rejectionReason?: string
+    rejectionReason?: string,
+    userId?: string
   ): Promise<void> {
+    const cleanUserId = (userId || 'BOR-2026-8801').trim();
     const token = localStorage.getItem('apex_token') || sessionStorage.getItem('apex_token');
     try {
       await fetch('/api/v1/kyc/simulate-status', {
@@ -350,45 +406,47 @@ class FrontendKycService {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ documentType, status, rejectionReason }),
+        body: JSON.stringify({ documentType, status, rejectionReason, userId: cleanUserId }),
       });
     } catch {}
 
-    const localDocs = this.getLocalDocuments();
+    const localDocs = this.getLocalDocuments(cleanUserId);
     const doc = localDocs.find((d) => d.documentType === documentType);
     if (doc) {
       doc.status = status;
       doc.verifiedAt = status === 'VERIFIED' ? new Date().toISOString() : null;
       doc.rejectionReason = status === 'REJECTED' ? (rejectionReason || 'Document did not meet regulatory standards.') : null;
     }
-    this.saveLocalDocuments(localDocs);
+    this.saveLocalDocuments(localDocs, cleanUserId);
   }
 
   /**
    * Approves a single document as VERIFIED
    */
-  public async approveDocument(documentType: KycDocType): Promise<void> {
-    await this.simulateStatus(documentType, 'VERIFIED');
+  public async approveDocument(documentType: KycDocType, userId?: string): Promise<void> {
+    await this.simulateStatus(documentType, 'VERIFIED', undefined, userId);
   }
 
   /**
    * Approves all documents as VERIFIED
    */
-  public async approveAllDocuments(): Promise<void> {
-    const localDocs = this.getLocalDocuments();
+  public async approveAllDocuments(userId?: string): Promise<void> {
+    const cleanUserId = (userId || 'BOR-2026-8801').trim();
+    const localDocs = this.getLocalDocuments(cleanUserId);
     localDocs.forEach((d) => {
       d.status = 'VERIFIED';
       d.verifiedAt = new Date().toISOString();
       d.rejectionReason = null;
     });
-    this.saveLocalDocuments(localDocs);
+    this.saveLocalDocuments(localDocs, cleanUserId);
   }
 
   /**
    * Reset all 3 documents to verified state
    */
-  public resetToVerified(): void {
-    this.saveLocalDocuments(DEFAULT_DOCUMENTS);
+  public resetToVerified(userId?: string): void {
+    const cleanUserId = (userId || 'BOR-2026-8801').trim();
+    this.saveLocalDocuments(DEFAULT_DOCUMENTS, cleanUserId);
   }
 }
 

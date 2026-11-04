@@ -5,6 +5,8 @@
  * ====================================================================
  */
 
+import fs from 'fs';
+import path from 'path';
 import { S3StorageService } from '../../services/s3StorageService';
 import { prisma } from '../../config/prisma';
 
@@ -76,11 +78,40 @@ export const MANDATORY_KYC_DOCUMENTS: {
 export class KycService {
   // In-memory persistent state store for immediate mock / local test / fallback operation
   private static mockStore = new Map<string, KycDocumentItem[]>();
+  private static vaultPath = path.join(process.cwd(), '.kyc_vault.json');
+
+  private static loadVaultFromDisk(): void {
+    try {
+      if (fs.existsSync(this.vaultPath)) {
+        const raw = fs.readFileSync(this.vaultPath, 'utf8');
+        const data = JSON.parse(raw);
+        for (const [userId, docs] of Object.entries(data)) {
+          if (Array.isArray(docs)) {
+            this.mockStore.set(userId, docs as KycDocumentItem[]);
+          }
+        }
+      }
+    } catch {}
+  }
+
+  private static saveVaultToDisk(): void {
+    try {
+      const obj: Record<string, KycDocumentItem[]> = {};
+      for (const [userId, docs] of this.mockStore.entries()) {
+        obj[userId] = docs;
+      }
+      fs.writeFileSync(this.vaultPath, JSON.stringify(obj, null, 2), 'utf8');
+    } catch {}
+  }
 
   /**
    * Initializes default baseline seed documents for a user
    */
   private static initSeedForUser(userId: string): KycDocumentItem[] {
+    this.loadVaultFromDisk();
+    const existing = this.mockStore.get(userId);
+    if (existing && existing.length > 0) return existing;
+
     const defaultDocs: KycDocumentItem[] = MANDATORY_KYC_DOCUMENTS.map((docConfig, idx) => ({
       id: `kyc-seed-${idx + 1}-${userId.slice(0, 8)}`,
       userId,
@@ -99,6 +130,7 @@ export class KycService {
     }));
 
     this.mockStore.set(userId, defaultDocs);
+    this.saveVaultToDisk();
     return defaultDocs;
   }
 
@@ -106,6 +138,7 @@ export class KycService {
    * Retrieves overall KYC status & generates pre-signed view URLs for each document
    */
   public static async getKycStatus(userId: string): Promise<KycStatusSummary> {
+    this.loadVaultFromDisk();
     let docs = this.mockStore.get(userId);
 
     // Try database if available
@@ -236,6 +269,7 @@ export class KycService {
       existingDocs.push(updatedDoc);
     }
     this.mockStore.set(userId, existingDocs);
+    this.saveVaultToDisk();
 
     // Persist to Prisma DB if accessible
     try {
@@ -304,6 +338,7 @@ export class KycService {
     doc.rejectionReason = status === 'REJECTED' ? (rejectionReason || 'Document did not meet regulatory standards.') : null;
 
     this.mockStore.set(userId, docs);
+    this.saveVaultToDisk();
     return doc;
   }
 
@@ -324,6 +359,7 @@ export class KycService {
       doc.rejectionReason = status === 'REJECTED' ? (rejectionReason || 'Document blurry or unreadable') : null;
     }
     this.mockStore.set(userId, docs);
+    this.saveVaultToDisk();
     return doc!;
   }
 }

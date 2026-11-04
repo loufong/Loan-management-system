@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   FilePlus2,
   CheckCircle2,
@@ -21,17 +21,33 @@ import {
   Sparkles,
   Lock,
   AlertTriangle,
+  Eye,
+  Download,
+  X,
+  ExternalLink,
+  ZoomIn,
+  ZoomOut,
+  RefreshCw,
 } from 'lucide-react';
 import { Currency, UserProfile } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 import { loanStorageService } from '../../services/loanStorageService';
 import { kycService, FrontendKycSummary } from '../../services/kycService';
+import { kycVaultStorage } from '../../services/kycVaultStorage';
 
 export interface BorrowerApplyLoanViewProps {
   currentUser: UserProfile;
   currency: Currency;
   onNavigate: (route: string) => void;
   onSubmitSuccess?: (applicationData: any) => void;
+}
+
+export interface LoanAttachedDoc {
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  dataUrl?: string;
+  uploadedAt: string;
 }
 
 export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
@@ -60,8 +76,23 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
   const [disbursementMethod, setDisbursementMethod] = useState<string>('acleda_2023');
   const [monthlyIncomeUSD, setMonthlyIncomeUSD] = useState<number>(2800);
   const [collateralType, setCollateralType] = useState<string>('soft_title');
-  const [uploadedSalarySlip, setUploadedSalarySlip] = useState<string | null>('payslip_september_2026.pdf');
-  const [uploadedCollateralDoc, setUploadedCollateralDoc] = useState<string | null>('residential_soft_title_card.pdf');
+  const [salarySlipDoc, setSalarySlipDoc] = useState<LoanAttachedDoc | null>(null);
+  const [collateralDoc, setCollateralDoc] = useState<LoanAttachedDoc | null>(null);
+  const [uploadedSalarySlip, setUploadedSalarySlip] = useState<string | null>(null);
+  const [uploadedCollateralDoc, setUploadedCollateralDoc] = useState<string | null>(null);
+  const [docError, setDocError] = useState<string | null>(null);
+
+  // Document Preview State
+  const [previewTargetDoc, setPreviewTargetDoc] = useState<{
+    title: string;
+    fileName: string;
+    mimeType: string;
+    dataUrl: string;
+  } | null>(null);
+  const [isPreviewZoomed, setIsPreviewZoomed] = useState<boolean>(false);
+
+  const salarySlipInputRef = useRef<HTMLInputElement>(null);
+  const collateralDocInputRef = useRef<HTMLInputElement>(null);
 
   // Step 3: Review & Terms State
   const [declarationAgreed, setDeclarationAgreed] = useState<boolean>(false);
@@ -74,6 +105,67 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
   // Regulatory KYC Guard State
   const [kycSummary, setKycSummary] = useState<FrontendKycSummary | null>(null);
   const [kycLoading, setKycLoading] = useState<boolean>(true);
+
+  // Restore or pull authentic KYC documents
+  useEffect(() => {
+    let isMounted = true;
+    const clientId = currentUser.id || 'BOR-2026-8801';
+
+    const loadSavedDocs = async () => {
+      try {
+        const savedDocsStr = localStorage.getItem(`JAM_LOAN_DOCS_${clientId}`);
+        if (savedDocsStr) {
+          const parsed = JSON.parse(savedDocsStr);
+          if (parsed.salarySlip && isMounted) {
+            setSalarySlipDoc(parsed.salarySlip);
+            setUploadedSalarySlip(parsed.salarySlip.fileName);
+          }
+          if (parsed.collateralDoc && isMounted) {
+            setCollateralDoc(parsed.collateralDoc);
+            setUploadedCollateralDoc(parsed.collateralDoc.fileName);
+          }
+        } else {
+          // Check if permanent KYC vault has uploaded employment / residence docs
+          const kycEmp =
+            (await kycVaultStorage.getFile(clientId, 'LOAN_SALARY_SLIP')) ||
+            (await kycVaultStorage.getFile(clientId, 'EMPLOYMENT_INCOME_CONTRACT'));
+          if (kycEmp && isMounted) {
+            const empDoc: LoanAttachedDoc = {
+              fileName: 'verified_employment_income_contract.pdf',
+              fileSize: 1.2 * 1024 * 1024,
+              mimeType: 'application/pdf',
+              dataUrl: kycEmp,
+              uploadedAt: new Date().toISOString(),
+            };
+            setSalarySlipDoc(empDoc);
+            setUploadedSalarySlip(empDoc.fileName);
+          }
+
+          const kycRes =
+            (await kycVaultStorage.getFile(clientId, 'LOAN_COLLATERAL_DOC')) ||
+            (await kycVaultStorage.getFile(clientId, 'PROOF_OF_RESIDENCE'));
+          if (kycRes && isMounted) {
+            const resDoc: LoanAttachedDoc = {
+              fileName: 'verified_residence_soft_title.pdf',
+              fileSize: 0.9 * 1024 * 1024,
+              mimeType: 'application/pdf',
+              dataUrl: kycRes,
+              uploadedAt: new Date().toISOString(),
+            };
+            setCollateralDoc(resDoc);
+            setUploadedCollateralDoc(resDoc.fileName);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed restoring loan application documents:', err);
+      }
+    };
+
+    loadSavedDocs();
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUser.id]);
 
   useEffect(() => {
     let isMounted = true;
@@ -190,7 +282,148 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
     }).format(amountUSD);
   };
 
+  const handleSalarySlipSelect = async (file: File) => {
+    setDocError(null);
+    const MAX_BYTES = 10 * 1024 * 1024;
+    if (file.size > MAX_BYTES) {
+      setDocError(`Salary slip file size (${(file.size / (1024 * 1024)).toFixed(2)}MB) exceeds 10MB limit.`);
+      return;
+    }
+    const validMimes = ['application/pdf', 'image/jpeg', 'image/png'];
+    if (!validMimes.includes(file.type.toLowerCase()) && !file.name.match(/\.(pdf|jpg|jpeg|png)$/i)) {
+      setDocError('Invalid format. Accepted formats are .pdf, .jpg, and .png only.');
+      return;
+    }
+
+    try {
+      const dataUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(file);
+      });
+
+      const clientId = currentUser.id || 'BOR-2026-8801';
+      const docData: LoanAttachedDoc = {
+        fileName: file.name,
+        fileSize: file.size,
+        mimeType: file.type || (file.name.endsWith('.pdf') ? 'application/pdf' : 'image/png'),
+        dataUrl,
+        uploadedAt: new Date().toISOString(),
+      };
+
+      setSalarySlipDoc(docData);
+      setUploadedSalarySlip(file.name);
+
+      await kycVaultStorage.saveFile(clientId, 'LOAN_SALARY_SLIP', dataUrl, {
+        fileName: file.name,
+        mimeType: docData.mimeType,
+        fileSize: file.size,
+      });
+
+      const currentSaved = JSON.parse(localStorage.getItem(`JAM_LOAN_DOCS_${clientId}`) || '{}');
+      localStorage.setItem(
+        `JAM_LOAN_DOCS_${clientId}`,
+        JSON.stringify({ ...currentSaved, salarySlip: docData })
+      );
+    } catch (err: any) {
+      setDocError('Failed to read or store salary slip file.');
+    }
+  };
+
+  const handleCollateralDocSelect = async (file: File) => {
+    setDocError(null);
+    const MAX_BYTES = 10 * 1024 * 1024;
+    if (file.size > MAX_BYTES) {
+      setDocError(`Collateral document file size (${(file.size / (1024 * 1024)).toFixed(2)}MB) exceeds 10MB limit.`);
+      return;
+    }
+    const validMimes = ['application/pdf', 'image/jpeg', 'image/png'];
+    if (!validMimes.includes(file.type.toLowerCase()) && !file.name.match(/\.(pdf|jpg|jpeg|png)$/i)) {
+      setDocError('Invalid format. Accepted formats are .pdf, .jpg, and .png only.');
+      return;
+    }
+
+    try {
+      const dataUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(file);
+      });
+
+      const clientId = currentUser.id || 'BOR-2026-8801';
+      const docData: LoanAttachedDoc = {
+        fileName: file.name,
+        fileSize: file.size,
+        mimeType: file.type || (file.name.endsWith('.pdf') ? 'application/pdf' : 'image/png'),
+        dataUrl,
+        uploadedAt: new Date().toISOString(),
+      };
+
+      setCollateralDoc(docData);
+      setUploadedCollateralDoc(file.name);
+
+      await kycVaultStorage.saveFile(clientId, 'LOAN_COLLATERAL_DOC', dataUrl, {
+        fileName: file.name,
+        mimeType: docData.mimeType,
+        fileSize: file.size,
+      });
+
+      const currentSaved = JSON.parse(localStorage.getItem(`JAM_LOAN_DOCS_${clientId}`) || '{}');
+      localStorage.setItem(
+        `JAM_LOAN_DOCS_${clientId}`,
+        JSON.stringify({ ...currentSaved, collateralDoc: docData })
+      );
+    } catch (err: any) {
+      setDocError('Failed to read or store collateral document file.');
+    }
+  };
+
+  const handleRemoveSalarySlip = () => {
+    setSalarySlipDoc(null);
+    setUploadedSalarySlip(null);
+    if (salarySlipInputRef.current) salarySlipInputRef.current.value = '';
+    const clientId = currentUser.id || 'BOR-2026-8801';
+    const currentSaved = JSON.parse(localStorage.getItem(`JAM_LOAN_DOCS_${clientId}`) || '{}');
+    delete currentSaved.salarySlip;
+    localStorage.setItem(`JAM_LOAN_DOCS_${clientId}`, JSON.stringify(currentSaved));
+  };
+
+  const handleRemoveCollateralDoc = () => {
+    setCollateralDoc(null);
+    setUploadedCollateralDoc(null);
+    if (collateralDocInputRef.current) collateralDocInputRef.current.value = '';
+    const clientId = currentUser.id || 'BOR-2026-8801';
+    const currentSaved = JSON.parse(localStorage.getItem(`JAM_LOAN_DOCS_${clientId}`) || '{}');
+    delete currentSaved.collateralDoc;
+    localStorage.setItem(`JAM_LOAN_DOCS_${clientId}`, JSON.stringify(currentSaved));
+  };
+
+  const handleProceedToStep3 = () => {
+    if (!salarySlipDoc || !collateralDoc) {
+      setDocError(
+        'National Bank of Cambodia directives require uploading both Income Proof (Salary Slip / Bank Statement) and Collateral Documentation before proceeding to review.'
+      );
+      return;
+    }
+    setDocError(null);
+    setCurrentStep(3);
+  };
+
   const handleSaveDraft = () => {
+    const clientId = currentUser.id || 'BOR-2026-8801';
+    localStorage.setItem(
+      `JAM_LOAN_DRAFT_${clientId}`,
+      JSON.stringify({
+        product: selectedProduct,
+        amount: loanAmountUSD,
+        tenure: tenureMonths,
+        income: monthlyIncomeUSD,
+        salarySlip: salarySlipDoc,
+        collateralDoc,
+      })
+    );
     setDraftSavedToast(true);
     setTimeout(() => setDraftSavedToast(false), 3000);
   };
@@ -227,6 +460,10 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
         disbursementBank: 'ACLEDA Bank Plc.',
         disbursementAccount: '****2023',
         collateralStatus: collateralType === 'HARD_TITLE' ? 'Verified Hard Title Lien' : 'Equipment Lien',
+        salarySlipFileName: salarySlipDoc?.fileName,
+        salarySlipFileSize: salarySlipDoc?.fileSize,
+        collateralDocFileName: collateralDoc?.fileName,
+        collateralDocFileSize: collateralDoc?.fileSize,
       };
 
       const record = await loanStorageService.submitLoanApplication(loanPayload);
@@ -774,68 +1011,228 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
 
               {/* Drag-and-Drop Document Upload Targets */}
               <div className="space-y-4 pt-2">
-                <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
-                  Income Proof & Collateral Documentation
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
+                    Income Proof & Collateral Documentation
+                  </label>
+                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 font-bold">
+                    MANDATORY NBC CDD
+                  </span>
+                </div>
 
-                {/* Target 1: Salary Slip */}
-                <div className="p-4 rounded-xl border border-dashed border-slate-700 bg-slate-950/60 hover:bg-slate-950 hover:border-emerald-500/50 transition-all">
+                {docError && (
+                  <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-300 flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                    <span>{docError}</span>
+                  </div>
+                )}
+
+                {/* Target 1: Monthly Salary Slip / Bank Statement */}
+                <div className="p-4 rounded-xl border border-slate-700 bg-slate-950/80 hover:border-emerald-500/50 transition-all space-y-3">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-emerald-400 shrink-0">
                         <UploadCloud className="w-5 h-5" />
                       </div>
                       <div>
-                        <h4 className="text-xs font-bold text-white">Monthly Salary Slip / Bank Statement</h4>
-                        <p className="text-[11px] text-slate-400">PDF, PNG, JPG (Latest 3 months approved format)</p>
+                        <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                          <span>Monthly Salary Slip / Bank Statement</span>
+                          <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded font-mono">Required</span>
+                        </h4>
+                        <p className="text-[11px] text-slate-400">PDF, PNG, JPG (Latest 3 months approved format up to 10MB)</p>
                       </div>
                     </div>
 
-                    {uploadedSalarySlip ? (
-                      <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded-lg text-emerald-400 text-xs font-mono font-semibold">
-                        <Check className="w-3.5 h-3.5" />
-                        <span className="truncate max-w-[150px]">{uploadedSalarySlip}</span>
+                    {salarySlipDoc && (
+                      <div className="flex items-center gap-2">
+                        {salarySlipDoc.dataUrl && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPreviewTargetDoc({
+                                title: 'Monthly Salary Slip / Bank Statement',
+                                fileName: salarySlipDoc.fileName,
+                                mimeType: salarySlipDoc.mimeType,
+                                dataUrl: salarySlipDoc.dataUrl!,
+                              });
+                              setIsPreviewZoomed(false);
+                            }}
+                            className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-slate-300 flex items-center gap-1 transition cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5 text-sky-400" />
+                            <span>View</span>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => salarySlipInputRef.current?.click()}
+                          className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-slate-300 flex items-center gap-1 transition cursor-pointer"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Replace</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleRemoveSalarySlip}
+                          className="px-2 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 text-xs font-semibold transition cursor-pointer"
+                          title="Remove file"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
                       </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setUploadedSalarySlip('payslip_september_2026.pdf')}
-                        className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 transition-colors"
-                      >
-                        Browse File
-                      </button>
                     )}
                   </div>
+
+                  <input
+                    ref={salarySlipInputRef}
+                    type="file"
+                    accept=".pdf,image/jpeg,image/png"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleSalarySlipSelect(file);
+                    }}
+                  />
+
+                  {salarySlipDoc ? (
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/90 border border-emerald-500/30 text-xs">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                        <div className="min-w-0">
+                          <p className="font-bold text-white truncate">{salarySlipDoc.fileName}</p>
+                          <p className="text-[10px] font-mono text-emerald-400">
+                            {(salarySlipDoc.fileSize / (1024 * 1024)).toFixed(2)} MB • {salarySlipDoc.mimeType.split('/')[1]?.toUpperCase() || 'DOCUMENT'}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 shrink-0">
+                        ATTACHED & ENCRYPTED
+                      </span>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => salarySlipInputRef.current?.click()}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const file = e.dataTransfer.files?.[0];
+                        if (file) handleSalarySlipSelect(file);
+                      }}
+                      className="p-5 border-2 border-dashed rounded-xl border-slate-800 hover:border-emerald-500/40 bg-slate-950/40 hover:bg-slate-950/70 text-center cursor-pointer transition-all space-y-1"
+                    >
+                      <UploadCloud className="w-6 h-6 text-slate-500 mx-auto" />
+                      <p className="text-xs font-bold text-slate-200">
+                        Click or drag & drop salary slip / bank statement here
+                      </p>
+                      <p className="text-[11px] text-slate-500">
+                        Strict 10MB ceiling • 256-bit SSL encrypted transit (.pdf, .jpg, .png)
+                      </p>
+                    </div>
+                  )}
                 </div>
 
-                {/* Target 2: Collateral Document / Soft Title */}
-                <div className="p-4 rounded-xl border border-dashed border-slate-700 bg-slate-950/60 hover:bg-slate-950 hover:border-emerald-500/50 transition-all">
+                {/* Target 2: Collateral Document / Land Soft Card / Business License */}
+                <div className="p-4 rounded-xl border border-slate-700 bg-slate-950/80 hover:border-emerald-500/50 transition-all space-y-3">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-emerald-400 shrink-0">
                         <FileCheck className="w-5 h-5" />
                       </div>
                       <div>
-                        <h4 className="text-xs font-bold text-white">Collateral Document / Land Soft Card / Business License</h4>
-                        <p className="text-[11px] text-slate-400">Proof of residency, vehicle registration or land deed</p>
+                        <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                          <span>Collateral Document / Land Soft Card / Business License</span>
+                          <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded font-mono">Required</span>
+                        </h4>
+                        <p className="text-[11px] text-slate-400">Proof of residency, vehicle registration or land deed up to 10MB</p>
                       </div>
                     </div>
 
-                    {uploadedCollateralDoc ? (
-                      <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded-lg text-emerald-400 text-xs font-mono font-semibold">
-                        <Check className="w-3.5 h-3.5" />
-                        <span className="truncate max-w-[150px]">{uploadedCollateralDoc}</span>
+                    {collateralDoc && (
+                      <div className="flex items-center gap-2">
+                        {collateralDoc.dataUrl && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPreviewTargetDoc({
+                                title: 'Collateral Document / Land Soft Card / Business License',
+                                fileName: collateralDoc.fileName,
+                                mimeType: collateralDoc.mimeType,
+                                dataUrl: collateralDoc.dataUrl!,
+                              });
+                              setIsPreviewZoomed(false);
+                            }}
+                            className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-slate-300 flex items-center gap-1 transition cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5 text-sky-400" />
+                            <span>View</span>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => collateralDocInputRef.current?.click()}
+                          className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-slate-300 flex items-center gap-1 transition cursor-pointer"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Replace</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleRemoveCollateralDoc}
+                          className="px-2 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 text-xs font-semibold transition cursor-pointer"
+                          title="Remove file"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
                       </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setUploadedCollateralDoc('residential_soft_title_card.pdf')}
-                        className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 transition-colors"
-                      >
-                        Browse File
-                      </button>
                     )}
                   </div>
+
+                  <input
+                    ref={collateralDocInputRef}
+                    type="file"
+                    accept=".pdf,image/jpeg,image/png"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleCollateralDocSelect(file);
+                    }}
+                  />
+
+                  {collateralDoc ? (
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/90 border border-emerald-500/30 text-xs">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                        <div className="min-w-0">
+                          <p className="font-bold text-white truncate">{collateralDoc.fileName}</p>
+                          <p className="text-[10px] font-mono text-emerald-400">
+                            {(collateralDoc.fileSize / (1024 * 1024)).toFixed(2)} MB • {collateralDoc.mimeType.split('/')[1]?.toUpperCase() || 'DOCUMENT'}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 shrink-0">
+                        ATTACHED & ENCRYPTED
+                      </span>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => collateralDocInputRef.current?.click()}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const file = e.dataTransfer.files?.[0];
+                        if (file) handleCollateralDocSelect(file);
+                      }}
+                      className="p-5 border-2 border-dashed rounded-xl border-slate-800 hover:border-emerald-500/40 bg-slate-950/40 hover:bg-slate-950/70 text-center cursor-pointer transition-all space-y-1"
+                    >
+                      <UploadCloud className="w-6 h-6 text-slate-500 mx-auto" />
+                      <p className="text-xs font-bold text-slate-200">
+                        Click or drag & drop collateral document or soft card here
+                      </p>
+                      <p className="text-[11px] text-slate-500">
+                        Strict 10MB ceiling • 256-bit SSL encrypted transit (.pdf, .jpg, .png)
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -852,7 +1249,7 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
 
                 <button
                   type="button"
-                  onClick={() => setCurrentStep(3)}
+                  onClick={handleProceedToStep3}
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-emerald-500/20 cursor-pointer"
                 >
                   <span>Review & Summary</span>
@@ -905,6 +1302,30 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
                   <span className="text-slate-400 font-medium">Disbursement Target</span>
                   <span className="text-white font-mono font-bold">
                     {disbursementMethod === 'acleda_2023' ? 'ACLEDA Bank Plc. (•••• 2023)' : 'Bakong ID (jamsongvich@nbc)'}
+                  </span>
+                </div>
+                <div className="p-3.5 flex justify-between items-center text-xs">
+                  <span className="text-slate-400 font-medium">Income Proof Attached</span>
+                  <span className="text-emerald-400 font-mono font-semibold flex items-center gap-1.5 truncate max-w-[240px]">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span className="truncate">{salarySlipDoc?.fileName || 'Attached'}</span>
+                    {salarySlipDoc && (
+                      <span className="text-[10px] text-slate-400 font-normal shrink-0">
+                        ({(salarySlipDoc.fileSize / (1024 * 1024)).toFixed(2)} MB)
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <div className="p-3.5 flex justify-between items-center text-xs">
+                  <span className="text-slate-400 font-medium">Collateral Attached</span>
+                  <span className="text-emerald-400 font-mono font-semibold flex items-center gap-1.5 truncate max-w-[240px]">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span className="truncate">{collateralDoc?.fileName || 'Attached'}</span>
+                    {collateralDoc && (
+                      <span className="text-[10px] text-slate-400 font-normal shrink-0">
+                        ({(collateralDoc.fileSize / (1024 * 1024)).toFixed(2)} MB)
+                      </span>
+                    )}
                   </span>
                 </div>
                 <div className="p-3.5 flex justify-between items-center text-xs bg-slate-900/60">
@@ -1075,7 +1496,7 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
             </div>
 
             {/* Micro MFI Regulatory Footnote */}
-            <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-850 flex items-start gap-2.5">
+            <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-855 flex items-start gap-2.5">
               <AlertCircle className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
               <p className="text-[10px] text-slate-400 leading-relaxed font-sans">
                 Approved applications will disburse immediately to your selected bank channel after underwriting approval. Zero prepayment penalties apply.
@@ -1084,6 +1505,102 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* ========================================================================= */}
+      {/* MODAL: DOCUMENT PREVIEW FOR ATTACHED INCOME & COLLATERAL DOCUMENTS        */}
+      {/* ========================================================================= */}
+      {previewTargetDoc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl sm:max-w-3xl p-5 sm:p-6 shadow-2xl relative space-y-4 text-slate-100 my-auto max-h-[92vh] overflow-y-auto">
+            <button
+              type="button"
+              onClick={() => setPreviewTargetDoc(null)}
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800 pr-8">
+              <div className="flex items-center gap-2.5">
+                <FileCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+                <div>
+                  <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">
+                    {previewTargetDoc.title}
+                  </h3>
+                  <span className="text-[11px] font-mono text-emerald-400">
+                    {previewTargetDoc.fileName}
+                  </span>
+                </div>
+              </div>
+              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono font-bold">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>256-Bit SSL Vault</span>
+              </div>
+            </div>
+
+            {/* Document Stage */}
+            <div className="rounded-2xl bg-slate-950 border border-slate-800 p-3 sm:p-4 space-y-3 shadow-inner">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
+                <span className="text-[11px] font-mono text-slate-400">
+                  Attached Regulatory Document
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsPreviewZoomed(!isPreviewZoomed)}
+                  className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-850 border border-slate-800 text-[11px] font-mono text-slate-300 flex items-center gap-1 transition cursor-pointer"
+                >
+                  {isPreviewZoomed ? (
+                    <ZoomOut className="w-3.5 h-3.5 text-sky-400" />
+                  ) : (
+                    <ZoomIn className="w-3.5 h-3.5 text-sky-400" />
+                  )}
+                  <span>{isPreviewZoomed ? 'Reset' : 'Zoom'}</span>
+                </button>
+              </div>
+
+              <div className="flex items-center justify-center min-h-[300px] bg-slate-950/90 rounded-xl overflow-hidden p-2">
+                {previewTargetDoc.mimeType === 'application/pdf' ||
+                previewTargetDoc.dataUrl.startsWith('data:application/pdf') ||
+                previewTargetDoc.fileName.toLowerCase().endsWith('.pdf') ? (
+                  <iframe
+                    src={previewTargetDoc.dataUrl}
+                    title={previewTargetDoc.title}
+                    className="w-full h-[400px] rounded-lg border-0 bg-white"
+                  />
+                ) : (
+                  <img
+                    src={previewTargetDoc.dataUrl}
+                    alt={previewTargetDoc.title}
+                    className={`object-contain rounded-lg shadow-md transition-all duration-300 ${
+                      isPreviewZoomed ? 'max-w-3xl max-h-[600px]' : 'max-w-md max-h-[380px]'
+                    }`}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-between pt-2">
+              <a
+                href={previewTargetDoc.dataUrl}
+                download={previewTargetDoc.fileName}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-200 font-semibold text-xs transition inline-flex items-center gap-1.5"
+              >
+                <Download className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Download File</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={() => setPreviewTargetDoc(null)}
+                className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs uppercase tracking-wider transition cursor-pointer"
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

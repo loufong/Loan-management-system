@@ -643,6 +643,10 @@ class LoanStorageService {
     disbursementBank?: string;
     disbursementAccount?: string;
     collateralStatus?: string;
+    salarySlipFileName?: string;
+    salarySlipFileSize?: number;
+    collateralDocFileName?: string;
+    collateralDocFileSize?: number;
   }): Promise<UnifiedLoanRecord> {
     // 0. Enforce Regulatory Borrowing Guard
     const kycSummary = await kycService.getKycStatus(payload.borrowerId);

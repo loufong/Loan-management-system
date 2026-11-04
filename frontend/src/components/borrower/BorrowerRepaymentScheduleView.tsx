@@ -41,6 +41,8 @@ interface ScheduleRow {
   lateFees: number;
   endingBalance: number;
   status: 'PAID' | 'DUE_SOON' | 'SCHEDULED' | 'OVERDUE';
+  daysOverdue?: number;
+  daysRemaining?: number;
   txRef?: string;
   paidAt?: string;
 }
@@ -56,8 +58,30 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
   const isKhmer = language === 'km' || (language as string) === 'KH';
 
   const [activeCurrency, setActiveCurrency] = useState<Currency>(appCurrency || 'USD');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PAID' | 'DUE_SOON' | 'SCHEDULED'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'OVERDUE' | 'DUE_SOON' | 'SCHEDULED' | 'PAID'>('ALL');
   const [selectedReceipt, setSelectedReceipt] = useState<ScheduleRow | null>(null);
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+
+  // Real-time ticking clock
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Real-time ledger synchronization on payments
+  useEffect(() => {
+    const handleLedgerUpdate = () => {
+      setCurrentTime(new Date());
+    };
+    window.addEventListener('ledger_updated', handleLedgerUpdate);
+    window.addEventListener('storage', handleLedgerUpdate);
+    return () => {
+      window.removeEventListener('ledger_updated', handleLedgerUpdate);
+      window.removeEventListener('storage', handleLedgerUpdate);
+    };
+  }, []);
 
   const NBC_RATE = 4080;
 
@@ -95,7 +119,7 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
   const activeLoan = activeLoans.length > 0 ? activeLoans[0] : null;
   const hasActiveLoan = !!activeLoan;
 
-  // Build schedule data strictly from active loan schedules with automatic reducing balance recovery
+  // Build schedule data strictly from active loan schedules with automatic reducing balance recovery & real-time dates
   const scheduleData: ScheduleRow[] = useMemo(() => {
     if (!hasActiveLoan || !activeLoan) {
       return [];
@@ -115,8 +139,10 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
     const referenceAmort = generateAmortizationSchedule(origPrincipal, apr, term);
 
     let runningPrincipal = origPrincipal;
+    const today = new Date(currentTime);
+    today.setHours(0, 0, 0, 0);
 
-    return rawSchedules.map((s: any, idx: number) => {
+    const rows: ScheduleRow[] = rawSchedules.map((s: any, idx: number) => {
       const cycle = s.installmentNo || idx + 1;
       const refRow = referenceAmort[idx] || referenceAmort[referenceAmort.length - 1];
 
@@ -143,33 +169,78 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
 
       runningPrincipal = endingBalance;
 
-      const isPaid = s.status === 'PAID';
-      const isOverdue = s.status === 'OVERDUE';
-      const status: 'PAID' | 'DUE_SOON' | 'SCHEDULED' | 'OVERDUE' = isPaid
-        ? 'PAID'
-        : isOverdue
-        ? 'OVERDUE'
-        : (idx === 0 || s.status === 'DUE' ? 'DUE_SOON' : 'SCHEDULED');
+      const dueDateStr = s.dueDate || refRow?.dueDate || '';
+      const dueDateObj = new Date(dueDateStr + 'T00:00:00');
+      dueDateObj.setHours(0, 0, 0, 0);
+
+      // Real-time days difference calculation
+      const diffTime = dueDateObj.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      const isPaid =
+        (s.status || '').toUpperCase() === 'PAID' ||
+        (s.remainingAmountUSD !== undefined && s.remainingAmountUSD <= 0 && s.amountPaidUSD > 0);
+
+      let status: 'PAID' | 'DUE_SOON' | 'SCHEDULED' | 'OVERDUE' = 'SCHEDULED';
+      let daysOverdue = 0;
+      let daysRemaining = 0;
+      let lateFees = Number(s.lateFees || s.lateFeeAccruedUSD || 0);
+
+      if (isPaid) {
+        status = 'PAID';
+        lateFees = 0;
+      } else if (diffDays < 0 || (s.status || '').toUpperCase() === 'OVERDUE') {
+        // Due date has passed in real time!
+        status = 'OVERDUE';
+        daysOverdue = Math.max(1, Math.abs(diffDays));
+        if (lateFees === 0) {
+          // Standard NBC regulatory formula: $0.50 per day overdue (capped at 10% of principal)
+          lateFees = Math.min(Math.round(principal * 0.1 * 100) / 100, Math.round(daysOverdue * 0.50 * 100) / 100);
+        }
+      } else if (diffDays <= 30 || (s.status || '').toUpperCase() === 'DUE' || idx === 0) {
+        // Current billing cycle within 30 days
+        status = 'DUE_SOON';
+        daysRemaining = Math.max(0, diffDays);
+        lateFees = 0;
+      } else {
+        status = 'SCHEDULED';
+        daysRemaining = Math.max(0, diffDays);
+        lateFees = 0;
+      }
 
       return {
         cycle,
-        dueDate: s.dueDate || refRow?.dueDate || '',
+        dueDate: dueDateStr,
         beginningPrincipal,
         scheduledEMI,
         principal,
         interest,
-        lateFees: Number(s.lateFees || s.lateFeeAccruedUSD || 0),
+        lateFees,
         endingBalance,
         status,
+        daysOverdue,
+        daysRemaining,
         txRef: (s as any).transactionReference || (s as any).txRef || (isPaid ? `TX-${cycle}` : undefined),
         paidAt: (s as any).settledAt || (s as any).paidAt || (isPaid ? s.dueDate : undefined),
       };
     });
-  }, [hasActiveLoan, activeLoan]);
+
+    // Ensure the earliest unpaid installment is always payable (DUE_SOON) if none is overdue or due soon
+    const hasOverdueOrDueSoon = rows.some((r) => r.status === 'OVERDUE' || r.status === 'DUE_SOON');
+    if (!hasOverdueOrDueSoon) {
+      const firstUnpaid = rows.find((r) => r.status !== 'PAID');
+      if (firstUnpaid) {
+        firstUnpaid.status = 'DUE_SOON';
+      }
+    }
+
+    return rows;
+  }, [hasActiveLoan, activeLoan, currentTime]);
 
   // Filtered rows
   const filteredSchedule = scheduleData.filter((row) => {
     if (statusFilter === 'ALL') return true;
+    if (statusFilter === 'OVERDUE') return row.status === 'OVERDUE';
     if (statusFilter === 'PAID') return row.status === 'PAID';
     if (statusFilter === 'DUE_SOON') return row.status === 'DUE_SOON';
     if (statusFilter === 'SCHEDULED') return row.status === 'SCHEDULED';
@@ -242,6 +313,23 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
             <p className="text-xs sm:text-sm text-slate-400 mt-1">
               National Bank of Cambodia compliant monthly reducing amortization schedule and digital settlement receipts.
             </p>
+
+            {/* Real-Time Engine Ticking Clock */}
+            <div className="flex flex-wrap items-center gap-2 mt-2.5">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950/90 border border-slate-800 text-[11px] font-mono text-slate-300">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="text-slate-400">Live Real-Time Engine:</span>
+                <strong className="text-emerald-400">
+                  {currentTime.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}{' '}
+                  {currentTime.toLocaleTimeString('en-US', { hour12: true })}
+                </strong>
+                <span className="text-slate-600">|</span>
+                <span className="text-slate-400">Timezone: <strong>Asia/Phnom_Penh (UTC+7)</strong></span>
+              </div>
+            </div>
           </div>
 
           {/* Quick Utility Controls: PDF Statement, Export CSV & Currency */}
@@ -341,17 +429,37 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
       <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-sm overflow-hidden">
         {/* Table Filter Tabs Toolbar */}
         <div className="p-4 sm:px-6 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/60">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Filter className="w-4 h-4 text-slate-400" />
             <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
               Filter Cycles:
             </span>
-            <div className="flex items-center gap-1.5 ml-2">
+            <div className="flex flex-wrap items-center gap-1.5 ml-1">
               {[
                 { id: 'ALL', label: `All (${scheduleData.length})` },
-                { id: 'PAID', label: `Paid (${scheduleData.filter((s) => s.status === 'PAID').length})` },
-                { id: 'DUE_SOON', label: `Due Soon (${scheduleData.filter((s) => s.status === 'DUE_SOON').length})` },
-                { id: 'SCHEDULED', label: `Scheduled (${scheduleData.filter((s) => s.status === 'SCHEDULED' || s.status === 'OVERDUE').length})` },
+                ...(scheduleData.filter((s) => s.status === 'OVERDUE').length > 0
+                  ? [
+                      {
+                        id: 'OVERDUE',
+                        label: `Overdue (${scheduleData.filter((s) => s.status === 'OVERDUE').length})`,
+                        isDanger: true,
+                      },
+                    ]
+                  : []),
+                {
+                  id: 'DUE_SOON',
+                  label: `Due Soon (${scheduleData.filter((s) => s.status === 'DUE_SOON').length})`,
+                  isWarn: true,
+                },
+                {
+                  id: 'SCHEDULED',
+                  label: `Scheduled (${scheduleData.filter((s) => s.status === 'SCHEDULED').length})`,
+                },
+                {
+                  id: 'PAID',
+                  label: `Paid (${scheduleData.filter((s) => s.status === 'PAID').length})`,
+                  isSuccess: true,
+                },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -359,7 +467,17 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
                   onClick={() => setStatusFilter(tab.id as any)}
                   className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                     statusFilter === tab.id
-                      ? 'bg-emerald-500 text-slate-950 font-bold shadow-2xs'
+                      ? (tab as any).isDanger
+                        ? 'bg-rose-500 text-white font-bold shadow-md'
+                        : (tab as any).isWarn
+                        ? 'bg-amber-500 text-slate-950 font-bold shadow-md'
+                        : (tab as any).isSuccess
+                        ? 'bg-emerald-500 text-slate-950 font-bold shadow-2xs'
+                        : 'bg-emerald-500 text-slate-950 font-bold shadow-2xs'
+                      : (tab as any).isDanger
+                      ? 'text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 font-bold'
+                      : (tab as any).isWarn
+                      ? 'text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30'
                       : 'text-slate-400 hover:text-white hover:bg-slate-800/80'
                   }`}
                 >
@@ -413,6 +531,7 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
                   </td>
                 </tr>
               ) : filteredSchedule.map((row) => {
+                const isOverdue = row.status === 'OVERDUE';
                 const isDueSoon = row.status === 'DUE_SOON';
                 const isPaid = row.status === 'PAID';
 
@@ -420,7 +539,9 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
                   <tr
                     key={row.cycle}
                     className={`transition-colors ${
-                      isDueSoon
+                      isOverdue
+                        ? 'bg-rose-500/10 hover:bg-rose-500/15 border-l-4 border-l-rose-500 text-rose-200'
+                        : isDueSoon
                         ? 'bg-amber-500/5 hover:bg-amber-500/10 border-l-4 border-l-amber-500'
                         : isPaid
                         ? 'bg-slate-900/30 hover:bg-slate-850/50'
@@ -434,7 +555,8 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
 
                     {/* Due Date */}
                     <td className="py-3 px-4 whitespace-nowrap">
-                      <span className={isDueSoon ? 'text-amber-400 font-bold' : isPaid ? 'text-slate-300' : 'text-slate-400'}>
+                      <span className={isOverdue ? 'text-rose-400 font-bold flex items-center gap-1.5' : isDueSoon ? 'text-amber-400 font-bold' : isPaid ? 'text-slate-300' : 'text-slate-400'}>
+                        {isOverdue && <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0" />}
                         {row.dueDate}
                       </span>
                     </td>
@@ -445,7 +567,7 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
                     </td>
 
                     {/* Scheduled EMI */}
-                    <td className={`py-3 px-4 text-right font-bold ${isDueSoon ? 'text-amber-400 text-sm' : isPaid ? 'text-slate-200' : 'text-slate-400'}`}>
+                    <td className={`py-3 px-4 text-right font-bold ${isOverdue ? 'text-rose-300 font-mono text-sm' : isDueSoon ? 'text-amber-400 text-sm' : isPaid ? 'text-slate-200' : 'text-slate-400'}`}>
                       {formatMoney(row.scheduledEMI)}
                     </td>
 
@@ -460,7 +582,7 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
                     </td>
 
                     {/* Late Fees */}
-                    <td className="py-3 px-4 text-right text-slate-400">
+                    <td className={`py-3 px-4 text-right ${isOverdue && row.lateFees > 0 ? 'text-rose-400 font-bold' : 'text-slate-400'}`}>
                       {formatMoney(row.lateFees)}
                     </td>
 
@@ -478,16 +600,37 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
                             PAID
                           </span>
                           {row.txRef && (
-                            <span className="text-[9px] text-slate-500 mt-0.5">{row.txRef}</span>
+                            <span className="text-[9px] text-slate-500 mt-0.5 font-mono">{row.txRef}</span>
+                          )}
+                        </div>
+                      )}
+
+                      {isOverdue && (
+                        <div className="inline-flex flex-col items-center">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30 animate-pulse">
+                            <AlertTriangle className="w-3 h-3 text-rose-400" />
+                            OVERDUE
+                          </span>
+                          {row.daysOverdue !== undefined && row.daysOverdue > 0 && (
+                            <span className="text-[9px] text-rose-400/90 font-mono mt-0.5">
+                              {row.daysOverdue} days late
+                            </span>
                           )}
                         </div>
                       )}
 
                       {isDueSoon && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 animate-pulse">
-                          <Clock className="w-3 h-3" />
-                          DUE SOON
-                        </span>
+                        <div className="inline-flex flex-col items-center">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 animate-pulse">
+                            <Clock className="w-3 h-3" />
+                            DUE SOON
+                          </span>
+                          {row.daysRemaining !== undefined && (
+                            <span className="text-[9px] text-amber-400/90 font-mono mt-0.5">
+                              {row.daysRemaining === 0 ? 'Due today!' : `Due in ${row.daysRemaining}d`}
+                            </span>
+                          )}
+                        </div>
                       )}
 
                       {row.status === 'SCHEDULED' && (
@@ -510,6 +653,19 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
                         </button>
                       )}
 
+                      {isOverdue && (
+                        <button
+                          type="button"
+                          onClick={() => handlePayInstallment(row.cycle, row.scheduledEMI + row.lateFees)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md shadow-rose-950/40 transition-all active:scale-[0.98] cursor-pointer font-sans"
+                        >
+                          <div className="w-3 h-3 rounded bg-white text-rose-600 flex items-center justify-center font-black text-[7px]">
+                            KH
+                          </div>
+                          <span>Settle Overdue</span>
+                        </button>
+                      )}
+
                       {isDueSoon && (
                         <button
                           type="button"
@@ -524,7 +680,7 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
                       )}
 
                       {row.status === 'SCHEDULED' && (
-                        <span className="text-[10px] text-slate-600 font-sans italic">Locked</span>
+                        <span className="text-[10px] text-slate-600 font-sans italic">Scheduled</span>
                       )}
                     </td>
                   </tr>

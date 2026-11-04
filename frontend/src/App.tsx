@@ -551,6 +551,8 @@ export const App: React.FC = () => {
   // Super Admin / Staff Dual-Mode Operation (Self-Borrowing vs Client Portfolio)
   const [originationMode, setOriginationMode] = useState<'SELF' | 'CLIENT'>('CLIENT');
   const [repaymentViewMode, setRepaymentViewMode] = useState<'SELF' | 'CLIENT'>('CLIENT');
+  const [selectedPayInstallmentNo, setSelectedPayInstallmentNo] = useState<number | undefined>();
+  const [selectedPayAmountUSD, setSelectedPayAmountUSD] = useState<number | undefined>();
 
   // Modals
   const [searchModalOpen, setSearchModalOpen] = useState<boolean>(false);
@@ -1882,11 +1884,13 @@ export const App: React.FC = () => {
               currency={currency}
               loans={userDisplayLoans}
               initialAmountUSD={
+                selectedPayAmountUSD ||
                 userDisplayLoans[0]?.schedules?.find((s: any) => s.status !== 'PAID')?.totalDueUSD ||
                 (userDisplayLoans[0] as any)?.monthlyEMIUSD ||
                 183.89
               }
               initialInstallmentNo={
+                selectedPayInstallmentNo ||
                 userDisplayLoans[0]?.schedules?.find((s: any) => s.status !== 'PAID')?.installmentNo || 1
               }
               onNavigate={handleNavSelection}
@@ -2117,7 +2121,11 @@ export const App: React.FC = () => {
                   currency={currency}
                   loans={userDisplayLoans}
                   onNavigate={handleNavSelection}
-                  onOpenPayInstallment={(cycle, amt) => handleNavSelection('/pay-installment')}
+                  onOpenPayInstallment={(cycle, amt) => {
+                    setSelectedPayInstallmentNo(cycle);
+                    setSelectedPayAmountUSD(amt);
+                    handleNavSelection('/pay-installment');
+                  }}
                 />
               ) : (
                 <UserRepaymentsView

@@ -57,7 +57,7 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
             try {
               const loanDocs = JSON.parse(localStorage.getItem(`JAM_LOAN_DOCS_${cid}`) || '{}');
               if (loanDocs.salarySlip?.dataUrl) incomeUrl = loanDocs.salarySlip.dataUrl;
-            } catch {}
+            } catch { }
           }
         }
         if (!statementUrl) {
@@ -70,7 +70,7 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
             try {
               const loanDocs = JSON.parse(localStorage.getItem(`JAM_LOAN_DOCS_${cid}`) || '{}');
               if (loanDocs.collateralDoc?.dataUrl) statementUrl = loanDocs.collateralDoc.dataUrl;
-            } catch {}
+            } catch { }
           }
         }
       }
@@ -130,7 +130,7 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
 
   return (
     <div className="space-y-6">
-      
+
       {/* Header & Status Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-[#E2E8F0]">
         <div className="flex items-center gap-3">
@@ -143,12 +143,11 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-bold text-[#0F172A] font-mono">{application.applicationNo}</h1>
-              <span className={`px-2 py-0.5 rounded-[4px] text-[10px] font-bold ${
-                application.status === 'APPROVED' ? 'bg-emerald-50 text-[#16A34A] border border-emerald-200' :
-                application.status === 'UNDER_REVIEW' ? 'bg-blue-50 text-[#2563EB] border border-blue-200' :
-                application.status === 'REJECTED' ? 'bg-rose-50 text-[#DC2626] border border-rose-200' :
-                'bg-amber-50 text-[#D97706] border border-amber-200'
-              }`}>
+              <span className={`px-2 py-0.5 rounded-[4px] text-[10px] font-bold ${application.status === 'APPROVED' ? 'bg-emerald-50 text-[#16A34A] border border-emerald-200' :
+                  application.status === 'UNDER_REVIEW' ? 'bg-blue-50 text-[#2563EB] border border-blue-200' :
+                    application.status === 'REJECTED' ? 'bg-rose-50 text-[#DC2626] border border-rose-200' :
+                      'bg-amber-50 text-[#D97706] border border-amber-200'
+                }`}>
                 {t(application.status, application.status)}
               </span>
             </div>
@@ -194,10 +193,10 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
 
       {/* Split-Pane Underwriting Layout: 55% Left / 45% Right */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
+
         {/* LEFT PANE (55% width) — Applicant Dossier */}
         <div className="lg:col-span-7 space-y-4">
-          
+
           {/* Accordion 1: Personal & Employment Information */}
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <button
@@ -311,8 +310,8 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
                       activeDocTab === 'ID'
                         ? realDocUrls.id || 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=600&auto=format&fit=crop&q=80'
                         : activeDocTab === 'INCOME'
-                        ? realDocUrls.income || 'https://images.unsplash.com/photo-1450133064473-71024230f91b?w=600&auto=format&fit=crop&q=80'
-                        : realDocUrls.statement || 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600&auto=format&fit=crop&q=80'
+                          ? realDocUrls.income || 'https://images.unsplash.com/photo-1450133064473-71024230f91b?w=600&auto=format&fit=crop&q=80'
+                          : realDocUrls.statement || 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600&auto=format&fit=crop&q=80'
                     }
                     alt="Document Preview"
                     style={{ transform: `scale(${zoomLevel}) rotate(${rotation}deg)`, transition: 'transform 0.15s ease' }}
@@ -347,18 +346,17 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
 
         {/* RIGHT PANE (45% width) — Underwriting & Decision Workbench */}
         <div className="lg:col-span-5 space-y-4">
-          
+
           {/* Automated Credit Scorecard Card with DTI Gauge */}
           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Automated Risk Scorecard</h3>
-              <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                application.dtiRatio <= 25
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${application.dtiRatio <= 25
                   ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                   : application.dtiRatio <= 40
-                  ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                  : 'bg-rose-50 text-rose-700 border border-rose-200'
-              }`}>
+                    ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                    : 'bg-rose-50 text-rose-700 border border-rose-200'
+                }`}>
                 {application.riskTier}
               </span>
             </div>
@@ -391,7 +389,7 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
           {/* Credit Officer Recommendation Section */}
           <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3 text-xs">
             <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Credit Officer Assessment</h3>
-            
+
             <div className="space-y-1.5">
               <label className="block text-slate-600 font-semibold">Recommendation</label>
               <div className="flex flex-col gap-1.5">
@@ -427,11 +425,10 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
 
             <button
               onClick={handleSignReview}
-              className={`w-full py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
-                isSigned
+              className={`w-full py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${isSigned
                   ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default'
                   : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs'
-              }`}
+                }`}
             >
               {isSigned ? '✓ Underwriting Recommendation Signed' : 'Sign & Submit Credit Review'}
             </button>

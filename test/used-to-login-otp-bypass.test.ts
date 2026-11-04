@@ -29,55 +29,31 @@ async function testUsedToLoginOtpBypass() {
   });
 
   try {
-    // Case A: First-time login -> MUST require OTP
-    console.log('--- TEST 1: First-time login for user with lastLogin: null ---');
+    // Case A: Direct login without OTP (OTP removed per user request)
+    console.log('--- TEST 1: Direct login without OTP ---');
     const firstLoginRes: any = await AuthService.login({
       usernameOrEmail: testEmail,
       password: testPassword,
     });
 
-    assert.strictEqual(firstLoginRes.requireOtp, true, 'First-time user must require OTP');
-    assert.strictEqual(firstLoginRes.email, testEmail);
-    assert.strictEqual(firstLoginRes.purpose, 'login_verification');
-    console.log('✅ First-time login correctly prompted for OTP (requireOtp: true)');
+    assert.strictEqual(firstLoginRes.requireOtp, undefined, 'User must NOT require OTP');
+    assert.ok(firstLoginRes.accessToken, 'Must return accessToken directly');
+    assert.ok(firstLoginRes.user, 'Must return user object');
+    assert.strictEqual(firstLoginRes.user.email, testEmail);
+    console.log('✅ Direct login verified with accessToken returned immediately.');
 
-    // Case B: Verify Login OTP
-    console.log('\n--- TEST 2: Complete OTP Verification for First-Time User ---');
-    const testOtpCode = '888999';
-    const otpHash = OtpService.hashOtp(testOtpCode, testEmail);
-
-    await prisma.otpVerification.updateMany({
-      where: { email: testEmail, purpose: 'LOGIN' },
-      data: { otpHash, expiresAt: new Date(Date.now() + 10 * 60 * 1000), attempts: 0 },
-    });
-
-    const verifyRes: any = await AuthService.verifyOtp({
-      email: testEmail,
-      code: testOtpCode,
-      purpose: 'LOGIN',
-    });
-
-    assert.strictEqual(verifyRes.success, true);
-    assert.ok(verifyRes.token, 'Must return token upon OTP verification');
-    console.log('✅ Login OTP verified successfully! User has now completed their first login.');
-
-    // Case C: Check PostgreSQL -> lastLogin is now set
-    const userInDb = await prisma.user.findUnique({ where: { id: newUser.id } });
-    assert.ok(userInDb?.lastLogin, 'user.lastLogin must now be populated in database');
-    console.log('✅ Verified in database: user.lastLogin =', userInDb.lastLogin);
-
-    // Case D: Second login -> Used to login already -> DO NOT require OTP anymore!
-    console.log('\n--- TEST 3: Subsequent login for user that used to login already ---');
+    // Case B: Subsequent login -> continues to log in directly
+    console.log('\n--- TEST 2: Subsequent login for user ---');
     const secondLoginRes: any = await AuthService.login({
       usernameOrEmail: testEmail,
       password: testPassword,
     });
 
-    assert.strictEqual(secondLoginRes.requireOtp, undefined, 'User that used to login already must NOT require OTP');
+    assert.strictEqual(secondLoginRes.requireOtp, undefined, 'Subsequent login must NOT require OTP');
     assert.ok(secondLoginRes.accessToken, 'Must return accessToken directly');
     assert.ok(secondLoginRes.user, 'Must return user object');
     assert.strictEqual(secondLoginRes.user.email, testEmail);
-    console.log('✅ Subsequent login bypassed OTP successfully! Logged in directly with password.');
+    console.log('✅ Subsequent login verified with accessToken returned directly.');
 
   } finally {
     // Cleanup

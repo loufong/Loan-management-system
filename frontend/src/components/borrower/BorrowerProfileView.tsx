@@ -24,6 +24,7 @@ import {
   AlertTriangle,
   Clock,
   RotateCcw,
+  RefreshCw,
   Check,
   FileUp,
   FileWarning,
@@ -67,15 +68,17 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
   const [uploadTargetDocType, setUploadTargetDocType] = useState<KycDocType | null>(null);
   const [idCardSide, setIdCardSide] = useState<'front' | 'back'>('front');
   const [isPhotoZoomed, setIsPhotoZoomed] = useState<boolean>(false);
-  const [photoViewMode, setPhotoViewMode] = useState<'scan' | 'specimen'>('scan');
+  const [previewBackPhoto, setPreviewBackPhoto] = useState<string | null>(null);
 
   // Upload Form State
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedBackFile, setSelectedBackFile] = useState<File | null>(null);
   const [refNumberInput, setRefNumberInput] = useState<string>('');
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const backFileInputRef = useRef<HTMLInputElement>(null);
 
   const NBC_RATE = 4080;
 
@@ -141,9 +144,27 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
     setSelectedFile(file);
   };
 
+  const handleBackFileSelect = (file: File) => {
+    setUploadError(null);
+    const MAX_BYTES = 10 * 1024 * 1024;
+    if (file.size > MAX_BYTES) {
+      setUploadError(`Back side file size (${(file.size / (1024 * 1024)).toFixed(2)}MB) exceeds maximum regulatory limit of 10MB.`);
+      setSelectedBackFile(null);
+      return;
+    }
+    const validMimes = ['application/pdf', 'image/jpeg', 'image/png'];
+    if (!validMimes.includes(file.type.toLowerCase())) {
+      setUploadError(`Invalid back side format "${file.type}". Regulatory standards accept .pdf, .jpg, and .png only.`);
+      setSelectedBackFile(null);
+      return;
+    }
+    setSelectedBackFile(file);
+  };
+
   const handleOpenUploadModal = (docType: KycDocType, currentRef?: string) => {
     setUploadTargetDocType(docType);
     setSelectedFile(null);
+    setSelectedBackFile(null);
     setUploadError(null);
     setUploadProgress(0);
     setRefNumberInput(currentRef || (
@@ -157,8 +178,8 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
 
   const handleExecuteUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!uploadTargetDocType || !selectedFile) {
-      setUploadError('Please select a valid document file to upload.');
+    if (!uploadTargetDocType || (!selectedFile && !selectedBackFile)) {
+      setUploadError('Please select at least one document file to upload.');
       return;
     }
 
@@ -166,41 +187,86 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
     setUploadError(null);
     setUploadProgress(20);
 
-    // Save uploaded file permanently to IndexedDB + LocalStorage vault
+    // Save front side photo permanently to IndexedDB + LocalStorage vault
     let cachedFileDataUrl = '';
-    try {
-      cachedFileDataUrl = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
-        reader.onerror = () => resolve('');
-        reader.readAsDataURL(selectedFile);
-      });
-      if (cachedFileDataUrl) {
-        await kycVaultStorage.saveFile(clientId, uploadTargetDocType, cachedFileDataUrl, {
-          fileName: selectedFile.name,
-          mimeType: selectedFile.type || 'image/png',
-          fileSize: selectedFile.size,
+    if (selectedFile) {
+      try {
+        cachedFileDataUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+          reader.onerror = () => resolve('');
+          reader.readAsDataURL(selectedFile);
         });
+        if (cachedFileDataUrl) {
+          await kycVaultStorage.saveFile(
+            clientId,
+            uploadTargetDocType === 'NATIONAL_ID' ? 'NATIONAL_ID_FRONT' : uploadTargetDocType,
+            cachedFileDataUrl,
+            {
+              fileName: selectedFile.name,
+              mimeType: selectedFile.type || 'image/png',
+              fileSize: selectedFile.size,
+            }
+          );
+          if (uploadTargetDocType === 'NATIONAL_ID') {
+            await kycVaultStorage.saveFile(clientId, 'NATIONAL_ID', cachedFileDataUrl, {
+              fileName: selectedFile.name,
+              mimeType: selectedFile.type || 'image/png',
+              fileSize: selectedFile.size,
+            });
+          }
+        }
+      } catch (cacheErr) {
+        console.warn('KYC vault caching note:', cacheErr);
       }
-    } catch (cacheErr) {
-      console.warn('KYC vault caching note:', cacheErr);
+    }
+
+    // Save back side photo if provided for National ID
+    let cachedBackDataUrl = '';
+    if (uploadTargetDocType === 'NATIONAL_ID' && selectedBackFile) {
+      try {
+        cachedBackDataUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+          reader.onerror = () => resolve('');
+          reader.readAsDataURL(selectedBackFile);
+        });
+        if (cachedBackDataUrl) {
+          await kycVaultStorage.saveFile(clientId, 'NATIONAL_ID_BACK', cachedBackDataUrl, {
+            fileName: selectedBackFile.name,
+            mimeType: selectedBackFile.type || 'image/png',
+            fileSize: selectedBackFile.size,
+          });
+        }
+      } catch (cacheBackErr) {
+        console.warn('KYC back vault caching note:', cacheBackErr);
+      }
     }
 
     try {
-      const mime = selectedFile.type || (selectedFile.name.endsWith('.pdf') ? 'application/pdf' : selectedFile.name.endsWith('.png') ? 'image/png' : 'image/jpeg');
+      const primaryFile = (selectedFile || selectedBackFile)!;
+      const mime =
+        primaryFile.type ||
+        (primaryFile.name.endsWith('.pdf')
+          ? 'application/pdf'
+          : primaryFile.name.endsWith('.png')
+          ? 'image/png'
+          : 'image/jpeg');
 
       // 1. Request pre-signed S3/R2 upload URL
       let uploadPlan;
       try {
         uploadPlan = await kycService.requestUploadUrl({
           documentType: uploadTargetDocType,
-          originalFilename: selectedFile.name,
+          originalFilename: primaryFile.name,
           mimeType: mime,
-          fileSizeBytes: selectedFile.size,
+          fileSizeBytes: (selectedFile?.size || 0) + (selectedBackFile?.size || 0),
           userId: clientId,
         });
       } catch {
-        const fileKey = `kyc/${clientId}/${uploadTargetDocType.toLowerCase()}_${Date.now()}.${selectedFile.name.split('.').pop() || 'png'}`;
+        const fileKey = `kyc/${clientId}/${uploadTargetDocType.toLowerCase()}_${Date.now()}.${
+          primaryFile.name.split('.').pop() || 'png'
+        }`;
         uploadPlan = {
           uploadUrl: `/api/v1/kyc/storage-simulator/upload?fileKey=${encodeURIComponent(fileKey)}`,
           fileKey,
@@ -214,7 +280,7 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
       setUploadProgress(50);
 
       // 2. Transmit binary stream to cloud storage URL
-      await kycService.uploadToStorage(uploadPlan.uploadUrl, selectedFile, uploadPlan.headers);
+      await kycService.uploadToStorage(uploadPlan.uploadUrl, primaryFile, uploadPlan.headers);
 
       setUploadProgress(85);
 
@@ -222,18 +288,21 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
       await kycService.confirmUpload({
         documentType: uploadTargetDocType,
         fileKey: uploadPlan.fileKey,
-        originalFilename: selectedFile.name,
+        originalFilename: selectedFile ? selectedFile.name : (selectedBackFile?.name || 'national_id.png'),
         referenceNumber: refNumberInput.trim() || `REF-${Date.now().toString().slice(-6)}`,
-        fileSizeBytes: selectedFile.size,
+        fileSizeBytes: (selectedFile?.size || 0) + (selectedBackFile?.size || 0),
         mimeType: mime,
         userId: clientId,
         viewUrl: cachedFileDataUrl || undefined,
+        backViewUrl: cachedBackDataUrl || undefined,
+        backOriginalFilename: selectedBackFile?.name || undefined,
       });
 
       setUploadProgress(100);
       await loadKyc();
       setUploadTargetDocType(null);
       setSelectedFile(null);
+      setSelectedBackFile(null);
     } catch (err: any) {
       setUploadError(err.message || 'Document upload failed. Please try again.');
     } finally {
@@ -246,28 +315,45 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
     setIsPhotoZoomed(false);
 
     // Retrieve from permanent vault (IndexedDB / LocalStorage)
-    const storedFile =
+    const storedFront =
+      (await kycVaultStorage.getFile(clientId, doc.documentType === 'NATIONAL_ID' ? 'NATIONAL_ID_FRONT' : doc.documentType)) ||
       (await kycVaultStorage.getFile(clientId, doc.documentType)) ||
       (doc.viewUrl && (doc.viewUrl.startsWith('data:') || doc.viewUrl.startsWith('blob:')) ? doc.viewUrl : null);
 
-    if (storedFile) {
-      setPreviewDoc({ ...doc, viewUrl: storedFile });
-      setPhotoViewMode('scan');
-    } else {
-      setPreviewDoc(doc);
-      setPhotoViewMode('specimen');
+    let storedBack = null;
+    if (doc.documentType === 'NATIONAL_ID') {
+      storedBack =
+        (await kycVaultStorage.getFile(clientId, 'NATIONAL_ID_BACK')) ||
+        (doc.backViewUrl && (doc.backViewUrl.startsWith('data:') || doc.backViewUrl.startsWith('blob:')) ? doc.backViewUrl : null);
     }
+    setPreviewBackPhoto(storedBack);
+
+    setPreviewDoc({
+      ...doc,
+      viewUrl: storedFront || doc.viewUrl,
+      backViewUrl: storedBack || doc.backViewUrl,
+    });
   };
 
   const handleDownloadScannedPhoto = () => {
     if (!previewDoc) return;
-    if (previewDoc.viewUrl && (previewDoc.viewUrl.startsWith('data:image/') || previewDoc.viewUrl.startsWith('blob:'))) {
+    const targetUrl =
+      previewDoc.documentType === 'NATIONAL_ID' && idCardSide === 'back' && (previewBackPhoto || previewDoc.backViewUrl)
+        ? (previewBackPhoto || previewDoc.backViewUrl)
+        : previewDoc.viewUrl;
+
+    const targetFilename =
+      previewDoc.documentType === 'NATIONAL_ID' && idCardSide === 'back'
+        ? previewDoc.backOriginalFilename || 'national_id_back.png'
+        : previewDoc.originalFilename || `${previewDoc.documentType.toLowerCase()}.png`;
+
+    if (targetUrl && (targetUrl.startsWith('data:') || targetUrl.startsWith('blob:'))) {
       const link = document.createElement('a');
-      link.href = previewDoc.viewUrl;
-      link.download = previewDoc.originalFilename || `${previewDoc.documentType.toLowerCase()}.png`;
+      link.href = targetUrl;
+      link.download = targetFilename;
       link.click();
     } else {
-      window.open(previewDoc.viewUrl || '#', '_blank');
+      window.open(targetUrl || '#', '_blank');
     }
   };
 
@@ -667,11 +753,23 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
       {/* 3. MODAL: PRE-SIGNED ENCRYPTED DOCUMENT VIEWER (PHOTO IN BOX)             */}
       {/* ========================================================================= */}
       {previewDoc && (() => {
-        const hasUploadedPhoto = !!(
-          previewDoc.viewUrl &&
-          (previewDoc.viewUrl.startsWith('data:image/') ||
-            previewDoc.viewUrl.startsWith('blob:') ||
-            previewDoc.originalFilename?.match(/\.(jpg|jpeg|png|webp)$/i))
+        const activeDisplayUrl =
+          previewDoc.documentType === 'NATIONAL_ID' && idCardSide === 'back'
+            ? (previewBackPhoto || previewDoc.backViewUrl)
+            : previewDoc.viewUrl;
+
+        const isBackMissing =
+          previewDoc.documentType === 'NATIONAL_ID' &&
+          idCardSide === 'back' &&
+          !activeDisplayUrl;
+
+        const isPdf = Boolean(
+          activeDisplayUrl &&
+            (activeDisplayUrl.startsWith('data:application/pdf') ||
+              (idCardSide === 'back'
+                ? previewDoc.backOriginalFilename?.toLowerCase().endsWith('.pdf')
+                : previewDoc.mimeType === 'application/pdf' ||
+                  previewDoc.originalFilename?.toLowerCase().endsWith('.pdf')))
         );
 
         return (
@@ -732,63 +830,41 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
                       Document Photo Scan
                     </span>
 
-                    {hasUploadedPhoto && (
-                      <div className="inline-flex rounded-lg bg-slate-900 border border-slate-800 p-0.5 text-[10px] font-mono">
+                    {/* National ID Front / Back Toggle (Official Specimen button removed per user request) */}
+                    {previewDoc.documentType === 'NATIONAL_ID' && (
+                      <div className="inline-flex rounded-lg bg-slate-900 border border-slate-800 p-0.5 text-[11px] font-mono">
                         <button
                           type="button"
-                          onClick={() => setPhotoViewMode('scan')}
-                          className={`px-2 py-0.5 rounded transition ${
-                            photoViewMode === 'scan'
-                              ? 'bg-emerald-500 text-slate-950 font-bold'
+                          onClick={() => setIdCardSide('front')}
+                          className={`px-3 py-1 rounded-md transition cursor-pointer flex items-center gap-1.5 ${
+                            idCardSide === 'front'
+                              ? 'bg-emerald-500 text-slate-950 font-bold shadow'
                               : 'text-slate-400 hover:text-white'
                           }`}
                         >
-                          Uploaded Photo
+                          <CreditCard className="w-3.5 h-3.5" />
+                          <span>Front Side</span>
                         </button>
                         <button
                           type="button"
-                          onClick={() => setPhotoViewMode('specimen')}
-                          className={`px-2 py-0.5 rounded transition ${
-                            photoViewMode === 'specimen'
-                              ? 'bg-emerald-500 text-slate-950 font-bold'
+                          onClick={() => setIdCardSide('back')}
+                          className={`px-3 py-1 rounded-md transition cursor-pointer flex items-center gap-1.5 ${
+                            idCardSide === 'back'
+                              ? 'bg-emerald-500 text-slate-950 font-bold shadow'
                               : 'text-slate-400 hover:text-white'
                           }`}
                         >
-                          Official Specimen
+                          <RefreshCw className="w-3.5 h-3.5" />
+                          <span>Back Side</span>
+                          {previewBackPhoto || previewDoc.backViewUrl ? (
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+                          ) : null}
                         </button>
                       </div>
                     )}
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {previewDoc.documentType === 'NATIONAL_ID' &&
-                      (!hasUploadedPhoto || photoViewMode === 'specimen') && (
-                        <div className="inline-flex rounded-lg bg-slate-900 border border-slate-800 p-0.5 text-[11px] font-mono">
-                          <button
-                            type="button"
-                            onClick={() => setIdCardSide('front')}
-                            className={`px-2.5 py-0.5 rounded transition cursor-pointer ${
-                              idCardSide === 'front'
-                                ? 'bg-sky-500 text-slate-950 font-bold shadow'
-                                : 'text-slate-400 hover:text-white'
-                            }`}
-                          >
-                            Front Side
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setIdCardSide('back')}
-                            className={`px-2.5 py-0.5 rounded transition cursor-pointer ${
-                              idCardSide === 'back'
-                                ? 'bg-sky-500 text-slate-950 font-bold shadow'
-                                : 'text-slate-400 hover:text-white'
-                            }`}
-                          >
-                            Back Side (MRZ)
-                          </button>
-                        </div>
-                      )}
-
                     <button
                       type="button"
                       onClick={() => setIsPhotoZoomed(!isPhotoZoomed)}
@@ -809,427 +885,83 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
 
                 {/* Scanned Photo Box Stage */}
                 <div className="overflow-x-auto overflow-y-hidden py-3 px-1 flex items-center justify-center min-h-[300px] bg-slate-950/90 rounded-xl border border-slate-900">
-                  {hasUploadedPhoto && photoViewMode === 'scan' ? (
-                    /* User Uploaded Photo or PDF Document */
+                  {activeDisplayUrl ? (
                     <div
                       className={`relative transition-all duration-300 ${
                         isPhotoZoomed ? 'max-w-3xl' : 'max-w-md'
                       } w-full rounded-xl overflow-hidden border border-slate-700/80 shadow-2xl bg-slate-900 p-1 flex items-center justify-center`}
                     >
-                      {previewDoc.viewUrl && (previewDoc.mimeType === 'application/pdf' || previewDoc.viewUrl.startsWith('data:application/pdf') || previewDoc.originalFilename?.toLowerCase().endsWith('.pdf')) ? (
+                      {isPdf ? (
                         <iframe
-                          src={previewDoc.viewUrl}
+                          src={activeDisplayUrl}
                           title={previewDoc.title}
                           className="w-full h-[380px] rounded-lg border-0 bg-white"
                         />
                       ) : (
                         <img
-                          src={previewDoc.viewUrl}
-                          alt={previewDoc.title}
+                          src={activeDisplayUrl}
+                          alt={`${previewDoc.title} - ${idCardSide}`}
                           className="w-full max-h-[380px] object-contain rounded-lg shadow-md"
                         />
                       )}
-                      <div className="absolute bottom-3 right-3 bg-slate-950/85 backdrop-blur-sm border border-emerald-500/30 text-[10px] font-mono text-emerald-400 px-2 py-0.5 rounded shadow flex items-center gap-1 font-bold">
+                      <div className="absolute bottom-3 right-3 bg-slate-950/85 backdrop-blur-sm border border-emerald-500/30 text-[10px] font-mono text-emerald-400 px-2.5 py-1 rounded shadow flex items-center gap-1.5 font-bold">
                         <Check className="w-3 h-3 text-emerald-400" />
-                        AUTHENTIC UPLOADED DOCUMENT
+                        <span>
+                          AUTHENTIC UPLOADED PHOTO
+                          {previewDoc.documentType === 'NATIONAL_ID'
+                            ? ` • ${idCardSide.toUpperCase()} SIDE`
+                            : ''}
+                        </span>
                       </div>
                     </div>
-                  ) : previewDoc.documentType === 'NATIONAL_ID' ? (
-                    idCardSide === 'back' ? (
-                      /* Cambodian National ID Card: Back Side */
-                      <div
-                        className={`relative transition-all duration-300 mx-auto ${
-                          isPhotoZoomed ? 'scale-105' : 'scale-100'
-                        } w-full max-w-[500px] rounded-2xl shadow-2xl overflow-hidden border border-sky-300/60 bg-gradient-to-br from-[#c6e4f5] via-[#def0fa] to-[#cbe5f0] text-slate-800 p-4 sm:p-5 select-none font-sans`}
-                        style={{
-                          boxShadow:
-                            '0 20px 40px -15px rgba(14, 116, 144, 0.3), 0 0 0 1px rgba(186, 230, 253, 0.5)',
+                  ) : isBackMissing ? (
+                    <div className="flex flex-col items-center justify-center p-8 text-center max-w-md mx-auto space-y-3 bg-slate-900/60 rounded-xl border border-slate-800">
+                      <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                        <CreditCard className="w-7 h-7" />
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className="text-sm font-bold text-white">Back Side Not Yet Uploaded</h4>
+                        <p className="text-xs text-slate-400 leading-relaxed">
+                          You have uploaded the Front Side of your National ID. Please upload the Back Side (showing residence address & MRZ barcode) to complete the verification package.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const ref = previewDoc.referenceNumber;
+                          setPreviewDoc(null);
+                          handleOpenUploadModal('NATIONAL_ID', ref);
                         }}
+                        className="mt-2 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wider transition cursor-pointer flex items-center gap-1.5 shadow-md shadow-emerald-500/20"
                       >
-                        {/* Magnetic Stripe on Top */}
-                        <div className="h-9 w-full bg-slate-900/90 rounded-lg shadow-inner mb-3 flex items-center px-4 justify-between text-[8px] font-mono text-slate-400">
-                          <span>TRACK 1 & 2 ENCRYPTED ISO-7810</span>
-                          <span className="text-emerald-400 font-bold">● SMART NFC ACTIVE</span>
-                        </div>
-
-                        <div className="grid grid-cols-12 gap-3 items-center">
-                          <div className="col-span-8 space-y-2">
-                            <div>
-                              <div className="text-[8px] font-bold text-slate-500">
-                                អាសយដ្ឋានបច្ចុប្បន្ន / CURRENT RESIDENCE
-                              </div>
-                              <div className="text-[11px] font-bold text-slate-900 font-serif leading-snug">
-                                ផ្ទះលេខ ៤៨ ផ្លូវ ៣១៥ សង្កាត់បឹងកក់១ ខណ្ឌទួលគោក រាជធានីភ្នំពេញ
-                              </div>
-                              <div className="text-[10px] font-semibold text-slate-700 leading-snug">
-                                #48, St 315, Sangkat Boeng Kak 1, Khan Tuol Kouk, Phnom Penh
-                              </div>
-                            </div>
-
-                            <div className="text-[8px] text-slate-600 font-mono space-y-0.5 pt-1">
-                              <div>AUTHORITY: GENERAL DEPT OF IDENTIFICATION</div>
-                              <div>RECORD NO: GDI-KH-2021-0899214</div>
-                            </div>
-                          </div>
-
-                          <div className="col-span-4 flex flex-col items-center">
-                            <div className="w-20 h-24 rounded-xl border-2 border-rose-600/50 bg-rose-50/80 p-1 flex items-center justify-center shadow-inner relative">
-                              <Fingerprint className="w-16 h-16 text-rose-700/80" />
-                            </div>
-                            <span className="text-[7px] font-bold text-slate-600 font-mono mt-1 text-center">
-                              ស្នាមមេដៃស្តាំ / RIGHT THUMB
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Machine Readable Zone (MRZ) Strip */}
-                        <div className="mt-3.5 p-2 bg-slate-100/90 rounded-lg border border-slate-300 font-mono text-[9px] sm:text-[10px] text-slate-800 tracking-widest leading-relaxed shadow-inner">
-                          <div>I&lt;KHM0109923848&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;</div>
-                          <div>9210145M3101128KHM&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;8</div>
-                          <div>DOE&lt;&lt;JOHNATHAN&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;</div>
-                        </div>
-                      </div>
-                    ) : (
-                      /* Cambodian National ID Card: Front Side */
-                      <div
-                        className={`relative transition-all duration-300 mx-auto ${
-                          isPhotoZoomed ? 'scale-105' : 'scale-100'
-                        } w-full max-w-[500px] rounded-2xl shadow-2xl overflow-hidden border border-sky-300/60 bg-gradient-to-br from-[#c6e4f5] via-[#def0fa] to-[#cbe5f0] text-slate-800 p-4 sm:p-5 select-none font-sans`}
-                        style={{
-                          boxShadow:
-                            '0 20px 40px -15px rgba(14, 116, 144, 0.3), 0 0 0 1px rgba(186, 230, 253, 0.5)',
-                        }}
-                      >
-                        {/* Guilloche Overlay */}
-                        <svg
-                          className="absolute inset-0 w-full h-full opacity-15 pointer-events-none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <defs>
-                            <pattern id="guilloche-pat" width="40" height="40" patternUnits="userSpaceOnUse">
-                              <path d="M 0 20 Q 10 0 20 20 T 40 20" fill="none" stroke="#0284c7" strokeWidth="0.8" />
-                              <path d="M 0 20 Q 10 40 20 20 T 40 20" fill="none" stroke="#0369a1" strokeWidth="0.8" />
-                              <circle cx="20" cy="20" r="14" fill="none" stroke="#0284c7" strokeWidth="0.5" strokeDasharray="2,2" />
-                            </pattern>
-                          </defs>
-                          <rect width="100%" height="100%" fill="url(#guilloche-pat)" />
-                        </svg>
-
-                        {/* Card Header */}
-                        <div className="relative z-10 flex items-start justify-between border-b border-sky-900/15 pb-2.5">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-400 to-amber-200 border border-amber-600/40 p-1 flex items-center justify-center shadow-sm shrink-0">
-                            <Landmark className="w-6 h-6 text-amber-900" />
-                          </div>
-
-                          <div className="text-center flex-1 px-2">
-                            <div className="text-[12px] sm:text-[13px] font-bold text-sky-950 tracking-wider font-serif">
-                              ព្រះរាជាណាចក្រកម្ពុជា
-                            </div>
-                            <div className="text-[9px] font-extrabold text-sky-900 tracking-widest uppercase">
-                              KINGDOM OF CAMBODIA
-                            </div>
-                            <div className="text-[8px] font-semibold text-sky-800">
-                              ជាតិ សាសនា ព្រះមហាក្សត្រ • NATION RELIGION KING
-                            </div>
-                            <div className="mt-1 py-0.5 px-3 bg-sky-900/10 rounded-full border border-sky-900/20 inline-block">
-                              <span className="text-[10px] font-bold text-sky-950 font-serif">
-                                អត្តសញ្ញាណប័ណ្ណសញ្ជាតិខ្មែរ
-                              </span>
-                              <span className="text-[8px] font-extrabold text-sky-900 ml-1.5 tracking-wider">
-                                NATIONAL IDENTITY CARD
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-400/40 via-teal-300/40 to-indigo-300/40 border border-sky-400/60 p-0.5 flex flex-col items-center justify-center text-[7px] font-mono font-bold text-sky-950 shadow-inner shrink-0 rotate-6">
-                            <Sparkles className="w-3.5 h-3.5 text-sky-800 animate-spin" />
-                            <span>KHM</span>
-                          </div>
-                        </div>
-
-                        {/* Card Body */}
-                        <div className="relative z-10 mt-3 grid grid-cols-12 gap-3 items-center">
-                          <div className="col-span-4 flex flex-col items-center space-y-2">
-                            {/* Gold EMV Chip */}
-                            <div className="w-11 h-9 rounded-md bg-gradient-to-tr from-amber-400 via-amber-200 to-amber-500 border border-amber-600/60 p-1 shadow-inner relative flex items-center justify-center">
-                              <div className="w-full h-full border border-amber-700/40 rounded grid grid-cols-2 gap-0.5 p-0.5">
-                                <div className="border-r border-amber-700/40" />
-                                <div />
-                                <div className="border-r border-t border-amber-700/40" />
-                                <div className="border-t border-amber-700/40" />
-                              </div>
-                            </div>
-
-                            {/* Passport Photo */}
-                            <div className="relative w-24 h-32 rounded-xl overflow-hidden border-2 border-sky-700/60 shadow-md bg-sky-200">
-                              <img
-                                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=256"
-                                alt="Johnathan Doe"
-                                className="w-full h-full object-cover"
-                              />
-                              <div className="absolute -bottom-3 -right-3 w-12 h-12 rounded-full border-2 border-rose-600/60 text-rose-700 flex items-center justify-center text-[6px] font-bold font-serif rotate-[-15deg] bg-rose-500/10 pointer-events-none">
-                                ក្រសួង
-                              </div>
-                            </div>
-
-                            <div className="text-center">
-                              <div className="font-serif italic text-xs text-sky-950 font-bold tracking-wider -rotate-3">
-                                Johnathan Doe
-                              </div>
-                              <div className="text-[7px] text-slate-500 font-mono">ហត្ថលេខា / SIGNATURE</div>
-                            </div>
-                          </div>
-
-                          <div className="col-span-8 space-y-1.5 pl-1">
-                            <div className="flex items-center justify-between pb-1 border-b border-sky-900/15">
-                              <span className="text-[9px] font-bold text-slate-600 font-mono">
-                                លេខអត្តសញ្ញាណប័ណ្ណ / ID NO:
-                              </span>
-                              <span className="text-base sm:text-lg font-black font-mono tracking-widest text-red-700">
-                                010992384
-                              </span>
-                            </div>
-
-                            <div className="leading-tight">
-                              <div className="text-[8px] font-bold text-slate-500">
-                                គោត្តនាម និងនាម / SURNAME & GIVEN NAME
-                              </div>
-                              <div className="text-sm font-bold text-slate-950 font-serif">យ៉ូណាថាន ដូ</div>
-                              <div className="text-xs font-black text-slate-900 tracking-wider">JOHNATHAN DOE</div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[9px] pt-0.5">
-                              <div>
-                                <span className="text-[7px] text-slate-500 block">ថ្ងៃខែឆ្នាំកំណើត / DOB</span>
-                                <span className="font-bold font-mono text-slate-900">14.10.1992</span>
-                              </div>
-                              <div>
-                                <span className="text-[7px] text-slate-500 block">ភេទ • កម្ពស់ / SEX • HT</span>
-                                <span className="font-bold text-slate-900">ប្រុស / M • 1.75 m</span>
-                              </div>
-                              <div>
-                                <span className="text-[7px] text-slate-500 block">សញ្ជាតិ / NATIONALITY</span>
-                                <span className="font-bold text-slate-900">ខ្មែរ / KHM</span>
-                              </div>
-                              <div>
-                                <span className="text-[7px] text-slate-500 block">សុពលភាព / EXPIRY</span>
-                                <span className="font-bold font-mono text-emerald-800">12.01.2031</span>
-                              </div>
-                              <div className="col-span-2">
-                                <span className="text-[7px] text-slate-500 block">ទីកន្លែងកំណើត / PLACE OF BIRTH</span>
-                                <span className="font-semibold text-slate-900">រាជធានីភ្នំពេញ / Phnom Penh</span>
-                              </div>
-                            </div>
-
-                            <div className="pt-1 flex items-center justify-between">
-                              <div className="text-[7px] font-mono text-slate-500 leading-tight">
-                                <div>ISSUED: 12.01.2021</div>
-                                <div>MINISTRY OF INTERIOR</div>
-                              </div>
-
-                              <div className="w-14 h-14 rounded-full border-2 border-rose-600/80 bg-rose-500/10 p-1 flex flex-col items-center justify-center text-rose-700 text-center shadow-sm rotate-6">
-                                <span className="text-[6px] font-bold font-serif leading-none">ក្រសួងមហាផ្ទៃ</span>
-                                <span className="text-[8px] leading-none my-0.5">★</span>
-                                <span className="text-[5px] font-mono uppercase font-bold leading-none">INTERIOR</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  ) : previewDoc.documentType === 'PROOF_OF_RESIDENCE' ? (
-                    /* Cambodian Soft Title / Family Residence Certificate Photo */
-                    <div
-                      className={`relative transition-all duration-300 mx-auto ${
-                        isPhotoZoomed ? 'scale-105' : 'scale-100'
-                      } w-full max-w-[520px] rounded-2xl shadow-2xl overflow-hidden border-2 border-emerald-900/30 bg-[#fdfcf7] text-slate-900 p-5 select-none font-serif`}
-                      style={{
-                        backgroundImage:
-                          'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.9) 0%, rgba(247,243,232,0.85) 100%)',
-                        boxShadow:
-                          '0 20px 40px -15px rgba(6, 78, 59, 0.25), 0 0 0 1px rgba(167, 243, 208, 0.3)',
-                      }}
-                    >
-                      <div className="text-center pb-2.5 border-b border-emerald-900/20">
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-400 to-amber-200 border border-amber-600/40 p-1 flex items-center justify-center shadow-sm mx-auto mb-1">
-                          <Landmark className="w-5 h-5 text-amber-900" />
-                        </div>
-                        <div className="text-xs sm:text-sm font-bold text-slate-900 tracking-wide font-serif">
-                          ព្រះរាជាណាចក្រកម្ពុជា • ជាតិ សាសនា ព្រះមហាក្សត្រ
-                        </div>
-                        <div className="text-[10px] font-bold text-emerald-900 tracking-wider font-sans">
-                          KINGDOM OF CAMBODIA • NATION RELIGION KING
-                        </div>
-                        <div className="text-[9px] font-semibold text-slate-600 font-sans mt-0.5">
-                          រដ្ឋបាលរាជធានីភ្នំពេញ • សាលាខណ្ឌទួលគោក (Toul Kork District Administration)
-                        </div>
-                        <div className="mt-1.5 py-1 px-4 bg-emerald-900/10 rounded-full border border-emerald-900/20 inline-block">
-                          <span className="text-xs font-bold text-emerald-950 font-serif">
-                            លិខិតបញ្ជាក់សិទ្ធិកាន់កាប់ប្រើប្រាស់ដីធ្លី និងផ្ទះសម្បែង (ប័ណ្ណសំគាល់សិទ្ធិទន់)
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="mt-3 grid grid-cols-2 gap-2 text-[10px] font-sans pb-2 border-b border-slate-200">
-                        <div>
-                          <span className="text-slate-500 block text-[8px]">លេខយោង / REFERENCE NO:</span>
-                          <strong className="font-mono text-emerald-900 font-bold text-xs">RES-PP-99401</strong>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 block text-[8px]">សៀវភៅលេខ / REGISTER VOLUME:</span>
-                          <strong className="font-mono text-slate-800">PP-TK-VOL 88 / FOLIO 14</strong>
-                        </div>
-                        <div className="col-span-2">
-                          <span className="text-slate-500 block text-[8px]">ម្ចាស់កាន់កាប់ / CERTIFIED OCCUPANT:</span>
-                          <strong className="text-slate-900 font-bold">Johnathan Doe (សញ្ជាតិ ខ្មែរ • NID: 010992384)</strong>
-                        </div>
-                        <div className="col-span-2">
-                          <span className="text-slate-500 block text-[8px]">ទីតាំងអចលនវត្ថុ / PROPERTY LOCATION:</span>
-                          <strong className="text-slate-900">
-                            ផ្ទះលេខ ៤៨ ផ្លូវ ៣១៥ សង្កាត់បឹងកក់១ ខណ្ឌទួលគោក រាជធានីភ្នំពេញ
-                          </strong>
-                        </div>
-                      </div>
-
-                      {/* Cadastral Survey Land Plot Sketch */}
-                      <div className="mt-2.5 bg-white rounded-xl border border-slate-300 p-2.5 shadow-inner">
-                        <div className="flex items-center justify-between text-[8px] font-mono text-slate-500 pb-1 border-b border-slate-100">
-                          <span>CADASTRAL SURVEY PLAN (ប្លង់ក្បាលដី)</span>
-                          <span>PARCEL #PK-889 • AREA: 168.5 m²</span>
-                        </div>
-
-                        <div className="relative h-24 w-full flex items-center justify-center my-1 bg-slate-50/80 rounded border border-dashed border-slate-300">
-                          <div className="absolute top-1 right-2 text-[8px] font-bold font-mono text-slate-500 flex flex-col items-center">
-                            <span>▲</span>
-                            <span>N</span>
-                          </div>
-
-                          <div className="w-48 h-16 border-2 border-emerald-700 bg-emerald-500/10 rounded flex flex-col items-center justify-center text-center relative shadow-sm">
-                            <span className="text-[7px] font-mono text-emerald-800 absolute -top-3">10.00 m</span>
-                            <span className="text-[7px] font-mono text-emerald-800 absolute -bottom-3">10.00 m (St. 315)</span>
-                            <span className="text-[7px] font-mono text-emerald-800 absolute -left-7">16.85 m</span>
-                            <span className="text-[7px] font-mono text-emerald-800 absolute -right-7">16.85 m</span>
-                            <span className="text-[10px] font-bold text-emerald-950 font-mono">LOT #PK-889</span>
-                            <span className="text-[8px] font-semibold text-emerald-900">ផ្ទៃក្រឡា: 168.50 ម៉ែត្រការ៉េ</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Official Red Commune Seal & Signature */}
-                      <div className="mt-3 flex items-center justify-between pt-1">
-                        <div className="text-[8px] font-sans text-slate-600">
-                          <div>ចុះថ្ងៃទី ១០ ខែ មីនា ឆ្នាំ ២០២៤</div>
-                          <div className="font-semibold text-slate-800">ប្រធានការិយាល័យភូមិបាលខណ្ឌទួលគោក</div>
-                          <div className="font-serif italic text-xs text-blue-900 mt-1 font-bold">Phok Sokha</div>
-                        </div>
-
-                        <div className="w-16 h-16 rounded-full border-2 border-rose-600/80 bg-rose-500/10 p-1 flex flex-col items-center justify-center text-rose-700 text-center shadow-sm rotate-6">
-                          <span className="text-[6px] font-bold font-serif leading-none">រដ្ឋបាលខណ្ឌទួលគោក</span>
-                          <span className="text-[8px] leading-none my-0.5">★</span>
-                          <span className="text-[5px] font-mono uppercase font-bold leading-none">TOUL KORK SEAL</span>
-                        </div>
-                      </div>
+                        <UploadCloud className="w-4 h-4" />
+                        <span>Upload Back Side Now</span>
+                      </button>
                     </div>
                   ) : (
-                    /* Corporate Employment Contract Photo */
-                    <div
-                      className={`relative transition-all duration-300 mx-auto ${
-                        isPhotoZoomed ? 'scale-105' : 'scale-100'
-                      } w-full max-w-[520px] rounded-2xl shadow-2xl overflow-hidden border border-slate-300 bg-white text-slate-900 p-5 select-none font-sans`}
-                      style={{
-                        boxShadow:
-                          '0 20px 40px -15px rgba(30, 41, 59, 0.25), 0 0 0 1px rgba(226, 232, 240, 0.8)',
-                      }}
-                    >
-                      <div className="flex items-start justify-between border-b-2 border-slate-900 pb-2.5">
-                        <div className="space-y-0.5">
-                          <div className="text-xs sm:text-sm font-black tracking-tight text-slate-950 font-mono">
-                            JAM SONG VICH TECHNOLOGY GROUP (CAMBODIA) CO., LTD.
-                          </div>
-                          <div className="text-[9px] font-bold text-slate-600 uppercase tracking-wider">
-                            FINTECH & CORE BANKING SYSTEMS DIVISION
-                          </div>
-                          <div className="text-[8px] text-slate-500 font-mono">
-                            MOC Reg #00049281-KH • #128 Norodom Blvd, Chamkarmon, Phnom Penh
-                          </div>
-                        </div>
-                        <div className="w-9 h-9 rounded-xl bg-slate-900 text-emerald-400 font-mono font-bold flex items-center justify-center text-xs shadow shrink-0">
-                          JSV
-                        </div>
+                    <div className="flex flex-col items-center justify-center p-8 text-center max-w-md mx-auto space-y-3 bg-slate-900/60 rounded-xl border border-slate-800">
+                      <div className="w-14 h-14 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400">
+                        <FileText className="w-7 h-7" />
                       </div>
-
-                      <div className="my-2.5 text-center">
-                        <div className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
-                          CERTIFIED EXECUTIVE EMPLOYMENT & SALARY CONTRACT
-                        </div>
-                        <div className="text-[9px] font-mono text-slate-500">
-                          Ref: <strong className="text-slate-800">EMP-CORP-2026</strong> • Effective Date: January 1, 2024
-                        </div>
+                      <div className="space-y-1">
+                        <h4 className="text-sm font-bold text-white">No Document Photo Uploaded Yet</h4>
+                        <p className="text-xs text-slate-400 leading-relaxed">
+                          No scanned photo is currently stored for this document. Please upload an authentic image or PDF to proceed.
+                        </p>
                       </div>
-
-                      <div className="bg-slate-50 rounded-lg p-2.5 border border-slate-200 grid grid-cols-2 gap-2 text-[10px]">
-                        <div>
-                          <span className="text-[8px] text-slate-500 block">EXECUTIVE BORROWER:</span>
-                          <strong className="text-slate-900 font-bold">Johnathan Doe</strong>
-                        </div>
-                        <div>
-                          <span className="text-[8px] text-slate-500 block">DESIGNATION / ROLE:</span>
-                          <strong className="text-slate-900 font-semibold">Principal Core Banking Systems Engineer</strong>
-                        </div>
-                        <div>
-                          <span className="text-[8px] text-slate-500 block">EMPLOYEE ID:</span>
-                          <span className="font-mono text-slate-800">EMP-8801</span>
-                        </div>
-                        <div>
-                          <span className="text-[8px] text-slate-500 block">EMPLOYMENT TENURE:</span>
-                          <span className="font-semibold text-emerald-700">Permanent Confirmed (Active Standing)</span>
-                        </div>
-                      </div>
-
-                      <div className="my-2.5 p-3 rounded-xl bg-emerald-50 border-2 border-emerald-500/40 space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-950 font-mono">
-                            Verified Net Monthly Remuneration
-                          </span>
-                          <span className="px-1.5 py-0.5 rounded bg-emerald-600 text-white font-mono font-bold text-[9px]">
-                            CLEARED FOR CREDIT
-                          </span>
-                        </div>
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-xl sm:text-2xl font-black font-mono text-emerald-900">$2,800.00 USD</span>
-                          <span className="text-[10px] text-emerald-800 font-medium">(Two Thousand Eight Hundred USD / Month)</span>
-                        </div>
-                        <div className="text-[8px] font-mono text-slate-600 pt-0.5 border-t border-emerald-200">
-                          Disbursement: ACLEDA Core Payroll Clearance • Dedicated Direct Deposit: #0100-XXXX-8821
-                        </div>
-                      </div>
-
-                      <div className="pt-1 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-12 h-12 bg-slate-100 rounded-lg border border-slate-300 p-1 flex items-center justify-center">
-                            <QrCode className="w-10 h-10 text-slate-800" />
-                          </div>
-                          <div className="text-[7px] font-mono text-slate-500 leading-tight">
-                            <div>HASH: NBC-KYC-HR-89211</div>
-                            <div>PAYROLL REGISTRY VERIFIED</div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                          <div className="text-right">
-                            <div className="font-serif italic text-xs text-blue-900 font-bold -rotate-3">
-                              Sokha Vannak
-                            </div>
-                            <div className="text-[7px] font-mono text-slate-500">GROUP MANAGING DIRECTOR</div>
-                          </div>
-
-                          <div className="w-14 h-14 rounded-full border-2 border-rose-600/80 bg-rose-500/10 p-1 flex flex-col items-center justify-center text-rose-700 text-center shadow-sm rotate-6">
-                            <span className="text-[5px] font-bold font-mono leading-none">JAM SONG VICH</span>
-                            <span className="text-[7px] leading-none my-0.5">★</span>
-                            <span className="text-[5px] font-bold uppercase font-mono leading-none">CORP SEAL</span>
-                          </div>
-                        </div>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const docType = previewDoc.documentType;
+                          const ref = previewDoc.referenceNumber;
+                          setPreviewDoc(null);
+                          handleOpenUploadModal(docType, ref);
+                        }}
+                        className="mt-2 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wider transition cursor-pointer flex items-center gap-1.5 shadow-md shadow-emerald-500/20"
+                      >
+                        <UploadCloud className="w-4 h-4" />
+                        <span>Upload Document Now</span>
+                      </button>
                     </div>
                   )}
                 </div>
@@ -1239,7 +971,9 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
                   <div className="flex items-center gap-1.5 truncate">
                     <span className="text-slate-500">File:</span>
                     <span className="text-slate-200 font-semibold truncate">
-                      {previewDoc.originalFilename}
+                      {previewDoc.documentType === 'NATIONAL_ID' && idCardSide === 'back'
+                        ? previewDoc.backOriginalFilename || 'national_id_back.png'
+                        : previewDoc.originalFilename}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5 truncate">
@@ -1298,7 +1032,7 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
                   </button>
 
                   <a
-                    href={previewDoc.viewUrl || '#'}
+                    href={activeDisplayUrl || previewDoc.viewUrl || '#'}
                     target="_blank"
                     rel="noreferrer"
                     className="px-4 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-750 text-slate-300 font-semibold text-xs transition inline-flex items-center gap-1.5"
@@ -1371,59 +1105,221 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
                 />
               </div>
 
-              {/* Drag & Drop Zone */}
-              <div>
-                <label className="block font-semibold text-slate-300 mb-1.5 font-mono">
-                  Document File (.pdf, .jpg, .png up to 10MB):
-                </label>
+              {/* Drag & Drop Zone: Dual-side dropzone for National ID, single for other documents */}
+              {uploadTargetDocType === 'NATIONAL_ID' ? (
+                <div className="space-y-3">
+                  <div className="p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/20 text-xs text-sky-300 flex items-center gap-2 font-mono">
+                    <CreditCard className="w-4 h-4 text-sky-400 shrink-0" />
+                    <span>National Bank of Cambodia regulations require both <strong>Front Side</strong> and <strong>Back Side</strong> scans.</span>
+                  </div>
 
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf,image/jpeg,image/png"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleFileSelect(file);
-                  }}
-                />
+                  {/* Front Side Dropzone */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="font-semibold text-slate-200 text-xs flex items-center gap-1.5 font-mono">
+                        <CreditCard className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>1. Front Side (Face Portrait & Personal Details):</span>
+                      </label>
+                      {selectedFile && (
+                        <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded font-bold">
+                          READY
+                        </span>
+                      )}
+                    </div>
 
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    const file = e.dataTransfer.files?.[0];
-                    if (file) handleFileSelect(file);
-                  }}
-                  className={`p-6 border-2 border-dashed rounded-2xl text-center cursor-pointer transition-all ${
-                    selectedFile
-                      ? 'border-emerald-500/60 bg-emerald-500/5'
-                      : 'border-slate-800 hover:border-emerald-500/40 bg-slate-950/60'
-                  }`}
-                >
-                  {selectedFile ? (
-                    <div className="space-y-1">
-                      <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
-                      <p className="text-sm font-bold text-white">{selectedFile.name}</p>
-                      <p className="text-[11px] font-mono text-emerald-400">
-                        {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • {selectedFile.type}
-                      </p>
-                      <p className="text-[10px] text-slate-500 pt-1">Click to replace file</p>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf,image/jpeg,image/png"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileSelect(file);
+                      }}
+                    />
+
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const file = e.dataTransfer.files?.[0];
+                        if (file) handleFileSelect(file);
+                      }}
+                      className={`p-3.5 border-2 border-dashed rounded-xl text-center cursor-pointer transition-all ${
+                        selectedFile
+                          ? 'border-emerald-500/60 bg-emerald-500/5'
+                          : 'border-slate-800 hover:border-emerald-500/40 bg-slate-950/60'
+                      }`}
+                    >
+                      {selectedFile ? (
+                        <div className="flex items-center justify-between text-left gap-2">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold text-white truncate">{selectedFile.name}</p>
+                              <p className="text-[10px] font-mono text-emerald-400">
+                                {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • {selectedFile.type || 'image'}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedFile(null);
+                              if (fileInputRef.current) fileInputRef.current.value = '';
+                            }}
+                            className="text-xs text-rose-400 hover:text-rose-300 font-mono px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/20 shrink-0"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-1 py-1">
+                          <UploadCloud className="w-5 h-5 text-slate-500 mx-auto" />
+                          <p className="text-xs font-bold text-slate-200">
+                            Click or drag & drop Front Side photo here
+                          </p>
+                          <p className="text-[10px] text-slate-500">
+                            Portrait photo, personal details (.pdf, .jpg, .png up to 10MB)
+                          </p>
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <div className="space-y-1">
-                      <UploadCloud className="w-8 h-8 text-slate-500 mx-auto mb-2" />
-                      <p className="text-xs font-bold text-white">
-                        Click or drag & drop document file here
-                      </p>
-                      <p className="text-[11px] text-slate-500">
-                        Strict 10MB ceiling • 256-bit SSL encrypted transit
-                      </p>
+                  </div>
+
+                  {/* Back Side Dropzone */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="font-semibold text-slate-200 text-xs flex items-center gap-1.5 font-mono">
+                        <RefreshCw className="w-3.5 h-3.5 text-sky-400" />
+                        <span>2. Back Side (Address & MRZ Barcode):</span>
+                      </label>
+                      {selectedBackFile && (
+                        <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded font-bold">
+                          READY
+                        </span>
+                      )}
                     </div>
-                  )}
+
+                    <input
+                      ref={backFileInputRef}
+                      type="file"
+                      accept=".pdf,image/jpeg,image/png"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleBackFileSelect(file);
+                      }}
+                    />
+
+                    <div
+                      onClick={() => backFileInputRef.current?.click()}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const file = e.dataTransfer.files?.[0];
+                        if (file) handleBackFileSelect(file);
+                      }}
+                      className={`p-3.5 border-2 border-dashed rounded-xl text-center cursor-pointer transition-all ${
+                        selectedBackFile
+                          ? 'border-emerald-500/60 bg-emerald-500/5'
+                          : 'border-slate-800 hover:border-sky-500/40 bg-slate-950/60'
+                      }`}
+                    >
+                      {selectedBackFile ? (
+                        <div className="flex items-center justify-between text-left gap-2">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold text-white truncate">{selectedBackFile.name}</p>
+                              <p className="text-[10px] font-mono text-emerald-400">
+                                {(selectedBackFile.size / (1024 * 1024)).toFixed(2)} MB • {selectedBackFile.type || 'image'}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedBackFile(null);
+                              if (backFileInputRef.current) backFileInputRef.current.value = '';
+                            }}
+                            className="text-xs text-rose-400 hover:text-rose-300 font-mono px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/20 shrink-0"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-1 py-1">
+                          <UploadCloud className="w-5 h-5 text-slate-500 mx-auto" />
+                          <p className="text-xs font-bold text-slate-200">
+                            Click or drag & drop Back Side photo here
+                          </p>
+                          <p className="text-[10px] text-slate-500">
+                            Residence address, fingerprint, MRZ barcode (.pdf, .jpg, .png up to 10MB)
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                /* Single Drag & Drop Zone for Proof of Residence & Employment Contract */
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1.5 font-mono">
+                    Document File (.pdf, .jpg, .png up to 10MB):
+                  </label>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,image/jpeg,image/png"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleFileSelect(file);
+                    }}
+                  />
+
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const file = e.dataTransfer.files?.[0];
+                      if (file) handleFileSelect(file);
+                    }}
+                    className={`p-6 border-2 border-dashed rounded-2xl text-center cursor-pointer transition-all ${
+                      selectedFile
+                        ? 'border-emerald-500/60 bg-emerald-500/5'
+                        : 'border-slate-800 hover:border-emerald-500/40 bg-slate-950/60'
+                    }`}
+                  >
+                    {selectedFile ? (
+                      <div className="space-y-1">
+                        <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
+                        <p className="text-sm font-bold text-white">{selectedFile.name}</p>
+                        <p className="text-[11px] font-mono text-emerald-400">
+                          {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • {selectedFile.type}
+                        </p>
+                        <p className="text-[10px] text-slate-500 pt-1">Click to replace file</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        <UploadCloud className="w-8 h-8 text-slate-500 mx-auto mb-2" />
+                        <p className="text-xs font-bold text-white">
+                          Click or drag & drop document file here
+                        </p>
+                        <p className="text-[11px] text-slate-500">
+                          Strict 10MB ceiling • 256-bit SSL encrypted transit
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Progress Bar during upload */}
               {isUploading && (
@@ -1453,9 +1349,9 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
 
                 <button
                   type="submit"
-                  disabled={isUploading || !selectedFile}
+                  disabled={isUploading || (!selectedFile && !selectedBackFile)}
                   className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition ${
-                    isUploading || !selectedFile
+                    isUploading || (!selectedFile && !selectedBackFile)
                       ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
                       : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-md shadow-emerald-500/20 cursor-pointer'
                   }`}

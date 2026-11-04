@@ -19,7 +19,7 @@ const STORE_DOCUMENTS = 'kyc_documents';
 export interface StoredKycFile {
   key: string; // `${userId}_${docType}`
   userId: string;
-  docType: KycDocType;
+  docType: KycDocType | string;
   dataUrl: string;
   fileName: string;
   mimeType: string;
@@ -87,7 +87,7 @@ class KycVaultStorageService {
    */
   public async saveFile(
     userId: string,
-    docType: KycDocType,
+    docType: KycDocType | string,
     dataUrl: string,
     metadata: { fileName: string; mimeType: string; fileSize: number }
   ): Promise<void> {
@@ -142,7 +142,7 @@ class KycVaultStorageService {
   /**
    * Retrieves permanently saved file Data URL
    */
-  public async getFile(userId: string, docType: KycDocType): Promise<string | null> {
+  public async getFile(userId: string, docType: KycDocType | string): Promise<string | null> {
     const cleanUserId = (userId || 'BOR-2026-8801').trim();
     const key = `${cleanUserId}_${docType}`;
 
@@ -294,3 +294,4 @@ class KycVaultStorageService {
 }
 
 export const kycVaultStorage = new KycVaultStorageService();
+

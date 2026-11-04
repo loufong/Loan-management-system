@@ -33,6 +33,8 @@ export interface FrontendKycDocument {
   rejectionReason?: string | null;
   uploadedAt: string;
   viewUrl?: string;
+  backViewUrl?: string;
+  backOriginalFilename?: string;
 }
 
 export interface FrontendKycSummary {
@@ -169,6 +171,8 @@ class FrontendKycService {
                 verifiedAt: matchingLocal.verifiedAt || serverDoc.verifiedAt,
                 rejectionReason: matchingLocal.rejectionReason,
                 viewUrl: matchingLocal.viewUrl || serverDoc.viewUrl,
+                backViewUrl: matchingLocal.backViewUrl || serverDoc.backViewUrl,
+                backOriginalFilename: matchingLocal.backOriginalFilename || serverDoc.backOriginalFilename,
               };
             }
             return matchingLocal || serverDoc;
@@ -326,6 +330,8 @@ class FrontendKycService {
     mimeType: string;
     userId?: string;
     viewUrl?: string;
+    backViewUrl?: string;
+    backOriginalFilename?: string;
   }): Promise<FrontendKycDocument> {
     const cleanUserId = (params.userId || 'BOR-2026-8801').trim();
     const token = localStorage.getItem('apex_token') || sessionStorage.getItem('apex_token');
@@ -352,7 +358,9 @@ class FrontendKycService {
 
     const persistentUrl =
       params.viewUrl ||
+      (await kycVaultStorage.getFile(cleanUserId, params.documentType === 'NATIONAL_ID' ? 'NATIONAL_ID_FRONT' : params.documentType)) ||
       (await kycVaultStorage.getFile(cleanUserId, params.documentType)) ||
+      (idx >= 0 ? localDocs[idx].viewUrl : undefined) ||
       this.uploadedBlobCache.get(params.fileKey) ||
       this.uploadedBlobCache.get(params.originalFilename);
 
@@ -376,6 +384,11 @@ class FrontendKycService {
       rejectionReason: null,
       uploadedAt: new Date().toISOString(),
       viewUrl: persistentUrl || `https://storage.jamsongvich.com/vault/${params.fileKey}?token=sig-${Date.now()}`,
+      backViewUrl:
+        params.backViewUrl ||
+        (await kycVaultStorage.getFile(cleanUserId, 'NATIONAL_ID_BACK')) ||
+        (idx >= 0 ? localDocs[idx].backViewUrl : undefined),
+      backOriginalFilename: params.backOriginalFilename || (idx >= 0 ? localDocs[idx].backOriginalFilename : undefined),
     };
 
     if (idx >= 0) {

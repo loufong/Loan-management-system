@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
+  Sliders,
   Globe,
   Bell,
   Shield,
@@ -28,6 +29,7 @@ import {
   ShieldCheck,
   Building2,
   RotateCcw,
+  AlertTriangle,
 } from 'lucide-react';
 import { Currency, UserProfile } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
@@ -56,24 +58,24 @@ function getClientDeviceInfo() {
   if (typeof window === 'undefined') {
     return {
       os: 'Windows 11',
-      browser: 'Chrome 130',
-      device: 'Desktop Chrome 130 (Windows 11)',
+      browser: 'Chrome',
+      device: 'Desktop Chrome (Windows 11)',
     };
   }
   const ua = navigator.userAgent;
-  let os = 'Windows 11 PC';
+  let os = 'Windows PC';
   if (ua.includes('Win')) os = 'Windows 11';
   else if (ua.includes('Mac')) os = 'macOS';
   else if (ua.includes('Linux')) os = 'Linux';
-  else if (ua.includes('Android')) os = 'Android Mobile';
+  else if (ua.includes('Android')) os = 'Android';
   else if (ua.includes('iPhone')) os = 'iPhone iOS';
   else if (ua.includes('iPad')) os = 'iPad iOS';
 
   let browser = 'Chrome';
-  if (ua.includes('Edg/')) browser = 'Microsoft Edge';
+  if (ua.includes('Edg/')) browser = 'Edge';
   else if (ua.includes('Chrome/')) browser = 'Chrome';
   else if (ua.includes('Firefox/')) browser = 'Firefox';
-  else if (ua.includes('Safari/') && !ua.includes('Chrome/')) browser = 'Safari Mobile';
+  else if (ua.includes('Safari/') && !ua.includes('Chrome/')) browser = 'Safari';
 
   return {
     os,
@@ -81,6 +83,30 @@ function getClientDeviceInfo() {
     device: `Desktop ${browser} (${os})`,
   };
 }
+
+// Human-crafted, accessible Toggle Switch
+const ToggleSwitch: React.FC<{
+  checked: boolean;
+  onChange: (val: boolean) => void;
+  disabled?: boolean;
+}> = ({ checked, onChange, disabled }) => (
+  <button
+    type="button"
+    role="switch"
+    aria-checked={checked}
+    disabled={disabled}
+    onClick={() => onChange(!checked)}
+    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+      checked ? 'bg-emerald-500' : 'bg-slate-800'
+    } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+  >
+    <span
+      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+        checked ? 'translate-x-5' : 'translate-x-0'
+      }`}
+    />
+  </button>
+);
 
 export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
   currentUser,
@@ -91,7 +117,10 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
 }) => {
   const { language, setLanguage, t } = useLanguage();
 
-  // Category 1: Localization & Display State
+  // Active Tab: 'general' | 'notifications' | 'security' | 'banking' | 'danger'
+  const [activeTab, setActiveTab] = useState<'general' | 'notifications' | 'security' | 'banking' | 'danger'>('general');
+
+  // Currency State
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('apex_currency') as Currency;
@@ -100,14 +129,13 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
     return appCurrency || 'USD';
   });
 
-  // Keep synced with parent currency prop
   useEffect(() => {
     if (appCurrency) {
       setSelectedCurrency(appCurrency);
     }
   }, [appCurrency]);
 
-  // Category 2: Notifications & Due Date Alerts State (Persisted)
+  // Notifications State
   const [telegramAlerts, setTelegramAlerts] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('jam_setting_telegram');
@@ -141,15 +169,7 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
     return true;
   });
 
-  const [khqrPushReceipts, setKhqrPushReceipts] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('jam_setting_khqr_receipts');
-      if (stored !== null) return stored === 'true';
-    }
-    return true;
-  });
-
-  // Category 3: Security & Access Management State
+  // Security & Password State
   const [currentPassword, setCurrentPassword] = useState<string>('');
   const [newPassword, setNewPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
@@ -160,18 +180,18 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
   const [passChangeSuccess, setPassChangeSuccess] = useState<boolean>(false);
   const [passError, setPassError] = useState<string | null>(null);
 
-  // 2FA Mode: 'DIRECT' (Disabled/Recommended) | 'BAKONG' | 'EMAIL'
+  // 2FA Mode
   const [twoFactorMode, setTwoFactorMode] = useState<'DIRECT' | 'BAKONG' | 'EMAIL'>(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('apex_2fa_mode');
       if (stored === 'DIRECT' || stored === 'BAKONG' || stored === 'EMAIL') return stored;
     }
-    return 'DIRECT'; // Default direct access to avoid blocking OTP issues
+    return 'DIRECT';
   });
 
   const [is2FaModalOpen, setIs2FaModalOpen] = useState(false);
 
-  // Active Sessions State (Dynamically populated from client environment)
+  // Active Sessions
   const [activeSessions, setActiveSessions] = useState<ActiveSessionItem[]>(() => {
     const client = getClientDeviceInfo();
     const defaultSessions: ActiveSessionItem[] = [
@@ -179,13 +199,13 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
         id: 'sess-current',
         device: client.device,
         location: 'Phnom Penh, Cambodia',
-        ip: '119.82.253.14 (COM7007)',
+        ip: '119.82.253.14',
         isCurrent: true,
         lastActive: 'Active now',
       },
       {
         id: 'sess-mobile',
-        device: 'iPhone 15 Pro (Safari Mobile)',
+        device: 'iPhone 15 Pro (Safari)',
         location: 'Phnom Penh, Cambodia',
         ip: '119.82.250.88',
         isCurrent: false,
@@ -207,31 +227,29 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
+    setTimeout(() => setToastMessage(null), 3000);
     onShowToast?.(msg);
   };
 
-  // 1. Language Toggle Handler
+  // Handlers
   const handleLanguageSelect = (lang: 'en' | 'km') => {
     setLanguage(lang as any);
     if (typeof window !== 'undefined') {
       localStorage.setItem('jam_language', lang);
       localStorage.setItem('apex_language', lang);
     }
-    showToast(lang === 'en' ? 'System language set to English (US)' : 'ភាសាប្រព័ន្ធត្រូវបានកំណត់ជា ភាសាខ្មែរ (Khmer)');
+    showToast(lang === 'en' ? 'Language set to English' : 'ភាសាត្រូវបានកំណត់ជា ភាសាខ្មែរ');
   };
 
-  // 2. Currency Toggle Handler
   const handleCurrencySelect = (curr: Currency) => {
     setSelectedCurrency(curr);
     onToggleCurrency(curr);
     if (typeof window !== 'undefined') {
       localStorage.setItem('apex_currency', curr);
     }
-    showToast(`Default accounting benchmark updated to ${curr}`);
+    showToast(`Currency changed to ${curr}`);
   };
 
-  // 3. Save Notification Preferences
   const handleSaveNotifications = (e?: React.FormEvent) => {
     e?.preventDefault();
     setIsSavingPreferences(true);
@@ -240,16 +258,14 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
       localStorage.setItem('jam_setting_telegram_user', telegramUsername);
       localStorage.setItem('jam_setting_sms', String(smsReminders));
       localStorage.setItem('jam_setting_email', String(emailStatements));
-      localStorage.setItem('jam_setting_khqr_receipts', String(khqrPushReceipts));
     }
 
     setTimeout(() => {
       setIsSavingPreferences(false);
-      showToast('Notification & dispatch preferences saved successfully.');
-    }, 400);
+      showToast('Notification settings saved.');
+    }, 300);
   };
 
-  // 4. Change Password Handler with Real Storage & API Sync
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPassError(null);
@@ -260,15 +276,15 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
       return;
     }
     if (newPassword.length < 8) {
-      setPassError('New password must be at least 8 characters long.');
+      setPassError('Password must be at least 8 characters.');
       return;
     }
     if (newPassword !== confirmPassword) {
-      setPassError('New password and confirmation do not match.');
+      setPassError('New passwords do not match.');
       return;
     }
     if (newPassword === currentPassword) {
-      setPassError('New password must be different from current password.');
+      setPassError('New password must be different.');
       return;
     }
 
@@ -285,8 +301,8 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      showToast(res.message || 'Password successfully updated.');
-      setTimeout(() => setPassChangeSuccess(false), 5000);
+      showToast(res.message || 'Password updated.');
+      setTimeout(() => setPassChangeSuccess(false), 4000);
     } catch (err: any) {
       setIsChangingPass(false);
       const msg = err?.message || err?.error || 'Failed to update password. Please check your credentials.';
@@ -294,7 +310,6 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
     }
   };
 
-  // 5. 2FA Configuration
   const handleSelect2FaMode = (mode: 'DIRECT' | 'BAKONG' | 'EMAIL') => {
     setTwoFactorMode(mode);
     if (typeof window !== 'undefined') {
@@ -303,684 +318,612 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
     setIs2FaModalOpen(false);
     const label =
       mode === 'DIRECT'
-        ? 'Direct One-Step Access (OTP bypassed)'
+        ? 'Direct Access'
         : mode === 'BAKONG'
-        ? 'Bakong KHQR Authenticator Protection'
-        : 'Gmail Multi-Factor OTP Verification';
-    showToast(`2FA security policy set to: ${label}`);
+        ? 'Bakong Authenticator'
+        : 'Email OTP';
+    showToast(`2FA updated: ${label}`);
   };
 
-  // 6. Terminate Other Sessions
   const handleTerminateOtherSessions = () => {
     const remaining = activeSessions.filter((s) => s.isCurrent);
     setActiveSessions(remaining);
     if (typeof window !== 'undefined') {
       localStorage.setItem('jam_active_sessions', JSON.stringify(remaining));
     }
-    showToast('All other device sessions have been safely terminated and revoked.');
+    showToast('Signed out of other devices.');
   };
 
-  // Borrower real profile details
   const borrowerName = currentUser?.fullName || currentUser?.name || 'Johnathan Doe';
   const borrowerEmail = currentUser?.email || 'luofong03@gmail.com';
   const borrowerPhone = currentUser?.phone || '+855 12 345 678';
   const maskedPhone = borrowerPhone.replace(/(\+855\s*\d{2})\d+(\d{3})/, '$1 ••• $2');
 
+  const tabs = [
+    { id: 'general', label: 'General', icon: Sliders },
+    { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'security', label: 'Security', icon: Shield },
+    { id: 'banking', label: 'Bank Accounts', icon: Landmark },
+    { id: 'danger', label: 'Data & Reset', icon: RotateCcw },
+  ] as const;
+
   return (
-    <div className="max-w-6xl mx-auto space-y-6 pb-12">
-      {/* Toast popup */}
+    <div className="max-w-4xl mx-auto space-y-6 pb-12 font-sans text-slate-100">
+      {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-slate-900 border border-emerald-500/40 text-emerald-400 shadow-2xl animate-fade-in text-xs font-semibold">
+        <div className="fixed top-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 border border-emerald-500/40 text-emerald-400 shadow-xl text-xs font-semibold animate-fade-in">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* 1. HEADER SECTION                                                         */}
-      {/* ========================================================================= */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm">
-        <div>
-          {/* Breadcrumb Trail */}
-          <div className="flex items-center gap-2 text-xs text-slate-400 mb-1.5">
-            <span className="text-slate-500 font-medium">Core Banking</span>
-            <span>/</span>
-            <span className="font-bold text-emerald-400 uppercase tracking-wider">
-              Settings
-            </span>
-          </div>
+      {/* Page Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-white tracking-tight">Settings</h1>
+        <p className="text-sm text-slate-400 mt-1">
+          Manage your account preferences, notifications, and security.
+        </p>
+      </div>
 
-          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-            Account Settings
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Manage your language, alerts, and password security.
-          </p>
-        </div>
+      {/* Clean Tab Navigation Pills */}
+      <div className="flex items-center gap-2 border-b border-slate-800 pb-3 overflow-x-auto no-scrollbar">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                isActive
+                  ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-xs'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-850 border border-transparent'
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5 shrink-0" />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. SETTINGS CATEGORIES GRID                                               */}
+      {/* TAB 1: GENERAL (Language & Currency)                                      */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        {/* Category 1: Language & Currency */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm space-y-5">
-          <div className="flex items-center gap-2 pb-3 border-b border-slate-800">
-            <Globe className="w-4 h-4 text-emerald-400" />
-            <h2 className="text-xs font-bold text-white uppercase tracking-wider">
-              1. Language & Currency
-            </h2>
-          </div>
+      {activeTab === 'general' && (
+        <div className="space-y-6">
+          {/* Display Language Card */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+            <div>
+              <h2 className="text-sm font-bold text-white">Display Language</h2>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Choose the language you prefer for the interface.
+              </p>
+            </div>
 
-          {/* Language Selector: English (US) vs Khmer */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
-              Display Language
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* English (US) Card */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg">
               <button
                 type="button"
                 onClick={() => handleLanguageSelect('en')}
-                className={`p-3.5 rounded-xl border text-left transition cursor-pointer ${
+                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
                   language === 'en'
-                    ? 'bg-slate-950 border-emerald-500 ring-1 ring-emerald-500/50 shadow-md'
+                    ? 'bg-slate-950 border-emerald-500 ring-1 ring-emerald-500/30'
                     : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-400'
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                    <span>English (US)</span>
-                  </span>
-                  {language === 'en' && <Check className="w-4 h-4 text-emerald-400" />}
+                <div>
+                  <div className="text-xs font-bold text-white">English (US)</div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">Standard English</div>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1">English display</p>
+                {language === 'en' && <Check className="w-4 h-4 text-emerald-400" />}
               </button>
 
-              {/* ភាសាខ្មែរ (Khmer) Card */}
               <button
                 type="button"
                 onClick={() => handleLanguageSelect('km')}
-                className={`p-3.5 rounded-xl border text-left transition cursor-pointer ${
+                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
                   language === 'km'
-                    ? 'bg-slate-950 border-emerald-500 ring-1 ring-emerald-500/50 shadow-md'
+                    ? 'bg-slate-950 border-emerald-500 ring-1 ring-emerald-500/30'
                     : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-400'
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-white flex items-center gap-1.5 font-suwannaphum">
-                    <span>ភាសាខ្មែរ (Khmer)</span>
-                  </span>
-                  {language === 'km' && <Check className="w-4 h-4 text-emerald-400" />}
+                <div>
+                  <div className="text-xs font-bold text-white font-suwannaphum">ភាសាខ្មែរ (Khmer)</div>
+                  <div className="text-[11px] text-slate-400 mt-0.5 font-suwannaphum">ភាសាខ្មែរ</div>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1 font-suwannaphum">ភាសាខ្មែរ</p>
+                {language === 'km' && <Check className="w-4 h-4 text-emerald-400" />}
               </button>
             </div>
           </div>
 
-          {/* Default Accounting Currency */}
-          <div className="space-y-2 pt-2">
-            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
-              Default Currency
-            </label>
-            <div className="grid grid-cols-2 gap-3">
+          {/* Default Currency Card */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+            <div>
+              <h2 className="text-sm font-bold text-white">Default Currency</h2>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Select your primary currency for loan calculations and balances.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg">
               <button
                 type="button"
                 onClick={() => handleCurrencySelect('USD')}
-                className={`p-3.5 rounded-xl border text-left transition cursor-pointer ${
+                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
                   selectedCurrency === 'USD'
-                    ? 'bg-slate-950 border-emerald-500 ring-1 ring-emerald-500/50 shadow-md'
+                    ? 'bg-slate-950 border-emerald-500 ring-1 ring-emerald-500/30'
                     : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-400'
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold font-mono text-white">USD ($) Dollar</span>
-                  {selectedCurrency === 'USD' && <Check className="w-4 h-4 text-emerald-400" />}
+                <div>
+                  <div className="text-xs font-bold text-white">USD ($)</div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">United States Dollar</div>
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1">US Dollar ($)</p>
+                {selectedCurrency === 'USD' && <Check className="w-4 h-4 text-emerald-400" />}
               </button>
 
               <button
                 type="button"
                 onClick={() => handleCurrencySelect('KHR')}
-                className={`p-3.5 rounded-xl border text-left transition cursor-pointer ${
+                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
                   selectedCurrency === 'KHR'
-                    ? 'bg-slate-950 border-emerald-500 ring-1 ring-emerald-500/50 shadow-md'
+                    ? 'bg-slate-950 border-emerald-500 ring-1 ring-emerald-500/30'
                     : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-400'
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold font-mono text-white">KHR (៛) Riel</span>
-                  {selectedCurrency === 'KHR' && <Check className="w-4 h-4 text-emerald-400" />}
+                <div>
+                  <div className="text-xs font-bold text-white">KHR (៛)</div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">Cambodian Riel (4,000 / USD)</div>
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1">Rate: 4,000 KHR / USD</p>
+                {selectedCurrency === 'KHR' && <Check className="w-4 h-4 text-emerald-400" />}
               </button>
             </div>
           </div>
         </div>
+      )}
 
-        {/* Category 2: Notifications & Due Date Alerts */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm space-y-5">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-            <div className="flex items-center gap-2">
-              <Bell className="w-4 h-4 text-emerald-400" />
-              <h2 className="text-xs font-bold text-white uppercase tracking-wider">
-                2. Alerts & Reminders
-              </h2>
-            </div>
-            <button
-              type="button"
-              onClick={handleSaveNotifications}
-              disabled={isSavingPreferences}
-              className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[11px] font-bold flex items-center gap-1 transition cursor-pointer"
-            >
-              <Save className="w-3 h-3" />
-              <span>{isSavingPreferences ? 'Saving...' : 'Save'}</span>
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            {/* Toggle: Telegram Alerts */}
-            <div className="p-4 rounded-xl bg-slate-950 border border-slate-850 flex items-start justify-between gap-4">
-              <div className="space-y-1">
+      {/* ========================================================================= */}
+      {/* TAB 2: NOTIFICATIONS (Telegram, SMS, Email)                               */}
+      {/* ========================================================================= */}
+      {activeTab === 'notifications' && (
+        <form onSubmit={handleSaveNotifications} className="space-y-6">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl divide-y divide-slate-800">
+            {/* Telegram Alerts */}
+            <div className="p-6 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              <div className="space-y-1.5 max-w-lg">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                    <Send className="w-3.5 h-3.5 text-sky-400" />
-                    Telegram Alerts
-                  </span>
-                  <span className="text-[9px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
-                    CONNECTED
+                  <span className="text-sm font-bold text-white">Telegram Alerts</span>
+                  <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                    Active
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Due date alerts and payment receipts sent to your Telegram.
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Get instant payment reminders and receipts sent to your Telegram account.
                 </p>
-                <div className="flex items-center gap-2 pt-0.5">
-                  <span className="text-[11px] text-slate-400">Bot:</span>
-                  <input
-                    type="text"
-                    value={telegramUsername}
-                    onChange={(e) => {
-                      setTelegramUsername(e.target.value);
-                      if (typeof window !== 'undefined') {
-                        localStorage.setItem('jam_setting_telegram_user', e.target.value);
-                      }
-                    }}
-                    placeholder="@JamSongVichBot"
-                    className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-[11px] font-mono text-sky-400 focus:outline-none focus:border-sky-500 w-44"
-                  />
-                  <a
-                    href="https://t.me"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-[11px] text-sky-400 hover:underline inline-flex items-center gap-0.5"
-                  >
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
-              </div>
 
-              <input
-                type="checkbox"
-                checked={telegramAlerts}
-                onChange={(e) => {
-                  setTelegramAlerts(e.target.checked);
-                  if (typeof window !== 'undefined') {
-                    localStorage.setItem('jam_setting_telegram', String(e.target.checked));
-                  }
-                  showToast(e.target.checked ? 'Telegram notifications enabled' : 'Telegram notifications paused');
-                }}
-                className="w-5 h-5 rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500 cursor-pointer mt-1"
-              />
-            </div>
-
-            {/* Toggle: SMS Reminders */}
-            <div className="p-4 rounded-xl bg-slate-950 border border-slate-850 flex items-center justify-between gap-4">
-              <div className="space-y-0.5">
-                <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                  <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
-                  SMS Reminders
-                </span>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  SMS reminder to {maskedPhone} 3 days before payment is due.
-                </p>
-              </div>
-
-              <input
-                type="checkbox"
-                checked={smsReminders}
-                onChange={(e) => {
-                  setSmsReminders(e.target.checked);
-                  if (typeof window !== 'undefined') {
-                    localStorage.setItem('jam_setting_sms', String(e.target.checked));
-                  }
-                  showToast(e.target.checked ? 'SMS Reminders active' : 'SMS Reminders paused');
-                }}
-                className="w-5 h-5 rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500 cursor-pointer"
-              />
-            </div>
-
-            {/* Toggle: Email Receipts */}
-            <div className="p-4 rounded-xl bg-slate-950 border border-slate-850 flex items-center justify-between gap-4">
-              <div className="space-y-0.5">
-                <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                  <Mail className="w-3.5 h-3.5 text-amber-400" />
-                  Email Receipts
-                </span>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Statements and receipts sent to <span className="text-slate-300 font-mono">{borrowerEmail}</span>.
-                </p>
-              </div>
-
-              <input
-                type="checkbox"
-                checked={emailStatements}
-                onChange={(e) => {
-                  setEmailStatements(e.target.checked);
-                  if (typeof window !== 'undefined') {
-                    localStorage.setItem('jam_setting_email', String(e.target.checked));
-                  }
-                  showToast(e.target.checked ? 'Email statements active' : 'Email statements paused');
-                }}
-                className="w-5 h-5 rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500 cursor-pointer"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Category 3: Security & Login (Spans 2 Cols) */}
-        <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm space-y-6">
-          <div className="flex items-center gap-2 pb-3 border-b border-slate-800">
-            <Shield className="w-4 h-4 text-emerald-400" />
-            <h2 className="text-xs font-bold text-white uppercase tracking-wider">
-              3. Security & Login
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Password Change Form (7 Cols) */}
-            <form onSubmit={handlePasswordSubmit} className="lg:col-span-7 space-y-4">
-              <div>
-                <h3 className="text-xs font-bold text-white tracking-tight flex items-center gap-1.5">
-                  <KeyRound className="w-3.5 h-3.5 text-emerald-400" />
-                  Change Password
-                </h3>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Keep your password strong and secure.
-                </p>
-              </div>
-
-              {passError && (
-                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2 animate-fade-in">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{passError}</span>
-                </div>
-              )}
-
-              {passChangeSuccess && (
-                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2 animate-fade-in">
-                  <CheckCircle2 className="w-4 h-4 shrink-0" />
-                  <span>Password updated successfully!</span>
-                </div>
-              )}
-
-              <div className="space-y-3 text-xs">
-                <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                    Current Password
-                  </label>
-                  <div className="relative">
+                {telegramAlerts && (
+                  <div className="flex items-center gap-2 pt-2">
+                    <span className="text-xs text-slate-400">Telegram:</span>
                     <input
-                      type={showCurrentPass ? 'text' : 'password'}
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      placeholder="••••••••••••"
-                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50"
+                      type="text"
+                      value={telegramUsername}
+                      onChange={(e) => setTelegramUsername(e.target.value)}
+                      placeholder="@your_username"
+                      className="px-3 py-1 bg-slate-950 border border-slate-700 rounded-lg text-xs font-mono text-sky-400 focus:outline-none focus:border-sky-500 w-48"
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowCurrentPass(!showCurrentPass)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                    <a
+                      href="https://t.me"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-sky-400 hover:underline inline-flex items-center gap-1"
                     >
-                      {showCurrentPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                      New Password
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showNewPass ? 'text' : 'password'}
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        placeholder="Min 8 characters"
-                        className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowNewPass(!showNewPass)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
-                      >
-                        {showNewPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                      Confirm New Password
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showConfirmPass ? 'text' : 'password'}
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="Re-type new password"
-                        className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPass(!showConfirmPass)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
-                      >
-                        {showConfirmPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Password Strength Indicator */}
-                {newPassword && (
-                  <div className="space-y-1 pt-1">
-                    <div className="flex justify-between text-[10px] font-mono text-slate-400">
-                      <span>Strength</span>
-                      <span className={newPassword.length >= 10 ? 'text-emerald-400 font-bold' : newPassword.length >= 8 ? 'text-amber-400 font-bold' : 'text-rose-400 font-bold'}>
-                        {newPassword.length >= 12 ? 'Very Strong' : newPassword.length >= 8 ? 'Good' : 'Weak (Min 8 chars)'}
-                      </span>
-                    </div>
-                    <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-300 ${
-                          newPassword.length >= 12 ? 'bg-emerald-500 w-full' : newPassword.length >= 8 ? 'bg-amber-400 w-2/3' : 'bg-rose-500 w-1/3'
-                        }`}
-                      />
-                    </div>
+                      <span>Open Telegram</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
                   </div>
                 )}
               </div>
 
-              <div className="pt-2">
-                <button
-                  type="submit"
-                  disabled={isChangingPass}
-                  className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wider transition shadow-md shadow-emerald-500/20 cursor-pointer disabled:opacity-50"
-                >
-                  {isChangingPass ? 'Updating...' : 'Update Password'}
-                </button>
-              </div>
-            </form>
+              <ToggleSwitch
+                checked={telegramAlerts}
+                onChange={(val) => setTelegramAlerts(val)}
+              />
+            </div>
 
-            {/* 2FA & Active Sessions (5 Cols) */}
-            <div className="lg:col-span-5 space-y-4">
-              {/* Two-Factor Authentication (2FA) */}
-              <div className="p-4 rounded-xl bg-slate-950 border border-slate-850 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Lock className="w-4 h-4 text-emerald-400" />
-                    <span className="text-xs font-bold text-white">Two-Factor Auth (2FA)</span>
-                  </div>
-                  <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
-                    twoFactorMode === 'DIRECT'
-                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                      : twoFactorMode === 'BAKONG'
-                      ? 'bg-sky-500/10 text-sky-400 border border-sky-500/30'
-                      : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
-                  }`}>
-                    {twoFactorMode === 'DIRECT' ? 'DIRECT ACCESS' : twoFactorMode === 'BAKONG' ? 'BAKONG AUTH' : 'EMAIL OTP'}
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  {twoFactorMode === 'DIRECT'
-                    ? 'Fast password login without OTP challenge.'
-                    : twoFactorMode === 'BAKONG'
-                    ? 'Requires Bakong Authenticator app approval.'
-                    : 'Sends a 6-digit code to your email.'}
+            {/* SMS Reminders */}
+            <div className="p-6 flex items-start justify-between gap-4">
+              <div className="space-y-1 max-w-lg">
+                <div className="text-sm font-bold text-white">SMS Reminders</div>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Receive an SMS text message to <strong className="text-slate-300 font-mono">{maskedPhone}</strong> 3 days before any payment is due.
                 </p>
-                <div className="flex items-center gap-3 pt-1">
+              </div>
+
+              <ToggleSwitch
+                checked={smsReminders}
+                onChange={(val) => setSmsReminders(val)}
+              />
+            </div>
+
+            {/* Email Statements */}
+            <div className="p-6 flex items-start justify-between gap-4">
+              <div className="space-y-1 max-w-lg">
+                <div className="text-sm font-bold text-white">Email Receipts</div>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Receive monthly statements and payment receipts at <strong className="text-slate-300 font-mono">{borrowerEmail}</strong>.
+                </p>
+              </div>
+
+              <ToggleSwitch
+                checked={emailStatements}
+                onChange={(val) => setEmailStatements(val)}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={isSavingPreferences}
+              className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition cursor-pointer shadow-md shadow-emerald-500/20 disabled:opacity-50"
+            >
+              {isSavingPreferences ? 'Saving...' : 'Save Preferences'}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 3: SECURITY (Password, 2FA, Devices)                                   */}
+      {/* ========================================================================= */}
+      {activeTab === 'security' && (
+        <div className="space-y-6">
+          {/* Change Password Card */}
+          <form onSubmit={handlePasswordSubmit} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+            <div>
+              <h2 className="text-sm font-bold text-white">Change Password</h2>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Update your password to keep your account secure.
+              </p>
+            </div>
+
+            {passError && (
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{passError}</span>
+              </div>
+            )}
+
+            {passChangeSuccess && (
+              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>Password updated successfully!</span>
+              </div>
+            )}
+
+            <div className="space-y-3 max-w-lg text-xs">
+              <div>
+                <label className="text-xs font-medium text-slate-300 block mb-1">
+                  Current Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showCurrentPass ? 'text' : 'password'}
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Enter current password"
+                    className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono text-xs focus:outline-none focus:border-emerald-500"
+                  />
                   <button
                     type="button"
-                    onClick={() => setIs2FaModalOpen(true)}
-                    className="text-xs font-bold text-emerald-400 hover:text-emerald-300 hover:underline cursor-pointer"
+                    onClick={() => setShowCurrentPass(!showCurrentPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
                   >
-                    Change 2FA Method
+                    {showCurrentPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
 
-              {/* Active Sessions Table */}
-              <div className="p-4 rounded-xl bg-slate-950 border border-slate-850 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                    <Laptop className="w-4 h-4 text-slate-400" />
-                    Active Devices
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-slate-300 block mb-1">
+                    New Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showNewPass ? 'text' : 'password'}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Min 8 characters"
+                      className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono text-xs focus:outline-none focus:border-emerald-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPass(!showNewPass)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                    >
+                      {showNewPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-slate-300 block mb-1">
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPass ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Re-enter password"
+                      className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono text-xs focus:outline-none focus:border-emerald-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPass(!showConfirmPass)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                    >
+                      {showConfirmPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={isChangingPass}
+                className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition cursor-pointer shadow-md shadow-emerald-500/20 disabled:opacity-50"
+              >
+                {isChangingPass ? 'Updating...' : 'Update Password'}
+              </button>
+            </div>
+          </form>
+
+          {/* Two-Factor Authentication Card */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-sm font-bold text-white">Two-Factor Authentication (2FA)</h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Add an extra layer of security when signing in.
+                </p>
+              </div>
+
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 whitespace-nowrap">
+                {twoFactorMode === 'DIRECT' ? 'Direct Access' : twoFactorMode === 'BAKONG' ? 'Bakong Auth' : 'Email OTP'}
+              </span>
+            </div>
+
+            <p className="text-xs text-slate-300">
+              {twoFactorMode === 'DIRECT'
+                ? 'Direct sign-in using your password without waiting for OTP codes.'
+                : twoFactorMode === 'BAKONG'
+                ? 'Secured with Bakong Authenticator biometric approvals.'
+                : 'Secured with a 6-digit verification code sent to your email.'}
+            </p>
+
+            <button
+              type="button"
+              onClick={() => setIs2FaModalOpen(true)}
+              className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 hover:underline cursor-pointer"
+            >
+              Change 2FA Method
+            </button>
+          </div>
+
+          {/* Active Devices Card */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-bold text-white">Active Devices</h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Devices currently signed into your account.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleTerminateOtherSessions}
+                className="text-xs text-rose-400 hover:text-rose-300 font-semibold hover:underline cursor-pointer"
+              >
+                Sign out other devices
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {activeSessions.map((sess) => (
+                <div
+                  key={sess.id}
+                  className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between text-xs"
+                >
+                  <div className="space-y-0.5">
+                    <div className="font-semibold text-white">{sess.device}</div>
+                    <div className="text-slate-400 font-mono text-[11px]">{sess.ip} • {sess.location}</div>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                    sess.isCurrent ? 'bg-emerald-500/15 text-emerald-400' : 'text-slate-400'
+                  }`}>
+                    {sess.isCurrent ? 'This Device' : sess.lastActive}
                   </span>
-                  <span className="text-[10px] font-mono text-slate-400">{activeSessions.length} Devices</span>
                 </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
-                <div className="space-y-2 text-xs">
-                  {activeSessions.map((sess) => (
-                    <div key={sess.id} className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <p className="text-[11px] font-bold text-white truncate max-w-[190px]">{sess.device}</p>
-                        <p className="text-[10px] font-mono text-slate-400">{sess.ip} • {sess.location}</p>
-                      </div>
-                      <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
-                        sess.isCurrent ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'
-                      }`}>
-                        {sess.isCurrent ? 'CURRENT' : sess.lastActive}
-                      </span>
+      {/* ========================================================================= */}
+      {/* TAB 4: BANK ACCOUNTS (Connected ACLEDA & Bakong)                           */}
+      {/* ========================================================================= */}
+      {activeTab === 'banking' && (
+        <div className="space-y-6">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+            <div>
+              <h2 className="text-sm font-bold text-white">Connected Accounts</h2>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Bank accounts linked to your profile for loan disbursement and repayments.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* ACLEDA Bank */}
+              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-blue-500/15 text-blue-400 font-bold text-xs flex items-center justify-center">
+                      AC
                     </div>
-                  ))}
+                    <span className="text-xs font-bold text-white">ACLEDA Bank Plc.</span>
+                  </div>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400">
+                    Verified
+                  </span>
                 </div>
+                <div className="text-xs font-mono text-slate-300">Account: •••• 2025</div>
+                <p className="text-[11px] text-slate-400">
+                  Primary disbursement destination for approved loans.
+                </p>
+              </div>
 
+              {/* Bakong KHQR */}
+              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-rose-500/15 text-rose-400 font-bold text-xs flex items-center justify-center">
+                      KH
+                    </div>
+                    <span className="text-xs font-bold text-white">Bakong KHQR</span>
+                  </div>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-400">
+                    Active
+                  </span>
+                </div>
+                <div className="text-xs font-mono text-slate-300">ID: jamsongvich@nbc</div>
+                <p className="text-[11px] text-slate-400">
+                  Instant repayment clearing via Bakong app with zero fees.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 5: DATA & RESET (Danger Zone)                                         */}
+      {/* ========================================================================= */}
+      {activeTab === 'danger' && (
+        <div className="space-y-6">
+          <div className="bg-slate-900 border border-rose-500/20 rounded-2xl p-6 space-y-4">
+            <div>
+              <h2 className="text-sm font-bold text-white">Data Management</h2>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Manage and reset your borrowing records for testing or starting fresh.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-0.5">
+                <div className="text-xs font-bold text-white">Reset Borrowing Records</div>
+                <p className="text-[11px] text-slate-400">
+                  Clears all active loans, repayment schedules, and receipts to start fresh with a clean $0.00 balance.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
-                  onClick={handleTerminateOtherSessions}
-                  className="w-full py-2 rounded-xl bg-slate-900 hover:bg-slate-850 text-slate-300 hover:text-white border border-slate-800 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer"
+                  onClick={() => {
+                    if (window.confirm('Reset all borrowing records? This clears all loans and receipts.')) {
+                      loanStorageService.resetAllBorrowingData();
+                      showToast('Borrowing data reset to $0.00.');
+                    }
+                  }}
+                  className="px-4 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-semibold transition cursor-pointer"
                 >
-                  <LogOut className="w-3.5 h-3.5 text-rose-400" />
-                  <span>Sign out all other devices</span>
+                  Reset My Data
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    loanStorageService.restoreDemoSeedData();
+                    showToast('Sample loans restored.');
+                  }}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-300 text-xs font-semibold transition cursor-pointer"
+                >
+                  Restore Demo
                 </button>
               </div>
             </div>
           </div>
         </div>
+      )}
 
-        {/* Category 4: Verified Institutional Accounts & Bakong KHQR Identity */}
-        <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm space-y-5">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-            <div className="flex items-center gap-2">
-              <Landmark className="w-4 h-4 text-emerald-400" />
-              <h2 className="text-xs font-bold text-white uppercase tracking-wider">
-                4. Connected Banking & Bakong KHQR Clearing Identity
-              </h2>
-            </div>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-              NATIONAL BANK OF CAMBODIA COMPLIANT
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Primary Disbursement Destination */}
-            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-white flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-[10px]">
-                    AC
-                  </div>
-                  ACLEDA Bank Plc.
-                </span>
-                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                  PRIMARY DISBURSEMENT
-                </span>
-              </div>
-              <p className="text-xs font-mono text-slate-300">Account: •••• 2025 (USD / KHR)</p>
-              <p className="text-[11px] text-slate-500">
-                Direct clearing destination for approved institutional facilities. Fast-track automated settlement enabled.
-              </p>
-            </div>
-
-            {/* Bakong KHQR Identity */}
-            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-white flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center font-bold text-[10px]">
-                    KH
-                  </div>
-                  Bakong Dynamic KHQR Channel
-                </span>
-                <span className="text-[10px] font-bold text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
-                  ACTIVE
-                </span>
-              </div>
-              <p className="text-xs font-mono text-slate-300">ID: jamsongvich@nbc (Connected Wallet)</p>
-              <p className="text-[11px] text-slate-500">
-                Instant repayment collection and automatic amortization schedule reconciliation compliant with NBC standards.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Category 5: Borrowing History & Self-Service Ledger Reset */}
-        <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm space-y-5">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-            <div className="flex items-center gap-2">
-              <RotateCcw className="w-4 h-4 text-rose-400" />
-              <h2 className="text-xs font-bold text-white uppercase tracking-wider">
-                5. Borrowing History & Ledger Reset
-              </h2>
-            </div>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
-              SELF-SERVICE CLEARING
-            </span>
-          </div>
-
-          <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <h3 className="text-xs font-bold text-white">Reset Account Borrowing Records</h3>
-              <p className="text-[11px] text-slate-400 max-w-xl">
-                Purge all active loans, repayment schedules, and transaction receipts to start fresh with a clean $0.00 balance and fresh credit facility application.
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  if (window.confirm('Are you sure you want to reset all borrowing records? This will clear all active loans, scheduled installments, and receipts.')) {
-                    loanStorageService.resetAllBorrowingData();
-                    showToast('All borrowing data has been reset to clean zero records.');
-                  }
-                }}
-                className="px-4 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-              >
-                <RotateCcw className="w-3.5 h-3.5 text-rose-400" />
-                <span>Reset My Borrowing Data</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  loanStorageService.restoreDemoSeedData();
-                  showToast('Demo loan facilities restored.');
-                }}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-medium transition cursor-pointer"
-              >
-                <span>Restore Demo Loans</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      {/* 2FA Configuration Modal */}
+      {/* 2FA Selection Modal */}
       {is2FaModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-emerald-400" />
-                <h3 className="text-sm font-bold text-white">Select Authentication Security Level</h3>
-              </div>
+              <h3 className="text-sm font-bold text-white">Select 2FA Method</h3>
               <button
                 type="button"
                 onClick={() => setIs2FaModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-3">
-              {/* Option 1: Direct Access */}
+            <div className="space-y-2.5">
               <button
                 type="button"
                 onClick={() => handleSelect2FaMode('DIRECT')}
-                className={`w-full p-3.5 rounded-xl border text-left transition cursor-pointer ${
+                className={`w-full p-3.5 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
                   twoFactorMode === 'DIRECT'
-                    ? 'bg-slate-950 border-emerald-500 ring-1 ring-emerald-500/50'
+                    ? 'bg-slate-950 border-emerald-500 ring-1 ring-emerald-500/30'
                     : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-white">Direct Access (No OTP - Recommended)</span>
-                  {twoFactorMode === 'DIRECT' && <Check className="w-4 h-4 text-emerald-400" />}
+                <div>
+                  <div className="text-xs font-bold text-white">Direct Access (Recommended)</div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">Quick password sign-in without OTP delay.</div>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1">
-                  Instant login with your strong password. No OTP codes or delays.
-                </p>
+                {twoFactorMode === 'DIRECT' && <Check className="w-4 h-4 text-emerald-400" />}
               </button>
 
-              {/* Option 2: Bakong App */}
               <button
                 type="button"
                 onClick={() => handleSelect2FaMode('BAKONG')}
-                className={`w-full p-3.5 rounded-xl border text-left transition cursor-pointer ${
+                className={`w-full p-3.5 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
                   twoFactorMode === 'BAKONG'
-                    ? 'bg-slate-950 border-sky-500 ring-1 ring-sky-500/50'
+                    ? 'bg-slate-950 border-sky-500 ring-1 ring-sky-500/30'
                     : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-white">Bakong KHQR Authenticator</span>
-                  {twoFactorMode === 'BAKONG' && <Check className="w-4 h-4 text-sky-400" />}
+                <div>
+                  <div className="text-xs font-bold text-white">Bakong Authenticator</div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">Biometric approval via Bakong app.</div>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1">
-                  Biometric QR confirmation using the National Bank of Cambodia Bakong App.
-                </p>
+                {twoFactorMode === 'BAKONG' && <Check className="w-4 h-4 text-sky-400" />}
               </button>
 
-              {/* Option 3: Email OTP */}
               <button
                 type="button"
                 onClick={() => handleSelect2FaMode('EMAIL')}
-                className={`w-full p-3.5 rounded-xl border text-left transition cursor-pointer ${
+                className={`w-full p-3.5 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
                   twoFactorMode === 'EMAIL'
-                    ? 'bg-slate-950 border-amber-500 ring-1 ring-amber-500/50'
+                    ? 'bg-slate-950 border-amber-500 ring-1 ring-amber-500/30'
                     : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-white">Gmail Multi-Factor OTP</span>
-                  {twoFactorMode === 'EMAIL' && <Check className="w-4 h-4 text-amber-400" />}
+                <div>
+                  <div className="text-xs font-bold text-white">Email Code (OTP)</div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">6-digit PIN sent to {borrowerEmail}.</div>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1">
-                  Dispatches a 6-digit confirmation PIN code to {borrowerEmail}.
-                </p>
+                {twoFactorMode === 'EMAIL' && <Check className="w-4 h-4 text-amber-400" />}
               </button>
             </div>
 

@@ -1747,7 +1747,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                   className="w-full px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800/70 flex items-center gap-2.5 transition cursor-pointer"
                                 >
                                   <FileText className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                  <span>View Complete Amortization Schedule</span>
+                                  <span>View Payment Schedule</span>
                                 </button>
 
                                 {/* 2. Manual Payment / Waiver */}
@@ -1766,7 +1766,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                   className="w-full px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800/70 flex items-center gap-2.5 transition cursor-pointer"
                                 >
                                   <DollarSign className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                                  <span>Manual Repayment / Waiver Entry</span>
+                                  <span>Record Payment / Waiver</span>
                                 </button>
 
                                 <div className="my-1 border-t border-[#1e293b]" />
@@ -1778,13 +1778,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     setOpenActionMenuId(null);
                                     setNotificationBanner({
                                       type: 'info',
-                                      message: `Initiating cellular call to borrower ${row.borrower.nameEn} (${row.borrower.phone})...`,
+                                      message: `Calling ${row.borrower.nameEn} (${row.borrower.phone})...`,
                                     });
                                   }}
                                   className="w-full px-3 py-2 text-emerald-300 hover:text-emerald-200 hover:bg-emerald-950/30 flex items-center gap-2.5 transition cursor-pointer"
                                 >
                                   <PhoneCall className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                  <span>Call Borrower ({row.borrower.phone || '+855 12 ••• 678'})</span>
+                                  <span>Call Borrower</span>
                                 </a>
 
                                 {/* 4. Direct Message to Telegram */}
@@ -1793,19 +1793,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     const emi = row.nextScheduledPayment.scheduledEMIUSD || 532.50;
                                     const text = encodeURIComponent(
                                       `🇰🇭 JAM SONG VICH - Payment Reminder\n` +
-                                      `Dear ${row.borrower.nameEn}, your Cycle #${row.nextScheduledPayment.cycleNumber} EMI of $${emi.toFixed(2)} for facility ${row.loanId} is due on ${row.nextScheduledPayment.dueDate}. Please settle via Bakong Dynamic KHQR (jamsongvich@nbc).`
+                                      `Dear ${row.borrower.nameEn}, your Cycle #${row.nextScheduledPayment.cycleNumber} payment of $${emi.toFixed(2)} for loan ${row.loanId} is due on ${row.nextScheduledPayment.dueDate}. Please settle via Bakong KHQR (jamsongvich@nbc).`
                                     );
                                     window.open(`https://t.me/share/url?url=https://loufong.github.io/Loan-management-system/%23/repayments&text=${text}`, '_blank');
                                     setOpenActionMenuId(null);
                                     setNotificationBanner({
                                       type: 'success',
-                                      message: `Telegram window opened with pre-filled payment reminder for ${row.borrower.nameEn}.`,
+                                      message: `Telegram opened with payment reminder for ${row.borrower.nameEn}.`,
                                     });
                                   }}
                                   className="w-full px-3 py-2 text-sky-300 hover:text-sky-200 hover:bg-sky-950/30 flex items-center gap-2.5 transition cursor-pointer"
                                 >
                                   <Send className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                                  <span>Message on Telegram (Payment Alert)</span>
+                                  <span>Message on Telegram</span>
                                 </button>
 
                                 {/* 5. Trigger Multi-Channel Alert Dispatcher Modal */}
@@ -1814,7 +1814,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                   className="w-full px-3 py-2 text-teal-300 hover:text-teal-200 hover:bg-teal-950/30 flex items-center gap-2.5 transition cursor-pointer"
                                 >
                                   <Bell className="w-3.5 h-3.5 text-teal-400 shrink-0" />
-                                  <span>Trigger SMS / Telegram Due Alert</span>
+                                  <span>Send Due Alert</span>
                                 </button>
 
                                 <div className="my-1 border-t border-[#1e293b]" />
@@ -1827,14 +1827,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                       newAprPercent: row.principal.aprPercent,
                                       newTermMonths: row.principal.termMonths + 6,
                                       gracePeriodMonths: 0,
-                                      reason: 'Super Admin term restructuring to prevent NPL delinquency',
+                                      reason: 'Term restructuring',
                                     });
                                     setOpenActionMenuId(null);
                                   }}
                                   className="w-full px-3 py-2 text-amber-300 hover:text-amber-200 hover:bg-amber-950/30 flex items-center gap-2.5 transition cursor-pointer"
                                 >
                                   <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                                  <span>Restructure Loan Terms</span>
+                                  <span>Restructure Loan</span>
                                 </button>
                               </div>
                             )}

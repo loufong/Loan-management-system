@@ -351,10 +351,10 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
           </div>
 
           <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-            Account Preferences & Security Controls
+            Account Settings
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Configure regional display standards, real-time installment reminders, and institutional authentication credentials.
+            Manage your language, alerts, and password security.
           </p>
         </div>
       </div>
@@ -364,19 +364,19 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
       {/* ========================================================================= */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        {/* Category 1: Localization & Display */}
+        {/* Category 1: Language & Currency */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm space-y-5">
           <div className="flex items-center gap-2 pb-3 border-b border-slate-800">
             <Globe className="w-4 h-4 text-emerald-400" />
             <h2 className="text-xs font-bold text-white uppercase tracking-wider">
-              1. Localization & Regional Display
+              1. Language & Currency
             </h2>
           </div>
 
           {/* Language Selector: English (US) vs Khmer */}
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
-              System Display Language
+              Display Language
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* English (US) Card */}
@@ -395,7 +395,7 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
                   </span>
                   {language === 'en' && <Check className="w-4 h-4 text-emerald-400" />}
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1">Official core banking Latin standard typography</p>
+                <p className="text-[11px] text-slate-400 mt-1">English display</p>
               </button>
 
               {/* ភាសាខ្មែរ (Khmer) Card */}
@@ -414,7 +414,7 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
                   </span>
                   {language === 'km' && <Check className="w-4 h-4 text-emerald-400" />}
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1 font-suwannaphum">ស្តង់ដារអក្សរខ្មែរ ធនាគារជាតិ នៃកម្ពុជា (NBC)</p>
+                <p className="text-[11px] text-slate-400 mt-1 font-suwannaphum">ភាសាខ្មែរ</p>
               </button>
             </div>
           </div>
@@ -422,7 +422,7 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
           {/* Default Accounting Currency */}
           <div className="space-y-2 pt-2">
             <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
-              Default Accounting Currency
+              Default Currency
             </label>
             <div className="grid grid-cols-2 gap-3">
               <button
@@ -438,7 +438,7 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
                   <span className="text-xs font-bold font-mono text-white">USD ($) Dollar</span>
                   {selectedCurrency === 'USD' && <Check className="w-4 h-4 text-emerald-400" />}
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1">Standard dual-currency benchmark</p>
+                <p className="text-[11px] text-slate-500 mt-1">US Dollar ($)</p>
               </button>
 
               <button
@@ -451,10 +451,10 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold font-mono text-white">KHR (៛) Cambodian Riel</span>
+                  <span className="text-xs font-bold font-mono text-white">KHR (៛) Riel</span>
                   {selectedCurrency === 'KHR' && <Check className="w-4 h-4 text-emerald-400" />}
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1">NBC Peg Rate: 4,000 KHR / USD</p>
+                <p className="text-[11px] text-slate-500 mt-1">Rate: 4,000 KHR / USD</p>
               </button>
             </div>
           </div>
@@ -466,7 +466,7 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
             <div className="flex items-center gap-2">
               <Bell className="w-4 h-4 text-emerald-400" />
               <h2 className="text-xs font-bold text-white uppercase tracking-wider">
-                2. Notifications & Due Date Alerts
+                2. Alerts & Reminders
               </h2>
             </div>
             <button
@@ -476,28 +476,28 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
               className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[11px] font-bold flex items-center gap-1 transition cursor-pointer"
             >
               <Save className="w-3 h-3" />
-              <span>{isSavingPreferences ? 'Saving...' : 'Save Preferences'}</span>
+              <span>{isSavingPreferences ? 'Saving...' : 'Save'}</span>
             </button>
           </div>
 
           <div className="space-y-3">
-            {/* Toggle: Telegram Bot Instant Alerts */}
+            {/* Toggle: Telegram Alerts */}
             <div className="p-4 rounded-xl bg-slate-950 border border-slate-850 flex items-start justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-white flex items-center gap-1.5">
                     <Send className="w-3.5 h-3.5 text-sky-400" />
-                    Telegram Bot Instant Alerts
+                    Telegram Alerts
                   </span>
                   <span className="text-[9px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
                     CONNECTED
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Real-time push notifications for installment due dates, Bakong receipts, and risk reviews.
+                  Due date alerts and payment receipts sent to your Telegram.
                 </p>
                 <div className="flex items-center gap-2 pt-0.5">
-                  <span className="text-[11px] text-slate-400">Connected Bot:</span>
+                  <span className="text-[11px] text-slate-400">Bot:</span>
                   <input
                     type="text"
                     value={telegramUsername}
@@ -535,15 +535,15 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
               />
             </div>
 
-            {/* Toggle: SMS Repayment Reminders */}
+            {/* Toggle: SMS Reminders */}
             <div className="p-4 rounded-xl bg-slate-950 border border-slate-850 flex items-center justify-between gap-4">
               <div className="space-y-0.5">
                 <span className="text-xs font-bold text-white flex items-center gap-1.5">
                   <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
-                  SMS Repayment Reminders
+                  SMS Reminders
                 </span>
                 <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Automated SMS dispatch to verified number ({maskedPhone}) 3 days prior to monthly due date.
+                  SMS reminder to {maskedPhone} 3 days before payment is due.
                 </p>
               </div>
 
@@ -561,15 +561,15 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
               />
             </div>
 
-            {/* Toggle: Email Statements & Settlement Receipts */}
+            {/* Toggle: Email Receipts */}
             <div className="p-4 rounded-xl bg-slate-950 border border-slate-850 flex items-center justify-between gap-4">
               <div className="space-y-0.5">
                 <span className="text-xs font-bold text-white flex items-center gap-1.5">
                   <Mail className="w-3.5 h-3.5 text-amber-400" />
-                  Email Statements & Settlement Receipts
+                  Email Receipts
                 </span>
                 <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Monthly PDF account statement and instant Bakong KHQR digital payment receipts sent to <span className="text-slate-300 font-mono">{borrowerEmail}</span>.
+                  Statements and receipts sent to <span className="text-slate-300 font-mono">{borrowerEmail}</span>.
                 </p>
               </div>
 
@@ -589,12 +589,12 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
           </div>
         </div>
 
-        {/* Category 3: Security & Access Management (Spans 2 Cols) */}
+        {/* Category 3: Security & Login (Spans 2 Cols) */}
         <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm space-y-6">
           <div className="flex items-center gap-2 pb-3 border-b border-slate-800">
             <Shield className="w-4 h-4 text-emerald-400" />
             <h2 className="text-xs font-bold text-white uppercase tracking-wider">
-              3. Security & Access Management
+              3. Security & Login
             </h2>
           </div>
 
@@ -604,10 +604,10 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
               <div>
                 <h3 className="text-xs font-bold text-white tracking-tight flex items-center gap-1.5">
                   <KeyRound className="w-3.5 h-3.5 text-emerald-400" />
-                  Update Account Password
+                  Change Password
                 </h3>
                 <p className="text-[11px] text-slate-400 mt-0.5">
-                  Ensure your core banking credentials are strong and unique.
+                  Keep your password strong and secure.
                 </p>
               </div>
 
@@ -621,7 +621,7 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
               {passChangeSuccess && (
                 <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2 animate-fade-in">
                   <CheckCircle2 className="w-4 h-4 shrink-0" />
-                  <span>Password changed successfully! Secure authentication credentials re-hashed.</span>
+                  <span>Password updated successfully!</span>
                 </div>
               )}
 
@@ -698,9 +698,9 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
                 {newPassword && (
                   <div className="space-y-1 pt-1">
                     <div className="flex justify-between text-[10px] font-mono text-slate-400">
-                      <span>Password Complexity</span>
+                      <span>Strength</span>
                       <span className={newPassword.length >= 10 ? 'text-emerald-400 font-bold' : newPassword.length >= 8 ? 'text-amber-400 font-bold' : 'text-rose-400 font-bold'}>
-                        {newPassword.length >= 12 ? 'Very Strong (Institutional Grade)' : newPassword.length >= 8 ? 'Good' : 'Too Weak (Min 8 chars)'}
+                        {newPassword.length >= 12 ? 'Very Strong' : newPassword.length >= 8 ? 'Good' : 'Weak (Min 8 chars)'}
                       </span>
                     </div>
                     <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
@@ -720,7 +720,7 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
                   disabled={isChangingPass}
                   className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wider transition shadow-md shadow-emerald-500/20 cursor-pointer disabled:opacity-50"
                 >
-                  {isChangingPass ? 'Encrypting & Updating...' : 'Update Password'}
+                  {isChangingPass ? 'Updating...' : 'Update Password'}
                 </button>
               </div>
             </form>
@@ -732,7 +732,7 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Lock className="w-4 h-4 text-emerald-400" />
-                    <span className="text-xs font-bold text-white">Two-Factor Authentication (2FA)</span>
+                    <span className="text-xs font-bold text-white">Two-Factor Auth (2FA)</span>
                   </div>
                   <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
                     twoFactorMode === 'DIRECT'
@@ -746,10 +746,10 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
                 </div>
                 <p className="text-[11px] text-slate-400 leading-relaxed">
                   {twoFactorMode === 'DIRECT'
-                    ? 'Direct password authentication without interrupting OTP challenges (Recommended for seamless daily access).'
+                    ? 'Fast password login without OTP challenge.'
                     : twoFactorMode === 'BAKONG'
-                    ? 'Requires NBC Bakong KHQR Authenticator approval for loan disbursements and prepayments.'
-                    : 'Dispatches 6-digit verification code to your verified Gmail inbox.'}
+                    ? 'Requires Bakong Authenticator app approval.'
+                    : 'Sends a 6-digit code to your email.'}
                 </p>
                 <div className="flex items-center gap-3 pt-1">
                   <button
@@ -767,7 +767,7 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-white flex items-center gap-1.5">
                     <Laptop className="w-4 h-4 text-slate-400" />
-                    Authorized Active Sessions
+                    Active Devices
                   </span>
                   <span className="text-[10px] font-mono text-slate-400">{activeSessions.length} Devices</span>
                 </div>
@@ -794,7 +794,7 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
                   className="w-full py-2 rounded-xl bg-slate-900 hover:bg-slate-850 text-slate-300 hover:text-white border border-slate-800 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5 text-rose-400" />
-                  <span>Sign out from all other devices</span>
+                  <span>Sign out all other devices</span>
                 </button>
               </div>
             </div>

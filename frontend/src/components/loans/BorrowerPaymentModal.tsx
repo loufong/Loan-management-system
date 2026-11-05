@@ -819,7 +819,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                         : 'text-slate-400 hover:text-white'
                     }`}
                   >
-                    <span>Official Standee Card</span>
+                    <span>Official QR Card</span>
                   </button>
                   <button
                     type="button"
@@ -830,7 +830,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                         : 'text-slate-400 hover:text-white'
                     }`}
                   >
-                    <span>Dynamic Bill QR</span>
+                    <span>Bill QR Code</span>
                   </button>
                 </div>
 
@@ -856,7 +856,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                       />
                     ) : (
                       <div className="w-56 h-56 bg-slate-100 flex items-center justify-center font-mono text-xs text-slate-900 p-2 text-center rounded-lg">
-                        Generating Bakong QR Canvas...
+                        Generating QR Code...
                       </div>
                     )}
 
@@ -869,7 +869,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
 
                 {/* Customer Instructions */}
                 <p className="text-xs text-slate-300 leading-relaxed px-4">
-                  Open your Cambodian banking app (Bakong, ACLEDA, ABA, Wing, or Canadia) and scan this QR code to settle.
+                  Scan with any Cambodian banking app (Bakong, ACLEDA, ABA, etc.) to pay.
                 </p>
 
                 {/* Expiration Countdown Timer */}
@@ -888,10 +888,10 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                   <Loader2 className="w-4 h-4 text-emerald-400 animate-spin" />
                   <div>
                     <span className="font-bold text-white block text-xs">
-                      Waiting for Bakong payment...
+                      Waiting for payment...
                     </span>
                     <span className="text-[11px] text-slate-400 font-mono">
-                      Auto-checking settlement network (Check #{pollCount})
+                      Checking automatically (#{pollCount})
                     </span>
                   </div>
                 </div>

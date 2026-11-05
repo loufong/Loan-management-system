@@ -369,9 +369,9 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
           <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between">
             <div className="space-y-0.5">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                Facility & Rate
+                Loan & Rate
               </span>
-              <p className="text-sm font-bold text-white">{hasActiveLoan ? (activeLoan?.productName || 'Personal Loan') : 'No Active Facility'}</p>
+              <p className="text-sm font-bold text-white">{hasActiveLoan ? (activeLoan?.productName || 'Personal Loan') : 'No Active Loan'}</p>
               <span className="text-xs font-mono text-emerald-400 font-semibold">
                 {hasActiveLoan
                   ? `${formatMoney(Number(activeLoan?.principalUSD || (activeLoan as any)?.principalAmount || 0))} @ ${Number(activeLoan?.interestRate || 0)}% p.a.`
@@ -386,15 +386,15 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
           <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between">
             <div className="space-y-0.5">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                Remaining Principal
+                Remaining Balance
               </span>
               <p className="text-base font-bold font-mono text-white">
                 {formatMoney(hasActiveLoan ? Number(activeLoan?.outstandingBalanceUSD || (activeLoan as any)?.outstandingBalance || 0) : 0)}
               </p>
               <span className="text-[11px] text-slate-400 font-mono">
                 {hasActiveLoan
-                  ? `${scheduleData.filter((s) => s.status !== 'PAID').length} of ${scheduleData.length} Cycles Remaining`
-                  : '0 Cycles Remaining'}
+                  ? `${scheduleData.filter((s) => s.status !== 'PAID').length} of ${scheduleData.length} payments left`
+                  : '0 payments left'}
               </span>
             </div>
             <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-300">
@@ -405,15 +405,15 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
           <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between">
             <div className="space-y-0.5">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                Total Settle-to-Date
+                Total Paid
               </span>
               <p className="text-base font-bold font-mono text-emerald-400">
                 {formatMoney(hasActiveLoan ? Number(activeLoan?.totalPaidUSD || (activeLoan as any)?.totalPaid || 0) : 0)}
               </p>
               <span className="text-[11px] text-slate-400 font-mono">
                 {hasActiveLoan
-                  ? `${scheduleData.filter((s) => s.status === 'PAID').length} Settled Installments`
-                  : '0 Settled Installments (0%)'}
+                  ? `${scheduleData.filter((s) => s.status === 'PAID').length} payments paid`
+                  : '0 payments paid'}
               </span>
             </div>
             <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
@@ -432,7 +432,7 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
           <div className="flex flex-wrap items-center gap-2">
             <Filter className="w-4 h-4 text-slate-400" />
             <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-              Filter Cycles:
+              Filter:
             </span>
             <div className="flex flex-wrap items-center gap-1.5 ml-1">
               {[
@@ -488,7 +488,7 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
           </div>
 
           <div className="text-[11px] font-mono text-slate-400 flex items-center gap-2">
-            <span>Interest Formula: <strong>NBC Reducing Balance ({Number(activeLoan?.interestRate || 6.5)}% p.a.)</strong></span>
+            <span>Interest: <strong>Reducing Balance ({Number(activeLoan?.interestRate || 6.5)}% p.a.)</strong></span>
           </div>
         </div>
 
@@ -499,12 +499,12 @@ export const BorrowerRepaymentScheduleView: React.FC<BorrowerRepaymentScheduleVi
               <tr className="border-b border-slate-800 bg-slate-950/70 text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">
                 <th className="py-3 px-4 text-center">Cycle #</th>
                 <th className="py-3 px-4">Due Date</th>
-                <th className="py-3 px-4 text-right">Beginning Principal</th>
-                <th className="py-3 px-4 text-right">Scheduled EMI</th>
+                <th className="py-3 px-4 text-right">Start Balance</th>
+                <th className="py-3 px-4 text-right">Payment Due</th>
                 <th className="py-3 px-4 text-right">Principal</th>
                 <th className="py-3 px-4 text-right">Interest</th>
                 <th className="py-3 px-4 text-right">Late Fees</th>
-                <th className="py-3 px-4 text-right">Ending Balance</th>
+                <th className="py-3 px-4 text-right">End Balance</th>
                 <th className="py-3 px-4 text-center">Status</th>
                 <th className="py-3 px-4 text-center">Action</th>
               </tr>

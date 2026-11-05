@@ -569,10 +569,10 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
             </div>
 
             <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-              {'New Credit Facility Application'}
+              {'Apply for Loan'}
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 mt-1">
-              {'Fast-track institutional financing intake compliant with National Bank of Cambodia lending directives.'}
+              {'Fast and simple loan application with instant calculation.'}
             </p>
           </div>
 
@@ -607,9 +607,9 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
         {/* Step Indicator Tracker */}
         <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-6 pt-5 border-t border-slate-800/80">
           {[
-            { step: 1, title: '1. Facility & Terms', subtitle: 'Product, principal & tenure' },
-            { step: 2, title: '2. Financial & KYC Details', subtitle: 'Bank account & soft title' },
-            { step: 3, title: '3. Review & Disburse', subtitle: 'NBC terms & submit' },
+            { step: 1, title: '1. Loan Details', subtitle: 'Amount & tenure' },
+            { step: 2, title: '2. Bank & Documents', subtitle: 'Account & verification' },
+            { step: 3, title: '3. Review & Submit', subtitle: 'Confirm & apply' },
           ].map((s) => {
             const isCompleted = currentStep > s.step;
             const isCurrent = currentStep === s.step;
@@ -658,14 +658,14 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
               <div className="space-y-1.5">
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="text-sm font-bold text-white tracking-tight">
-                    Regulatory Borrowing Lock Active (NBC Article 42 Compliance)
+                    KYC Verification Needed
                   </h3>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40">
                     {kycSummary?.verifiedCount ?? 0} of 3 Verified
                   </span>
                 </div>
                 <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-                  National Bank of Cambodia lending directives mandate that borrowers must have all three statutory regulatory KYC documents verified prior to originating credit facilities or drawing funds.
+                  Please verify all 3 documents in your profile before applying for a loan.
                 </p>
 
                 {/* Individual Document Status Chips */}
@@ -699,7 +699,7 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
               onClick={() => onNavigate('profile')}
               className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-slate-950 font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-rose-500/20 shrink-0 cursor-pointer self-start md:self-center"
             >
-              <span>Complete KYC Vault</span>
+              <span>Verify Documents</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -718,10 +718,10 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
               <div>
                 <h2 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
                   <FilePlus2 className="w-4 h-4 text-emerald-400" />
-                  Select Credit Product & Loan Structure
+                  Select Loan Product
                 </h2>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Choose a product tier that matches your financing requirements and repayment capacity.
+                  Choose the loan type that fits your needs.
                 </p>
               </div>
 
@@ -938,14 +938,14 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
                   Disbursement Destination & KYC Documentation
                 </h2>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Designate where approved funds should be credited and provide verification documents.
+                  Select receiving bank account and upload documents.
                 </p>
               </div>
 
               {/* Linked Bank Account Dropdown */}
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
-                  Disbursement Receiving Account (Direct Clearing)
+                  Disbursement Receiving Account
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div
@@ -965,7 +965,7 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
                     <p className="text-xs font-mono font-semibold text-emerald-400">
                       Account: •••• 2023 (USD/KHR)
                     </p>
-                    <span className="text-[10px] text-slate-500 mt-1 block">Primary Verified Disbursement Channel</span>
+                    <span className="text-[10px] text-slate-500 mt-1 block">Primary Account</span>
                   </div>
 
                   <div
@@ -980,12 +980,12 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
                       <div className="w-6 h-6 rounded bg-red-600 text-white font-black text-[9px] flex items-center justify-center">
                         KH
                       </div>
-                      <span className="text-xs font-bold text-white">Bakong KHQR Account ID</span>
+                      <span className="text-xs font-bold text-white">Bakong KHQR ID</span>
                     </div>
                     <p className="text-xs font-mono font-semibold text-emerald-400">
                       jamsongvich@nbc
                     </p>
-                    <span className="text-[10px] text-slate-500 mt-1 block">Instant Settlement to Connected Wallet</span>
+                    <span className="text-[10px] text-slate-500 mt-1 block">Instant Bakong Wallet</span>
                   </div>
                 </div>
               </div>
@@ -993,7 +993,7 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
               {/* Monthly Income Verification Field */}
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
-                  Verified Monthly Net Income (USD)
+                  Monthly Net Income (USD)
                 </label>
                 <div className="relative">
                   <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-mono font-bold">$</div>
@@ -1005,7 +1005,7 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
                   />
                 </div>
                 <p className="text-[11px] text-slate-500">
-                  DTI Ratio Indicator: Projected installment ({formatMoney(calculations.monthlyEMIUSD)}) is approx. {Math.round((calculations.monthlyEMIUSD / monthlyIncomeUSD) * 100)}% of declared income (Healthy: &lt; 40%).
+                  Payment is ~{Math.round((calculations.monthlyEMIUSD / (monthlyIncomeUSD || 1)) * 100)}% of income (Healthy: &lt; 40%).
                 </p>
               </div>
 
@@ -1013,10 +1013,10 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
               <div className="space-y-4 pt-2">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
-                    Income Proof & Collateral Documentation
+                    Income & Collateral Documents
                   </label>
                   <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 font-bold">
-                    MANDATORY NBC CDD
+                    REQUIRED
                   </span>
                 </div>
 
@@ -1036,10 +1036,10 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
                       </div>
                       <div>
                         <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
-                          <span>Monthly Salary Slip / Bank Statement</span>
+                          <span>Salary Slip or Bank Statement</span>
                           <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded font-mono">Required</span>
                         </h4>
-                        <p className="text-[11px] text-slate-400">PDF, PNG, JPG (Latest 3 months approved format up to 10MB)</p>
+                        <p className="text-[11px] text-slate-400">PDF, PNG, or JPG (up to 10MB)</p>
                       </div>
                     </div>
 
@@ -1122,16 +1122,16 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
                     >
                       <UploadCloud className="w-6 h-6 text-slate-500 mx-auto" />
                       <p className="text-xs font-bold text-slate-200">
-                        Click or drag & drop salary slip / bank statement here
+                        Click or drop file here
                       </p>
                       <p className="text-[11px] text-slate-500">
-                        Strict 10MB ceiling • 256-bit SSL encrypted transit (.pdf, .jpg, .png)
+                        Max 10MB (.pdf, .jpg, .png)
                       </p>
                     </div>
                   )}
                 </div>
 
-                {/* Target 2: Collateral Document / Land Soft Card / Business License */}
+                {/* Target 2: Collateral Document */}
                 <div className="p-4 rounded-xl border border-slate-700 bg-slate-950/80 hover:border-emerald-500/50 transition-all space-y-3">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
@@ -1140,10 +1140,10 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
                       </div>
                       <div>
                         <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
-                          <span>Collateral Document / Land Soft Card / Business License</span>
+                          <span>Collateral Document</span>
                           <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded font-mono">Required</span>
                         </h4>
-                        <p className="text-[11px] text-slate-400">Proof of residency, vehicle registration or land deed up to 10MB</p>
+                        <p className="text-[11px] text-slate-400">Land title, vehicle card, or business license (up to 10MB)</p>
                       </div>
                     </div>
 
@@ -1154,7 +1154,7 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
                             type="button"
                             onClick={() => {
                               setPreviewTargetDoc({
-                                title: 'Collateral Document / Land Soft Card / Business License',
+                                title: 'Collateral Document',
                                 fileName: collateralDoc.fileName,
                                 mimeType: collateralDoc.mimeType,
                                 dataUrl: collateralDoc.dataUrl!,
@@ -1226,10 +1226,10 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
                     >
                       <UploadCloud className="w-6 h-6 text-slate-500 mx-auto" />
                       <p className="text-xs font-bold text-slate-200">
-                        Click or drag & drop collateral document or soft card here
+                        Click or drop file here
                       </p>
                       <p className="text-[11px] text-slate-500">
-                        Strict 10MB ceiling • 256-bit SSL encrypted transit (.pdf, .jpg, .png)
+                        Max 10MB (.pdf, .jpg, .png)
                       </p>
                     </div>
                   )}
@@ -1244,7 +1244,7 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white bg-slate-950 border border-slate-800 hover:border-slate-700 transition-all cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
-                  Back to Step 1
+                  Back
                 </button>
 
                 <button
@@ -1260,14 +1260,14 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
           )}
 
           {/* ================================================================= */}
-          {/* STEP 3: REVIEW, DISBURSEMENT DECLARATION & SUBMISSION              */}
+          {/* STEP 3: REVIEW & SUBMIT                                           */}
           {/* ================================================================= */}
           {currentStep === 3 && (
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 space-y-6">
               <div>
                 <h2 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                  Application Disclosure & Compliance Declaration
+                  Review & Declaration
                 </h2>
                 <p className="text-xs text-slate-400 mt-0.5">
                   Confirm facility parameters prior to regulatory submission to the credit committee.
@@ -1346,8 +1346,8 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
                     className="mt-0.5 w-4 h-4 rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500"
                   />
                   <div className="text-xs text-slate-300 leading-relaxed">
-                    <strong className="text-white block mb-0.5">National Bank of Cambodia (NBC) Regulatory Declaration:</strong>
-                    I attest that all declarations, employment proofs, and collateral titles provided are authentic. I authorize JAM SONG VICH Microfinance Institution to query my Credit Bureau Cambodia (CBC) dossier and perform regulatory credit evaluations.
+                    <strong className="text-white block mb-0.5">Applicant Declaration:</strong>
+                    I certify that all information and uploaded documents are accurate and authorize credit evaluation.
                   </div>
                 </label>
               </div>
@@ -1357,7 +1357,7 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
                 <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-3 text-rose-300 text-xs">
                   <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                   <div>
-                    <strong className="text-white block mb-0.5">Application Submission Blocked</strong>
+                    <strong className="text-white block mb-0.5">Submission Blocked</strong>
                     <span>{submissionError}</span>
                   </div>
                 </div>
@@ -1398,7 +1398,7 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
                       {isSubmitting ? (
                         <>
                           <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                          <span>Transmitting Application...</span>
+                          <span>Submitting Application...</span>
                         </>
                       ) : isBorrowingLocked ? (
                         <>
@@ -1408,7 +1408,7 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
                       ) : (
                         <>
                           <BadgeCheck className="w-4 h-4" />
-                          <span>Submit Credit Application</span>
+                          <span>Submit Application</span>
                         </>
                       )}
                     </button>
@@ -1418,10 +1418,10 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
                       <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block w-72 p-3 bg-slate-950 text-slate-200 text-[11px] rounded-xl border border-rose-500/40 shadow-2xl z-30 pointer-events-none">
                         <div className="font-bold text-rose-400 mb-1 flex items-center gap-1.5">
                           <Lock className="w-3.5 h-3.5" />
-                          Borrowing Action Blocked
+                          Action Blocked
                         </div>
                         <p className="text-slate-300 leading-relaxed">
-                          All 3 mandatory regulatory documents (National ID, Proof of Residence, Employment Contract) must be verified prior to credit application submission.
+                          All 3 KYC documents must be verified in your profile before applying.
                         </p>
                       </div>
                     )}
@@ -1441,46 +1441,46 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-emerald-400" />
                 <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-                  Live EMI Simulator
+                  Payment Calculator
                 </h3>
               </div>
               <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 font-bold">
-                NBC Formula
+                NBC Standard
               </span>
             </div>
 
             {/* Calculated Monthly EMI Big Display */}
             <div className="bg-slate-950 border border-slate-800/80 rounded-xl p-4 text-center space-y-1">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                Estimated Monthly Installment
+                Monthly Payment
               </span>
               <p className="text-2xl sm:text-3xl font-black font-mono text-emerald-400">
                 {formatMoney(calculations.monthlyEMIUSD)}
               </p>
               <p className="text-[10px] text-slate-500 font-mono">
-                {tenureMonths} equal monthly installments
+                {tenureMonths} monthly payments
               </p>
             </div>
 
             {/* Breakdown Items List */}
             <div className="space-y-2.5 text-xs font-mono">
               <div className="flex items-center justify-between text-slate-400">
-                <span className="font-sans">Facility Principal</span>
+                <span className="font-sans">Loan Amount</span>
                 <span className="text-white font-bold">{formatMoney(loanAmountUSD)}</span>
               </div>
 
               <div className="flex items-center justify-between text-slate-400">
-                <span className="font-sans">Annual Interest Rate</span>
+                <span className="font-sans">Interest Rate</span>
                 <span className="text-emerald-400 font-bold">{interestRate}% p.a.</span>
               </div>
 
               <div className="flex items-center justify-between text-slate-400">
-                <span className="font-sans">Total Interest Payable</span>
+                <span className="font-sans">Total Interest</span>
                 <span className="text-white font-bold">{formatMoney(calculations.totalInterestUSD)}</span>
               </div>
 
               <div className="flex items-center justify-between text-slate-400">
-                <span className="font-sans">Loan Processing Fee (1.0%)</span>
+                <span className="font-sans">Processing Fee (1%)</span>
                 <span className="text-slate-300 font-bold">{formatMoney(calculations.processingFeeUSD)}</span>
               </div>
 
@@ -1490,7 +1490,7 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
               </div>
 
               <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-slate-200 font-bold">
-                <span className="font-sans">Total Repayable</span>
+                <span className="font-sans">Total to Repay</span>
                 <span className="text-white text-sm">{formatMoney(calculations.totalRepayableUSD)}</span>
               </div>
             </div>
@@ -1499,7 +1499,7 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
             <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-855 flex items-start gap-2.5">
               <AlertCircle className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
               <p className="text-[10px] text-slate-400 leading-relaxed font-sans">
-                Approved applications will disburse immediately to your selected bank channel after underwriting approval. Zero prepayment penalties apply.
+                Instant disbursement once approved. No prepayment penalties.
               </p>
             </div>
           </div>

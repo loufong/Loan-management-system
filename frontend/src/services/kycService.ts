@@ -54,7 +54,7 @@ const DEFAULT_DOCUMENTS: FrontendKycDocument[] = [
     id: 'kyc-doc-nid',
     userId: 'BOR-2026-8801',
     documentType: 'NATIONAL_ID',
-    title: 'National ID Card (Front & Back)',
+    title: 'National ID Card',
     referenceNumber: 'NID-KH-010992384',
     originalFilename: 'national_id_verified.pdf',
     fileKey: 'kyc/BOR-2026-8801/national_id_verified.pdf',
@@ -70,7 +70,7 @@ const DEFAULT_DOCUMENTS: FrontendKycDocument[] = [
     id: 'kyc-doc-res',
     userId: 'BOR-2026-8801',
     documentType: 'PROOF_OF_RESIDENCE',
-    title: 'Proof of Residence (Family Book / Soft Title)',
+    title: 'Proof of Residence',
     referenceNumber: 'RES-PP-99401',
     originalFilename: 'soft_title_card_khan_toul_kork.pdf',
     fileKey: 'kyc/BOR-2026-8801/soft_title_card_khan_toul_kork.pdf',
@@ -86,7 +86,7 @@ const DEFAULT_DOCUMENTS: FrontendKycDocument[] = [
     id: 'kyc-doc-emp',
     userId: 'BOR-2026-8801',
     documentType: 'EMPLOYMENT_INCOME_CONTRACT',
-    title: 'Employment & Income Contract',
+    title: 'Employment & Income Proof',
     referenceNumber: 'EMP-CORP-2026',
     originalFilename: 'employment_contract_senior_dev.pdf',
     fileKey: 'kyc/BOR-2026-8801/employment_contract_senior_dev.pdf',
@@ -117,7 +117,7 @@ class FrontendKycService {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
-    } catch {}
+    } catch { }
     this.saveLocalDocuments(DEFAULT_DOCUMENTS, cleanUserId);
     return DEFAULT_DOCUMENTS;
   }
@@ -127,7 +127,7 @@ class FrontendKycService {
     try {
       localStorage.setItem(`JAM_KYC_DOCS_${cleanUserId}`, JSON.stringify(docs));
       localStorage.setItem(STORAGE_KEY, JSON.stringify(docs));
-    } catch {}
+    } catch { }
     kycVaultStorage.saveDocuments(cleanUserId, docs);
     window.dispatchEvent(new CustomEvent('kyc_status_updated'));
   }
@@ -290,7 +290,7 @@ class FrontendKycService {
           this.uploadedBlobCache.set(decodeURIComponent(match[1]), blobUrl);
         }
       }
-    } catch {}
+    } catch { }
 
     try {
       const res = await fetch(uploadUrl, {
@@ -351,7 +351,7 @@ class FrontendKycService {
         const json = await res.json();
         confirmedDoc = json.data;
       }
-    } catch {}
+    } catch { }
 
     const localDocs = this.getLocalDocuments(cleanUserId);
     const idx = localDocs.findIndex((d) => d.documentType === params.documentType);
@@ -372,8 +372,8 @@ class FrontendKycService {
         params.documentType === 'NATIONAL_ID'
           ? 'National ID Card (Front & Back)'
           : params.documentType === 'PROOF_OF_RESIDENCE'
-          ? 'Proof of Residence (Family Book / Soft Title)'
-          : 'Employment & Income Contract',
+            ? 'Proof of Residence (Family Book / Soft Title)'
+            : 'Employment & Income Contract',
       referenceNumber: params.referenceNumber,
       originalFilename: params.originalFilename,
       fileKey: params.fileKey,
@@ -421,7 +421,7 @@ class FrontendKycService {
         },
         body: JSON.stringify({ documentType, status, rejectionReason, userId: cleanUserId }),
       });
-    } catch {}
+    } catch { }
 
     const localDocs = this.getLocalDocuments(cleanUserId);
     const doc = localDocs.find((d) => d.documentType === documentType);

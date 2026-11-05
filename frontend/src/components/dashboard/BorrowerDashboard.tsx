@@ -5,7 +5,6 @@ import {
   CheckCircle2,
   Calendar,
   CreditCard,
-  QrCode,
   FileText,
   TrendingUp,
   Receipt,
@@ -130,19 +129,6 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
     totalRepaidVal > 0 ? 5 : 0
   );
 
-  const handleOpenKhqr = () => {
-    if (primaryLoan) {
-      if (onOpenQuickPayment) {
-        onOpenQuickPayment(primaryLoan.id, nextInstallmentNo, nextDueAmount);
-      } else {
-        onNavigate('payments');
-      }
-    } else {
-      if (onOpenApplyLoan) onOpenApplyLoan();
-      else onNavigate('new-application');
-    }
-  };
-
   const isKhmer = language === 'km' || (language as string) === 'KH';
 
   return (
@@ -201,57 +187,24 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
               </h1>
 
               <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-xl">
-                {'Manage active credit facilities, settle installments instantly via Bakong KHQR, and monitor repayments.'}
+                {'Manage your active loans and monitor repayments.'}
               </p>
             </div>
           </div>
 
           {/* Action Buttons on the Right */}
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 pt-2 lg:pt-0 shrink-0">
-            {/* Primary Action Button */}
-            {primaryLoan ? (
-              <button
-                type="button"
-                onClick={handleOpenKhqr}
-                className="inline-flex items-center justify-center gap-2 h-10 px-4.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-red-950/40 transition-all cursor-pointer select-none whitespace-nowrap active:scale-[0.98]"
-              >
-                <div className="w-4 h-4 rounded bg-white text-red-600 flex items-center justify-center font-black text-[9px] shrink-0">
-                  KH
-                </div>
-                <QrCode className="w-4 h-4 text-white shrink-0" />
-                <span>{'Pay via Bakong KHQR'}</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  if (onOpenApplyLoan) onOpenApplyLoan();
-                  else onNavigate('new-application');
-                }}
-                className="inline-flex items-center justify-center gap-1.5 h-10 px-4.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs sm:text-sm shadow-md shadow-emerald-950/40 transition-all cursor-pointer select-none whitespace-nowrap active:scale-[0.98]"
-              >
-                <Plus className="w-4 h-4 text-slate-950 shrink-0" />
-                <span>{'+ Apply for Credit Facility'}</span>
-              </button>
-            )}
-
-            {/* Secondary Action: Apply for Loan (shown when user already has an active loan) */}
-            {primaryLoan && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (onOpenApplyLoan) {
-                    onOpenApplyLoan();
-                  } else {
-                    onNavigate('new-application');
-                  }
-                }}
-                className="inline-flex items-center justify-center gap-1.5 h-10 px-4.5 rounded-xl bg-slate-800 hover:bg-slate-750 text-white font-semibold text-xs sm:text-sm border border-slate-700 hover:border-slate-600 transition-all cursor-pointer select-none whitespace-nowrap active:scale-[0.98]"
-              >
-                <Plus className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>{'+ Apply for Loan'}</span>
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => {
+                if (onOpenApplyLoan) onOpenApplyLoan();
+                else onNavigate('new-application');
+              }}
+              className="inline-flex items-center justify-center gap-1.5 h-10 px-4.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs sm:text-sm shadow-md shadow-emerald-950/40 transition-all cursor-pointer select-none whitespace-nowrap active:scale-[0.98]"
+            >
+              <Plus className="w-4 h-4 text-slate-950 shrink-0" />
+              <span>{'+ Apply for Loan'}</span>
+            </button>
 
             {/* Outline Button: Schedule */}
             <button
@@ -474,11 +427,17 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                   <button
                     type="button"
-                    onClick={handleOpenKhqr}
-                    className="px-5 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md shadow-red-950/50 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                    onClick={() => {
+                      if (onOpenQuickPayment) {
+                        onOpenQuickPayment(primaryLoan.id, nextInstallmentNo, nextDueAmount);
+                      } else {
+                        onNavigate('payments');
+                      }
+                    }}
+                    className="px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md shadow-emerald-950/40 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
                   >
-                    <QrCode className="w-4 h-4 text-white" />
-                    <span>{'Scan & Pay via KHQR'}</span>
+                    <CreditCard className="w-4 h-4 text-slate-950" />
+                    <span>{'Pay Installment'}</span>
                   </button>
                   <button
                     type="button"
@@ -648,52 +607,6 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
 
         {/* Right 4 Columns: Right Sidebar Widgets */}
         <div className="lg:col-span-4 space-y-6">
-          {/* Cambodia Bakong KHQR Card */}
-          <div className="bg-slate-900 rounded-2xl p-5 border border-slate-800 shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-red-600 text-white flex items-center justify-center font-black text-xs shadow-xs">
-                  KH
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-white tracking-tight">KH Bakong Cambodia Bakong KHQR</h4>
-                  <p className="text-[10px] text-slate-400">National Bank of Cambodia Standard</p>
-                </div>
-              </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                LIVE
-              </span>
-            </div>
-
-            <p className="text-xs text-slate-300 leading-relaxed">
-              {'Settle repayments seamlessly from any supported Cambodian banking app (ACLEDA, ABA, Wing, Canadia, Bakong App) with zero transaction fees.'}
-            </p>
-
-            <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800 space-y-2 text-xs text-slate-300">
-              <div className="flex justify-between items-center">
-                <span className="text-slate-400">{'Receiving Bank:'}</span>
-                <span className="font-semibold text-white">ACLEDA Bank Plc.</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-400">{'Merchant:'}</span>
-                <span className="font-semibold text-white">JAM SONG VICH LMS</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-400">{'Currency:'}</span>
-                <span className="font-mono font-bold text-emerald-400">USD & KHR (Dual Currency)</span>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleOpenKhqr}
-              className="w-full py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md shadow-red-950/50 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
-            >
-              <QrCode className="w-4 h-4 text-white" />
-              <span>{'Generate Bakong KHQR Now'}</span>
-            </button>
-          </div>
-
           {/* My Applications Card */}
           <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 space-y-4 shadow-sm">
             <div className="flex items-center justify-between">

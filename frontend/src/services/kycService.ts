@@ -47,14 +47,69 @@ export interface FrontendKycSummary {
   documents: FrontendKycDocument[];
 }
 
-const STORAGE_KEY = 'JAM_KYC_DOCUMENTS_STORE_V1';
+export const createFreshUserDocuments = (userId: string): FrontendKycDocument[] => [
+  {
+    id: `kyc-nid-${userId}`,
+    userId,
+    documentType: 'NATIONAL_ID',
+    title: 'National ID Card (Front & Back)',
+    referenceNumber: '',
+    originalFilename: '',
+    fileKey: '',
+    fileSizeBytes: 0,
+    mimeType: '',
+    status: 'MISSING',
+    verifiedAt: null,
+    rejectionReason: null,
+    uploadedAt: '',
+    viewUrl: undefined,
+    backViewUrl: undefined,
+    backOriginalFilename: undefined,
+  },
+  {
+    id: `kyc-res-${userId}`,
+    userId,
+    documentType: 'PROOF_OF_RESIDENCE',
+    title: 'Proof of Residence (Family Book / Soft Title)',
+    referenceNumber: '',
+    originalFilename: '',
+    fileKey: '',
+    fileSizeBytes: 0,
+    mimeType: '',
+    status: 'MISSING',
+    verifiedAt: null,
+    rejectionReason: null,
+    uploadedAt: '',
+    viewUrl: undefined,
+    backViewUrl: undefined,
+    backOriginalFilename: undefined,
+  },
+  {
+    id: `kyc-emp-${userId}`,
+    userId,
+    documentType: 'EMPLOYMENT_INCOME_CONTRACT',
+    title: 'Employment & Income Proof',
+    referenceNumber: '',
+    originalFilename: '',
+    fileKey: '',
+    fileSizeBytes: 0,
+    mimeType: '',
+    status: 'MISSING',
+    verifiedAt: null,
+    rejectionReason: null,
+    uploadedAt: '',
+    viewUrl: undefined,
+    backViewUrl: undefined,
+    backOriginalFilename: undefined,
+  },
+];
 
 const DEFAULT_DOCUMENTS: FrontendKycDocument[] = [
   {
     id: 'kyc-doc-nid',
     userId: 'BOR-2026-8801',
     documentType: 'NATIONAL_ID',
-    title: 'National ID Card',
+    title: 'National ID Card (Front & Back)',
     referenceNumber: 'NID-KH-010992384',
     originalFilename: 'national_id_verified.pdf',
     fileKey: 'kyc/BOR-2026-8801/national_id_verified.pdf',
@@ -70,7 +125,7 @@ const DEFAULT_DOCUMENTS: FrontendKycDocument[] = [
     id: 'kyc-doc-res',
     userId: 'BOR-2026-8801',
     documentType: 'PROOF_OF_RESIDENCE',
-    title: 'Proof of Residence',
+    title: 'Proof of Residence (Family Book / Soft Title)',
     referenceNumber: 'RES-PP-99401',
     originalFilename: 'soft_title_card_khan_toul_kork.pdf',
     fileKey: 'kyc/BOR-2026-8801/soft_title_card_khan_toul_kork.pdf',
@@ -111,25 +166,26 @@ class FrontendKycService {
         const parsed = JSON.parse(rawUser);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
-
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
     } catch { }
-    this.saveLocalDocuments(DEFAULT_DOCUMENTS, cleanUserId);
-    return DEFAULT_DOCUMENTS;
+
+    const isDemoAccount =
+      cleanUserId === 'BOR-2026-8801' ||
+      cleanUserId === 'BOR-2026-0001' ||
+      cleanUserId === 'bor-8801' ||
+      cleanUserId === 'usr-test-borrower-8801';
+
+    const initialDocs = isDemoAccount ? DEFAULT_DOCUMENTS : createFreshUserDocuments(cleanUserId);
+    this.saveLocalDocuments(initialDocs, cleanUserId);
+    return initialDocs;
   }
 
   public saveLocalDocuments(docs: FrontendKycDocument[], userId?: string): void {
     const cleanUserId = (userId || 'BOR-2026-8801').trim();
     try {
       localStorage.setItem(`JAM_KYC_DOCS_${cleanUserId}`, JSON.stringify(docs));
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(docs));
     } catch { }
     kycVaultStorage.saveDocuments(cleanUserId, docs);
-    window.dispatchEvent(new CustomEvent('kyc_status_updated'));
+    window.dispatchEvent(new CustomEvent('kyc_status_updated', { detail: { userId: cleanUserId } }));
   }
 
   /**
@@ -138,6 +194,12 @@ class FrontendKycService {
   public async getKycStatus(userId?: string): Promise<FrontendKycSummary> {
     const cleanUserId = (userId || 'BOR-2026-8801').trim();
     const localDocs = this.getLocalDocuments(cleanUserId);
+
+    const isDemoAccount =
+      cleanUserId === 'BOR-2026-8801' ||
+      cleanUserId === 'BOR-2026-0001' ||
+      cleanUserId === 'bor-8801' ||
+      cleanUserId === 'usr-test-borrower-8801';
 
     try {
       const token = localStorage.getItem('apex_token') || sessionStorage.getItem('apex_token');
@@ -148,10 +210,21 @@ class FrontendKycService {
         const json = await res.json();
         if (json?.data?.documents) {
           // Intelligently merge server documents with local uploaded documents
-          // NEVER let default seed documents overwrite real user uploads!
+          // NEVER let default seed documents overwrite real user uploads or fresh new user accounts!
           const mergedDocs: FrontendKycDocument[] = json.data.documents.map((serverDoc: FrontendKycDocument) => {
             const matchingLocal = localDocs.find((l) => l.documentType === serverDoc.documentType);
             if (!matchingLocal) return serverDoc;
+
+            // If not a demo account, don't let seed documents overwrite fresh empty user state
+            const isServerSeedDoc =
+              serverDoc.originalFilename &&
+              (serverDoc.originalFilename.includes('_verified.pdf') ||
+                serverDoc.originalFilename.includes('_senior_dev.pdf') ||
+                serverDoc.originalFilename.includes('_khan_toul_kork.pdf'));
+
+            if (!isDemoAccount && isServerSeedDoc && matchingLocal.status === 'MISSING') {
+              return matchingLocal;
+            }
 
             const isUserCustomUpload =
               matchingLocal.originalFilename &&
@@ -283,7 +356,6 @@ class FrontendKycService {
     // Cache local object URL so user can immediately view uploaded file in the viewer modal
     try {
       const blobUrl = URL.createObjectURL(file);
-      this.uploadedBlobCache.set(file.name, blobUrl);
       if (uploadUrl.includes('fileKey=')) {
         const match = uploadUrl.match(/fileKey=([^&]+)/);
         if (match && match[1]) {
@@ -360,9 +432,8 @@ class FrontendKycService {
       params.viewUrl ||
       (await kycVaultStorage.getFile(cleanUserId, params.documentType === 'NATIONAL_ID' ? 'NATIONAL_ID_FRONT' : params.documentType)) ||
       (await kycVaultStorage.getFile(cleanUserId, params.documentType)) ||
-      (idx >= 0 ? localDocs[idx].viewUrl : undefined) ||
       this.uploadedBlobCache.get(params.fileKey) ||
-      this.uploadedBlobCache.get(params.originalFilename);
+      (idx >= 0 && localDocs[idx].status !== 'MISSING' ? localDocs[idx].viewUrl : undefined);
 
     const updatedDoc: FrontendKycDocument = {
       id: confirmedDoc?.id || (idx >= 0 ? localDocs[idx].id : `kyc-${Date.now()}`),
@@ -387,7 +458,7 @@ class FrontendKycService {
       backViewUrl:
         params.backViewUrl ||
         (await kycVaultStorage.getFile(cleanUserId, 'NATIONAL_ID_BACK')) ||
-        (idx >= 0 ? localDocs[idx].backViewUrl : undefined),
+        (idx >= 0 && localDocs[idx].status !== 'MISSING' ? localDocs[idx].backViewUrl : undefined),
       backOriginalFilename: params.backOriginalFilename || (idx >= 0 ? localDocs[idx].backOriginalFilename : undefined),
     };
 

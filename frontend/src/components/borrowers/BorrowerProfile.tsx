@@ -79,20 +79,23 @@ export const BorrowerProfile: React.FC<BorrowerProfileProps> = ({
 
   useEffect(() => {
     const loadRealPhotos = async () => {
-      const candidateIds = [borrowerId, 'BOR-2026-8801', 'BOR-2026-0001'].filter(Boolean);
+      const isSeedDemo = borrowerId === 'BOR-2026-8801' || borrowerId === 'BOR-2026-0001' || borrowerId === 'bor-8801';
+      const candidateIds = [borrowerId, ...(isSeedDemo ? ['BOR-2026-8801', 'BOR-2026-0001'] : [])].filter(Boolean) as string[];
       for (const cid of candidateIds) {
         if (!realIdPhoto) {
           const idPhoto =
             (await kycVaultStorage.getFile(cid, 'NATIONAL_ID_FRONT')) ||
             (await kycVaultStorage.getFile(cid, 'NATIONAL_ID')) ||
-            localStorage.getItem('kyc_photo_NATIONAL_ID_FRONT') ||
-            localStorage.getItem('kyc_photo_NATIONAL_ID');
+            localStorage.getItem(`kyc_file_${cid}_NATIONAL_ID_FRONT`) ||
+            localStorage.getItem(`kyc_file_${cid}_NATIONAL_ID`);
           if (idPhoto) setRealIdPhoto(idPhoto);
         }
         if (!realCollateralPhoto) {
           const colPhoto =
             (await kycVaultStorage.getFile(cid, 'LOAN_COLLATERAL_DOC')) ||
-            (await kycVaultStorage.getFile(cid, 'PROOF_OF_RESIDENCE'));
+            (await kycVaultStorage.getFile(cid, 'PROOF_OF_RESIDENCE')) ||
+            localStorage.getItem(`kyc_file_${cid}_LOAN_COLLATERAL_DOC`) ||
+            localStorage.getItem(`kyc_file_${cid}_PROOF_OF_RESIDENCE`);
           if (colPhoto) setRealCollateralPhoto(colPhoto);
         }
       }
@@ -219,11 +222,10 @@ export const BorrowerProfile: React.FC<BorrowerProfileProps> = ({
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`px-4 py-3.5 text-xs font-bold transition border-b-2 whitespace-nowrap ${
-                activeTab === tab.id
+              className={`px-4 py-3.5 text-xs font-bold transition border-b-2 whitespace-nowrap ${activeTab === tab.id
                   ? 'border-emerald-500 text-emerald-400 bg-slate-900'
                   : 'border-transparent text-slate-400 hover:text-white'
-              }`}
+                }`}
             >
               {tab.label}
             </button>

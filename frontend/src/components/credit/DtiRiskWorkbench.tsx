@@ -70,7 +70,17 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
 
   useEffect(() => {
     const loadRealEvidence = async () => {
-      const candidateIds = [application?.borrowerId, application?.id, 'BOR-2026-8801', 'BOR-2026-0001'].filter(Boolean) as string[];
+      const isSeedDemo =
+        application?.borrowerId === 'BOR-2026-8801' ||
+        application?.borrowerId === 'BOR-2026-0001' ||
+        (application as any)?.borrowerName === 'Johnathan Doe';
+
+      const candidateIds = [
+        application?.borrowerId,
+        application?.id,
+        ...(isSeedDemo ? ['BOR-2026-8801', 'BOR-2026-0001'] : []),
+      ].filter(Boolean) as string[];
+
       let idCard: string | undefined;
       let paySlip: string | undefined;
       let bankStmt: string | undefined;
@@ -81,8 +91,6 @@ export const DtiRiskWorkbench: React.FC<DtiRiskWorkbenchProps> = ({
             (await kycVaultStorage.getFile(cid, 'NATIONAL_ID_FRONT')) ||
             (await kycVaultStorage.getFile(cid, 'NATIONAL_ID')) ||
             localStorage.getItem(`kyc_file_${cid}_NATIONAL_ID_FRONT`) ||
-            localStorage.getItem('kyc_photo_NATIONAL_ID_FRONT') ||
-            localStorage.getItem('kyc_photo_NATIONAL_ID') ||
             undefined;
         }
         if (!paySlip) {

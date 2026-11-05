@@ -90,6 +90,12 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
   const loadDocuments = async () => {
     setIsLoadingDocs(true);
     try {
+      const isSeedDemoBorrower =
+        borrower.borrowerId === 'BOR-2026-8801' ||
+        borrower.borrowerId === 'BOR-2026-0001' ||
+        borrower.id === 'bor-8801' ||
+        borrower.fullName === 'Johnathan Doe';
+
       const candidateIds = Array.from(
         new Set(
           [
@@ -97,8 +103,7 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
             borrower.id,
             (borrower as any).clientCode,
             (borrower as any).userId,
-            'BOR-2026-8801',
-            'BOR-2026-0001',
+            ...(isSeedDemoBorrower ? ['BOR-2026-8801', 'BOR-2026-0001'] : []),
           ].filter(Boolean) as string[]
         )
       );
@@ -144,10 +149,7 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
               ? nidDoc.viewUrl
               : null) ||
             localStorage.getItem(`kyc_file_${cid}_NATIONAL_ID_FRONT`) ||
-            localStorage.getItem(`kyc_file_${cid}_NATIONAL_ID`) ||
-            localStorage.getItem('kyc_file_NATIONAL_ID_FRONT') ||
-            localStorage.getItem('kyc_photo_NATIONAL_ID_FRONT') ||
-            localStorage.getItem('kyc_photo_NATIONAL_ID');
+            localStorage.getItem(`kyc_file_${cid}_NATIONAL_ID`);
         }
 
         if (!realNidBack) {
@@ -157,9 +159,7 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
             (nidDoc.backViewUrl.startsWith('data:') || nidDoc.backViewUrl.startsWith('blob:'))
               ? nidDoc.backViewUrl
               : null) ||
-            localStorage.getItem(`kyc_file_${cid}_NATIONAL_ID_BACK`) ||
-            localStorage.getItem('kyc_file_NATIONAL_ID_BACK') ||
-            localStorage.getItem('kyc_photo_NATIONAL_ID_BACK');
+            localStorage.getItem(`kyc_file_${cid}_NATIONAL_ID_BACK`);
         }
 
         if (!realSalaryFile) {
@@ -170,8 +170,7 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
               ? empDoc.viewUrl
               : null) ||
             localStorage.getItem(`kyc_file_${cid}_LOAN_SALARY_SLIP`) ||
-            localStorage.getItem(`kyc_file_${cid}_EMPLOYMENT_INCOME_CONTRACT`) ||
-            localStorage.getItem('kyc_file_LOAN_SALARY_SLIP');
+            localStorage.getItem(`kyc_file_${cid}_EMPLOYMENT_INCOME_CONTRACT`);
         }
 
         if (!realCollateralFile) {
@@ -182,8 +181,7 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
               ? resDoc.viewUrl
               : null) ||
             localStorage.getItem(`kyc_file_${cid}_LOAN_COLLATERAL_DOC`) ||
-            localStorage.getItem(`kyc_file_${cid}_PROOF_OF_RESIDENCE`) ||
-            localStorage.getItem('kyc_file_LOAN_COLLATERAL_DOC');
+            localStorage.getItem(`kyc_file_${cid}_PROOF_OF_RESIDENCE`);
         }
       }
 

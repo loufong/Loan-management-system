@@ -38,7 +38,29 @@ class KycVaultStorageService {
   private memoryFiles = new Map<string, string>();
 
   constructor() {
+    this.cleanLegacyGlobalStorage();
     this.initDb();
+  }
+
+  private cleanLegacyGlobalStorage(): void {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const legacyDocTypes = [
+          'NATIONAL_ID',
+          'NATIONAL_ID_FRONT',
+          'NATIONAL_ID_BACK',
+          'PROOF_OF_RESIDENCE',
+          'EMPLOYMENT_INCOME_CONTRACT',
+          'LOAN_SALARY_SLIP',
+          'LOAN_COLLATERAL_DOC',
+        ];
+        legacyDocTypes.forEach((dt) => {
+          localStorage.removeItem(`kyc_file_${dt}`);
+          localStorage.removeItem(`kyc_photo_${dt}`);
+        });
+        localStorage.removeItem('JAM_KYC_DOCUMENTS_STORE_V1');
+      }
+    } catch { }
   }
 
   private initDb(): Promise<IDBDatabase | null> {
@@ -84,6 +106,7 @@ class KycVaultStorageService {
 
   /**
    * Permanently saves a document file (Data URL / Base64) to IndexedDB + LocalStorage fallback
+   * Strictly user-scoped: files are saved only for this specific user account.
    */
   public async saveFile(
     userId: string,
@@ -91,18 +114,15 @@ class KycVaultStorageService {
     dataUrl: string,
     metadata: { fileName: string; mimeType: string; fileSize: number }
   ): Promise<void> {
-    const cleanUserId = (userId || 'BOR-2026-8801').trim();
+    const cleanUserId = (userId || 'anonymous').trim();
     const key = `${cleanUserId}_${docType}`;
 
-    // 1. Memory cache
+    // 1. User-scoped memory cache
     this.memoryFiles.set(key, dataUrl);
-    this.memoryFiles.set(docType, dataUrl);
 
-    // 2. LocalStorage fast cache
+    // 2. User-scoped LocalStorage cache
     try {
       localStorage.setItem(`kyc_file_${key}`, dataUrl);
-      localStorage.setItem(`kyc_file_${docType}`, dataUrl);
-      localStorage.setItem(`kyc_photo_${docType}`, dataUrl);
     } catch {
       // LocalStorage might be full for large images, handled gracefully by IndexedDB
     }
@@ -141,32 +161,28 @@ class KycVaultStorageService {
 
   /**
    * Retrieves permanently saved file Data URL
+   * Strictly user-scoped: never returns files uploaded by another user account.
    */
   public async getFile(userId: string, docType: KycDocType | string): Promise<string | null> {
-    const cleanUserId = (userId || 'BOR-2026-8801').trim();
+    const cleanUserId = (userId || '').trim();
+    if (!cleanUserId) return null;
     const key = `${cleanUserId}_${docType}`;
 
-    // 1. Check memory
+    // 1. Check user-scoped memory
     if (this.memoryFiles.has(key)) {
       return this.memoryFiles.get(key) || null;
     }
-    if (this.memoryFiles.has(docType)) {
-      return this.memoryFiles.get(docType) || null;
-    }
 
-    // 2. Check LocalStorage
+    // 2. Check user-scoped LocalStorage
     try {
-      const fromLocal =
-        localStorage.getItem(`kyc_file_${key}`) ||
-        localStorage.getItem(`kyc_file_${docType}`) ||
-        localStorage.getItem(`kyc_photo_${docType}`);
+      const fromLocal = localStorage.getItem(`kyc_file_${key}`);
       if (fromLocal && fromLocal.startsWith('data:')) {
         this.memoryFiles.set(key, fromLocal);
         return fromLocal;
       }
-    } catch {}
+    } catch { }
 
-    // 3. Check IndexedDB
+    // 3. Check user-scoped IndexedDB
     const db = await this.initDb();
     if (db) {
       const dbFile = await new Promise<string | null>((resolve) => {
@@ -179,13 +195,7 @@ class KycVaultStorageService {
             if (result && result.dataUrl) {
               resolve(result.dataUrl);
             } else {
-              // Try generic docType key fallback
-              const genericReq = store.get(docType);
-              genericReq.onsuccess = () => {
-                const genRes = genericReq.result as StoredKycFile | undefined;
-                resolve(genRes?.dataUrl || null);
-              };
-              genericReq.onerror = () => resolve(null);
+              resolve(null);
             }
           };
           req.onerror = () => resolve(null);
@@ -205,19 +215,19 @@ class KycVaultStorageService {
 
   /**
    * Permanently saves the user's KYC document list & metadata
+   * Strictly user-scoped to cleanUserId.
    */
   public async saveDocuments(userId: string, docs: FrontendKycDocument[]): Promise<void> {
-    const cleanUserId = (userId || 'BOR-2026-8801').trim();
+    const cleanUserId = (userId || 'anonymous').trim();
 
-    // 1. LocalStorage permanent save
+    // 1. User-scoped LocalStorage permanent save
     try {
       localStorage.setItem(`JAM_KYC_DOCS_${cleanUserId}`, JSON.stringify(docs));
-      localStorage.setItem('JAM_KYC_DOCUMENTS_STORE_V1', JSON.stringify(docs));
     } catch (e) {
       console.warn('[KycVaultStorage] LocalStorage write error:', e);
     }
 
-    // 2. IndexedDB permanent save
+    // 2. User-scoped IndexedDB permanent save
     const db = await this.initDb();
     if (db) {
       await new Promise<void>((resolve) => {
@@ -239,32 +249,28 @@ class KycVaultStorageService {
     }
 
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('kyc_status_updated'));
+      window.dispatchEvent(new CustomEvent('kyc_status_updated', { detail: { userId: cleanUserId } }));
     }
   }
 
   /**
    * Retrieves permanently saved KYC document list
+   * Strictly user-scoped. Never falls back to a global document store.
    */
   public async getDocuments(userId: string): Promise<FrontendKycDocument[] | null> {
-    const cleanUserId = (userId || 'BOR-2026-8801').trim();
+    const cleanUserId = (userId || '').trim();
+    if (!cleanUserId) return null;
 
-    // 1. Check LocalStorage
+    // 1. Check user-scoped LocalStorage
     try {
       const rawUser = localStorage.getItem(`JAM_KYC_DOCS_${cleanUserId}`);
       if (rawUser) {
         const parsed = JSON.parse(rawUser);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
+    } catch { }
 
-      const rawGlobal = localStorage.getItem('JAM_KYC_DOCUMENTS_STORE_V1');
-      if (rawGlobal) {
-        const parsed = JSON.parse(rawGlobal);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {}
-
-    // 2. Check IndexedDB
+    // 2. Check user-scoped IndexedDB
     const db = await this.initDb();
     if (db) {
       const docs = await new Promise<FrontendKycDocument[] | null>((resolve) => {

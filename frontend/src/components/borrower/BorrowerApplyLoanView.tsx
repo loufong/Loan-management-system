@@ -106,10 +106,20 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
   const [kycSummary, setKycSummary] = useState<FrontendKycSummary | null>(null);
   const [kycLoading, setKycLoading] = useState<boolean>(true);
 
+  const isDemoAccount =
+    currentUser?.email === 'johnathan.doe@student.edu' ||
+    currentUser?.username === 'j.doe' ||
+    currentUser?.username === 'borrower' ||
+    currentUser?.email === 'borrower@apex.local';
+
+  const effectiveBorrowerId =
+    currentUser.borrowerId ||
+    (isDemoAccount ? 'BOR-2026-8801' : (currentUser.id || currentUser.username || currentUser.email || 'user'));
+
   // Restore or pull authentic KYC documents
   useEffect(() => {
     let isMounted = true;
-    const clientId = currentUser.id || 'BOR-2026-8801';
+    const clientId = effectiveBorrowerId;
 
     const loadSavedDocs = async () => {
       try {
@@ -165,14 +175,14 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [currentUser.id]);
+  }, [effectiveBorrowerId]);
 
   useEffect(() => {
     let isMounted = true;
     const fetchKyc = async () => {
       try {
         setKycLoading(true);
-        const data = await kycService.getKycStatus(currentUser.id || 'BOR-2026-8801');
+        const data = await kycService.getKycStatus(effectiveBorrowerId);
         if (isMounted) setKycSummary(data);
       } catch (err) {
         console.error('Failed to query KYC status for borrower:', err);
@@ -182,15 +192,17 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
     };
     fetchKyc();
 
-    const handleKycUpdate = () => {
-      fetchKyc();
+    const handleKycUpdate = (e: any) => {
+      if (!e.detail?.userId || e.detail.userId === effectiveBorrowerId) {
+        fetchKyc();
+      }
     };
     window.addEventListener('kyc_status_updated', handleKycUpdate);
     return () => {
       isMounted = false;
       window.removeEventListener('kyc_status_updated', handleKycUpdate);
     };
-  }, [currentUser.id]);
+  }, [effectiveBorrowerId]);
 
   const isBorrowingLocked = !kycLoading && kycSummary !== null && !kycSummary.isEligibleToBorrow;
 
@@ -303,7 +315,7 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
         reader.readAsDataURL(file);
       });
 
-      const clientId = currentUser.id || 'BOR-2026-8801';
+      const clientId = effectiveBorrowerId;
       const docData: LoanAttachedDoc = {
         fileName: file.name,
         fileSize: file.size,
@@ -352,7 +364,7 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
         reader.readAsDataURL(file);
       });
 
-      const clientId = currentUser.id || 'BOR-2026-8801';
+      const clientId = effectiveBorrowerId;
       const docData: LoanAttachedDoc = {
         fileName: file.name,
         fileSize: file.size,
@@ -384,7 +396,7 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
     setSalarySlipDoc(null);
     setUploadedSalarySlip(null);
     if (salarySlipInputRef.current) salarySlipInputRef.current.value = '';
-    const clientId = currentUser.id || 'BOR-2026-8801';
+    const clientId = effectiveBorrowerId;
     const currentSaved = JSON.parse(localStorage.getItem(`JAM_LOAN_DOCS_${clientId}`) || '{}');
     delete currentSaved.salarySlip;
     localStorage.setItem(`JAM_LOAN_DOCS_${clientId}`, JSON.stringify(currentSaved));
@@ -394,7 +406,7 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
     setCollateralDoc(null);
     setUploadedCollateralDoc(null);
     if (collateralDocInputRef.current) collateralDocInputRef.current.value = '';
-    const clientId = currentUser.id || 'BOR-2026-8801';
+    const clientId = effectiveBorrowerId;
     const currentSaved = JSON.parse(localStorage.getItem(`JAM_LOAN_DOCS_${clientId}`) || '{}');
     delete currentSaved.collateralDoc;
     localStorage.setItem(`JAM_LOAN_DOCS_${clientId}`, JSON.stringify(currentSaved));
@@ -412,7 +424,7 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
   };
 
   const handleSaveDraft = () => {
-    const clientId = currentUser.id || 'BOR-2026-8801';
+    const clientId = effectiveBorrowerId;
     localStorage.setItem(
       `JAM_LOAN_DRAFT_${clientId}`,
       JSON.stringify({
@@ -445,7 +457,7 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
       const generatedId = `LN-2026-${Math.floor(1000 + Math.random() * 9000)}`;
       const loanPayload = {
         id: generatedId,
-        borrowerId: currentUser.id || 'BOR-2026-8801',
+        borrowerId: effectiveBorrowerId,
         borrowerName: currentUser.fullName || currentUser.name || 'Johnathan Doe',
         borrowerEmail: currentUser.email || 'borrower@jamsongvich.com',
         borrowerPhone: currentUser.phone || '+855 12 345 678',

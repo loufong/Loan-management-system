@@ -112,21 +112,27 @@ export class KycService {
     const existing = this.mockStore.get(userId);
     if (existing && existing.length > 0) return existing;
 
+    const isDemoSeed =
+      userId === 'usr-test-borrower-8801' ||
+      userId === 'BOR-2026-8801' ||
+      userId === 'BOR-2026-0001' ||
+      userId === 'bor-8801';
+
     const defaultDocs: KycDocumentItem[] = MANDATORY_KYC_DOCUMENTS.map((docConfig, idx) => ({
-      id: `kyc-seed-${idx + 1}-${userId.slice(0, 8)}`,
+      id: `kyc-${isDemoSeed ? 'seed' : 'doc'}-${idx + 1}-${userId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8)}`,
       userId,
       documentType: docConfig.type,
       title: docConfig.title,
-      referenceNumber: docConfig.defaultRef,
-      originalFilename: docConfig.sampleFile,
-      fileKey: `kyc/${userId}/${docConfig.type.toLowerCase()}_seed.pdf`,
-      fileSizeBytes: 1450000,
-      mimeType: 'application/pdf',
-      status: 'VERIFIED',
-      verifiedAt: '2026-03-12T10:00:00Z',
-      verifiedBy: 'system-compliance-auditor',
+      referenceNumber: isDemoSeed ? docConfig.defaultRef : '',
+      originalFilename: isDemoSeed ? docConfig.sampleFile : '',
+      fileKey: isDemoSeed ? `kyc/${userId}/${docConfig.type.toLowerCase()}_seed.pdf` : '',
+      fileSizeBytes: isDemoSeed ? 1450000 : 0,
+      mimeType: isDemoSeed ? 'application/pdf' : '',
+      status: isDemoSeed ? 'VERIFIED' : 'MISSING',
+      verifiedAt: isDemoSeed ? '2026-03-12T10:00:00Z' : null,
+      verifiedBy: isDemoSeed ? 'system-compliance-auditor' : null,
       rejectionReason: null,
-      uploadedAt: '2026-03-10T08:30:00Z',
+      uploadedAt: isDemoSeed ? '2026-03-10T08:30:00Z' : '',
     }));
 
     this.mockStore.set(userId, defaultDocs);
@@ -177,10 +183,10 @@ export class KycService {
 
     // Attach fresh 15-minute signed view URLs
     const detailedDocs = docs.map((doc) => {
-      const readResult = S3StorageService.generatePreSignedReadUrl(doc.fileKey, 900);
+      const readUrl = doc.fileKey ? S3StorageService.generatePreSignedReadUrl(doc.fileKey, 900).readUrl : undefined;
       return {
         ...doc,
-        viewUrl: readResult.readUrl,
+        viewUrl: readUrl,
       };
     });
 

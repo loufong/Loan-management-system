@@ -31,7 +31,17 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
 
   useEffect(() => {
     const loadRealDocs = async () => {
-      const candidateIds = [application.borrowerId, application.id, 'BOR-2026-8801', 'BOR-2026-0001'].filter(Boolean) as string[];
+      const isSeedDemo =
+        application.borrowerId === 'BOR-2026-8801' ||
+        application.borrowerId === 'BOR-2026-0001' ||
+        application.borrowerName === 'Johnathan Doe';
+
+      const candidateIds = [
+        application.borrowerId,
+        application.id,
+        ...(isSeedDemo ? ['BOR-2026-8801', 'BOR-2026-0001'] : []),
+      ].filter(Boolean) as string[];
+
       let idUrl: string | undefined;
       let incomeUrl: string | undefined;
       let statementUrl: string | undefined;
@@ -43,8 +53,6 @@ export const CreditReviewApproval: React.FC<CreditReviewApprovalProps> = ({
             (await kycVaultStorage.getFile(cid, 'NATIONAL_ID')) ||
             localStorage.getItem(`kyc_file_${cid}_NATIONAL_ID_FRONT`) ||
             localStorage.getItem(`kyc_file_${cid}_NATIONAL_ID`) ||
-            localStorage.getItem('kyc_photo_NATIONAL_ID_FRONT') ||
-            localStorage.getItem('kyc_photo_NATIONAL_ID') ||
             undefined;
         }
         if (!incomeUrl) {

@@ -28,13 +28,11 @@ import {
   X,
   ShieldCheck,
   Building2,
-  RotateCcw,
   AlertTriangle,
 } from 'lucide-react';
 import { Currency, UserProfile } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 import { api } from '../../services/api';
-import { loanStorageService } from '../../services/loanStorageService';
 
 export interface BorrowerSettingsViewProps {
   currentUser: UserProfile;
@@ -117,8 +115,8 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
 }) => {
   const { language, setLanguage, t } = useLanguage();
 
-  // Active Tab: 'general' | 'notifications' | 'security' | 'banking' | 'danger'
-  const [activeTab, setActiveTab] = useState<'general' | 'notifications' | 'security' | 'banking' | 'danger'>('general');
+  // Active Tab: 'general' | 'notifications' | 'security' | 'banking'
+  const [activeTab, setActiveTab] = useState<'general' | 'notifications' | 'security' | 'banking'>('general');
 
   // Currency State
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>(() => {
@@ -344,7 +342,6 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'security', label: 'Security', icon: Shield },
     { id: 'banking', label: 'Bank Accounts', icon: Landmark },
-    { id: 'danger', label: 'Data & Reset', icon: RotateCcw },
   ] as const;
 
   return (
@@ -806,56 +803,6 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
                 <p className="text-[11px] text-slate-400">
                   Instant repayment clearing via Bakong app with zero fees.
                 </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* TAB 5: DATA & RESET (Danger Zone)                                         */}
-      {/* ========================================================================= */}
-      {activeTab === 'danger' && (
-        <div className="space-y-6">
-          <div className="bg-slate-900 border border-rose-500/20 rounded-2xl p-6 space-y-4">
-            <div>
-              <h2 className="text-sm font-bold text-white">Data Management</h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Manage and reset your borrowing records for testing or starting fresh.
-              </p>
-            </div>
-
-            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="space-y-0.5">
-                <div className="text-xs font-bold text-white">Reset Borrowing Records</div>
-                <p className="text-[11px] text-slate-400">
-                  Clears all active loans, repayment schedules, and receipts to start fresh with a clean $0.00 balance.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (window.confirm('Reset all borrowing records? This clears all loans and receipts.')) {
-                      loanStorageService.resetAllBorrowingData();
-                      showToast('Borrowing data reset to $0.00.');
-                    }
-                  }}
-                  className="px-4 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-semibold transition cursor-pointer"
-                >
-                  Reset My Data
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    loanStorageService.restoreDemoSeedData();
-                    showToast('Sample loans restored.');
-                  }}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-300 text-xs font-semibold transition cursor-pointer"
-                >
-                  Restore Demo
-                </button>
               </div>
             </div>
           </div>

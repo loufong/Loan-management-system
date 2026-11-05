@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import QRCode from 'qrcode';
+import companyKhqrImg from '../../assets/company-khqr.png';
 import {
   X,
   QrCode,
@@ -135,6 +136,7 @@ export const CleanPaymentModal: React.FC<CleanPaymentModalProps> = ({
 
   // Flow Sub-Views: 'INPUT' -> 'KHQR' -> 'RECEIPT'
   const [viewStep, setViewStep] = useState<'INPUT' | 'KHQR' | 'RECEIPT'>('INPUT');
+  const [qrViewMode, setQrViewMode] = useState<'card' | 'code'>('card');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -428,20 +430,59 @@ export const CleanPaymentModal: React.FC<CleanPaymentModalProps> = ({
                 <span>Bakong NBC KHQR Dynamic Standard</span>
               </div>
 
-              {/* QR Image Canvas Container */}
-              <div className="flex justify-center p-4 bg-white rounded-3xl max-w-xs mx-auto shadow-inner">
-                {qrDataUrl ? (
-                  <img
-                    src={qrDataUrl}
-                    alt="Bakong KHQR Payment Code"
-                    className="w-56 h-56 object-contain"
-                  />
-                ) : (
-                  <div className="w-56 h-56 flex items-center justify-center text-slate-400">
-                    <Loader2 className="w-8 h-8 animate-spin" />
-                  </div>
-                )}
+              {/* QR Mode Selector */}
+              <div className="flex items-center justify-center p-1 bg-slate-950 rounded-xl max-w-xs mx-auto border border-slate-800 text-xs font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setQrViewMode('card')}
+                  className={`flex-1 py-1 px-3 rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                    qrViewMode === 'card'
+                      ? 'bg-red-600 text-white shadow'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <span>Official QR Card</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQrViewMode('code')}
+                  className={`flex-1 py-1 px-3 rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                    qrViewMode === 'code'
+                      ? 'bg-slate-800 text-white shadow'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <span>Bill QR Code</span>
+                </button>
               </div>
+
+              {/* QR Image Canvas Container */}
+              {qrViewMode === 'card' ? (
+                <div className="flex flex-col items-center justify-center p-3 bg-white rounded-3xl max-w-xs mx-auto shadow-2xl">
+                  <img
+                    src={companyKhqrImg}
+                    alt="Official JAM SONG VICH Bakong KHQR Standee"
+                    className="w-56 h-auto object-contain rounded-xl"
+                  />
+                  <div className="mt-2 text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                    ACLEDA Bank Plc. • JAM SONG VICH
+                  </div>
+                </div>
+              ) : (
+                <div className="flex justify-center p-4 bg-white rounded-3xl max-w-xs mx-auto shadow-inner">
+                  {qrDataUrl ? (
+                    <img
+                      src={qrDataUrl}
+                      alt="Bakong KHQR Payment Code"
+                      className="w-56 h-56 object-contain"
+                    />
+                  ) : (
+                    <div className="w-56 h-56 flex items-center justify-center text-slate-400">
+                      <Loader2 className="w-8 h-8 animate-spin" />
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Amount & Reference Details */}
               <div className="space-y-1">

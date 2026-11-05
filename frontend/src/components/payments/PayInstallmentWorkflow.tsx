@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import QRCode from 'qrcode';
+import companyKhqrImg from '../../assets/company-khqr.png';
 import {
   Wallet,
   QrCode,
@@ -147,6 +148,7 @@ export const PayInstallmentWorkflow: React.FC<PayInstallmentWorkflowProps> = ({
   const [pinError, setPinError] = useState<string | null>(null);
 
   // QR Display & Polling State
+  const [qrViewMode, setQrViewMode] = useState<'card' | 'code'>('card');
   const QR_VALIDITY_SECONDS = 180; // 3 minutes validity window
   const [secondsRemaining, setSecondsRemaining] = useState<number>(QR_VALIDITY_SECONDS);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
@@ -834,25 +836,64 @@ export const PayInstallmentWorkflow: React.FC<PayInstallmentWorkflowProps> = ({
                   </p>
                 </div>
 
-                {/* EMVCo QR Canvas Container */}
-                <div className="inline-block p-4 rounded-2xl bg-white shadow-xl ring-4 ring-emerald-500/20 relative mx-auto">
-                  {qrCodeDataUrl ? (
-                    <img
-                      src={qrCodeDataUrl}
-                      alt="Bakong KHQR Payment Canvas"
-                      className="w-64 h-64 sm:w-72 sm:h-72 object-contain mx-auto"
-                    />
-                  ) : (
-                    <div className="w-64 h-64 flex items-center justify-center text-slate-900 font-mono text-xs">
-                      Generating EMVCo Payload...
-                    </div>
-                  )}
-
-                  {/* Merchant Badge Center Overlay */}
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-xl bg-red-600 border-2 border-white flex items-center justify-center text-white font-black text-xs shadow-md pointer-events-none">
-                    KH
-                  </div>
+                {/* QR Display Mode Selector */}
+                <div className="flex items-center justify-center p-1 bg-slate-950 rounded-xl max-w-xs mx-auto border border-slate-800 text-xs font-semibold">
+                  <button
+                    type="button"
+                    onClick={() => setQrViewMode('card')}
+                    className={`flex-1 py-1.5 px-3 rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                      qrViewMode === 'card'
+                        ? 'bg-red-600 text-white shadow'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <span>Official QR Card</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQrViewMode('code')}
+                    className={`flex-1 py-1.5 px-3 rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                      qrViewMode === 'code'
+                        ? 'bg-slate-800 text-white shadow'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <span>Bill QR Code</span>
+                  </button>
                 </div>
+
+                {/* EMVCo QR Canvas Container */}
+                {qrViewMode === 'card' ? (
+                  <div className="inline-block p-4 rounded-2xl bg-white shadow-2xl ring-4 ring-red-500/20 relative mx-auto max-w-[300px]">
+                    <img
+                      src={companyKhqrImg}
+                      alt="Official JAM SONG VICH Bakong KHQR Standee"
+                      className="w-64 h-auto mx-auto object-contain rounded-xl"
+                    />
+                    <div className="mt-2 text-[10px] font-bold text-slate-700 uppercase tracking-wider font-sans">
+                      ACLEDA Bank Plc. • JAM SONG VICH
+                    </div>
+                  </div>
+                ) : (
+                  <div className="inline-block p-4 rounded-2xl bg-white shadow-xl ring-4 ring-emerald-500/20 relative mx-auto">
+                    {qrCodeDataUrl ? (
+                      <img
+                        src={qrCodeDataUrl}
+                        alt="Bakong KHQR Payment Canvas"
+                        className="w-64 h-64 sm:w-72 sm:h-72 object-contain mx-auto"
+                      />
+                    ) : (
+                      <div className="w-64 h-64 flex items-center justify-center text-slate-900 font-mono text-xs">
+                        Generating EMVCo Payload...
+                      </div>
+                    )}
+
+                    {/* Merchant Badge Center Overlay */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-xl bg-red-600 border-2 border-white flex items-center justify-center text-white font-black text-xs shadow-md pointer-events-none">
+                      KH
+                    </div>
+                  </div>
+                )}
 
                 {/* Receiving Institution & Merchant Badge */}
                 <div className="p-3.5 bg-slate-950 rounded-xl border border-slate-800 max-w-sm mx-auto text-xs space-y-1 font-mono">

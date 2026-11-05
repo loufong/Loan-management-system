@@ -1559,9 +1559,11 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
               </div>
 
               <div className="flex items-center justify-center min-h-[300px] bg-slate-950/90 rounded-xl overflow-hidden p-2">
-                {previewTargetDoc.mimeType === 'application/pdf' ||
-                previewTargetDoc.dataUrl.startsWith('data:application/pdf') ||
-                previewTargetDoc.fileName.toLowerCase().endsWith('.pdf') ? (
+                {!previewTargetDoc.dataUrl.startsWith('data:image/') &&
+                !/\.(jpg|jpeg|png|webp|gif|avif)($|\?)/i.test(previewTargetDoc.dataUrl) &&
+                (previewTargetDoc.mimeType === 'application/pdf' ||
+                  previewTargetDoc.dataUrl.startsWith('data:application/pdf') ||
+                  previewTargetDoc.fileName.toLowerCase().endsWith('.pdf')) ? (
                   <iframe
                     src={previewTargetDoc.dataUrl}
                     title={previewTargetDoc.title}
@@ -1571,8 +1573,8 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
                   <img
                     src={previewTargetDoc.dataUrl}
                     alt={previewTargetDoc.title}
-                    className={`object-contain rounded-lg shadow-md transition-all duration-300 ${
-                      isPreviewZoomed ? 'max-w-3xl max-h-[600px]' : 'max-w-md max-h-[380px]'
+                    className={`object-contain rounded-lg shadow-md transition-all duration-300 w-auto h-auto max-w-full ${
+                      isPreviewZoomed ? 'max-h-[600px]' : 'max-h-[420px]'
                     }`}
                   />
                 )}

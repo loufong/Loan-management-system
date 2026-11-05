@@ -1004,10 +1004,18 @@ export const BorrowerDetail: React.FC<BorrowerDetailProps> = ({
             activeSide === 'back' && selectedDocZoom.backFileName
               ? selectedDocZoom.backFileName
               : selectedDocZoom.fileName;
+          const isImage = Boolean(
+            displayUrl &&
+              (displayUrl.startsWith('data:image/') ||
+                /\.(jpg|jpeg|png|webp|gif|avif)($|\?)/i.test(displayUrl))
+          );
           const isPdf =
-            (activeSide === 'back' ? selectedDocZoom.backMimeType : selectedDocZoom.mimeType)?.includes('pdf') ||
-            displayName?.toLowerCase().endsWith('.pdf') ||
-            displayUrl?.startsWith('data:application/pdf');
+            !isImage &&
+            Boolean(
+              (activeSide === 'back' ? selectedDocZoom.backMimeType : selectedDocZoom.mimeType)?.includes('pdf') ||
+              displayName?.toLowerCase().endsWith('.pdf') ||
+              displayUrl?.startsWith('data:application/pdf')
+            );
 
           return (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm">

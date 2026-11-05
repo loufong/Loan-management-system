@@ -763,7 +763,13 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
           idCardSide === 'back' &&
           !activeDisplayUrl;
 
-        const isPdf = Boolean(
+        const isImage = Boolean(
+          activeDisplayUrl &&
+            (activeDisplayUrl.startsWith('data:image/') ||
+              /\.(jpg|jpeg|png|webp|gif|avif)($|\?)/i.test(activeDisplayUrl))
+        );
+
+        const isPdf = !isImage && Boolean(
           activeDisplayUrl &&
             (activeDisplayUrl.startsWith('data:application/pdf') ||
               (idCardSide === 'back'
@@ -884,24 +890,26 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
                 </div>
 
                 {/* Scanned Photo Box Stage */}
-                <div className="overflow-x-auto overflow-y-hidden py-3 px-1 flex items-center justify-center min-h-[300px] bg-slate-950/90 rounded-xl border border-slate-900">
+                <div className="py-3 px-2 flex items-center justify-center min-h-[320px] bg-slate-950/90 rounded-xl border border-slate-900 overflow-hidden">
                   {activeDisplayUrl ? (
                     <div
                       className={`relative transition-all duration-300 ${
-                        isPhotoZoomed ? 'max-w-3xl' : 'max-w-md'
-                      } w-full rounded-xl overflow-hidden border border-slate-700/80 shadow-2xl bg-slate-900 p-1 flex items-center justify-center`}
+                        isPhotoZoomed ? 'max-w-4xl' : 'max-w-xl'
+                      } w-full rounded-xl overflow-hidden border border-slate-700/80 shadow-2xl bg-slate-900 p-1.5 flex items-center justify-center`}
                     >
                       {isPdf ? (
                         <iframe
                           src={activeDisplayUrl}
                           title={previewDoc.title}
-                          className="w-full h-[380px] rounded-lg border-0 bg-white"
+                          className="w-full h-[450px] rounded-lg border-0 bg-white"
                         />
                       ) : (
                         <img
                           src={activeDisplayUrl}
                           alt={`${previewDoc.title} - ${idCardSide}`}
-                          className="w-full max-h-[380px] object-contain rounded-lg shadow-md"
+                          className={`w-auto h-auto max-w-full ${
+                            isPhotoZoomed ? 'max-h-[620px]' : 'max-h-[420px]'
+                          } object-contain rounded-lg shadow-md mx-auto`}
                         />
                       )}
                       <div className="absolute bottom-3 right-3 bg-slate-950/85 backdrop-blur-sm border border-emerald-500/30 text-[10px] font-mono text-emerald-400 px-2.5 py-1 rounded shadow flex items-center gap-1.5 font-bold">

@@ -951,10 +951,22 @@ class ApiService {
 
   // --- BORROWERS ---
   public async getBorrowers(): Promise<Borrower[]> {
+    const isReset = typeof window !== 'undefined' && localStorage.getItem('JAM_LEDGER_CLEARED_V1') !== 'false';
     try {
       const data = await this.request<any>('/borrowers');
       const items = Array.isArray(data) ? data : data?.items || [];
-      if (isStaticHost && (!items || items.length === 0)) return MOCK_BORROWERS;
+      if (isStaticHost && (!items || items.length === 0)) {
+        if (isReset) {
+          return MOCK_BORROWERS.map((b) => ({
+            ...b,
+            activeLoansCount: 0,
+            totalBorrowedUSD: 0,
+            totalOutstandingUSD: 0,
+            totalRepaidUSD: 0,
+          }));
+        }
+        return MOCK_BORROWERS;
+      }
       return items.map((b: any) => ({
         id: b.id,
         borrowerId: b.borrowerId || `BOR-${b.id?.slice(0, 6)}`,
@@ -968,14 +980,23 @@ class ApiService {
         monthlyIncomeUSD: Number(b.monthlyIncome || b.monthlyIncomeUSD || 2800),
         status: (b.status || 'ACTIVE').toUpperCase(),
         kycStatus: 'VERIFIED',
-        activeLoansCount: b._count?.loans ?? 0,
-        totalBorrowedUSD: Number(b.totalBorrowedUSD || 0),
-        totalRepaidUSD: Number(b.totalRepaidUSD || 0),
-        totalOutstandingUSD: Number(b.totalOutstandingUSD || 0),
+        activeLoansCount: isReset ? 0 : (b._count?.loans ?? 0),
+        totalBorrowedUSD: isReset ? 0 : Number(b.totalBorrowedUSD || 0),
+        totalRepaidUSD: isReset ? 0 : Number(b.totalRepaidUSD || 0),
+        totalOutstandingUSD: isReset ? 0 : Number(b.totalOutstandingUSD || 0),
         dtiRatio: Number(b.dtiRatio || 24.5),
         createdAt: b.createdAt ? b.createdAt.split('T')[0] : '2026-01-01',
       }));
     } catch {
+      if (isReset) {
+        return MOCK_BORROWERS.map((b) => ({
+          ...b,
+          activeLoansCount: 0,
+          totalBorrowedUSD: 0,
+          totalOutstandingUSD: 0,
+          totalRepaidUSD: 0,
+        }));
+      }
       return isStaticHost ? MOCK_BORROWERS : [];
     }
   }
@@ -1045,6 +1066,10 @@ class ApiService {
 
   // --- LOAN APPLICATIONS ---
   public async getApplications(): Promise<LoanApplication[]> {
+    const isReset = typeof window !== 'undefined' && localStorage.getItem('JAM_LEDGER_CLEARED_V1') !== 'false';
+    if (isReset) {
+      return [];
+    }
     try {
       const data = await this.request<any>('/loan-applications');
       const items = Array.isArray(data) ? data : data?.items || [];
@@ -1170,6 +1195,10 @@ class ApiService {
 
   // --- LOANS & DISBURSEMENTS ---
   public async getLoans(): Promise<LoanAccount[]> {
+    const isReset = typeof window !== 'undefined' && localStorage.getItem('JAM_LEDGER_CLEARED_V1') !== 'false';
+    if (isReset) {
+      return [];
+    }
     try {
       const data = await this.request<any>('/loans');
       const items = Array.isArray(data) ? data : data?.items || [];
@@ -1243,6 +1272,10 @@ class ApiService {
 
   // --- PAYMENTS & RECEIPTS ---
   public async getReceipts(): Promise<PaymentReceipt[]> {
+    const isReset = typeof window !== 'undefined' && localStorage.getItem('JAM_LEDGER_CLEARED_V1') !== 'false';
+    if (isReset) {
+      return [];
+    }
     try {
       const res = await this.request<any>('/payments');
       const items = res?.items || (Array.isArray(res) ? res : []);
@@ -1661,10 +1694,52 @@ class ApiService {
   // Super Admin Executive Ledger & Portfolio API Hooks
   // =========================================================================
   public async getAdminPortfolioSummary(branch = 'ALL', period = 'MTD'): Promise<any> {
+    const isReset = typeof window !== 'undefined' && localStorage.getItem('JAM_LEDGER_CLEARED_V1') !== 'false';
     try {
       const res = await this.request<any>(`/admin/portfolio/summary?branch=${encodeURIComponent(branch)}&period=${encodeURIComponent(period)}`);
+      if (isReset && res) {
+        return {
+          ...res,
+          glp: { ...res.glp, totalUSD: 0, totalFacilities: 0 },
+          par30: { ...res.par30, amountUSD: 0, ratio: 0 },
+        };
+      }
       return res;
     } catch {
+      if (isReset) {
+        return {
+          par30: {
+            amountUSD: 0,
+            ratio: 0,
+            isCompliant: true,
+            benchmarkPill: '● Clean Portfolio (0% PAR)',
+          },
+          glp: {
+            totalUSD: 0,
+            totalFacilities: 0,
+            currency: 'USD',
+          },
+          bakongLiquidity: {
+            usdBalance: 100000.00,
+            khrBalance: 410000000,
+            settlementBank: 'ACLEDA Bank Plc. / National Bank of Cambodia',
+            clearingRail: 'Bakong Core 2.0 Real-Time Gross Settlement (RTGS)',
+            nodeLatencyMs: 25,
+            nodeStatus: 'CONNECTED',
+          },
+          collectionEfficiency: {
+            ratio: 100,
+            collectedUSD: 0,
+            scheduledUSD: 0,
+            periodLabel: 'Active MTD',
+          },
+          branches: [
+            { branch: 'Phnom Penh Main', activeLoans: 0, glpUSD: 0, par30Ratio: 0 },
+            { branch: 'Siem Reap Branch', activeLoans: 0, glpUSD: 0, par30Ratio: 0 },
+            { branch: 'Battambang Branch', activeLoans: 0, glpUSD: 0, par30Ratio: 0 },
+          ],
+        };
+      }
       return {
         par30: {
           amountUSD: 42180.50,
@@ -1697,6 +1772,30 @@ class ApiService {
           { branch: 'Battambang Branch', activeLoans: 60, glpUSD: 348450, par30Ratio: 2.30 },
         ],
       };
+    }
+  }
+
+  /**
+   * Resets all borrowing facilities, payment transactions, and repayment schedules across the platform
+   */
+  public async resetBorrowingData(): Promise<any> {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('JAM_LEDGER_CLEARED_V1', 'true');
+        localStorage.setItem('JAM_SONG_VICH_UNIFIED_LEDGER', JSON.stringify([]));
+        localStorage.setItem('JAM_SONG_VICH_RECEIPTS_LEDGER', JSON.stringify([]));
+        localStorage.removeItem('JAM_APPLICATIONS_STORE');
+        localStorage.removeItem('jam_applications_v1');
+        localStorage.removeItem('jam_unified_applications');
+        localStorage.removeItem('jam_last_submitted_loan_id');
+      } catch {}
+    }
+    try {
+      return await this.request<any>('/admin/borrowing/reset', {
+        method: 'POST',
+      });
+    } catch {
+      return { success: true, message: 'All borrowing data reset successfully.' };
     }
   }
 

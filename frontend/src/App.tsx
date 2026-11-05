@@ -639,13 +639,16 @@ export const App: React.FC = () => {
             ),
         }));
 
+      const isLedgerReset = loanStorageService.isLedgerCleared();
       const apiLoans = Array.isArray(l) ? l : [];
-      const combinedLoans = [
-        ...apiLoans,
-        ...activeUnifiedLoans.filter(
-          (ul: any) => !apiLoans.some((al: any) => al.loanNumber === ul.loanNumber || al.id === ul.id)
-        ),
-      ];
+      const combinedLoans = isLedgerReset
+        ? activeUnifiedLoans
+        : [
+            ...apiLoans,
+            ...activeUnifiedLoans.filter(
+              (ul: any) => !apiLoans.some((al: any) => al.loanNumber === ul.loanNumber || al.id === ul.id)
+            ),
+          ];
       setLoans(combinedLoans as any[]);
 
       // Map unified pending applications
@@ -672,16 +675,20 @@ export const App: React.FC = () => {
         }));
 
       const apiApps = Array.isArray(a) ? a : [];
-      const combinedApps = [
-        ...pendingUnifiedApps,
-        ...apiApps.filter(
-          (ap: any) => !pendingUnifiedApps.some((pa: any) => pa.applicationNo === ap.applicationNo || pa.id === ap.id)
-        ),
-      ];
+      const combinedApps = isLedgerReset
+        ? pendingUnifiedApps
+        : [
+            ...pendingUnifiedApps,
+            ...apiApps.filter(
+              (ap: any) => !pendingUnifiedApps.some((pa: any) => pa.applicationNo === ap.applicationNo || pa.id === ap.id)
+            ),
+          ];
       setApplications(combinedApps as any[]);
 
       const unifiedReceipts = loanStorageService.getReceipts();
-      const combinedReceipts = (Array.isArray(r) && r.length > 0) ? r : unifiedReceipts;
+      const combinedReceipts = isLedgerReset
+        ? unifiedReceipts
+        : ((Array.isArray(r) && r.length > 0) ? r : unifiedReceipts);
       setReceipts(combinedReceipts);
       const storedNotifs = notificationStorageService.getNotifications(!isStaff);
       const combinedNotifs = (Array.isArray(n) && n.length > 0) ? n : storedNotifs;
@@ -1214,7 +1221,7 @@ export const App: React.FC = () => {
     return false;
   });
   const userDisplayReceipts = isBorrowerRole
-    ? (userFilteredReceipts.length > 0 ? userFilteredReceipts : receipts)
+    ? userFilteredReceipts
     : receipts;
 
   // Helper to open payment flow appropriately for borrower (modal) or staff (cashier desk)

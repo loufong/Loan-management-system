@@ -559,11 +559,69 @@ class LoanStorageService {
   }
 
   /**
+   * Safe status check: has borrowing ledger been cleared/reset?
+   */
+  public isLedgerCleared(): boolean {
+    if (typeof window === 'undefined') return true;
+    const val = localStorage.getItem('JAM_LEDGER_CLEARED_V1');
+    // Default to true (clean reset state) on initial run unless explicitly restored
+    if (val === null) {
+      try {
+        localStorage.setItem('JAM_LEDGER_CLEARED_V1', 'true');
+        localStorage.setItem(UNIFIED_LEDGER_KEY, JSON.stringify([]));
+        localStorage.setItem(UNIFIED_RECEIPTS_KEY, JSON.stringify([]));
+      } catch {}
+      return true;
+    }
+    return val === 'true';
+  }
+
+  /**
+   * Complete reset: purges all active loans, applications, payment receipts, and repayment schedules
+   */
+  public resetAllBorrowingData(): void {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem('JAM_LEDGER_CLEARED_V1', 'true');
+      localStorage.setItem(UNIFIED_LEDGER_KEY, JSON.stringify([]));
+      localStorage.setItem(UNIFIED_RECEIPTS_KEY, JSON.stringify([]));
+      localStorage.removeItem('JAM_APPLICATIONS_STORE');
+      localStorage.removeItem('jam_applications_v1');
+      localStorage.removeItem('jam_unified_applications');
+      localStorage.removeItem('jam_last_submitted_loan_id');
+      window.dispatchEvent(new Event(LEDGER_UPDATE_EVENT));
+    } catch (e) {
+      console.warn('Failed to reset borrowing data:', e);
+    }
+  }
+
+  /**
+   * Restores default initial seed demo loans on demand
+   */
+  public restoreDemoSeedData(): void {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem('JAM_LEDGER_CLEARED_V1', 'false');
+      localStorage.setItem(UNIFIED_LEDGER_KEY, JSON.stringify(INITIAL_SEED_LOANS));
+      localStorage.setItem(UNIFIED_RECEIPTS_KEY, JSON.stringify(INITIAL_SEED_RECEIPTS));
+      window.dispatchEvent(new Event(LEDGER_UPDATE_EVENT));
+    } catch (e) {
+      console.warn('Failed to restore demo seed data:', e);
+    }
+  }
+
+  /**
    * Safe localStorage accessor with seed fallback
    */
   private getStorage(): UnifiedLoanRecord[] {
-    if (typeof window === 'undefined') return INITIAL_SEED_LOANS;
+    if (typeof window === 'undefined') return this.isLedgerCleared() ? [] : INITIAL_SEED_LOANS;
     try {
+      if (this.isLedgerCleared()) {
+        const raw = localStorage.getItem(UNIFIED_LEDGER_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed.map((item: any) => this.sanitizeRecord(item)) : [];
+      }
       const raw = localStorage.getItem(UNIFIED_LEDGER_KEY);
       if (!raw) {
         localStorage.setItem(UNIFIED_LEDGER_KEY, JSON.stringify(INITIAL_SEED_LOANS));
@@ -576,7 +634,7 @@ class LoanStorageService {
       }
       return parsed.map((item: any) => this.sanitizeRecord(item));
     } catch {
-      return INITIAL_SEED_LOANS;
+      return this.isLedgerCleared() ? [] : INITIAL_SEED_LOANS;
     }
   }
 
@@ -595,8 +653,14 @@ class LoanStorageService {
    * Safe receipts storage accessor with seed fallback
    */
   public getReceipts(): PaymentReceipt[] {
-    if (typeof window === 'undefined') return INITIAL_SEED_RECEIPTS;
+    if (typeof window === 'undefined') return this.isLedgerCleared() ? [] : INITIAL_SEED_RECEIPTS;
     try {
+      if (this.isLedgerCleared()) {
+        const raw = localStorage.getItem(UNIFIED_RECEIPTS_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      }
       const raw = localStorage.getItem(UNIFIED_RECEIPTS_KEY);
       if (!raw) {
         localStorage.setItem(UNIFIED_RECEIPTS_KEY, JSON.stringify(INITIAL_SEED_RECEIPTS));
@@ -609,7 +673,7 @@ class LoanStorageService {
       }
       return parsed;
     } catch {
-      return INITIAL_SEED_RECEIPTS;
+      return this.isLedgerCleared() ? [] : INITIAL_SEED_RECEIPTS;
     }
   }
 
@@ -762,6 +826,10 @@ class LoanStorageService {
    * Retrieves full master loans array for Super Admin portfolio table
    */
   public async getAllLoansForAdmin(): Promise<UnifiedLoanRecord[]> {
+    if (this.isLedgerCleared()) {
+      return this.getStorage();
+    }
+
     // Attempt backend fetch
     try {
       const activeToken = typeof window !== 'undefined'
@@ -1012,6 +1080,28 @@ class LoanStorageService {
       totalRepaidUSD: 0,
       totalOutstandingUSD: 0,
       dtiRatio: 18.5,
+      createdAt: '2026-01-01',
+    });
+
+    // Baseline client borrower (Normal User / Client Borrower)
+    map.set('bor-8801', {
+      id: 'bor-8801',
+      borrowerId: 'BOR-2026-0001',
+      fullName: 'Johnathan Doe',
+      avatarUrl: '',
+      nationalId: '010992384',
+      phone: '+855 12 984 219',
+      email: 'johnathan.doe@student.edu',
+      address: 'No. 42 Street 214, Sangkat Boeung Raing, Khan Daun Penh, Phnom Penh',
+      occupation: 'Graduate Teaching Assistant',
+      monthlyIncomeUSD: 2800,
+      status: 'ACTIVE',
+      kycStatus: 'VERIFIED',
+      activeLoansCount: 0,
+      totalBorrowedUSD: 0,
+      totalRepaidUSD: 0,
+      totalOutstandingUSD: 0,
+      dtiRatio: 24.5,
       createdAt: '2026-01-01',
     });
 

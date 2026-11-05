@@ -27,10 +27,12 @@ import {
   X,
   ShieldCheck,
   Building2,
+  RotateCcw,
 } from 'lucide-react';
 import { Currency, UserProfile } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 import { api } from '../../services/api';
+import { loanStorageService } from '../../services/loanStorageService';
 
 export interface BorrowerSettingsViewProps {
   currentUser: UserProfile;
@@ -850,6 +852,55 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
               <p className="text-[11px] text-slate-500">
                 Instant repayment collection and automatic amortization schedule reconciliation compliant with NBC standards.
               </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Category 5: Borrowing History & Self-Service Ledger Reset */}
+        <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm space-y-5">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div className="flex items-center gap-2">
+              <RotateCcw className="w-4 h-4 text-rose-400" />
+              <h2 className="text-xs font-bold text-white uppercase tracking-wider">
+                5. Borrowing History & Ledger Reset
+              </h2>
+            </div>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
+              SELF-SERVICE CLEARING
+            </span>
+          </div>
+
+          <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <h3 className="text-xs font-bold text-white">Reset Account Borrowing Records</h3>
+              <p className="text-[11px] text-slate-400 max-w-xl">
+                Purge all active loans, repayment schedules, and transaction receipts to start fresh with a clean $0.00 balance and fresh credit facility application.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to reset all borrowing records? This will clear all active loans, scheduled installments, and receipts.')) {
+                    loanStorageService.resetAllBorrowingData();
+                    showToast('All borrowing data has been reset to clean zero records.');
+                  }
+                }}
+                className="px-4 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-rose-400" />
+                <span>Reset My Borrowing Data</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  loanStorageService.restoreDemoSeedData();
+                  showToast('Demo loan facilities restored.');
+                }}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-medium transition cursor-pointer"
+              >
+                <span>Restore Demo Loans</span>
+              </button>
             </div>
           </div>
         </div>

@@ -33,12 +33,19 @@ import {
   ChevronDown,
   BarChart3,
   Banknote,
-  Users
+  Users,
+  Phone,
+  PhoneCall,
+  Copy,
+  CheckCheck,
+  Bell,
+  Database,
 } from 'lucide-react';
 import { Currency, LoanAccount, Borrower, LoanApplication, PaymentReceipt, UserProfile } from '../../types';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { loanStorageService, UnifiedLoanRecord, LEDGER_UPDATE_EVENT } from '../../services/loanStorageService';
+import { notificationStorageService } from '../../services/notificationStorageService';
 import { BorrowerList } from '../borrowers/BorrowerList';
 
 export interface AdminDashboardProps {
@@ -169,6 +176,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   });
   const [isSubmittingManualPayment, setIsSubmittingManualPayment] = useState(false);
 
+  // Due Date Alert & Direct Outreach Dispatcher State (Phone & Telegram)
+  const [selectedLoanForAlert, setSelectedLoanForAlert] = useState<EnrichedLoanRow | null>(null);
+  const [alertCustomMessage, setAlertCustomMessage] = useState<string>('');
+  const [copiedMessage, setCopiedMessage] = useState<boolean>(false);
+
+  // Complete Reset Borrowing Ledger Confirmation State
+  const [showResetConfirmModal, setShowResetConfirmModal] = useState<boolean>(false);
+  const [isResettingLedger, setIsResettingLedger] = useState<boolean>(false);
+
+  const isResetMode = loanStorageService.isLedgerCleared();
+
+  const handleResetBorrowingLedger = async () => {
+    setIsResettingLedger(true);
+    try {
+      await api.resetBorrowingData().catch(() => null);
+      loanStorageService.resetAllBorrowingData();
+      setShowResetConfirmModal(false);
+      setNotificationBanner({
+        type: 'success',
+        message: 'Complete Borrowing Reset: All loans, installments, and payment records have been purged. Ledger is now at clean zero.',
+      });
+      fetchDashboardData();
+    } catch {
+      loanStorageService.resetAllBorrowingData();
+      setShowResetConfirmModal(false);
+      fetchDashboardData();
+    } finally {
+      setIsResettingLedger(false);
+    }
+  };
+
   // Close action menu when clicking outside
   useEffect(() => {
     const handleClickOutside = () => setOpenActionMenuId(null);
@@ -244,7 +282,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       const serverItems = ledgerRes?.items && Array.isArray(ledgerRes.items) && ledgerRes.items.length > 0
         ? ledgerRes.items
         : [];
-      
+
       const combined = serverItems.length > 0
         ? [...localLoans.filter((l) => l.facility.status === 'UNDERWRITING_PENDING'), ...serverItems]
         : localLoans;
@@ -280,7 +318,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // Fallback enriched data if backend empty
   const displayLedger = useMemo((): EnrichedLoanRow[] => {
-    const baseSource: any[] = loansLedger.length > 0 ? loansLedger : [
+    if (isResetMode && loansLedger.length === 0) {
+      return [];
+    }
+    const baseSource: any[] = loansLedger.length > 0 ? loansLedger : (isResetMode ? [] : [
       {
         id: 'ln-001',
         loanId: 'LN-2026-6042',
@@ -476,7 +517,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           daysOverdue: 0,
         },
       },
-    ];
+    ]);
 
     let source = baseSource;
     if (activeTab === 'UNDERWRITING_PENDING') {
@@ -513,74 +554,75 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const dynamicGlpUSD = useMemo(() => {
     const sum = activeFacilities.reduce((acc: number, l: any) => acc + Number(l.principal?.disbursedAmountUSD || 0), 0);
-    return sum > 0 ? sum : (portfolioSummary?.glp?.totalUSD || 1420500.00);
-  }, [activeFacilities, portfolioSummary]);
+    if (isResetMode && sum === 0) return 0;
+    return sum > 0 ? sum : (portfolioSummary?.glp?.totalUSD || (isResetMode ? 0 : 1420500.00));
+  }, [activeFacilities, portfolioSummary, isResetMode]);
 
   // Computed Portfolio Metrics for Top Operational KPI Cards (Active Facilities, Total Borrowed, Outstanding Balance, Total Repaid)
   const portfolioMetrics = useMemo(() => {
     const source: any[] = loansLedger.length > 0
       ? loansLedger
-      : (propLoans.length > 0 ? propLoans : [
-          {
-            id: 'ln-001',
-            facility: { status: 'ACTIVE' },
-            principal: { disbursedAmountUSD: 6000 },
-            repaymentProgress: { outstandingBalanceUSD: 3850, totalPaidUSD: 2150 },
-          },
-          {
-            id: 'ln-002',
-            facility: { status: 'ACTIVE' },
-            principal: { disbursedAmountUSD: 12000 },
-            repaymentProgress: { outstandingBalanceUSD: 9200, totalPaidUSD: 2800 },
-          },
-          {
-            id: 'ln-003',
-            facility: { status: 'ACTIVE' },
-            principal: { disbursedAmountUSD: 3500 },
-            repaymentProgress: { outstandingBalanceUSD: 2100, totalPaidUSD: 1400 },
-          },
-          {
-            id: 'ln-004',
-            facility: { status: 'ACTIVE' },
-            principal: { disbursedAmountUSD: 15000 },
-            repaymentProgress: { outstandingBalanceUSD: 13400, totalPaidUSD: 1600 },
-          },
-          {
-            id: 'ln-005',
-            facility: { status: 'ACTIVE' },
-            principal: { disbursedAmountUSD: 2200 },
-            repaymentProgress: { outstandingBalanceUSD: 1650, totalPaidUSD: 550 },
-          },
-          {
-            id: 'ln-006',
-            facility: { status: 'ACTIVE' },
-            principal: { disbursedAmountUSD: 3000 },
-            repaymentProgress: { outstandingBalanceUSD: 1400, totalPaidUSD: 1600 },
-          },
-        ]);
+      : (propLoans.length > 0 ? propLoans : (isResetMode ? [] : [
+        {
+          id: 'ln-001',
+          facility: { status: 'ACTIVE' },
+          principal: { disbursedAmountUSD: 6000 },
+          repaymentProgress: { outstandingBalanceUSD: 3850, totalPaidUSD: 2150 },
+        },
+        {
+          id: 'ln-002',
+          facility: { status: 'ACTIVE' },
+          principal: { disbursedAmountUSD: 12000 },
+          repaymentProgress: { outstandingBalanceUSD: 9200, totalPaidUSD: 2800 },
+        },
+        {
+          id: 'ln-003',
+          facility: { status: 'ACTIVE' },
+          principal: { disbursedAmountUSD: 3500 },
+          repaymentProgress: { outstandingBalanceUSD: 2100, totalPaidUSD: 1400 },
+        },
+        {
+          id: 'ln-004',
+          facility: { status: 'ACTIVE' },
+          principal: { disbursedAmountUSD: 15000 },
+          repaymentProgress: { outstandingBalanceUSD: 13400, totalPaidUSD: 1600 },
+        },
+        {
+          id: 'ln-005',
+          facility: { status: 'ACTIVE' },
+          principal: { disbursedAmountUSD: 2200 },
+          repaymentProgress: { outstandingBalanceUSD: 1650, totalPaidUSD: 550 },
+        },
+        {
+          id: 'ln-006',
+          facility: { status: 'ACTIVE' },
+          principal: { disbursedAmountUSD: 3000 },
+          repaymentProgress: { outstandingBalanceUSD: 1400, totalPaidUSD: 1600 },
+        },
+      ]));
 
     const activeList = source.filter((l: any) => {
       const st = ((l.facility?.status || l.status) || '').toUpperCase();
       return st === 'ACTIVE' || st === 'OVERDUE' || st === 'IN_REPAYMENT';
     });
 
-    const activeCount = activeList.length > 0 ? activeList.length : 6;
-    const totalCount = source.length > 0 ? source.length : 6;
+    const activeCount = isResetMode ? activeList.length : (activeList.length > 0 ? activeList.length : 6);
+    const totalCount = isResetMode ? source.length : (source.length > 0 ? source.length : 6);
 
     const totalBorrowed = source.reduce((sum: number, l: any) => {
       const val = Number(l.principal?.disbursedAmountUSD ?? l.principalUSD ?? l.principalAmount ?? 0);
       return sum + val;
-    }, 0) || 41700.00;
+    }, 0) || (isResetMode ? 0 : 41700.00);
 
     const outstandingBalance = activeList.reduce((sum: number, l: any) => {
       const val = Number(l.repaymentProgress?.outstandingBalanceUSD ?? l.outstandingBalanceUSD ?? l.outstandingBalance ?? 0);
       return sum + val;
-    }, 0) || 31600.00;
+    }, 0) || (isResetMode ? 0 : 31600.00);
 
     const totalRepaid = source.reduce((sum: number, l: any) => {
       const val = Number(l.repaymentProgress?.totalPaidUSD ?? l.totalPaidUSD ?? l.totalPaid ?? 0);
       return sum + val;
-    }, 0) || 10100.00;
+    }, 0) || (isResetMode ? 0 : 10100.00);
 
     const settledReceiptsCount = (propReceipts && propReceipts.length > 0)
       ? propReceipts.length
@@ -618,12 +660,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  // Trigger SMS / Telegram Due Date Alert
+  // Trigger SMS / Telegram Due Date Alert & Direct Outreach Dispatcher
   const handleTriggerAlert = (row: EnrichedLoanRow) => {
-    setNotificationBanner({
-      type: 'success',
-      message: `SMS & Telegram Due Date Alert dispatched to ${row.borrower.nameEn} (${row.borrower.phone}) for facility ${row.loanId}. Cycle #${row.nextScheduledPayment.cycleNumber} EMI due ${row.nextScheduledPayment.dueDate}.`,
-    });
+    setSelectedLoanForAlert(row);
+    const emi = row.nextScheduledPayment.scheduledEMIUSD || 532.50;
+    const dueDate = row.nextScheduledPayment.dueDate || '2026-11-15';
+    const cycle = row.nextScheduledPayment.cycleNumber || 5;
+    const isOverdue =
+      row.nextScheduledPayment.daysOverdue > 0 ||
+      row.facility.health === 'DEFAULT_RISK' ||
+      row.facility.health === 'WATCHLIST';
+
+    const msg =
+      `🇰🇭 JAM SONG VICH - Core Banking Payment Alert\n` +
+      `-----------------------------------------\n` +
+      `Dear ${row.borrower.nameEn},\n` +
+      `Notice for Credit Facility ${row.loanId}:\n` +
+      `• Installment Cycle: #${cycle}\n` +
+      `• Scheduled Due Date: ${dueDate} ${isOverdue ? '⚠️ (OVERDUE)' : ''}\n` +
+      `• Amount Due: $${emi.toFixed(2)} (approx. ៛${(emi * 4000).toLocaleString()})\n` +
+      `• Settlement Channel: Bakong Dynamic KHQR (jamsongvich@nbc)\n\n` +
+      `Please settle promptly on or before the due date to preserve your Credit Bureau Cambodia (CBC) rating and avoid NBC penalty fees. Thank you.`;
+
+    setAlertCustomMessage(msg);
     setOpenActionMenuId(null);
   };
 
@@ -867,13 +926,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* ========================================================================= */}
       {notificationBanner && (
         <div
-          className={`p-3.5 rounded-xl border flex items-center justify-between text-xs font-semibold shadow-sm transition-all ${
-            notificationBanner.type === 'success'
+          className={`p-3.5 rounded-xl border flex items-center justify-between text-xs font-semibold shadow-sm transition-all ${notificationBanner.type === 'success'
               ? 'bg-emerald-950/70 border-emerald-500/40 text-emerald-300'
               : notificationBanner.type === 'error'
-              ? 'bg-rose-950/70 border-rose-500/40 text-rose-300'
-              : 'bg-slate-900 border-slate-700 text-slate-300'
-          }`}
+                ? 'bg-rose-950/70 border-rose-500/40 text-rose-300'
+                : 'bg-slate-900 border-slate-700 text-slate-300'
+            }`}
         >
           <div className="flex items-center gap-2.5">
             {notificationBanner.type === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />}
@@ -944,6 +1002,36 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <span>Portfolio Intelligence & Risk Engine →</span>
             </button>
 
+            {/* Quick Reset All Borrowing Data Button */}
+            <button
+              type="button"
+              onClick={() => setShowResetConfirmModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 rounded-xl text-xs font-bold text-rose-300 shadow-sm transition-all cursor-pointer"
+              title="Reset all loan facilities, payment history, and borrowing ledger for both Super Admin and Normal Users"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-rose-400" />
+              <span>Reset Borrowing Data</span>
+            </button>
+
+            {isResetMode && (
+              <button
+                type="button"
+                onClick={() => {
+                  loanStorageService.restoreDemoSeedData();
+                  setNotificationBanner({
+                    type: 'success',
+                    message: 'Default demo loan facilities and payment records have been restored.',
+                  });
+                  fetchDashboardData();
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-semibold text-emerald-400 shadow-sm transition-all cursor-pointer"
+                title="Restore sample demo loan accounts for testing"
+              >
+                <Database className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Restore Demo Data</span>
+              </button>
+            )}
+
             {/* Super Admin Profile Badge */}
             <div className="flex items-center gap-2 px-3 py-1 bg-[#0f172a] border border-[#1e293b] rounded-xl">
               <div className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-[10px] font-bold text-emerald-300">
@@ -970,11 +1058,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <button
                 key={period}
                 onClick={() => setPeriodScope(period)}
-                className={`flex-1 py-1 px-2.5 rounded-lg text-xs font-mono font-bold transition-all ${
-                  periodScope === period
+                className={`flex-1 py-1 px-2.5 rounded-lg text-xs font-mono font-bold transition-all ${periodScope === period
                     ? 'bg-emerald-500 text-slate-950 shadow-md'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                }`}
+                  }`}
               >
                 {period}
               </button>
@@ -1001,11 +1088,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <button
                 key={mode}
                 onClick={() => setCurrencyMode(mode)}
-                className={`flex-1 py-1 px-1.5 rounded-lg text-[11px] font-mono font-bold transition-all ${
-                  currencyMode === mode
+                className={`flex-1 py-1 px-1.5 rounded-lg text-[11px] font-mono font-bold transition-all ${currencyMode === mode
                     ? 'bg-amber-400 text-slate-950 shadow-md'
                     : 'text-slate-400 hover:text-white'
-                }`}
+                  }`}
               >
                 {mode === 'CONSOLIDATED' ? 'DUAL' : mode}
               </button>
@@ -1228,11 +1314,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => setFacilitySubTab('TABLE')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
-                facilitySubTab === 'TABLE'
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${facilitySubTab === 'TABLE'
                   ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow'
                   : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
-              }`}
+                }`}
             >
               <Layers className="w-3.5 h-3.5 text-emerald-400" />
               <span>Active Facilities Table</span>
@@ -1243,11 +1328,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
             <button
               onClick={() => setFacilitySubTab('BORROWERS')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
-                facilitySubTab === 'BORROWERS'
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${facilitySubTab === 'BORROWERS'
                   ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow'
                   : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
-              }`}
+                }`}
             >
               <Users className="w-3.5 h-3.5 text-blue-400" />
               <span>Borrower Dossiers Directory</span>
@@ -1274,11 +1358,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => setViewMode('LEDGER')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
-                viewMode === 'LEDGER'
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${viewMode === 'LEDGER'
                   ? 'bg-slate-800 text-white border border-slate-700 shadow'
                   : 'text-slate-400 hover:text-white hover:bg-slate-900'
-              }`}
+                }`}
             >
               <Layers className="w-3.5 h-3.5 text-emerald-400" />
               <span>Facility Management Table</span>
@@ -1289,11 +1372,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
             <button
               onClick={() => setViewMode('UNDERWRITING')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
-                viewMode === 'UNDERWRITING'
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${viewMode === 'UNDERWRITING'
                   ? 'bg-slate-800 text-white border border-slate-700 shadow'
                   : 'text-slate-400 hover:text-white hover:bg-slate-900'
-              }`}
+                }`}
             >
               <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
               <span>Underwriting Origination Queue</span>
@@ -1304,11 +1386,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
             <button
               onClick={() => setViewMode('RECONCILIATION')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
-                viewMode === 'RECONCILIATION'
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${viewMode === 'RECONCILIATION'
                   ? 'bg-slate-800 text-white border border-slate-700 shadow'
                   : 'text-slate-400 hover:text-white hover:bg-slate-900'
-              }`}
+                }`}
             >
               <RefreshCw className="w-3.5 h-3.5 text-teal-400" />
               <span>Bakong KHQR Reconciliation Feed</span>
@@ -1371,11 +1452,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   onClick={() => {
                     setActiveTab(tab.id);
                   }}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-mono font-semibold whitespace-nowrap transition-all ${
-                    activeTab === tab.id
+                  className={`px-3 py-1.5 rounded-xl text-xs font-mono font-semibold whitespace-nowrap transition-all ${activeTab === tab.id
                       ? 'bg-emerald-500/15 border border-emerald-500/40 text-emerald-300'
                       : 'text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent'
-                  }`}
+                    }`}
                 >
                   {tab.label}
                 </button>
@@ -1416,7 +1496,34 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1e293b]/70 font-sans">
-                {displayLedger.map((row) => {
+                {displayLedger.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-16 text-center">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 mx-auto mb-3">
+                        <Landmark className="w-6 h-6 text-emerald-400" />
+                      </div>
+                      <h4 className="text-sm font-bold text-white mb-1">No Active Loans in Portfolio Ledger</h4>
+                      <p className="text-xs text-slate-400 max-w-sm mx-auto mb-4">
+                        All borrowing facilities have been reset to clean zero records. New borrower loan applications will appear in the Underwriting Review queue.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          loanStorageService.restoreDemoSeedData();
+                          setNotificationBanner({
+                            type: 'success',
+                            message: 'Sample demo loans restored successfully.',
+                          });
+                          fetchDashboardData();
+                        }}
+                        className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 text-xs font-semibold border border-slate-700 transition cursor-pointer"
+                      >
+                        Restore Demo Seed Loans
+                      </button>
+                    </td>
+                  </tr>
+                ) : (
+                  displayLedger.map((row) => {
                   const isPar = row.facility.health === 'DEFAULT_RISK';
                   const isWatch = row.facility.health === 'WATCHLIST';
 
@@ -1626,70 +1733,117 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               <MoreVertical className="w-4 h-4" />
                             </button>
 
-                          {openActionMenuId === row.id && (
-                            <div
-                              onClick={(e) => e.stopPropagation()}
-                              className="absolute right-4 top-10 z-30 w-64 bg-[#0b0f17] border border-[#1e293b] rounded-xl shadow-2xl py-1 text-left text-xs font-medium backdrop-blur-md animate-fadeIn"
-                            >
-                              <button
-                                onClick={() => {
-                                  setSelectedLoanForLedger(row);
-                                  setOpenActionMenuId(null);
-                                }}
-                                className="w-full px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800/70 flex items-center gap-2.5 transition"
+                            {openActionMenuId === row.id && (
+                              <div
+                                onClick={(e) => e.stopPropagation()}
+                                className="absolute right-4 top-10 z-30 w-72 bg-[#0b0f17] border border-[#1e293b] rounded-xl shadow-2xl py-1 text-left text-xs font-medium backdrop-blur-md animate-fadeIn"
                               >
-                                <FileText className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                <span>View Complete Amortization Schedule</span>
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setSelectedLoanForManualPayment(row);
-                                  setManualPaymentForm({
-                                    amount: row.nextScheduledPayment.scheduledEMIUSD || 542.80,
-                                    paymentType: 'REPAYMENT',
-                                    paymentMethod: 'BAKONG',
-                                    referenceNumber: `BK-${row.loanId}-MAN`,
-                                    note: `Manual repayment for installment cycle #${row.nextScheduledPayment.cycleNumber}`,
-                                  });
-                                  setOpenActionMenuId(null);
-                                }}
-                                className="w-full px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800/70 flex items-center gap-2.5 transition"
-                              >
-                                <DollarSign className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                                <span>Manual Repayment / Waiver Entry</span>
-                              </button>
-                              <button
-                                onClick={() => handleTriggerAlert(row)}
-                                className="w-full px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800/70 flex items-center gap-2.5 transition"
-                              >
-                                <Send className="w-3.5 h-3.5 text-teal-400 shrink-0" />
-                                <span>Trigger SMS / Telegram Due Alert</span>
-                              </button>
-                              <div className="my-1 border-t border-[#1e293b]" />
-                              <button
-                                onClick={() => {
-                                  setSelectedLoanForRestructure(row);
-                                  setRestructureForm({
-                                    newAprPercent: row.principal.aprPercent,
-                                    newTermMonths: row.principal.termMonths + 6,
-                                    gracePeriodMonths: 0,
-                                    reason: 'Super Admin term restructuring to prevent NPL delinquency',
-                                  });
-                                  setOpenActionMenuId(null);
-                                }}
-                                className="w-full px-3 py-2 text-amber-300 hover:text-amber-200 hover:bg-amber-950/30 flex items-center gap-2.5 transition"
-                              >
-                                <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                                <span>Restructure Loan Terms</span>
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </td>
+                                {/* 1. Amortization Schedule */}
+                                <button
+                                  onClick={() => {
+                                    setSelectedLoanForLedger(row);
+                                    setOpenActionMenuId(null);
+                                  }}
+                                  className="w-full px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800/70 flex items-center gap-2.5 transition cursor-pointer"
+                                >
+                                  <FileText className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                  <span>View Complete Amortization Schedule</span>
+                                </button>
+
+                                {/* 2. Manual Payment / Waiver */}
+                                <button
+                                  onClick={() => {
+                                    setSelectedLoanForManualPayment(row);
+                                    setManualPaymentForm({
+                                      amount: row.nextScheduledPayment.scheduledEMIUSD || 542.80,
+                                      paymentType: 'REPAYMENT',
+                                      paymentMethod: 'BAKONG',
+                                      referenceNumber: `BK-${row.loanId}-MAN`,
+                                      note: `Manual repayment for installment cycle #${row.nextScheduledPayment.cycleNumber}`,
+                                    });
+                                    setOpenActionMenuId(null);
+                                  }}
+                                  className="w-full px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800/70 flex items-center gap-2.5 transition cursor-pointer"
+                                >
+                                  <DollarSign className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                  <span>Manual Repayment / Waiver Entry</span>
+                                </button>
+
+                                <div className="my-1 border-t border-[#1e293b]" />
+
+                                {/* 3. Direct Phone Call */}
+                                <a
+                                  href={`tel:${(row.borrower.phone || '+85512345678').replace(/\s+/g, '')}`}
+                                  onClick={() => {
+                                    setOpenActionMenuId(null);
+                                    setNotificationBanner({
+                                      type: 'info',
+                                      message: `Initiating cellular call to borrower ${row.borrower.nameEn} (${row.borrower.phone})...`,
+                                    });
+                                  }}
+                                  className="w-full px-3 py-2 text-emerald-300 hover:text-emerald-200 hover:bg-emerald-950/30 flex items-center gap-2.5 transition cursor-pointer"
+                                >
+                                  <PhoneCall className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                  <span>Call Borrower ({row.borrower.phone || '+855 12 ••• 678'})</span>
+                                </a>
+
+                                {/* 4. Direct Message to Telegram */}
+                                <button
+                                  onClick={() => {
+                                    const emi = row.nextScheduledPayment.scheduledEMIUSD || 532.50;
+                                    const text = encodeURIComponent(
+                                      `🇰🇭 JAM SONG VICH - Payment Reminder\n` +
+                                      `Dear ${row.borrower.nameEn}, your Cycle #${row.nextScheduledPayment.cycleNumber} EMI of $${emi.toFixed(2)} for facility ${row.loanId} is due on ${row.nextScheduledPayment.dueDate}. Please settle via Bakong Dynamic KHQR (jamsongvich@nbc).`
+                                    );
+                                    window.open(`https://t.me/share/url?url=https://loufong.github.io/Loan-management-system/%23/repayments&text=${text}`, '_blank');
+                                    setOpenActionMenuId(null);
+                                    setNotificationBanner({
+                                      type: 'success',
+                                      message: `Telegram window opened with pre-filled payment reminder for ${row.borrower.nameEn}.`,
+                                    });
+                                  }}
+                                  className="w-full px-3 py-2 text-sky-300 hover:text-sky-200 hover:bg-sky-950/30 flex items-center gap-2.5 transition cursor-pointer"
+                                >
+                                  <Send className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                                  <span>Message on Telegram (Payment Alert)</span>
+                                </button>
+
+                                {/* 5. Trigger Multi-Channel Alert Dispatcher Modal */}
+                                <button
+                                  onClick={() => handleTriggerAlert(row)}
+                                  className="w-full px-3 py-2 text-teal-300 hover:text-teal-200 hover:bg-teal-950/30 flex items-center gap-2.5 transition cursor-pointer"
+                                >
+                                  <Bell className="w-3.5 h-3.5 text-teal-400 shrink-0" />
+                                  <span>Trigger SMS / Telegram Due Alert</span>
+                                </button>
+
+                                <div className="my-1 border-t border-[#1e293b]" />
+
+                                {/* 6. Restructure Loan Terms */}
+                                <button
+                                  onClick={() => {
+                                    setSelectedLoanForRestructure(row);
+                                    setRestructureForm({
+                                      newAprPercent: row.principal.aprPercent,
+                                      newTermMonths: row.principal.termMonths + 6,
+                                      gracePeriodMonths: 0,
+                                      reason: 'Super Admin term restructuring to prevent NPL delinquency',
+                                    });
+                                    setOpenActionMenuId(null);
+                                  }}
+                                  className="w-full px-3 py-2 text-amber-300 hover:text-amber-200 hover:bg-amber-950/30 flex items-center gap-2.5 transition cursor-pointer"
+                                >
+                                  <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                  <span>Restructure Loan Terms</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </td>
                     </tr>
                   );
-                })}
+                }))}
               </tbody>
             </table>
           </div>
@@ -1720,46 +1874,46 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {(underwritingQueue.length > 0
               ? underwritingQueue
               : [
-                  {
-                    id: 'app-991',
-                    applicationNumber: 'APP-2026-0982',
-                    borrowerName: 'Kanha Srun',
-                    borrowerPhone: '+855 17 882 109',
-                    declaredIncomeUSD: 2400,
-                    requestedAmountUSD: 10000,
-                    requestedTermMonths: 24,
-                    productName: 'SME Working Capital',
-                    cbcScore: { score: 745, grade: 'Grade A - Prime Risk', color: 'emerald', dtiRatio: 26.5 },
-                    collateralStatus: 'Registered Hard Title (Boeung Keng Kang, PP)',
-                    submittedAt: '2026-10-31 08:30:15',
-                  },
-                  {
-                    id: 'app-992',
-                    applicationNumber: 'APP-2026-1044',
-                    borrowerName: 'Dara Pich',
-                    borrowerPhone: '+855 81 294 881',
-                    declaredIncomeUSD: 1600,
-                    requestedAmountUSD: 5000,
-                    requestedTermMonths: 12,
-                    productName: 'Agri Micro-Credit',
-                    cbcScore: { score: 685, grade: 'Grade B - Moderate Risk', color: 'amber', dtiRatio: 38.2 },
-                    collateralStatus: 'Soft Title & Equipment Lien (Battambang)',
-                    submittedAt: '2026-10-31 09:14:22',
-                  },
-                  {
-                    id: 'app-993',
-                    applicationNumber: 'APP-2026-1102',
-                    borrowerName: 'Vicheka Long',
-                    borrowerPhone: '+855 92 401 922',
-                    declaredIncomeUSD: 3100,
-                    requestedAmountUSD: 15000,
-                    requestedTermMonths: 36,
-                    productName: 'Commercial Credit Line',
-                    cbcScore: { score: 780, grade: 'Grade A+ - Exceptional', color: 'emerald', dtiRatio: 22.0 },
-                    collateralStatus: 'Fixed Deposit Lien ($20,000 in ACLEDA)',
-                    submittedAt: '2026-10-31 10:02:40',
-                  },
-                ]
+                {
+                  id: 'app-991',
+                  applicationNumber: 'APP-2026-0982',
+                  borrowerName: 'Kanha Srun',
+                  borrowerPhone: '+855 17 882 109',
+                  declaredIncomeUSD: 2400,
+                  requestedAmountUSD: 10000,
+                  requestedTermMonths: 24,
+                  productName: 'SME Working Capital',
+                  cbcScore: { score: 745, grade: 'Grade A - Prime Risk', color: 'emerald', dtiRatio: 26.5 },
+                  collateralStatus: 'Registered Hard Title (Boeung Keng Kang, PP)',
+                  submittedAt: '2026-10-31 08:30:15',
+                },
+                {
+                  id: 'app-992',
+                  applicationNumber: 'APP-2026-1044',
+                  borrowerName: 'Dara Pich',
+                  borrowerPhone: '+855 81 294 881',
+                  declaredIncomeUSD: 1600,
+                  requestedAmountUSD: 5000,
+                  requestedTermMonths: 12,
+                  productName: 'Agri Micro-Credit',
+                  cbcScore: { score: 685, grade: 'Grade B - Moderate Risk', color: 'amber', dtiRatio: 38.2 },
+                  collateralStatus: 'Soft Title & Equipment Lien (Battambang)',
+                  submittedAt: '2026-10-31 09:14:22',
+                },
+                {
+                  id: 'app-993',
+                  applicationNumber: 'APP-2026-1102',
+                  borrowerName: 'Vicheka Long',
+                  borrowerPhone: '+855 92 401 922',
+                  declaredIncomeUSD: 3100,
+                  requestedAmountUSD: 15000,
+                  requestedTermMonths: 36,
+                  productName: 'Commercial Credit Line',
+                  cbcScore: { score: 780, grade: 'Grade A+ - Exceptional', color: 'emerald', dtiRatio: 22.0 },
+                  collateralStatus: 'Fixed Deposit Lien ($20,000 in ACLEDA)',
+                  submittedAt: '2026-10-31 10:02:40',
+                },
+              ]
             ).map((app: any) => (
               <div
                 key={app.id}
@@ -1960,47 +2114,47 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 {(reconciliationFeed?.transactions?.length > 0
                   ? reconciliationFeed.transactions
                   : [
-                      {
-                        id: 'tx-01',
-                        timestamp: '2026-10-31 10:14:02',
-                        settlementHash: 'd41d8cd98f00b204e9800998ecf8427e',
-                        payerAccount: 'bakong:sokha.chan@aclb',
-                        billReference: 'LN-2026-6042-INS05',
-                        originatingBank: 'ABA Bank KHQR',
-                        settledAmountUSD: 122.50,
-                        status: 'MATCHED',
-                      },
-                      {
-                        id: 'tx-02',
-                        timestamp: '2026-10-31 10:11:38',
-                        settlementHash: 'e2fc714c4727ee9395f324cd2e7f331f',
-                        payerAccount: 'bakong:sereyroth.mom@wing',
-                        billReference: 'LN-2026-1184-INS02',
-                        originatingBank: 'ACLEDA Bank Plc.',
-                        settledAmountUSD: 1650.00,
-                        status: 'MATCHED',
-                      },
-                      {
-                        id: 'tx-03',
-                        timestamp: '2026-10-31 09:58:19',
-                        settlementHash: '79cfeb94595de33b3326c06ab16efdcb',
-                        payerAccount: 'bakong:rithy.khem@canadia',
-                        billReference: 'LN-2026-9041-INS04',
-                        originatingBank: 'Wing Bank (Cambodia)',
-                        settledAmountUSD: 1083.50,
-                        status: 'MATCHED',
-                      },
-                      {
-                        id: 'tx-04',
-                        timestamp: '2026-10-31 09:42:10',
-                        settlementHash: '3b890a8274f829a1b0294829fa019284',
-                        payerAccount: 'bakong:unknown.payer@aclb',
-                        billReference: 'LN-2026-7719-UNM',
-                        originatingBank: 'Canadia Bank',
-                        settledAmountUSD: 300.00,
-                        status: 'FLAGGED UNMATCHED',
-                      },
-                    ]
+                    {
+                      id: 'tx-01',
+                      timestamp: '2026-10-31 10:14:02',
+                      settlementHash: 'd41d8cd98f00b204e9800998ecf8427e',
+                      payerAccount: 'bakong:sokha.chan@aclb',
+                      billReference: 'LN-2026-6042-INS05',
+                      originatingBank: 'ABA Bank KHQR',
+                      settledAmountUSD: 122.50,
+                      status: 'MATCHED',
+                    },
+                    {
+                      id: 'tx-02',
+                      timestamp: '2026-10-31 10:11:38',
+                      settlementHash: 'e2fc714c4727ee9395f324cd2e7f331f',
+                      payerAccount: 'bakong:sereyroth.mom@wing',
+                      billReference: 'LN-2026-1184-INS02',
+                      originatingBank: 'ACLEDA Bank Plc.',
+                      settledAmountUSD: 1650.00,
+                      status: 'MATCHED',
+                    },
+                    {
+                      id: 'tx-03',
+                      timestamp: '2026-10-31 09:58:19',
+                      settlementHash: '79cfeb94595de33b3326c06ab16efdcb',
+                      payerAccount: 'bakong:rithy.khem@canadia',
+                      billReference: 'LN-2026-9041-INS04',
+                      originatingBank: 'Wing Bank (Cambodia)',
+                      settledAmountUSD: 1083.50,
+                      status: 'MATCHED',
+                    },
+                    {
+                      id: 'tx-04',
+                      timestamp: '2026-10-31 09:42:10',
+                      settlementHash: '3b890a8274f829a1b0294829fa019284',
+                      payerAccount: 'bakong:unknown.payer@aclb',
+                      billReference: 'LN-2026-7719-UNM',
+                      originatingBank: 'Canadia Bank',
+                      settledAmountUSD: 300.00,
+                      status: 'FLAGGED UNMATCHED',
+                    },
+                  ]
                 ).map((tx: any) => (
                   <tr key={tx.id} className="hover:bg-slate-900/60 transition">
                     <td className="py-2.5 px-4 text-slate-400">{tx.timestamp}</td>
@@ -2166,22 +2320,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <button
                 type="button"
                 onClick={() => setManualPaymentForm({ ...manualPaymentForm, paymentType: 'REPAYMENT' })}
-                className={`py-2 px-3 rounded-lg text-xs font-mono font-bold transition ${
-                  manualPaymentForm.paymentType === 'REPAYMENT'
+                className={`py-2 px-3 rounded-lg text-xs font-mono font-bold transition ${manualPaymentForm.paymentType === 'REPAYMENT'
                     ? 'bg-emerald-500 text-slate-950 shadow'
                     : 'text-slate-400 hover:text-white'
-                }`}
+                  }`}
               >
                 Installment Repayment
               </button>
               <button
                 type="button"
                 onClick={() => setManualPaymentForm({ ...manualPaymentForm, paymentType: 'WAIVER' })}
-                className={`py-2 px-3 rounded-lg text-xs font-mono font-bold transition ${
-                  manualPaymentForm.paymentType === 'WAIVER'
+                className={`py-2 px-3 rounded-lg text-xs font-mono font-bold transition ${manualPaymentForm.paymentType === 'WAIVER'
                     ? 'bg-amber-400 text-slate-950 shadow'
                     : 'text-slate-400 hover:text-white'
-                }`}
+                  }`}
               >
                 Interest / Penalty Waiver
               </button>
@@ -2511,6 +2663,283 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow transition"
               >
                 Dispatch Counter-Offer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 12. MODAL 5: DUE DATE ALERT & DIRECT OUTREACH DISPATCHER (Phone & Telegram) */}
+      {/* ========================================================================= */}
+      {selectedLoanForAlert && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl w-full max-w-xl shadow-2xl p-6 space-y-5 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-[#1e293b]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center text-teal-400">
+                  <Send className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white font-mono">
+                    Payment Due Alert & Outreach Dispatcher
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    Facility Ref: {selectedLoanForAlert.loanId} • Borrower: {selectedLoanForAlert.borrower.nameEn}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedLoanForAlert(null)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Borrower & Due Installment Details Card */}
+            <div className="bg-[#0f172a] p-4 rounded-xl border border-[#1e293b] space-y-3">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <span className="text-xs font-bold text-white block">
+                    {selectedLoanForAlert.borrower.nameEn}
+                  </span>
+                  <span className="text-[11px] text-slate-400 font-mono">
+                    Client ID: {selectedLoanForAlert.borrower.clientCode} • {selectedLoanForAlert.facility.productName}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {selectedLoanForAlert.nextScheduledPayment.daysOverdue > 0 ? (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                      CRITICAL OVERDUE ({selectedLoanForAlert.nextScheduledPayment.daysOverdue}D)
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                      UPCOMING DUE
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#1e293b]/80 text-xs font-mono">
+                <div>
+                  <span className="text-[10px] text-slate-500 block">Cycle Due</span>
+                  <span className="text-white font-bold">Cycle #{selectedLoanForAlert.nextScheduledPayment.cycleNumber}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 block">Due Date</span>
+                  <span className="text-amber-400 font-bold">{selectedLoanForAlert.nextScheduledPayment.dueDate}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 block">Amount Payable</span>
+                  <span className="text-emerald-400 font-bold">
+                    ${(selectedLoanForAlert.nextScheduledPayment.scheduledEMIUSD || 532.50).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Channel 1: Direct Voice Call Section */}
+            <div className="bg-[#0f172a]/90 p-4 rounded-xl border border-emerald-500/30 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-white flex items-center gap-2">
+                  <PhoneCall className="w-4 h-4 text-emerald-400" />
+                  Direct Phone Call to Borrower
+                </span>
+                <span className="text-xs font-mono font-bold text-emerald-400">
+                  {selectedLoanForAlert.borrower.phone || '+855 12 345 678'}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Call borrower directly from your device to follow up on the upcoming installment and payment terms.
+              </p>
+              <div className="flex items-center gap-2 pt-1">
+                <a
+                  href={`tel:${(selectedLoanForAlert.borrower.phone || '+85512345678').replace(/\s+/g, '')}`}
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition shadow cursor-pointer"
+                >
+                  <Phone className="w-3.5 h-3.5" />
+                  <span>Call {selectedLoanForAlert.borrower.phone || '+855 12 345 678'}</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(selectedLoanForAlert.borrower.phone || '+855 12 345 678');
+                    setNotificationBanner({
+                      type: 'success',
+                      message: `Phone number copied: ${selectedLoanForAlert.borrower.phone}`,
+                    });
+                  }}
+                  className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium flex items-center gap-1 transition"
+                  title="Copy Phone Number"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>Copy Phone</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Channel 2: Direct Telegram Message Section */}
+            <div className="bg-[#0f172a]/90 p-4 rounded-xl border border-sky-500/30 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-white flex items-center gap-2">
+                  <Send className="w-4 h-4 text-sky-400" />
+                  Direct Telegram Payment Alert
+                </span>
+                <span className="text-[10px] font-mono font-bold text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
+                  TELEGRAM DIRECT & BOT
+                </span>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                  Payment Alert Message Preview (Editable)
+                </label>
+                <textarea
+                  rows={6}
+                  value={alertCustomMessage}
+                  onChange={(e) => setAlertCustomMessage(e.target.value)}
+                  className="w-full p-2.5 bg-[#0b0f17] border border-slate-800 rounded-xl text-white font-mono text-xs focus:ring-1 focus:ring-sky-500 leading-relaxed"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 pt-1 flex-wrap">
+                {/* 1. Open Telegram to Message Borrower */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const encodedMsg = encodeURIComponent(alertCustomMessage);
+                    const telegramUrl = `https://t.me/share/url?url=https://loufong.github.io/Loan-management-system/%23/repayments&text=${encodedMsg}`;
+                    window.open(telegramUrl, '_blank');
+                    setNotificationBanner({
+                      type: 'success',
+                      message: `Telegram window opened with pre-filled payment alert for ${selectedLoanForAlert.borrower.nameEn}.`,
+                    });
+                  }}
+                  className="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition shadow cursor-pointer"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Open & Message on Telegram</span>
+                </button>
+
+                {/* 2. Instant Bot & In-App Push */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const emi = selectedLoanForAlert.nextScheduledPayment.scheduledEMIUSD || 532.50;
+                    const dueDate = selectedLoanForAlert.nextScheduledPayment.dueDate || '2026-11-15';
+                    const cycle = selectedLoanForAlert.nextScheduledPayment.cycleNumber || 5;
+
+                    notificationStorageService.addNotification({
+                      title: `Due Date Alert: ${selectedLoanForAlert.loanId} (Cycle #${cycle})`,
+                      message: `Scheduled payment of $${emi.toFixed(2)} is due on ${dueDate}. Settle via Bakong Dynamic KHQR.`,
+                      category: selectedLoanForAlert.nextScheduledPayment.daysOverdue > 0 ? 'OVERDUE' : 'PAYMENT_DUE',
+                      linkId: '/repayments',
+                    });
+
+                    setNotificationBanner({
+                      type: 'success',
+                      message: `Official Telegram Bot & In-App Due Date Alert dispatched to ${selectedLoanForAlert.borrower.nameEn} for Cycle #${cycle} (Due: ${dueDate}).`,
+                    });
+                    setSelectedLoanForAlert(null);
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                >
+                  <Bell className="w-3.5 h-3.5 text-teal-400" />
+                  <span>Send Institutional Bot & In-App Push</span>
+                </button>
+
+                {/* 3. Copy message */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(alertCustomMessage);
+                    setCopiedMessage(true);
+                    setTimeout(() => setCopiedMessage(false), 3000);
+                  }}
+                  className="px-3 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs font-medium flex items-center gap-1 transition cursor-pointer"
+                >
+                  {copiedMessage ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedMessage ? 'Copied' : 'Copy Text'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="pt-3 border-t border-[#1e293b] flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectedLoanForAlert(null)}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs rounded-xl transition cursor-pointer"
+              >
+                Close Dispatcher
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Borrowing Ledger Confirmation Modal */}
+      {showResetConfirmModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0b0f17] border border-rose-500/40 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
+                <RotateCcw className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white tracking-tight">
+                  Reset Borrowing Ledger & Data
+                </h3>
+                <p className="text-xs text-rose-300 font-mono">
+                  Permanent Core Banking Clearing Operation
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3.5 bg-rose-950/30 border border-rose-500/20 rounded-xl space-y-2 text-xs text-slate-300">
+              <p className="font-semibold text-rose-200">
+                Warning: This operation will completely clear all borrowing records:
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-slate-400 font-mono text-[11px]">
+                <li>All active, overdue, and matured loans &rarr; 0</li>
+                <li>All loan underwriting applications &rarr; 0</li>
+                <li>All scheduled installments & amortization &rarr; 0</li>
+                <li>All payment settlement receipts &rarr; 0</li>
+                <li>Both Super Admin and Normal User balances &rarr; $0.00</li>
+              </ul>
+              <p className="text-[11px] text-slate-400 pt-1">
+                You can restore sample demo facilities at any time using the "Restore Demo Data" action.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowResetConfirmModal(false)}
+                disabled={isResettingLedger}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleResetBorrowingLedger}
+                disabled={isResettingLedger}
+                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition flex items-center gap-2 shadow-lg shadow-rose-950/50 cursor-pointer disabled:opacity-50"
+              >
+                {isResettingLedger ? (
+                  <>
+                    <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                    <span>Resetting Ledger...</span>
+                  </>
+                ) : (
+                  <>
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Confirm & Reset All Borrowing Data</span>
+                  </>
+                )}
               </button>
             </div>
           </div>

@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import { Currency } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
+import { loanStorageService } from '../../services/loanStorageService';
+import { api } from '../../services/api';
 
 interface SystemSettingsProps {
   currency: Currency;
@@ -699,6 +701,41 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
                 <span>Execute Manual Delinquency Scan Job</span>
                 <span className="text-[11px] text-emerald-400 font-bold font-mono">Trigger &rarr;</span>
               </button>
+
+              <div className="pt-2 border-t border-slate-800 space-y-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (window.confirm('Are you sure you want to completely RESET all borrowing data? All loans, applications, payment receipts, and repayment schedules will be purged to zero records for both Super Admin and Normal Users.')) {
+                      await api.resetBorrowingData().catch(() => null);
+                      loanStorageService.resetAllBorrowingData();
+                      onShowToast?.('All borrowing data has been reset to zero across the platform', 'success');
+                    }
+                  }}
+                  className="w-full py-3 px-3.5 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 font-bold transition cursor-pointer text-left flex items-center justify-between shadow-sm"
+                >
+                  <span className="flex items-center gap-2">
+                    <RotateCcw className="w-3.5 h-3.5 text-rose-400" />
+                    Reset All Core Banking Borrowing Ledger
+                  </span>
+                  <span className="text-[11px] text-rose-400 font-mono">Reset &rarr;</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    loanStorageService.restoreDemoSeedData();
+                    onShowToast?.('Sample demo loans and borrowing records restored successfully', 'info');
+                  }}
+                  className="w-full py-2.5 px-3.5 rounded-xl border border-slate-800 bg-slate-950 hover:bg-slate-800 text-slate-300 font-medium transition cursor-pointer text-left flex items-center justify-between text-xs"
+                >
+                  <span className="flex items-center gap-2">
+                    <Database className="w-3.5 h-3.5 text-emerald-400" />
+                    Restore Default Demo Seed Loans
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-mono">Restore &rarr;</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

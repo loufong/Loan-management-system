@@ -32,6 +32,7 @@ adminRouter.get('/underwriting/queue', AdminCoreController.getUnderwritingQueue)
 adminRouter.post('/applications/:id/counter-offer', AdminCoreController.counterOfferApplication);
 adminRouter.get('/reconciliation/bakong-feed', AdminCoreController.getBakongReconciliationFeed);
 adminRouter.post('/reconciliation/resolve-anomaly', AdminCoreController.resolveReconciliationAnomaly);
+adminRouter.post('/borrowing/reset', AdminCoreController.resetBorrowingData);
 
 // 1. User Management
 adminRouter.get('/users', UserController.list);

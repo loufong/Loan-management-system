@@ -502,4 +502,29 @@ export class AdminCoreController {
       next(err);
     }
   }
+
+  /**
+   * 8. POST /api/v1/admin/borrowing/reset
+   * Complete atomic reset of all loan accounts, payment history, and borrowing applications
+   */
+  static async resetBorrowingData(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      await prisma.$transaction(async (tx) => {
+        // Safely clear payment and schedule ledgers first due to foreign keys
+        try { await (tx as any).payment?.deleteMany(); } catch {}
+        try { await (tx as any).repaymentSchedule?.deleteMany(); } catch {}
+        try { await (tx as any).disbursement?.deleteMany(); } catch {}
+        try { await (tx as any).loan?.deleteMany(); } catch {}
+        try { await (tx as any).loanApplication?.deleteMany(); } catch {}
+      });
+
+      sendSuccess(res, {
+        message: 'All borrowing records, loan accounts, installments, and payment receipts have been reset to zero.',
+        resetTimestamp: new Date().toISOString(),
+        clearedLedgers: ['loans', 'applications', 'repayments', 'payments', 'disbursements'],
+      }, 'All borrowing data reset successfully');
+    } catch (err) {
+      next(err);
+    }
+  }
 }

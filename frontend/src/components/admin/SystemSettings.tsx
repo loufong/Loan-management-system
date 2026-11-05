@@ -720,21 +720,6 @@ export const SystemSettings: React.FC<SystemSettingsProps> = ({
                   </span>
                   <span className="text-[11px] text-rose-400 font-mono">Reset &rarr;</span>
                 </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    loanStorageService.restoreDemoSeedData();
-                    onShowToast?.('Sample demo loans and borrowing records restored successfully', 'info');
-                  }}
-                  className="w-full py-2.5 px-3.5 rounded-xl border border-slate-800 bg-slate-950 hover:bg-slate-800 text-slate-300 font-medium transition cursor-pointer text-left flex items-center justify-between text-xs"
-                >
-                  <span className="flex items-center gap-2">
-                    <Database className="w-3.5 h-3.5 text-emerald-400" />
-                    Restore Default Demo Seed Loans
-                  </span>
-                  <span className="text-[10px] text-slate-500 font-mono">Restore &rarr;</span>
-                </button>
               </div>
             </div>
           </div>

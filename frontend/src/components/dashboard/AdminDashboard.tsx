@@ -181,31 +181,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [alertCustomMessage, setAlertCustomMessage] = useState<string>('');
   const [copiedMessage, setCopiedMessage] = useState<boolean>(false);
 
-  // Complete Reset Borrowing Ledger Confirmation State
-  const [showResetConfirmModal, setShowResetConfirmModal] = useState<boolean>(false);
-  const [isResettingLedger, setIsResettingLedger] = useState<boolean>(false);
-
   const isResetMode = loanStorageService.isLedgerCleared();
-
-  const handleResetBorrowingLedger = async () => {
-    setIsResettingLedger(true);
-    try {
-      await api.resetBorrowingData().catch(() => null);
-      loanStorageService.resetAllBorrowingData();
-      setShowResetConfirmModal(false);
-      setNotificationBanner({
-        type: 'success',
-        message: 'Complete Borrowing Reset: All loans, installments, and payment records have been purged. Ledger is now at clean zero.',
-      });
-      fetchDashboardData();
-    } catch {
-      loanStorageService.resetAllBorrowingData();
-      setShowResetConfirmModal(false);
-      fetchDashboardData();
-    } finally {
-      setIsResettingLedger(false);
-    }
-  };
 
   // Close action menu when clicking outside
   useEffect(() => {
@@ -1002,36 +978,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <span>Portfolio Intelligence & Risk Engine →</span>
             </button>
 
-            {/* Quick Reset All Borrowing Data Button */}
-            <button
-              type="button"
-              onClick={() => setShowResetConfirmModal(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 rounded-xl text-xs font-bold text-rose-300 shadow-sm transition-all cursor-pointer"
-              title="Reset all loan facilities, payment history, and borrowing ledger for both Super Admin and Normal Users"
-            >
-              <RotateCcw className="w-3.5 h-3.5 text-rose-400" />
-              <span>Reset Borrowing Data</span>
-            </button>
-
-            {isResetMode && (
-              <button
-                type="button"
-                onClick={() => {
-                  loanStorageService.restoreDemoSeedData();
-                  setNotificationBanner({
-                    type: 'success',
-                    message: 'Default demo loan facilities and payment records have been restored.',
-                  });
-                  fetchDashboardData();
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-semibold text-emerald-400 shadow-sm transition-all cursor-pointer"
-                title="Restore sample demo loan accounts for testing"
-              >
-                <Database className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Restore Demo Data</span>
-              </button>
-            )}
-
             {/* Super Admin Profile Badge */}
             <div className="flex items-center gap-2 px-3 py-1 bg-[#0f172a] border border-[#1e293b] rounded-xl">
               <div className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-[10px] font-bold text-emerald-300">
@@ -1503,23 +1449,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <Landmark className="w-6 h-6 text-emerald-400" />
                       </div>
                       <h4 className="text-sm font-bold text-white mb-1">No Active Loans in Portfolio Ledger</h4>
-                      <p className="text-xs text-slate-400 max-w-sm mx-auto mb-4">
-                        All borrowing facilities have been reset to clean zero records. New borrower loan applications will appear in the Underwriting Review queue.
+                      <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                        There are currently no active loans. Approved borrower applications will appear in this ledger.
                       </p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          loanStorageService.restoreDemoSeedData();
-                          setNotificationBanner({
-                            type: 'success',
-                            message: 'Sample demo loans restored successfully.',
-                          });
-                          fetchDashboardData();
-                        }}
-                        className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 text-xs font-semibold border border-slate-700 transition cursor-pointer"
-                      >
-                        Restore Demo Seed Loans
-                      </button>
                     </td>
                   </tr>
                 ) : (
@@ -2874,72 +2806,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs rounded-xl transition cursor-pointer"
               >
                 Close Dispatcher
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Reset Borrowing Ledger Confirmation Modal */}
-      {showResetConfirmModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0b0f17] border border-rose-500/40 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
-                <RotateCcw className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-white tracking-tight">
-                  Reset Borrowing Ledger & Data
-                </h3>
-                <p className="text-xs text-rose-300 font-mono">
-                  Permanent Core Banking Clearing Operation
-                </p>
-              </div>
-            </div>
-
-            <div className="p-3.5 bg-rose-950/30 border border-rose-500/20 rounded-xl space-y-2 text-xs text-slate-300">
-              <p className="font-semibold text-rose-200">
-                Warning: This operation will completely clear all borrowing records:
-              </p>
-              <ul className="list-disc list-inside space-y-1 text-slate-400 font-mono text-[11px]">
-                <li>All active, overdue, and matured loans &rarr; 0</li>
-                <li>All loan underwriting applications &rarr; 0</li>
-                <li>All scheduled installments & amortization &rarr; 0</li>
-                <li>All payment settlement receipts &rarr; 0</li>
-                <li>Both Super Admin and Normal User balances &rarr; $0.00</li>
-              </ul>
-              <p className="text-[11px] text-slate-400 pt-1">
-                You can restore sample demo facilities at any time using the "Restore Demo Data" action.
-              </p>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setShowResetConfirmModal(false)}
-                disabled={isResettingLedger}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleResetBorrowingLedger}
-                disabled={isResettingLedger}
-                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition flex items-center gap-2 shadow-lg shadow-rose-950/50 cursor-pointer disabled:opacity-50"
-              >
-                {isResettingLedger ? (
-                  <>
-                    <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                    <span>Resetting Ledger...</span>
-                  </>
-                ) : (
-                  <>
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    <span>Confirm & Reset All Borrowing Data</span>
-                  </>
-                )}
               </button>
             </div>
           </div>

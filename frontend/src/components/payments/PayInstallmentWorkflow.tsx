@@ -410,22 +410,20 @@ export const PayInstallmentWorkflow: React.FC<PayInstallmentWorkflowProps> = ({
             <button
               type="button"
               onClick={() => setSelectedCurrency('USD')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
-                selectedCurrency === 'USD'
+              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${selectedCurrency === 'USD'
                   ? 'bg-emerald-500 text-slate-950 shadow-sm'
                   : 'text-slate-400 hover:text-white'
-              }`}
+                }`}
             >
               USD ($)
             </button>
             <button
               type="button"
               onClick={() => setSelectedCurrency('KHR')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
-                selectedCurrency === 'KHR'
+              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${selectedCurrency === 'KHR'
                   ? 'bg-emerald-500 text-slate-950 shadow-sm'
                   : 'text-slate-400 hover:text-white'
-              }`}
+                }`}
             >
               KHR (៛)
             </button>
@@ -499,17 +497,15 @@ export const PayInstallmentWorkflow: React.FC<PayInstallmentWorkflowProps> = ({
                 {/* Option A: Pay Current Installment */}
                 <div
                   onClick={() => setPaymentOption('NEXT')}
-                  className={`p-4 rounded-xl border transition-all cursor-pointer ${
-                    paymentOption === 'NEXT'
+                  className={`p-4 rounded-xl border transition-all cursor-pointer ${paymentOption === 'NEXT'
                       ? 'bg-slate-950 border-emerald-500 ring-1 ring-emerald-500/50 shadow-md shadow-emerald-950/30'
                       : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-400'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                        paymentOption === 'NEXT' ? 'border-emerald-400 bg-emerald-500' : 'border-slate-600'
-                      }`}>
+                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${paymentOption === 'NEXT' ? 'border-emerald-400 bg-emerald-500' : 'border-slate-600'
+                        }`}>
                         {paymentOption === 'NEXT' && <div className="w-1.5 h-1.5 rounded-full bg-slate-950" />}
                       </div>
                       <div>
@@ -539,17 +535,15 @@ export const PayInstallmentWorkflow: React.FC<PayInstallmentWorkflowProps> = ({
                 {/* Option B: Custom Partial Prepayment */}
                 <div
                   onClick={() => setPaymentOption('CUSTOM')}
-                  className={`p-4 rounded-xl border transition-all cursor-pointer ${
-                    paymentOption === 'CUSTOM'
+                  className={`p-4 rounded-xl border transition-all cursor-pointer ${paymentOption === 'CUSTOM'
                       ? 'bg-slate-950 border-emerald-500 ring-1 ring-emerald-500/50 shadow-md shadow-emerald-950/30'
                       : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-400'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                        paymentOption === 'CUSTOM' ? 'border-emerald-400 bg-emerald-500' : 'border-slate-600'
-                      }`}>
+                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${paymentOption === 'CUSTOM' ? 'border-emerald-400 bg-emerald-500' : 'border-slate-600'
+                        }`}>
                         {paymentOption === 'CUSTOM' && <div className="w-1.5 h-1.5 rounded-full bg-slate-950" />}
                       </div>
                       <div>
@@ -595,17 +589,15 @@ export const PayInstallmentWorkflow: React.FC<PayInstallmentWorkflowProps> = ({
                 {/* Option C: Full Loan Settlement / Payoff */}
                 <div
                   onClick={() => setPaymentOption('FULL')}
-                  className={`p-4 rounded-xl border transition-all cursor-pointer ${
-                    paymentOption === 'FULL'
+                  className={`p-4 rounded-xl border transition-all cursor-pointer ${paymentOption === 'FULL'
                       ? 'bg-slate-950 border-emerald-500 ring-1 ring-emerald-500/50 shadow-md shadow-emerald-950/30'
                       : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-400'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                        paymentOption === 'FULL' ? 'border-emerald-400 bg-emerald-500' : 'border-slate-600'
-                      }`}>
+                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${paymentOption === 'FULL' ? 'border-emerald-400 bg-emerald-500' : 'border-slate-600'
+                        }`}>
                         {paymentOption === 'FULL' && <div className="w-1.5 h-1.5 rounded-full bg-slate-950" />}
                       </div>
                       <div>
@@ -650,11 +642,10 @@ export const PayInstallmentWorkflow: React.FC<PayInstallmentWorkflowProps> = ({
                 {/* Method 1: Instant QR / Direct Bank Clearing */}
                 <div
                   onClick={() => setPaymentMethod('QR_INSTANT')}
-                  className={`p-4 rounded-xl border transition-all cursor-pointer ${
-                    paymentMethod === 'QR_INSTANT'
+                  className={`p-4 rounded-xl border transition-all cursor-pointer ${paymentMethod === 'QR_INSTANT'
                       ? 'bg-slate-950 border-emerald-500 ring-1 ring-emerald-500/50 shadow-md shadow-emerald-950/30'
                       : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-400'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -680,11 +671,10 @@ export const PayInstallmentWorkflow: React.FC<PayInstallmentWorkflowProps> = ({
                 {/* Method 2: Linked Settlement Account */}
                 <div
                   onClick={() => setPaymentMethod('LINKED_ACCOUNT')}
-                  className={`p-4 rounded-xl border transition-all cursor-pointer ${
-                    paymentMethod === 'LINKED_ACCOUNT'
+                  className={`p-4 rounded-xl border transition-all cursor-pointer ${paymentMethod === 'LINKED_ACCOUNT'
                       ? 'bg-slate-950 border-emerald-500 ring-1 ring-emerald-500/50 shadow-md shadow-emerald-950/30'
                       : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-400'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -710,11 +700,10 @@ export const PayInstallmentWorkflow: React.FC<PayInstallmentWorkflowProps> = ({
                 {/* Method 3: Manual Counter / Bank Transfer Receipt Upload */}
                 <div
                   onClick={() => setPaymentMethod('MANUAL_SLIP')}
-                  className={`p-4 rounded-xl border transition-all cursor-pointer ${
-                    paymentMethod === 'MANUAL_SLIP'
+                  className={`p-4 rounded-xl border transition-all cursor-pointer ${paymentMethod === 'MANUAL_SLIP'
                       ? 'bg-slate-950 border-emerald-500 ring-1 ring-emerald-500/50 shadow-md shadow-emerald-950/30'
                       : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-400'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -841,22 +830,20 @@ export const PayInstallmentWorkflow: React.FC<PayInstallmentWorkflowProps> = ({
                   <button
                     type="button"
                     onClick={() => setQrViewMode('card')}
-                    className={`flex-1 py-1.5 px-3 rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                      qrViewMode === 'card'
+                    className={`flex-1 py-1.5 px-3 rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer ${qrViewMode === 'card'
                         ? 'bg-red-600 text-white shadow'
                         : 'text-slate-400 hover:text-white'
-                    }`}
+                      }`}
                   >
                     <span>Official QR Card</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setQrViewMode('code')}
-                    className={`flex-1 py-1.5 px-3 rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                      qrViewMode === 'code'
+                    className={`flex-1 py-1.5 px-3 rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer ${qrViewMode === 'code'
                         ? 'bg-slate-800 text-white shadow'
                         : 'text-slate-400 hover:text-white'
-                    }`}
+                      }`}
                   >
                     <span>Bill QR Code</span>
                   </button>

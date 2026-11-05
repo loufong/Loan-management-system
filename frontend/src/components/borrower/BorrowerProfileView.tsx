@@ -23,12 +23,10 @@ import {
   FileText,
   AlertTriangle,
   Clock,
-  RotateCcw,
   RefreshCw,
   Check,
   FileUp,
   FileWarning,
-  Sparkles,
   Fingerprint,
   QrCode,
   ZoomIn,
@@ -355,17 +353,6 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
     } else {
       window.open(targetUrl || '#', '_blank');
     }
-  };
-
-  // Simulation Controls for Testing
-  const handleSimulateStatus = async (docType: KycDocType, status: KycStatus, reason?: string) => {
-    await kycService.simulateStatus(docType, status, reason, clientId);
-    await loadKyc();
-  };
-
-  const handleResetKyc = async () => {
-    kycService.resetToVerified(clientId);
-    await loadKyc();
   };
 
   const handleApproveDocument = async (docType: KycDocType) => {
@@ -705,47 +692,6 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
               </div>
             );
           })}
-        </div>
-
-        {/* Reviewer / Sandbox Testing Toolset */}
-        <div className="mt-6 pt-4 border-t border-slate-800/80 bg-slate-950/50 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-emerald-400" />
-            <span className="text-xs font-bold text-white">KYC Borrowing Lock Demonstration Tools:</span>
-          </div>
-
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={() =>
-                handleSimulateStatus(
-                  'PROOF_OF_RESIDENCE',
-                  'REJECTED',
-                  'Commune administrative stamp missing or expired beyond 6 months.'
-                )
-              }
-              className="px-2.5 py-1 text-[11px] font-mono font-semibold rounded-lg bg-rose-500/10 text-rose-300 border border-rose-500/30 hover:bg-rose-500/20 cursor-pointer transition"
-            >
-              Simulate Rejection (Lock Borrowing)
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleSimulateStatus('EMPLOYMENT_INCOME_CONTRACT', 'PENDING_REVIEW')}
-              className="px-2.5 py-1 text-[11px] font-mono font-semibold rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/30 hover:bg-amber-500/20 cursor-pointer transition"
-            >
-              Simulate Pending (2/3 Locked)
-            </button>
-
-            <button
-              type="button"
-              onClick={handleResetKyc}
-              className="px-2.5 py-1 text-[11px] font-mono font-bold rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 cursor-pointer transition flex items-center gap-1"
-            >
-              <RotateCcw className="w-3 h-3" />
-              Reset to 3 of 3 Verified
-            </button>
-          </div>
         </div>
       </div>
 

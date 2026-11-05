@@ -386,14 +386,8 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
     }
   };
 
-  const handleApproveAll = async () => {
-    await kycService.approveAllDocuments();
-    await loadKyc();
-  };
-
   const verifiedCount = kycSummary?.verifiedCount ?? 3;
   const isBorrowingUnlocked = kycSummary?.isEligibleToBorrow ?? true;
-  const pendingCount = (kycSummary?.documents || []).filter((d) => d.status === 'PENDING_REVIEW').length;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 font-sans text-slate-100">
@@ -541,38 +535,6 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
                 Credit origination and disbursements are restricted. You currently have {verifiedCount} of 3 verified regulatory KYC documents. Please upload the required documents below to clear compliance review.
               </p>
             </div>
-          </div>
-        )}
-
-        {/* Pending Review Queue Banner with One-Click Fast-Track Approval */}
-        {pendingCount > 0 && (
-          <div className="p-4 rounded-xl bg-gradient-to-r from-amber-950/60 via-slate-900 to-emerald-950/40 border border-amber-500/40 text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg animate-fade-in">
-            <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0 mt-0.5">
-                <Clock className="w-5 h-5" />
-              </div>
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-white text-xs">
-                    Underwriting Review Desk: {pendingCount} Document{pendingCount > 1 ? 's' : ''} Awaiting Approval
-                  </span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                    PENDING OFFICER SIGN-OFF
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-300 max-w-xl leading-relaxed">
-                  Documents are queued for Credit Committee due diligence. Authorized compliance officers can review each document or fast-track verify all 3 to immediately unlock borrowing.
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={handleApproveAll}
-              className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-emerald-500/20 cursor-pointer shrink-0 flex items-center justify-center gap-1.5 self-start sm:self-center"
-            >
-              <BadgeCheck className="w-4 h-4" />
-              <span>Approve All (Fast-Track)</span>
-            </button>
           </div>
         )}
 

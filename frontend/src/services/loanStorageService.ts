@@ -1065,11 +1065,11 @@ class LoanStorageService {
     map.set('bor-8800', {
       id: 'bor-8800',
       borrowerId: 'BOR-2026-8800',
-      fullName: 'Phon Rithya',
+      fullName: 'JAM SONG VICH',
       avatarUrl: '',
       nationalId: '010****00',
       phone: '+855 12 000 888',
-      email: 'phon.rithya@jamsongvich.com',
+      email: 'admin@jamsongvich.com',
       address: 'Preah Monivong Blvd, Sangkat Boeung Keng Kang 1, Phnom Penh',
       occupation: 'Executive Director & Super Admin',
       monthlyIncomeUSD: 5500,

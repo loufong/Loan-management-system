@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import QRCode from 'qrcode';
+import companyKhqrImg from '../../assets/company-khqr.png';
 import { LoanAccount, Currency, PaymentReceipt, KhqrPaymentSession, RepaymentInstallment } from '../../types';
 import { api } from '../../services/api';
 import { useLanguage } from '../../context/LanguageContext';
@@ -159,6 +160,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
 
   // Active KHQR Session & Polling
   const [khqrSession, setKhqrSession] = useState<KhqrPaymentSession | null>(null);
+  const [qrViewMode, setQrViewMode] = useState<'card' | 'code'>('card');
   const [secondsRemaining, setSecondsRemaining] = useState<number>(900); // 15 mins
   const [pollCount, setPollCount] = useState<number>(0);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
@@ -324,7 +326,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
       const billNumber = session?.referenceNo || `BK-${(loan.loanNumber || 'LOAN').slice(-4)}-${Date.now().toString().slice(-4)}`;
       const rawKhqrString = session?.qr || generateBakongKHQRString({
         merchantId: 'khqr@aclb',
-        merchantName: 'PHON RITHYA',
+        merchantName: 'JAM SONG VICH',
         amount: Number(numericAmount),
         currency: currencyChoice,
         billNumber,
@@ -354,7 +356,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
         qr: rawKhqrString,
         qrDataUrl: dataUrl,
         md5: session?.md5 || `md5-${Date.now()}`,
-        merchantName: session?.merchantName || 'PHON RITHYA',
+        merchantName: session?.merchantName || 'JAM SONG VICH',
         bankName: session?.bankName || 'ACLEDA Bank Plc. / Bakong',
         accountInfo: session?.accountInfo || '85517790800',
         expiresAt: session?.expiresAt || new Date(Date.now() + 15 * 60 * 1000).toISOString(),
@@ -456,7 +458,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
       status: 'PAID',
       paidAt: result.paidAt || new Date().toISOString().replace('T', ' ').slice(0, 19),
       verifiedAt: result.verifiedAt || new Date().toISOString(),
-      cashierName: khqrSession?.merchantName || 'PHON RITHYA (Bakong KHQR Gateway)',
+      cashierName: khqrSession?.merchantName || 'JAM SONG VICH (Bakong KHQR Gateway)',
       principalAllocatedUSD: finalAmount * 0.85,
       interestAllocatedUSD: finalAmount * 0.15,
       lateFeeAllocatedUSD: 0,
@@ -786,7 +788,7 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                     <span className="font-mono tracking-wider text-sm font-black">KHQR</span>
                   </div>
                   <span className="text-xs font-medium opacity-95">
-                    {khqrSession.bankName || 'ACLEDA Bank Plc. / Bakong'} • {khqrSession.merchantName || 'PHON RITHYA'}
+                    {khqrSession.bankName || 'ACLEDA Bank Plc. / Bakong'} • {khqrSession.merchantName || 'JAM SONG VICH'}
                   </span>
                 </div>
 
@@ -806,25 +808,64 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                   </p>
                 </div>
 
-                {/* Real Scannable Bakong QR Canvas */}
-                <div className="bg-white p-3.5 rounded-2xl inline-block shadow-2xl ring-4 ring-emerald-500/20 relative mx-auto">
-                  {khqrSession.qrDataUrl ? (
-                    <img
-                      src={khqrSession.qrDataUrl}
-                      alt="Bakong KHQR Payment Canvas"
-                      className="w-56 h-56 mx-auto object-contain rounded-lg"
-                    />
-                  ) : (
-                    <div className="w-56 h-56 bg-slate-100 flex items-center justify-center font-mono text-xs text-slate-900 p-2 text-center rounded-lg">
-                      Generating Bakong QR Canvas...
-                    </div>
-                  )}
-
-                  {/* Red KH Center Overlay */}
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-9 h-9 rounded-xl bg-red-600 border-2 border-white flex items-center justify-center text-white font-black text-[10px] shadow pointer-events-none">
-                    KH
-                  </div>
+                {/* QR Display Mode Selector */}
+                <div className="flex items-center justify-center p-1 bg-slate-900 rounded-xl max-w-xs mx-auto border border-slate-800 text-[11px] font-semibold">
+                  <button
+                    type="button"
+                    onClick={() => setQrViewMode('card')}
+                    className={`flex-1 py-1 px-3 rounded-lg transition flex items-center justify-center gap-1.5 ${
+                      qrViewMode === 'card'
+                        ? 'bg-red-600 text-white shadow'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <span>Official Standee Card</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQrViewMode('code')}
+                    className={`flex-1 py-1 px-3 rounded-lg transition flex items-center justify-center gap-1.5 ${
+                      qrViewMode === 'code'
+                        ? 'bg-slate-800 text-white shadow'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <span>Dynamic Bill QR</span>
+                  </button>
                 </div>
+
+                {/* Authentic Scannable ACLEDA KHQR / Dynamic Canvas */}
+                {qrViewMode === 'card' ? (
+                  <div className="bg-white p-3 rounded-2xl inline-block shadow-2xl ring-4 ring-red-500/20 relative mx-auto max-w-[280px]">
+                    <img
+                      src={companyKhqrImg}
+                      alt="Official JAM SONG VICH Bakong KHQR Standee"
+                      className="w-60 h-auto mx-auto object-contain rounded-xl"
+                    />
+                    <div className="mt-2 text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                      ACLEDA Bank Plc. • JAM SONG VICH
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-white p-3.5 rounded-2xl inline-block shadow-2xl ring-4 ring-emerald-500/20 relative mx-auto">
+                    {khqrSession.qrDataUrl ? (
+                      <img
+                        src={khqrSession.qrDataUrl}
+                        alt="Bakong KHQR Payment Canvas"
+                        className="w-56 h-56 mx-auto object-contain rounded-lg"
+                      />
+                    ) : (
+                      <div className="w-56 h-56 bg-slate-100 flex items-center justify-center font-mono text-xs text-slate-900 p-2 text-center rounded-lg">
+                        Generating Bakong QR Canvas...
+                      </div>
+                    )}
+
+                    {/* Red KH Center Overlay */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-9 h-9 rounded-xl bg-red-600 border-2 border-white flex items-center justify-center text-white font-black text-[10px] shadow pointer-events-none">
+                      KH
+                    </div>
+                  </div>
+                )}
 
                 {/* Customer Instructions */}
                 <p className="text-xs text-slate-300 leading-relaxed px-4">

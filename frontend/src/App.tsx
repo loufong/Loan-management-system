@@ -1423,15 +1423,20 @@ export const App: React.FC = () => {
   const activeFacilitiesCount = loans.filter((l: any) => {
     const st = ((l.status || l.facility?.status) || '').toUpperCase();
     return st === 'ACTIVE' || st === 'IN_REPAYMENT' || st === 'OVERDUE';
-  }).length || 6;
+  }).length;
   const overdueLoansCount = loans.filter((l: any) => {
     const st = ((l.status || l.facility?.status) || '').toUpperCase();
     return st === 'OVERDUE' || (l.daysOverdue && l.daysOverdue > 0);
   }).length;
   const pendingApprovalsCount = applications.filter((a: any) => {
     const st = (a.status || '').toUpperCase();
-    return st === 'SUBMITTED' || st === 'PENDING' || st === 'UNDER_REVIEW';
-  }).length || 5;
+    return (
+      st === 'SUBMITTED' ||
+      st === 'PENDING' ||
+      st === 'UNDER_REVIEW' ||
+      st === 'UNDERWRITING_PENDING'
+    );
+  }).length;
 
   return (
     <>

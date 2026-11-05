@@ -33,9 +33,15 @@ export const ApprovalsQueue: React.FC<ApprovalsQueueProps> = ({
 }) => {
   const { t } = useLanguage();
   // Only show applications pending executive sign-off
-  const pendingApprovals = applications.filter(
-    (a) => a.status === 'UNDER_REVIEW' || (a.status === 'SUBMITTED' && a.creditOfficerReview)
-  );
+  const pendingApprovals = applications.filter((a) => {
+    const st = (a.status || '').toUpperCase();
+    return (
+      st === 'UNDER_REVIEW' ||
+      st === 'SUBMITTED' ||
+      st === 'PENDING' ||
+      st === 'UNDERWRITING_PENDING'
+    );
+  });
 
   // Modals state
   const [selectedAppForApproval, setSelectedAppForApproval] = useState<LoanApplication | null>(null);

@@ -226,13 +226,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       path: '/admin/borrowers',
     },
     {
-      id: 'cashier',
-      label: 'Repayments & Cashier',
-      icon: Wallet,
-      path: '/admin/cashier',
-      badge: overdueCount > 0 ? overdueCount : undefined,
-    },
-    {
       id: 'reports',
       label: 'Reports & Credit Scoring',
       icon: BarChart3,

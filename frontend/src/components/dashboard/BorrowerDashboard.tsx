@@ -331,32 +331,6 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
         </div>
       )}
 
-      {!hasActiveLoan && !pendingApp && approvedApp && (
-        <div className="bg-emerald-950/40 border border-emerald-500/40 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-              <CheckCircle2 className="w-5 h-5" />
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 font-mono">
-                  Application Approved
-                </span>
-                <span className="text-[11px] font-mono text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
-                  {approvedApp.id || (approvedApp as any).applicationNo}
-                </span>
-              </div>
-              <p className="text-sm font-semibold text-white">
-                Congratulations! Your loan application has been approved and is currently queued for disbursement.
-              </p>
-              <p className="text-xs text-slate-400">
-                Sanctioned facility amount: <strong className="text-emerald-400 font-mono">{formatMoney(approvedApp.requestedAmountUSD || (approvedApp as any).amount || 0)}</strong>.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {!hasActiveLoan && !pendingApp && hasCompletedLoan && (
         <div className="bg-emerald-950/30 border border-emerald-500/30 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-3.5">

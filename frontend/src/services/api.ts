@@ -29,13 +29,13 @@ export const isStaticHost =
   !(import.meta as any).env?.VITE_API_URL &&
   typeof window !== 'undefined' &&
   (window.location.hostname.includes('github.io') ||
-   window.location.hostname.includes('github') ||
-   window.location.hostname.includes('rokolise') ||
-   window.location.pathname.toLowerCase().includes('loan-management-system') ||
-   window.location.protocol === 'file:' ||
-   window.location.hostname.endsWith('.pages.dev') ||
-   window.location.hostname.includes('netlify.app') ||
-   window.location.hostname.includes('vercel.app'));
+    window.location.hostname.includes('github') ||
+    window.location.hostname.includes('rokolise') ||
+    window.location.pathname.toLowerCase().includes('loan-management-system') ||
+    window.location.protocol === 'file:' ||
+    window.location.hostname.endsWith('.pages.dev') ||
+    window.location.hostname.includes('netlify.app') ||
+    window.location.hostname.includes('vercel.app'));
 
 export function normalizeUserRole(role?: string): UserRole {
   const r = (role || '').toUpperCase();
@@ -154,7 +154,7 @@ class ApiService {
       existing[cleanEmail] = newUser;
       existing[cleanUsername] = newUser;
       localStorage.setItem('apex_registered_users', JSON.stringify(existing));
-    } catch {}
+    } catch { }
 
     return {
       id: borrowerId,
@@ -187,7 +187,7 @@ class ApiService {
     try {
       const stored = localStorage.getItem('apex_registered_users');
       if (stored) registeredUsersMap = JSON.parse(stored);
-    } catch {}
+    } catch { }
 
     const mockAccounts: Record<
       string,
@@ -444,7 +444,7 @@ class ApiService {
       if (stored) {
         try {
           return JSON.parse(stored);
-        } catch {}
+        } catch { }
       }
       return {
         id: 'usr-admin',
@@ -488,7 +488,7 @@ class ApiService {
       if (stored) {
         try {
           return JSON.parse(stored);
-        } catch {}
+        } catch { }
       }
       return USER_PROFILES.MANAGER;
     }
@@ -840,7 +840,7 @@ class ApiService {
           stored[cleanEmail].password = payload.newPassword;
           localStorage.setItem('apex_registered_users', JSON.stringify(stored));
         }
-      } catch {}
+      } catch { }
       return {
         success: true,
         message: 'Your password has been successfully reset. Please log in with your new credentials.',
@@ -891,7 +891,7 @@ class ApiService {
         stored[email].password = payload.newPassword;
         localStorage.setItem('apex_registered_users', JSON.stringify(stored));
       }
-    } catch {}
+    } catch { }
 
     return {
       success: true,
@@ -914,7 +914,7 @@ class ApiService {
     try {
       const raw = localStorage.getItem('apex_user') || sessionStorage.getItem('apex_user');
       if (raw) cachedUser = JSON.parse(raw);
-    } catch {}
+    } catch { }
 
     const updatedProfile: UserProfile = {
       ...cachedUser,
@@ -2303,7 +2303,7 @@ class ApiService {
         localStorage.removeItem('jam_applications_v1');
         localStorage.removeItem('jam_unified_applications');
         localStorage.removeItem('jam_last_submitted_loan_id');
-      } catch {}
+      } catch { }
     }
     try {
       return await this.request<any>('/admin/borrowing/reset', {

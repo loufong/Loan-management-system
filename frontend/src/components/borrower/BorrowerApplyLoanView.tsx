@@ -591,34 +591,7 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
         </div>
       )}
 
-      {/* One Active Loan Policy Warning Card */}
-      {isLoanPolicyBlocked && (
-        <div className="bg-amber-950/40 border border-amber-500/40 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
-              <Lock className="w-5 h-5" />
-            </div>
-            <div className="space-y-1">
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-400 font-mono">
-                One Active Loan Policy Restriction
-              </span>
-              <p className="text-sm font-semibold text-white">
-                {activeLoanCheck.reason || 'You already have an active loan. Please complete your current repayment before applying for another loan.'}
-              </p>
-              <p className="text-xs text-slate-400">
-                In compliance with lending policy, each borrower is limited to one active credit facility at a time. Once your facility is fully repaid and marked as COMPLETED, new applications will automatically unlock.
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => onNavigate('borrower_dashboard')}
-            className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition shrink-0 cursor-pointer shadow-md"
-          >
-            Return to Dashboard
-          </button>
-        </div>
-      )}
+
 
       {/* ========================================================================= */}
       {/* 1. HEADER SECTION & STEP TRACKER                                          */}

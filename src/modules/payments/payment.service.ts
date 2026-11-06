@@ -1648,6 +1648,20 @@ export class PaymentService {
         }
       });
 
+      if (isLoanFullyRepaid && (loan.borrower?.userId || loan.userId)) {
+        const notifyUserId = loan.borrower?.userId || loan.userId;
+        if (notifyUserId) {
+          await tx.notification.create({
+            data: {
+              userId: notifyUserId,
+              title: `Loan Fully Completed: ${loan.loanNumber}`,
+              message: `Congratulations! Your loan ${loan.loanNumber} has been fully repaid. You are now eligible to apply for a new loan.`,
+              type: 'LOAN_COMPLETED'
+            }
+          });
+        }
+      }
+
       // 4. Audit Log
       await recordAuditLog({
         userId: caller.id,

@@ -9,8 +9,23 @@ export const applicationRouter = Router();
 applicationRouter.use(authenticate);
 
 // 1. Directory & Query
+applicationRouter.get(
+  '/admin/all',
+  authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MANAGER),
+  ApplicationController.listForSuperAdmin
+);
 applicationRouter.get('/', ApplicationController.list);
 applicationRouter.get('/:id', ApplicationController.getById);
+applicationRouter.get(
+  '/:id/dossier',
+  authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MANAGER),
+  ApplicationController.getDossier
+);
+applicationRouter.get(
+  '/:id/audit-history',
+  authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MANAGER),
+  ApplicationController.getAuditHistory
+);
 
 // 2. Draft Lifecycle (USER, ADMIN)
 applicationRouter.post(

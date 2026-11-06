@@ -31,7 +31,7 @@ export interface UnifiedLoanRecord {
   facility: {
     productName: string;
     currency: string;
-    status: 'UNDERWRITING_PENDING' | 'APPROVED' | 'ACTIVE' | 'OVERDUE' | 'REJECTED' | 'MATURED';
+    status: 'UNDERWRITING_PENDING' | 'APPROVED' | 'ACTIVE' | 'OVERDUE' | 'COMPLETED' | 'REJECTED' | 'MATURED';
     health: 'PERFORMING' | 'WATCHLIST' | 'GRACE_PERIOD' | 'DEFAULT_RISK';
     branch: string;
   };
@@ -614,7 +614,7 @@ class LoanStorageService {
   /**
    * Safe localStorage accessor with seed fallback
    */
-  private getStorage(): UnifiedLoanRecord[] {
+  public getStorage(): UnifiedLoanRecord[] {
     if (typeof window === 'undefined') return this.isLedgerCleared() ? [] : INITIAL_SEED_LOANS;
     try {
       if (this.isLedgerCleared()) {
@@ -890,7 +890,7 @@ class LoanStorageService {
    */
   public async updateLoanStatus(
     loanId: string,
-    newStatus: 'ACTIVE' | 'APPROVED' | 'REJECTED' | 'UNDERWRITING_PENDING',
+    newStatus: 'ACTIVE' | 'APPROVED' | 'REJECTED' | 'UNDERWRITING_PENDING' | 'COMPLETED',
     adminNotes?: string,
     terms?: { amount?: number; term?: number; rate?: number }
   ): Promise<UnifiedLoanRecord | null> {
@@ -1006,6 +1006,17 @@ class LoanStorageService {
     } else if (newStatus === 'REJECTED') {
       item.facility.health = 'DEFAULT_RISK';
       item.rejectionCode = adminNotes || 'NBC-REJ-01: Debt service ratio exceeded (> 50%)';
+    } else if (newStatus === 'COMPLETED') {
+      item.facility.health = 'PERFORMING';
+      item.repaymentProgress.outstandingBalanceUSD = 0;
+      item.repaymentProgress.principalBalanceUSD = 0;
+      item.repaymentProgress.percentPaid = 100;
+      if (Array.isArray(item.schedules)) {
+        item.schedules.forEach((s) => {
+          s.status = 'PAID';
+          s.remainingBalance = 0;
+        });
+      }
     }
 
     list[idx] = item;
@@ -1095,7 +1106,9 @@ class LoanStorageService {
       };
 
       if (newOutstanding === 0) {
-        targetLoan.facility.status = 'MATURED';
+        targetLoan.facility.status = 'COMPLETED';
+        targetLoan.facility.health = 'PERFORMING';
+        targetLoan.repaymentProgress.percentPaid = 100;
       }
 
       list[idx] = targetLoan;
@@ -1510,6 +1523,17 @@ class LoanStorageService {
       const amt = Number(r.amountPaidUSD || 0);
       loan.repaymentProgress.outstandingBalanceUSD = Math.max(0, loan.repaymentProgress.outstandingBalanceUSD - amt);
       loan.repaymentProgress.totalPaidUSD += amt;
+      if (loan.repaymentProgress.outstandingBalanceUSD <= 0) {
+        loan.facility.status = 'COMPLETED';
+        loan.facility.health = 'PERFORMING';
+        loan.repaymentProgress.percentPaid = 100;
+        if (Array.isArray(loan.schedules)) {
+          loan.schedules.forEach((s) => {
+            s.status = 'PAID';
+            s.remainingBalance = 0;
+          });
+        }
+      }
       loans[lIdx] = loan;
       this.saveStorage(loans);
     }
@@ -1692,6 +1716,68 @@ class LoanStorageService {
         timestamp: new Date(Date.now() - 3600000).toISOString(),
       },
     ];
+  }
+
+  /**
+   * Evaluates One Active Loan Per User status for borrower dashboard & origination lock
+   */
+  public getUserActiveLoanStatus(userId?: string, borrowerId?: string): {
+    canBorrow: boolean;
+    hasActiveLoan: boolean;
+    activeLoan: UnifiedLoanRecord | null;
+    pendingApp: any | null;
+    isCompleted: boolean;
+    reason?: string;
+    statusReason?: string;
+  } {
+    const loans = this.getStorage();
+    const cleanUid = (userId || '').toLowerCase();
+    const cleanBid = (borrowerId || '').toLowerCase();
+
+    // Match loans belonging to this borrower / user
+    const userLoans = loans.filter((l) => {
+      const bId = (l.borrower?.id || '').toLowerCase();
+      const bCode = (l.borrower?.clientCode || '').toLowerCase();
+      const name = (l.borrower?.nameEn || '').toLowerCase();
+      return (
+        (cleanBid && (bId === cleanBid || bCode === cleanBid)) ||
+        (cleanUid && (bId === cleanUid || (name.includes('doe') && cleanUid.includes('doe')))) ||
+        (!cleanBid && !cleanUid)
+      );
+    });
+
+    const activeLoan = userLoans.find((l) => {
+      const st = l.facility.status;
+      return st === 'ACTIVE' || st === 'OVERDUE' || st === 'UNDERWRITING_PENDING' || st === 'APPROVED';
+    }) || null;
+
+    const completedLoan = userLoans.find((l) => l.facility.status === 'COMPLETED' || l.facility.status === 'MATURED') || null;
+
+    if (activeLoan) {
+      const isApprovedOrPending = activeLoan.facility.status === 'UNDERWRITING_PENDING' || activeLoan.facility.status === 'APPROVED';
+      const reason = isApprovedOrPending
+        ? 'Your loan application is currently under review by our administrator.'
+        : 'You already have an active loan. Please complete your current repayment before applying for another loan.';
+      return {
+        canBorrow: false,
+        hasActiveLoan: true,
+        activeLoan,
+        pendingApp: isApprovedOrPending ? activeLoan : null,
+        isCompleted: false,
+        reason,
+        statusReason: reason
+      };
+    }
+
+    return {
+      canBorrow: true,
+      hasActiveLoan: false,
+      activeLoan: null,
+      pendingApp: null,
+      isCompleted: Boolean(completedLoan),
+      reason: completedLoan ? 'Loan Completed! Congratulations, you are eligible to apply for a new loan.' : undefined,
+      statusReason: completedLoan ? 'Loan Completed! Congratulations, you are eligible to apply for a new loan.' : undefined
+    };
   }
 }
 

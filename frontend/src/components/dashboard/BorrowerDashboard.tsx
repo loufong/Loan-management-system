@@ -15,6 +15,10 @@ import {
   ArrowRight,
   Building,
   Sparkles,
+  AlertTriangle,
+  Lock,
+  Info,
+  XCircle,
 } from 'lucide-react';
 import { Currency, LoanAccount, LoanApplication, PaymentReceipt, UserProfile } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
@@ -129,6 +133,30 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
     totalRepaidVal > 0 ? 5 : 0
   );
 
+  // One Active Loan Per User Policy derivation:
+  const hasActiveLoan = activeLoans.length > 0;
+  const pendingApp = (applications || []).find((a) => {
+    const st = (a.status || '').toUpperCase();
+    return st === 'PENDING' || st === 'SUBMITTED' || st === 'UNDER_REVIEW';
+  });
+  const approvedApp = (applications || []).find((a) => (a.status || '').toUpperCase() === 'APPROVED');
+  const rejectedApp = (applications || []).find((a) => (a.status || '').toUpperCase() === 'REJECTED');
+
+  const completedLoans = userLoans.filter((l) => {
+    const st = (l.status || '').toUpperCase();
+    return st === 'COMPLETED' || Number(l.outstandingBalanceUSD || 0) <= 0;
+  });
+  const hasCompletedLoan = completedLoans.length > 0 && !hasActiveLoan && !pendingApp && !approvedApp;
+
+  const canApplyForNewLoan = !hasActiveLoan && !pendingApp && !approvedApp;
+  const cannotApplyReason = hasActiveLoan
+    ? 'You already have an active loan. Please complete your current repayment before applying for another loan.'
+    : pendingApp
+    ? 'Your loan application has been submitted successfully. Please wait while our administrator reviews your information.'
+    : approvedApp
+    ? 'Your loan application has been approved and is queued for disbursement.'
+    : null;
+
   const isKhmer = language === 'km' || (language as string) === 'KH';
 
   return (
@@ -196,13 +224,27 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 pt-2 lg:pt-0 shrink-0">
             <button
               type="button"
+              disabled={!canApplyForNewLoan}
               onClick={() => {
+                if (!canApplyForNewLoan) {
+                  alert(cannotApplyReason || 'You are not eligible to apply for a new loan at this time.');
+                  return;
+                }
                 if (onOpenApplyLoan) onOpenApplyLoan();
                 else onNavigate('new-application');
               }}
-              className="inline-flex items-center justify-center gap-1.5 h-10 px-4.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs sm:text-sm shadow-md shadow-emerald-950/40 transition-all cursor-pointer select-none whitespace-nowrap active:scale-[0.98]"
+              title={cannotApplyReason || 'Apply for a new loan'}
+              className={`inline-flex items-center justify-center gap-1.5 h-10 px-4.5 rounded-xl font-bold text-xs sm:text-sm transition-all select-none whitespace-nowrap ${
+                canApplyForNewLoan
+                  ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-md shadow-emerald-950/40 cursor-pointer active:scale-[0.98]'
+                  : 'bg-slate-800/80 text-slate-500 border border-slate-700 cursor-not-allowed opacity-60'
+              }`}
             >
-              <Plus className="w-4 h-4 text-slate-950 shrink-0" />
+              {canApplyForNewLoan ? (
+                <Plus className="w-4 h-4 text-slate-950 shrink-0" />
+              ) : (
+                <Lock className="w-4 h-4 text-slate-500 shrink-0" />
+              )}
               <span>{'+ Apply for Loan'}</span>
             </button>
 
@@ -219,6 +261,165 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
           </div>
         </div>
       </div>
+
+      {/* ========================================================================= */}
+      {/* 1.1 ONE ACTIVE LOAN NOTIFICATION BANNERS                                  */}
+      {/* ========================================================================= */}
+      {hasActiveLoan && (
+        <div className="bg-amber-950/40 border border-amber-500/40 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+              <Lock className="w-5 h-5" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-400 font-mono">
+                  Active Loan in Repayment
+                </span>
+                <span className="text-[11px] font-mono text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                  {loanNumber}
+                </span>
+              </div>
+              <p className="text-sm font-semibold text-white">
+                You already have an active loan. Please complete your current repayment before applying for another loan.
+              </p>
+              <p className="text-xs text-slate-400">
+                Current outstanding balance: <strong className="text-amber-400 font-mono">{formatMoney(remainingBalance)}</strong>. Per credit policy, borrowers may maintain only one active credit facility at a time.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => onNavigate('repayments')}
+            className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition shrink-0 cursor-pointer"
+          >
+            View Repayment Schedule
+          </button>
+        </div>
+      )}
+
+      {!hasActiveLoan && pendingApp && (
+        <div className="bg-blue-950/40 border border-blue-500/40 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
+              <Clock className="w-5 h-5" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-blue-400 font-mono">
+                  Application Under Review
+                </span>
+                <span className="text-[11px] font-mono text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                  {pendingApp.id || (pendingApp as any).applicationNo}
+                </span>
+              </div>
+              <p className="text-sm font-semibold text-white">
+                Your loan application has been submitted successfully. Please wait while our administrator reviews your information.
+              </p>
+              <p className="text-xs text-slate-400">
+                Requested Amount: <strong className="text-white font-mono">{formatMoney(pendingApp.requestedAmountUSD || (pendingApp as any).amount || 0)}</strong>. The underwriting committee will update you upon determination.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => onNavigate('applications')}
+            className="px-4 py-2 rounded-xl bg-blue-500 hover:bg-blue-400 text-slate-950 font-bold text-xs transition shrink-0 cursor-pointer"
+          >
+            Track Application Status
+          </button>
+        </div>
+      )}
+
+      {!hasActiveLoan && !pendingApp && approvedApp && (
+        <div className="bg-emerald-950/40 border border-emerald-500/40 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 font-mono">
+                  Application Approved
+                </span>
+                <span className="text-[11px] font-mono text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                  {approvedApp.id || (approvedApp as any).applicationNo}
+                </span>
+              </div>
+              <p className="text-sm font-semibold text-white">
+                Congratulations! Your loan application has been approved and is currently queued for disbursement.
+              </p>
+              <p className="text-xs text-slate-400">
+                Sanctioned facility amount: <strong className="text-emerald-400 font-mono">{formatMoney(approvedApp.requestedAmountUSD || (approvedApp as any).amount || 0)}</strong>.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!hasActiveLoan && !pendingApp && hasCompletedLoan && (
+        <div className="bg-emerald-950/30 border border-emerald-500/30 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 font-mono">
+                  Loan Completed & Eligible
+                </span>
+              </div>
+              <p className="text-sm font-semibold text-white">
+                Loan Completed! Congratulations, all repayments for your previous loan have been completed.
+              </p>
+              <p className="text-xs text-slate-400">
+                Your account is in excellent standing. You are fully eligible to apply for a new loan facility.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (onOpenApplyLoan) onOpenApplyLoan();
+              else onNavigate('new-application');
+            }}
+            className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition shrink-0 cursor-pointer shadow-md"
+          >
+            Apply for New Loan →
+          </button>
+        </div>
+      )}
+
+      {!hasActiveLoan && !pendingApp && rejectedApp && !hasCompletedLoan && (
+        <div className="bg-rose-950/30 border border-rose-500/30 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center shrink-0 mt-0.5">
+              <XCircle className="w-5 h-5" />
+            </div>
+            <div className="space-y-1">
+              <span className="text-xs font-bold uppercase tracking-wider text-rose-400 font-mono">
+                Previous Application Resolved
+              </span>
+              <p className="text-sm font-semibold text-white">
+                Your previous application was not approved. You are eligible to submit a new loan application.
+              </p>
+              <p className="text-xs text-slate-400">
+                Please ensure updated documentation or adjusted principal is provided in your next application.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (onOpenApplyLoan) onOpenApplyLoan();
+              else onNavigate('new-application');
+            }}
+            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs border border-slate-700 transition shrink-0 cursor-pointer"
+          >
+            Submit New Application
+          </button>
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* 2. TOP METRIC CARDS GRID (4 High-Density Enterprise Columns)              */}
@@ -511,13 +712,24 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
+                    disabled={!canApplyForNewLoan}
                     onClick={() => {
+                      if (!canApplyForNewLoan) {
+                        alert(cannotApplyReason || 'You are not eligible to apply for a new loan at this time.');
+                        return;
+                      }
                       if (onOpenApplyLoan) onOpenApplyLoan();
                       else onNavigate('new-application');
                     }}
-                    className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-750 text-emerald-400 border border-slate-700 font-semibold text-xs transition cursor-pointer"
+                    title={cannotApplyReason || 'Apply for a new loan'}
+                    className={`px-4 py-2.5 rounded-xl font-semibold text-xs transition flex items-center gap-1.5 ${
+                      canApplyForNewLoan
+                        ? 'bg-slate-800 hover:bg-slate-750 text-emerald-400 border border-slate-700 cursor-pointer'
+                        : 'bg-slate-800/60 text-slate-500 border border-slate-800 cursor-not-allowed opacity-60'
+                    }`}
                   >
-                    {'+ Apply for Loan'}
+                    {!canApplyForNewLoan && <Lock className="w-3.5 h-3.5 text-slate-500" />}
+                    <span>{'+ Apply for Loan'}</span>
                   </button>
                 </div>
               </div>

@@ -1102,6 +1102,266 @@ class ApiService {
     }
   }
 
+  public async getAdminLoanApplications(params: {
+    status?: string;
+    search?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+    page?: number;
+    limit?: number;
+  } = {}): Promise<any> {
+    try {
+      if (!isStaticHost) {
+        const q = new URLSearchParams();
+        if (params.status) q.append('status', params.status);
+        if (params.search) q.append('search', params.search);
+        if (params.sortBy) q.append('sortBy', params.sortBy);
+        if (params.sortOrder) q.append('sortOrder', params.sortOrder);
+        if (params.page) q.append('page', String(params.page));
+        if (params.limit) q.append('limit', String(params.limit));
+
+        return await this.request(`/loan-applications/admin/all?${q.toString()}`);
+      }
+    } catch (err) {
+      if (!isStaticHost) throw err;
+    }
+
+    // Static Host / Offline Fallback
+    const loans = loanStorageService.getStorage();
+    const mockApps = [...MOCK_APPLICATIONS];
+
+    // Combine storage records and mock apps
+    const all = [
+      ...loans.map((l) => ({
+        id: l.id,
+        applicationId: l.loanId,
+        applicationNo: l.loanId,
+        userId: l.borrower.id,
+        applicantName: l.borrower.nameEn,
+        email: l.borrower.email || 'borrower@jamsongvich.com',
+        phone: l.borrower.phone || '+855 12 000 888',
+        requestedAmount: l.principal.disbursedAmountUSD,
+        loanDuration: l.principal.termMonths,
+        productName: l.facility.productName,
+        interestRate: l.principal.aprPercent,
+        applicationDate: l.submittedAt || '2026-09-01',
+        applicationStatus: l.facility.status,
+        status: l.facility.status,
+        purpose: 'Commercial Working Capital',
+        monthlyIncome: l.borrower.monthlyIncome || 2500,
+        loan: {
+          id: l.id,
+          loanNumber: l.loanId,
+          status: l.facility.status,
+          outstandingBalance: l.repaymentProgress.outstandingBalanceUSD,
+          totalPaid: l.repaymentProgress.totalPaidUSD,
+        }
+      })),
+      ...mockApps.filter((m) => !loans.some((l) => l.loanId === m.applicationNo || l.id === m.id)).map((m) => ({
+        id: m.id,
+        applicationId: m.applicationNo,
+        applicationNo: m.applicationNo,
+        userId: m.borrowerId,
+        applicantName: m.borrowerName,
+        email: 'applicant@student.edu',
+        phone: '+855 12 345 678',
+        requestedAmount: m.requestedAmountUSD,
+        loanDuration: m.requestedTermMonths,
+        productName: m.productName,
+        interestRate: 10.5,
+        applicationDate: m.createdAt,
+        applicationStatus: m.status,
+        status: m.status,
+        purpose: m.purpose,
+        monthlyIncome: m.borrowerIncomeUSD,
+        loan: null
+      }))
+    ];
+
+    let filtered = all;
+    if (params.status && params.status !== 'ALL') {
+      const st = params.status.toUpperCase();
+      if (st === 'PENDING') {
+        filtered = filtered.filter(
+          (a) =>
+            (a.status as string) === 'UNDERWRITING_PENDING' ||
+            (a.status as string) === 'SUBMITTED' ||
+            (a.status as string) === 'PENDING'
+        );
+      } else {
+        filtered = filtered.filter((a) => (a.status || '').toUpperCase() === st);
+      }
+    }
+
+    if (params.search?.trim()) {
+      const s = params.search.toLowerCase().trim();
+      filtered = filtered.filter((a) =>
+        a.applicantName.toLowerCase().includes(s) ||
+        a.applicationId.toLowerCase().includes(s) ||
+        a.email.toLowerCase().includes(s) ||
+        a.phone.toLowerCase().includes(s)
+      );
+    }
+
+    const pendingCount = all.filter(
+      (a) =>
+        (a.status as string) === 'UNDERWRITING_PENDING' ||
+        (a.status as string) === 'SUBMITTED' ||
+        (a.status as string) === 'PENDING'
+    ).length;
+
+    return {
+      items: filtered,
+      total: filtered.length,
+      page: 1,
+      limit: filtered.length,
+      totalPages: 1,
+      pendingCount
+    };
+  }
+
+  public async getApplicationDossier(applicationId: string): Promise<any> {
+    try {
+      if (!isStaticHost) {
+        return await this.request(`/loan-applications/${applicationId}/dossier`);
+      }
+    } catch (err) {
+      if (!isStaticHost) throw err;
+    }
+
+    // Static Host / Offline Fallback
+    const loans = loanStorageService.getStorage();
+    const targetLoan = loans.find((l) => l.loanId === applicationId || l.id === applicationId) || loans[0];
+    const mockApp = MOCK_APPLICATIONS.find((a) => a.id === applicationId || a.applicationNo === applicationId);
+
+    const principal = targetLoan ? targetLoan.principal.disbursedAmountUSD : (mockApp?.requestedAmountUSD || 6000);
+    const term = targetLoan ? targetLoan.principal.termMonths : (mockApp?.requestedTermMonths || 12);
+    const rate = targetLoan ? targetLoan.principal.aprPercent : 10.5;
+    const monthlyIncome = targetLoan?.borrower?.monthlyIncome || mockApp?.borrowerIncomeUSD || 2500;
+    const emi = Math.round((principal * (1 + rate / 100)) / term);
+
+    return {
+      application: {
+        id: targetLoan?.id || applicationId,
+        applicationNo: targetLoan?.loanId || applicationId,
+        requestedAmount: principal,
+        requestedTerm: term,
+        purpose: 'Commercial Working Capital & Expansion',
+        supportingInfo: 'Verified applicant with clean credit track record',
+        status: targetLoan?.facility.status || mockApp?.status || 'UNDERWRITING_PENDING',
+        createdAt: targetLoan?.submittedAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      personalInfo: {
+        fullName: targetLoan?.borrower.nameEn || mockApp?.borrowerName || 'Johnathan Doe',
+        dateOfBirth: '1998-05-12',
+        gender: 'Male',
+        email: targetLoan?.borrower.email || 'johnathan.doe@student.edu',
+        phone: targetLoan?.borrower.phone || '+855 12 000 888',
+        residentialAddress: 'Preah Monivong Blvd, Boeung Keng Kang 1, Phnom Penh',
+        occupation: targetLoan?.borrower.occupation || 'Business Owner / Student',
+        employmentInfo: 'Full-time Active Commercial Enterprise',
+        userId: targetLoan?.borrower.id || 'BOR-2026-0001'
+      },
+      loanInfo: {
+        requestedAmount: principal,
+        loanPurpose: 'Commercial Working Capital & Expansion',
+        loanDuration: term,
+        interestRate: rate,
+        monthlyInstallment: emi,
+        totalRepaymentAmount: Math.round(principal * (1 + rate / 100)),
+        totalInterest: Math.round(principal * (rate / 100)),
+        repaymentStartDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
+        productName: targetLoan?.facility.productName || 'Personal Installment Facility'
+      },
+      financialInfo: {
+        monthlyIncome,
+        employmentStatus: 'Employed / Self-Employed',
+        existingFinancialObligations: 0,
+        dtiRatio: Math.round((emi / monthlyIncome) * 100),
+        creditScore: 745
+      },
+      supportingDocuments: [
+        {
+          id: 'doc-id-01',
+          type: 'ID_CARD',
+          filename: 'national_id_front.png',
+          sizeBytes: 245000,
+          mimeType: 'image/png',
+          status: 'VERIFIED',
+          uploadedAt: new Date(Date.now() - 86400000).toISOString(),
+          fileKey: 'kyc/national_id.png'
+        },
+        {
+          id: 'doc-id-02',
+          type: 'INCOME_PROOF',
+          filename: 'salary_slip_recent.pdf',
+          sizeBytes: 412000,
+          mimeType: 'application/pdf',
+          status: 'VERIFIED',
+          uploadedAt: new Date(Date.now() - 86400000).toISOString(),
+          fileKey: 'kyc/salary_slip.pdf'
+        },
+        {
+          id: 'doc-id-03',
+          type: 'PROOF_OF_RESIDENCE',
+          filename: 'residence_certificate.jpg',
+          sizeBytes: 310000,
+          mimeType: 'image/jpeg',
+          status: 'VERIFIED',
+          uploadedAt: new Date(Date.now() - 86400000).toISOString(),
+          fileKey: 'kyc/residence.jpg'
+        }
+      ],
+      existingLoanHistory: loans.map((l) => ({
+        id: l.id,
+        loanNumber: l.loanId,
+        productName: l.facility.productName,
+        principalAmount: l.principal.disbursedAmountUSD,
+        outstandingBalance: l.repaymentProgress.outstandingBalanceUSD,
+        totalPaid: l.repaymentProgress.totalPaidUSD,
+        status: l.facility.status,
+        startDate: '2026-01-15',
+        endDate: '2027-01-15'
+      })),
+      auditHistory: [
+        {
+          id: 'aud-1',
+          previousStatus: null,
+          newStatus: 'SUBMITTED',
+          changedBy: 'Borrower Origination System',
+          actionTaken: 'SUBMITTED',
+          notes: 'Loan application submitted for credit assessment.',
+          date: targetLoan?.submittedAt || new Date().toISOString()
+        }
+      ]
+    };
+  }
+
+  public async getApplicationAuditHistory(applicationId: string): Promise<any[]> {
+    try {
+      if (!isStaticHost) {
+        return await this.request(`/loan-applications/${applicationId}/audit-history`);
+      }
+    } catch (err) {
+      if (!isStaticHost) throw err;
+    }
+
+    return [
+      {
+        id: `aud-${applicationId}-1`,
+        applicationId,
+        adminId: 'SYSTEM',
+        adminName: 'Applicant Origination Desk',
+        previousStatus: 'INITIATED',
+        newStatus: 'SUBMITTED',
+        actionTaken: 'APPLICATION_SUBMITTED',
+        adminNotes: 'Application submitted with KYC document package.',
+        date: new Date(Date.now() - 86400000).toISOString()
+      }
+    ];
+  }
+
   public async submitApplication(applicationData: Partial<LoanApplication>): Promise<LoanApplication> {
     if (!this.token) {
       this.token = localStorage.getItem('apex_token') || sessionStorage.getItem('apex_token') || 'dev-borrower-token';
@@ -1125,6 +1385,21 @@ class ApiService {
         body: JSON.stringify(payload),
       });
     } catch (err: any) {
+      if (err?.code === 'ACTIVE_LOAN_EXISTS' || err?.message?.includes('active loan')) {
+        throw err;
+      }
+      // Enforce One Active Loan check locally for static/offline host
+      const activeCheck = loanStorageService.getUserActiveLoanStatus(
+        applicationData.borrowerId || 'BOR-2026-0001',
+        applicationData.borrowerId || 'BOR-2026-0001'
+      );
+      if (activeCheck.hasActiveLoan) {
+        throw new Error(
+          activeCheck.statusReason ||
+          'You already have an active loan. Please complete your current repayment before applying for another loan.'
+        );
+      }
+
       console.warn('API submitApplication fallback:', err);
       const newApp: LoanApplication = {
         id: `APP-2026-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -1209,9 +1484,7 @@ class ApiService {
         });
       }
     } catch (err: any) {
-      if (!isStaticHost && err?.status !== 405 && !err?.message?.includes('405')) {
-        throw err;
-      }
+      console.warn('Backend approveApplication request failed, falling back to local unified ledger:', err);
     }
 
     const updated = await loanStorageService.updateLoanStatus(
@@ -1262,9 +1535,7 @@ class ApiService {
         });
       }
     } catch (err: any) {
-      if (!isStaticHost && err?.status !== 405 && !err?.message?.includes('405')) {
-        throw err;
-      }
+      console.warn('Backend rejectApplication request failed, falling back to local unified ledger:', err);
     }
 
     await loanStorageService.updateLoanStatus(

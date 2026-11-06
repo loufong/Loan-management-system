@@ -206,6 +206,21 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
 
   const isBorrowingLocked = !kycLoading && kycSummary !== null && !kycSummary.isEligibleToBorrow;
 
+  // One Active Loan Per User Policy derivation
+  const [activeLoanCheck, setActiveLoanCheck] = useState<{
+    canBorrow: boolean;
+    activeLoan?: any;
+    pendingApplication?: any;
+    reason?: string;
+  }>({ canBorrow: true });
+
+  useEffect(() => {
+    const status = loanStorageService.getUserActiveLoanStatus(currentUser.id, effectiveBorrowerId);
+    setActiveLoanCheck(status);
+  }, [currentUser.id, effectiveBorrowerId]);
+
+  const isLoanPolicyBlocked = !activeLoanCheck.canBorrow;
+
   // Product configurations
   const products = {
     PERSONAL: {
@@ -443,6 +458,14 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
   const handleSubmitApplication = async () => {
     if (!declarationAgreed) return;
 
+    if (isLoanPolicyBlocked) {
+      setSubmissionError(
+        activeLoanCheck.reason ||
+        'You already have an active loan. Please complete your current repayment before applying for another loan.'
+      );
+      return;
+    }
+
     if (isBorrowingLocked) {
       setSubmissionError(
         `Regulatory Borrowing Lock Active: ${kycSummary?.verifiedCount ?? 0} of 3 KYC documents verified. In accordance with National Bank of Cambodia lending directives, all 3 mandatory KYC documents must be verified before origination.`
@@ -508,10 +531,13 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
           </span>
 
           <h2 className="text-2xl font-bold text-white tracking-tight">
-            Application Submitted — Under Review by Core Banking Credit Committee
+            Your loan application has been submitted successfully.
           </h2>
-          <p className="text-slate-400 text-sm max-w-lg mx-auto mt-2 leading-relaxed">
-            Your application reference <span className="font-mono text-emerald-400 font-bold">{submittedAppId}</span> has been logged with the underwriting risk desk. Instant updates will be dispatched via SMS & Telegram.
+          <p className="text-emerald-400 font-semibold text-sm max-w-lg mx-auto mt-2 leading-relaxed">
+            Please wait while our administrator reviews your information.
+          </p>
+          <p className="text-slate-400 text-xs max-w-lg mx-auto mt-1 leading-relaxed">
+            Your application reference <span className="font-mono text-emerald-400 font-bold">{submittedAppId}</span> has been logged with the underwriting risk desk. Status updates will be visible on your borrower dashboard.
           </p>
 
           {/* Quick Summary Pill Box */}
@@ -562,6 +588,35 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
         <div className="fixed top-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-slate-900 border border-emerald-500/40 text-emerald-400 shadow-2xl animate-fade-in text-xs font-semibold">
           <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           <span>Application draft saved to local secure cache.</span>
+        </div>
+      )}
+
+      {/* One Active Loan Policy Warning Card */}
+      {isLoanPolicyBlocked && (
+        <div className="bg-amber-950/40 border border-amber-500/40 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+              <Lock className="w-5 h-5" />
+            </div>
+            <div className="space-y-1">
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-400 font-mono">
+                One Active Loan Policy Restriction
+              </span>
+              <p className="text-sm font-semibold text-white">
+                {activeLoanCheck.reason || 'You already have an active loan. Please complete your current repayment before applying for another loan.'}
+              </p>
+              <p className="text-xs text-slate-400">
+                In compliance with lending policy, each borrower is limited to one active credit facility at a time. Once your facility is fully repaid and marked as COMPLETED, new applications will automatically unlock.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => onNavigate('borrower_dashboard')}
+            className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition shrink-0 cursor-pointer shadow-md"
+          >
+            Return to Dashboard
+          </button>
         </div>
       )}
 
@@ -1399,10 +1454,10 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
                   <div className="relative group">
                     <button
                       type="button"
-                      disabled={!declarationAgreed || isSubmitting || isBorrowingLocked}
+                      disabled={!declarationAgreed || isSubmitting || isBorrowingLocked || isLoanPolicyBlocked}
                       onClick={handleSubmitApplication}
                       className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer ${
-                        declarationAgreed && !isSubmitting && !isBorrowingLocked
+                        declarationAgreed && !isSubmitting && !isBorrowingLocked && !isLoanPolicyBlocked
                           ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-emerald-500/20 active:scale-[0.98]'
                           : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-750'
                       }`}
@@ -1416,6 +1471,11 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
                         <>
                           <Lock className="w-4 h-4 text-rose-400" />
                           <span>Borrowing Locked ({kycSummary?.verifiedCount ?? 0}/3 KYC)</span>
+                        </>
+                      ) : isLoanPolicyBlocked ? (
+                        <>
+                          <Lock className="w-4 h-4 text-amber-400" />
+                          <span>Active Loan Policy Blocked</span>
                         </>
                       ) : (
                         <>
@@ -1434,6 +1494,17 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
                         </div>
                         <p className="text-slate-300 leading-relaxed">
                           All 3 KYC documents must be verified in your profile before applying.
+                        </p>
+                      </div>
+                    )}
+                    {!isBorrowingLocked && isLoanPolicyBlocked && (
+                      <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block w-72 p-3 bg-slate-950 text-slate-200 text-[11px] rounded-xl border border-amber-500/40 shadow-2xl z-30 pointer-events-none">
+                        <div className="font-bold text-amber-400 mb-1 flex items-center gap-1.5">
+                          <Lock className="w-3.5 h-3.5" />
+                          Active Loan Policy
+                        </div>
+                        <p className="text-slate-300 leading-relaxed">
+                          {activeLoanCheck.reason || 'You already have an active loan. Please complete your current repayment before applying for another loan.'}
                         </p>
                       </div>
                     )}

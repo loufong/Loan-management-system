@@ -1,6 +1,8 @@
 import { Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { LoanService } from './loan.service';
+import { ApplicationService } from '../applications/application.service';
+import { prisma } from '../../config/prisma';
 import { AuthenticatedRequest } from '../../middlewares/auth.middleware';
 import { sendSuccess } from '../../utils/response';
 import { LoanStatus, DisbursementMethod } from '@prisma/client';
@@ -107,6 +109,12 @@ export class LoanController {
 
   static async apply(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
+      const viewerId = req.user!.id;
+      // Enforce One Active Loan Policy in Prisma DB transaction
+      await prisma.$transaction(async (tx) => {
+        await ApplicationService.validateOneActiveLoanPolicy(tx, viewerId, req.body.borrowerId || viewerId);
+      });
+
       const {
         productType,
         principalAmount,

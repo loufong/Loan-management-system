@@ -235,4 +235,41 @@ export class ApplicationController {
       next(err);
     }
   }
+
+  // Super Admin: List all applications with status filters, search, and sorting
+  static async listForSuperAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const result = await ApplicationService.getSuperAdminApplications(req.user!, {
+        status: req.query.status as string,
+        search: req.query.search as string,
+        sortBy: req.query.sortBy as string,
+        sortOrder: req.query.sortOrder as 'asc' | 'desc',
+        page: req.query.page ? Number(req.query.page) : undefined,
+        limit: req.query.limit ? Number(req.query.limit) : undefined,
+      });
+      sendSuccess(res, result, 'Super Admin applications directory retrieved');
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // Super Admin: View full verification dossier
+  static async getDossier(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const dossier = await ApplicationService.getApplicationDossier(req.params.id, req.user!);
+      sendSuccess(res, dossier, 'Application verification dossier retrieved');
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // Super Admin: View immutable audit history
+  static async getAuditHistory(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const history = await ApplicationService.getApplicationAuditHistory(req.params.id, req.user!);
+      sendSuccess(res, history, 'Application audit history retrieved');
+    } catch (err) {
+      next(err);
+    }
+  }
 }

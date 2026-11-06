@@ -108,5 +108,5 @@ export function roleHasPermission(role: UserRole, permission: Permission): boole
 export function isStaffRole(role: UserRole | string | undefined | null): boolean {
   if (!role) return false;
   const r = String(role).toUpperCase();
-  return ['ADMIN', 'MANAGER', 'LOAN_OFFICER', 'CREDIT_OFFICER', 'CASHIER'].includes(r);
+  return ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'LOAN_OFFICER', 'CREDIT_OFFICER', 'CASHIER'].includes(r);
 }

@@ -67,15 +67,15 @@ async function runSuperAdminPaymentHistoryTests() {
 
   const adminUser = {
     id: '00000000-0000-4000-a000-000000000001',
-    username: 'super_admin',
-    email: 'admin@jamsongvich.com',
+    username: 'super_admin_pay_test',
+    email: 'pay_admin_test@test.local',
     role: UserRole.ADMIN,
     fullName: 'System Administrator'
   };
   const borrowerUser = {
     id: '00000000-0000-4000-a000-000000000002',
-    username: 'borrower_sokha',
-    email: 'sokha.chan@gmail.com',
+    username: 'borrower_sokha_pay_test',
+    email: 'sokha_pay_test@test.local',
     role: UserRole.BORROWER,
     fullName: 'Sokha Chan'
   };
@@ -370,6 +370,7 @@ async function runSuperAdminPaymentHistoryTests() {
   await prisma.$executeRawUnsafe(`DELETE FROM loans WHERE id = '${testLoan.id}'`);
   await prisma.$executeRawUnsafe(`DELETE FROM loan_applications WHERE id = '${appEntity.id}'`);
   await prisma.$executeRawUnsafe(`DELETE FROM borrowers WHERE id = '${borrower.id}'`);
+  await prisma.$executeRawUnsafe(`DELETE FROM users WHERE id IN ('${adminUser.id}', '${borrowerUser.id}')`);
 
   console.log('\n🎉 ALL SUPER ADMIN USER PAYMENT HISTORY MANAGEMENT TESTS PASSED PERFECTLY!\n');
 }

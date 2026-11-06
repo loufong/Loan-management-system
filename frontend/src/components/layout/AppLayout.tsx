@@ -771,14 +771,14 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               )}
             </div>
 
-            {/* Authenticated User Badge with Avatar: Johnathan Doe • Client Borrower */}
+            {/* Authenticated User Badge with Avatar */}
             <div className="hidden sm:flex items-center gap-2.5 pl-3 border-l border-slate-800">
               <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs shrink-0">
-                {(currentUser?.fullName || currentUser?.name || 'Johnathan Doe').slice(0, 2).toUpperCase()}
+                {(currentUser?.fullName || currentUser?.name || currentUser?.username || 'User').slice(0, 2).toUpperCase()}
               </div>
               <div className="text-left hidden md:block">
                 <span className="text-xs font-bold text-white block leading-tight truncate">
-                  {currentUser?.fullName || currentUser?.name || 'Johnathan Doe'}
+                  {currentUser?.fullName || currentUser?.name || currentUser?.username || 'User'}
                 </span>
                 <span className="text-[10px] text-emerald-400 font-medium block leading-tight">
                   {isBorrower ? 'Client Borrower' : (currentUser?.title || 'Administrator')}

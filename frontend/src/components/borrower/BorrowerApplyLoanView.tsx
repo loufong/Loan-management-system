@@ -478,12 +478,16 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
 
     try {
       const generatedId = `LN-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+      const resolvedBorrowerName = currentUser.fullName || currentUser.name || (currentUser.username ? currentUser.username.charAt(0).toUpperCase() + currentUser.username.slice(1) : 'Applicant');
+      const resolvedBorrowerEmail = currentUser.email || (currentUser.username ? `${currentUser.username}@student.edu` : 'applicant@student.edu');
+      const resolvedBorrowerPhone = currentUser.phone || '+855 12 000 888';
+
       const loanPayload = {
         id: generatedId,
         borrowerId: effectiveBorrowerId,
-        borrowerName: currentUser.fullName || currentUser.name || 'Johnathan Doe',
-        borrowerEmail: currentUser.email || 'borrower@jamsongvich.com',
-        borrowerPhone: currentUser.phone || '+855 12 345 678',
+        borrowerName: resolvedBorrowerName,
+        borrowerEmail: resolvedBorrowerEmail,
+        borrowerPhone: resolvedBorrowerPhone,
         productType: activeProductConfig.name,
         principalAmount: Number(loanAmountUSD),
         annualInterestRate: activeProductConfig.rate,
@@ -1318,7 +1322,7 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
               <div className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden divide-y divide-slate-850">
                 <div className="p-3.5 flex justify-between items-center text-xs">
                   <span className="text-slate-400 font-medium">Borrower Full Name</span>
-                  <span className="text-white font-bold">{currentUser?.fullName || currentUser?.name || 'Johnathan Doe'}</span>
+                  <span className="text-white font-bold">{currentUser?.fullName || currentUser?.name || currentUser?.username || 'Applicant'}</span>
                 </div>
                 <div className="p-3.5 flex justify-between items-center text-xs">
                   <span className="text-slate-400 font-medium">Selected Credit Facility</span>

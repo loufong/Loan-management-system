@@ -446,12 +446,12 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
               <div className="flex items-center gap-3 pt-1 text-[11px] text-slate-400">
                 <span className="flex items-center gap-1">
                   <Phone className="w-3 h-3 text-slate-500" />
-                  +855 12 345 678
+                  {currentUser?.phone || '+855 12 000 888'}
                 </span>
                 <span>•</span>
                 <span className="flex items-center gap-1">
                   <Mail className="w-3 h-3 text-slate-500" />
-                  {currentUser?.email || 'borrower@jamsongvich.com'}
+                  {currentUser?.email || (currentUser?.username ? `${currentUser.username}@student.edu` : 'borrower@jamsongvich.com')}
                 </span>
               </div>
             </div>

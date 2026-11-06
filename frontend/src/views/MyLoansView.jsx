@@ -21,7 +21,7 @@ import { MOCK_LOANS, MOCK_RECEIPTS } from '../data/mockData';
 export const MyLoansView: React.FC = () => {
   const { user, profile } = useAuth();
   const currentBorrower = profile || user;
-  const borrowerName = currentBorrower?.fullName || currentBorrower?.name || 'Johnathan Doe';
+  const borrowerName = currentBorrower?.fullName || currentBorrower?.name || currentBorrower?.username || 'Client User';
 
   // Active Loan Account
   const activeLoan = useMemo(() => {

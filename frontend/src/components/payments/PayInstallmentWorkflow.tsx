@@ -114,14 +114,18 @@ export const PayInstallmentWorkflow: React.FC<PayInstallmentWorkflowProps> = ({
   onPaymentSettled,
 }) => {
   // Merge prop facility with enterprise defaults
-  const facility: LoanFacilityContext = useMemo(() => ({
-    ...DEFAULT_FACILITY,
-    ...customFacility,
-    linkedAccount: {
-      ...DEFAULT_FACILITY.linkedAccount!,
-      ...(customFacility?.linkedAccount || {}),
-    },
-  }), [customFacility]);
+  const facility: LoanFacilityContext = useMemo(() => {
+    const holder = currentUser?.fullName || currentUser?.name || currentUser?.username || 'Client Account';
+    return {
+      ...DEFAULT_FACILITY,
+      ...customFacility,
+      linkedAccount: {
+        ...DEFAULT_FACILITY.linkedAccount!,
+        accountHolder: holder,
+        ...(customFacility?.linkedAccount || {}),
+      },
+    };
+  }, [customFacility, currentUser]);
 
   // NBC Official Reference Rate: 1 USD = 4,080 KHR
   const NBC_RATE = 4080;

@@ -750,20 +750,28 @@ class LoanStorageService {
         : Math.round((principal / tenure) * 100) / 100
     );
 
+    const borrowerNameEn = payload.borrowerName || 'Applicant';
+    const borrowerEmail = payload.borrowerEmail || ((payload as any).email || `${borrowerNameEn.toLowerCase().replace(/\s+/g, '.')}@student.edu`);
+    const borrowerPhone = payload.borrowerPhone || (payload as any).phone || '+855 12 000 888';
+    const clientCode = payload.borrowerId?.startsWith('BOR-') ? payload.borrowerId : `BOR-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+
     const newRecord: UnifiedLoanRecord = {
       id: loanId.toLowerCase().replace(/[^a-z0-9]/g, '-'),
       loanId,
       borrower: {
-        id: payload.borrowerId || 'bor-8800',
-        clientCode: payload.borrowerId?.startsWith('BOR-') ? payload.borrowerId : `BOR-2026-${Math.floor(1000 + Math.random() * 9000)}`,
-        nameEn: payload.borrowerName || 'Johnathan Doe',
-        nameKh: 'ចន ណាថាន ដូ',
-        maskedNationalId: '010****23',
-        phone: payload.borrowerPhone || '+855 12 345 678',
-        email: payload.borrowerEmail || 'borrower@jamsongvich.com',
-        occupation: 'SME Commercial Merchant',
+        id: payload.borrowerId || clientCode,
+        clientCode,
+        nameEn: borrowerNameEn,
+        nameKh: (payload as any).borrowerNameKh || borrowerNameEn,
+        maskedNationalId: (payload as any).nationalId ? `${(payload as any).nationalId.slice(0, 3)}****${(payload as any).nationalId.slice(-2)}` : '010****23',
+        phone: borrowerPhone,
+        email: borrowerEmail,
+        occupation: (payload as any).occupation || 'Student / Entrepreneur',
         monthlyIncome: Math.round(emi * 3.5),
-      },
+        dateOfBirth: (payload as any).dateOfBirth || (payload as any).dob || '2001-08-15',
+        gender: (payload as any).gender || 'Female',
+        residentialAddress: (payload as any).residentialAddress || (payload as any).address || 'Preah Monivong Blvd, Sangkat BKK1, Phnom Penh, Cambodia',
+      } as any,
       facility: {
         productName: payload.productType || 'SME Working Capital',
         currency: 'USD',
@@ -801,7 +809,30 @@ class LoanStorageService {
       disbursementBank: payload.disbursementBank || 'ACLEDA Bank Plc.',
       disbursementAccount: payload.disbursementAccount || '****2023',
       repaymentType: payload.repaymentType || 'REDUCING_BALANCE',
-    };
+      salarySlipDoc: (payload as any).salarySlipDoc,
+      collateralDoc: (payload as any).collateralDoc,
+      documents: (payload as any).documents || [],
+    } as any;
+
+    // Ensure apex_registered_users map retains this real applicant profile
+    try {
+      const reg = JSON.parse(localStorage.getItem('apex_registered_users') || '{}');
+      const profile = {
+        name: borrowerNameEn,
+        fullName: borrowerNameEn,
+        email: borrowerEmail,
+        phone: borrowerPhone,
+        borrowerId: clientCode,
+        dateOfBirth: (payload as any).dateOfBirth || (payload as any).dob || '2001-08-15',
+        gender: (payload as any).gender || 'Female',
+        address: (payload as any).residentialAddress || (payload as any).address || 'Preah Monivong Blvd, Sangkat BKK1, Phnom Penh, Cambodia',
+        occupation: (payload as any).occupation || 'Student / Entrepreneur',
+      };
+      if (borrowerEmail) reg[borrowerEmail.toLowerCase()] = { ...reg[borrowerEmail.toLowerCase()], ...profile };
+      if (clientCode) reg[clientCode] = { ...reg[clientCode], ...profile };
+      reg[borrowerNameEn.toLowerCase()] = { ...reg[borrowerNameEn.toLowerCase()], ...profile };
+      localStorage.setItem('apex_registered_users', JSON.stringify(reg));
+    } catch {}
 
     // Online Mode API attempt
     try {
@@ -936,19 +967,32 @@ class LoanStorageService {
       const appTerm = terms?.term || mock?.requestedTermMonths || 12;
       const appRate = terms?.rate || 10.5;
 
+      let regUser: any = null;
+      try {
+        const reg = JSON.parse(localStorage.getItem('apex_registered_users') || '{}');
+        regUser = (mock?.borrowerId && reg[mock.borrowerId]) ||
+                  (mock?.borrowerName && reg[mock.borrowerName.toLowerCase()]) ||
+                  Object.values(reg).find((u: any) => u.name?.toLowerCase() === mock?.borrowerName?.toLowerCase()) || null;
+      } catch {}
+
+      const bName = mock?.borrowerName || regUser?.name || 'Applicant';
       item = {
         id: mock?.id || loanId,
         loanId: mock?.applicationNo || loanId,
         borrower: {
-          id: mock?.borrowerId || 'BOR-2026-0001',
-          clientCode: 'CLI-8801',
-          nameEn: mock?.borrowerName || 'Johnathan Doe',
-          nameKh: 'ចនណាថាន ដូ',
+          id: mock?.borrowerId || regUser?.borrowerId || 'BOR-2026-3838',
+          clientCode: mock?.borrowerId || regUser?.borrowerId || 'BOR-2026-3838',
+          nameEn: bName,
+          nameKh: bName,
           maskedNationalId: '010****00',
-          phone: '+855 12 000 888',
-          occupation: 'Commercial Borrower',
+          phone: (mock as any)?.phone || regUser?.phone || '+855 12 000 888',
+          email: (mock as any)?.email || regUser?.email || `${bName.toLowerCase().replace(/\s+/g, '.')}@student.edu`,
+          occupation: (mock as any)?.occupation || regUser?.occupation || 'Student / Entrepreneur',
           monthlyIncome: mock?.borrowerIncomeUSD || 2500,
-        },
+          dateOfBirth: (mock as any)?.dateOfBirth || regUser?.dateOfBirth || '2001-08-15',
+          gender: (mock as any)?.gender || regUser?.gender || 'Female',
+          residentialAddress: (mock as any)?.residentialAddress || regUser?.address || 'Preah Monivong Blvd, Sangkat BKK1, Phnom Penh, Cambodia',
+        } as any,
         facility: {
           productName: mock?.productName || 'Credit Facility',
           currency: 'USD',
@@ -1256,6 +1300,36 @@ class LoanStorageService {
         });
       }
     }
+
+    try {
+      const reg = JSON.parse(localStorage.getItem('apex_registered_users') || '{}');
+      for (const [, u] of Object.entries<any>(reg)) {
+        if (!u || !u.name) continue;
+        const uId = u.borrowerId || `BOR-2026-${u.name.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 4)}`;
+        if (!map.has(uId) && !map.has(u.name.toLowerCase())) {
+          map.set(uId, {
+            id: uId.toLowerCase(),
+            borrowerId: uId,
+            fullName: u.name,
+            avatarUrl: '',
+            nationalId: '010****89',
+            phone: u.phone || '+855 12 000 888',
+            email: u.email || `${u.name.toLowerCase().replace(/\s+/g, '.')}@student.edu`,
+            address: u.address || 'Preah Monivong Blvd, Phnom Penh, Kingdom of Cambodia',
+            occupation: u.occupation || 'Student / Entrepreneur',
+            monthlyIncomeUSD: 2400,
+            status: 'ACTIVE',
+            kycStatus: 'VERIFIED',
+            activeLoansCount: 0,
+            totalBorrowedUSD: 0,
+            totalRepaidUSD: 0,
+            totalOutstandingUSD: 0,
+            dtiRatio: 22.0,
+            createdAt: '2026-09-01',
+          });
+        }
+      }
+    } catch {}
 
     return Array.from(map.values());
   }

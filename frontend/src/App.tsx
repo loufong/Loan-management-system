@@ -82,7 +82,7 @@ import { UserRoleManagement } from './components/admin/UserRoleManagement';
 import { SystemSettings } from './components/admin/SystemSettings';
 
 import { Search, X, DollarSign, FileText, User, CreditCard, Shield, AlertCircle, UserCheck, Building2, Landmark, Wallet } from 'lucide-react';
-import { api } from './services/api';
+import { api, isStaticHost } from './services/api';
 import { AccessDeniedPage } from './components/common/AccessDeniedPage';
 import { LoginPage } from './components/auth/LoginPage';
 import { RegisterPage } from './components/auth/RegisterPage';
@@ -656,27 +656,59 @@ export const App: React.FC = () => {
       setLoans(combinedLoans as any[]);
 
       // Map unified pending applications
+      let globalRegUsers: Record<string, any> = {};
+      try {
+        globalRegUsers = JSON.parse(localStorage.getItem('apex_registered_users') || '{}');
+      } catch {}
+
       const pendingUnifiedApps = (unifiedLoans || [])
         .filter((u: any) => u?.facility && (u.facility.status === 'UNDERWRITING_PENDING' || u.facility.status === 'APPROVED'))
-        .map((u: any) => ({
-          id: u.id || `app-${Date.now()}`,
-          applicationNo: u.loanId || u.id || 'APP-2026-0000',
-          borrowerId: u.borrower?.id || 'BOR-2026-8801',
-          borrowerName: u.borrower?.nameEn || u.borrower?.fullName || 'Client Borrower',
-          borrowerAvatar: '',
-          borrowerIncomeUSD: Number(u.borrower?.monthlyIncome || 2400),
-          productId: u.id,
-          productName: u.facility?.productName || 'Credit Facility',
-          requestedAmountUSD: Number(u.principal?.disbursedAmountUSD || 0),
-          requestedTermMonths: Number(u.principal?.termMonths || 12),
-          frequency: 'MONTHLY' as any,
-          purpose: 'Commercial Working Capital',
-          dtiRatio: 28.5,
-          riskTier: 'LOW' as any,
-          status: (u.facility.status === 'APPROVED' ? 'APPROVED' : 'UNDERWRITING_PENDING') as any,
-          createdAt: u.submittedAt || new Date().toISOString(),
-          documents: [],
-        }));
+        .map((u: any) => {
+          const applicantName = u.borrower?.nameEn || u.borrower?.fullName || 'Client Borrower';
+          const bId = u.borrower?.clientCode || u.borrower?.id || 'BOR-2026-8801';
+          const matchedUser = (u.borrower?.email && globalRegUsers[u.borrower.email.toLowerCase()]) ||
+                              globalRegUsers[bId] ||
+                              globalRegUsers[applicantName.toLowerCase()] ||
+                              Object.values(globalRegUsers).find((ru: any) =>
+                                ru.name?.toLowerCase() === applicantName.toLowerCase() ||
+                                ru.borrowerId === bId
+                              ) || null;
+
+          const email = u.borrower?.email || matchedUser?.email || `${applicantName.toLowerCase().replace(/\s+/g, '.')}@student.edu`;
+          const phone = u.borrower?.phone || matchedUser?.phone || '+855 12 000 888';
+          const dateOfBirth = (u.borrower as any)?.dateOfBirth || (u.borrower as any)?.dob || matchedUser?.dateOfBirth || matchedUser?.dob || '2001-08-15';
+          const gender = (u.borrower as any)?.gender || matchedUser?.gender || 'Female';
+          const residentialAddress = (u.borrower as any)?.residentialAddress || (u.borrower as any)?.address || matchedUser?.address || matchedUser?.residentialAddress || 'Preah Monivong Blvd, Sangkat BKK1, Phnom Penh, Cambodia';
+          const occupation = u.borrower?.occupation || matchedUser?.occupation || 'Student / Entrepreneur';
+
+          return {
+            id: u.id || `app-${Date.now()}`,
+            applicationNo: u.loanId || u.id || 'APP-2026-0000',
+            borrowerId: bId,
+            borrowerName: applicantName,
+            borrowerAvatar: '',
+            borrowerIncomeUSD: Number(u.borrower?.monthlyIncome || 2400),
+            email,
+            phone,
+            dateOfBirth,
+            gender,
+            residentialAddress,
+            occupation,
+            productId: u.id,
+            productName: u.facility?.productName || 'Credit Facility',
+            requestedAmountUSD: Number(u.principal?.disbursedAmountUSD || 0),
+            requestedTermMonths: Number(u.principal?.termMonths || 12),
+            frequency: 'MONTHLY' as any,
+            purpose: 'Commercial Working Capital',
+            dtiRatio: 28.5,
+            riskTier: 'LOW' as any,
+            status: (u.facility.status === 'APPROVED' ? 'APPROVED' : 'UNDERWRITING_PENDING') as any,
+            createdAt: u.submittedAt || new Date().toISOString(),
+            documents: (u as any).documents || [],
+            salarySlipDoc: (u as any).salarySlipDoc,
+            collateralDoc: (u as any).collateralDoc,
+          };
+        });
 
       const apiApps = Array.isArray(a) ? a : [];
       const combinedApps = isLedgerReset
@@ -1315,6 +1347,9 @@ export const App: React.FC = () => {
     decision: 'APPROVED' | 'REJECTED',
     terms?: { amount: number; term: number; rate: number; reason?: string }
   ) => {
+    const targetApp = applications.find((a) => a.id === appId || a.applicationNo === appId);
+    const applicantName = targetApp?.borrowerName || 'Applicant';
+
     try {
       if (decision === 'APPROVED') {
         setApplications((prev) =>
@@ -1324,30 +1359,37 @@ export const App: React.FC = () => {
               : a
           )
         );
-        try {
-          await api.approveApplication(appId, {
-            amount: terms?.amount,
-            term: terms?.term,
-            rate: terms?.rate,
-            reason: terms?.reason || 'Approved by Executive Committee',
-          });
-        } catch (apiErr: any) {
-          console.warn('API approveApplication issue, syncing unified ledger:', apiErr);
-          await loanStorageService.updateLoanStatus(
-            appId,
-            'APPROVED',
-            terms?.reason || 'Approved by Executive Committee',
-            terms
-          );
+
+        // Update local unified storage first to guarantee persistence across reloads
+        await loanStorageService.updateLoanStatus(
+          appId,
+          'APPROVED',
+          terms?.reason || 'Approved by Executive Committee',
+          terms
+        );
+
+        if (!isStaticHost) {
+          try {
+            await api.approveApplication(appId, {
+              amount: terms?.amount,
+              term: terms?.term,
+              rate: terms?.rate,
+              reason: terms?.reason || 'Approved by Executive Committee',
+            });
+          } catch (apiErr: any) {
+            console.warn('API approveApplication issue, synced with unified storage:', apiErr);
+          }
         }
+
         await reloadAllData();
-        alert(`Application ${appId} successfully APPROVED! Facility ready in Disbursements queue.`);
+        alert(`Application ${appId} for ${applicantName} successfully APPROVED! Facility ready in Disbursements queue.`);
         setActiveTab('disbursements');
       } else {
         if (!terms?.reason?.trim()) {
           alert('A rejection reason is strictly mandatory.');
           return;
         }
+
         setApplications((prev) =>
           prev.map((a) =>
             a.id === appId || a.applicationNo === appId
@@ -1355,18 +1397,23 @@ export const App: React.FC = () => {
               : a
           )
         );
-        try {
-          await api.rejectApplication(appId, terms.reason);
-        } catch (apiErr: any) {
-          console.warn('API rejectApplication issue, syncing unified ledger:', apiErr);
-          await loanStorageService.updateLoanStatus(
-            appId,
-            'REJECTED',
-            terms.reason
-          );
+
+        await loanStorageService.updateLoanStatus(
+          appId,
+          'REJECTED',
+          terms.reason
+        );
+
+        if (!isStaticHost) {
+          try {
+            await api.rejectApplication(appId, terms.reason);
+          } catch (apiErr: any) {
+            console.warn('API rejectApplication issue, synced with unified storage:', apiErr);
+          }
         }
+
         await reloadAllData();
-        alert(`Application ${appId} marked as REJECTED.`);
+        alert(`Application ${appId} for ${applicantName} marked as REJECTED.`);
         setActiveTab('approvals');
       }
     } catch (err: any) {
@@ -1379,9 +1426,9 @@ export const App: React.FC = () => {
           terms
         );
         await reloadAllData();
-        alert(`Application ${appId} successfully ${decision}!`);
+        alert(`Application ${appId} for ${applicantName} successfully ${decision}!`);
       } catch {
-        alert(`Application ${appId} processed as ${decision}.`);
+        alert(`Application ${appId} for ${applicantName} processed as ${decision}.`);
       }
     }
   };

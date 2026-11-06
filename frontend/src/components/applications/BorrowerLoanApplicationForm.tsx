@@ -55,9 +55,18 @@ export const BorrowerLoanApplicationForm: React.FC<BorrowerLoanApplicationFormPr
   const isKhmer = language === 'km';
 
   // 1. Borrower Identity State
-  const [fullName, setFullName] = useState<string>('Johnathan Doe');
-  const [phone, setPhone] = useState<string>('+855 12 984 219');
-  const [nationalId, setNationalId] = useState<string>('010992384');
+  const savedUser = (() => {
+    try {
+      const raw = localStorage.getItem('apex_user') || sessionStorage.getItem('apex_user');
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  })();
+
+  const [fullName, setFullName] = useState<string>(savedUser?.fullName || savedUser?.name || savedUser?.username || '');
+  const [phone, setPhone] = useState<string>(savedUser?.phone || '+855 12 000 888');
+  const [nationalId, setNationalId] = useState<string>(savedUser?.nationalId || '010992384');
 
   // 2. Loan Parameter State
   const [currency, setCurrency] = useState<Currency>(initialCurrency);

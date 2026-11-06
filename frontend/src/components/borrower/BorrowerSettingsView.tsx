@@ -149,7 +149,7 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
       const stored = localStorage.getItem('jam_setting_telegram_user');
       if (stored) return stored;
     }
-    const cleanUser = (currentUser?.username || currentUser?.name || 'JohnathanDoe').replace(/\s+/g, '');
+    const cleanUser = (currentUser?.username || currentUser?.name || 'user').replace(/\s+/g, '');
     return `@${cleanUser}_bot`;
   });
 
@@ -355,9 +355,9 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
     showToast('Signed out of other devices.');
   };
 
-  const borrowerName = currentUser?.fullName || currentUser?.name || 'Johnathan Doe';
-  const borrowerEmail = currentUser?.email || 'luofong03@gmail.com';
-  const borrowerPhone = currentUser?.phone || '+855 12 345 678';
+  const borrowerName = currentUser?.fullName || currentUser?.name || currentUser?.username || 'Client User';
+  const borrowerEmail = currentUser?.email || (currentUser?.username ? `${currentUser.username}@student.edu` : 'user@student.edu');
+  const borrowerPhone = currentUser?.phone || '+855 12 000 888';
   const maskedPhone = borrowerPhone.replace(/(\+855\s*\d{2})\d+(\d{3})/, '$1 ••• $2');
 
   const tabs = [

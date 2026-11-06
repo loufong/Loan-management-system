@@ -243,7 +243,7 @@ export const CleanPaymentModal: React.FC<CleanPaymentModalProps> = ({
     const mockReceipt = {
       receiptNumber: `REC-2026-${Date.now().toString().slice(-4)}`,
       loanCode: loan.loanCode || loan.loan_code || 'LN-2026-0010',
-      borrowerName: loan.borrowerName || loan.borrower_name || 'Johnathan Doe',
+      borrowerName: loan.borrowerName || loan.borrower_name || (loan as any).borrower?.nameEn || 'Client Borrower',
       installmentNo: selectedSchedule?.installmentNo ?? selectedSchedule?.installment_no ?? 1,
       amountPaid: parsedAmount,
       currency,

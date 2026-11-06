@@ -131,14 +131,24 @@ class ApiService {
     lastName?: string;
     username: string;
     email: string;
+    phone?: string;
     password?: string;
     role?: UserRole;
+    dateOfBirth?: string;
+    gender?: string;
+    residentialAddress?: string;
+    occupation?: string;
   }): UserProfile {
     const cleanEmail = payload.email.trim().toLowerCase();
     const cleanUsername = payload.username.trim().toLowerCase();
     const name = payload.fullName || `${payload.firstName || ''} ${payload.lastName || ''}`.trim() || payload.username;
     const role = payload.role || 'USER';
     const borrowerId = `BOR-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+    const phone = payload.phone || '+855 12 000 888';
+    const dateOfBirth = payload.dateOfBirth || '2001-08-15';
+    const gender = payload.gender || 'Female';
+    const address = payload.residentialAddress || 'Preah Monivong Blvd, Sangkat BKK1, Phnom Penh, Cambodia';
+    const occupation = payload.occupation || 'Student / Entrepreneur';
 
     try {
       const existing = JSON.parse(localStorage.getItem('apex_registered_users') || '{}');
@@ -146,13 +156,22 @@ class ApiService {
         role,
         status: 'active' as const,
         name,
+        fullName: name,
         email: payload.email,
+        phone,
         username: payload.username,
         password: payload.password || 'Password123!',
         borrowerId,
+        dateOfBirth,
+        gender,
+        address,
+        residentialAddress: address,
+        occupation,
       };
       existing[cleanEmail] = newUser;
       existing[cleanUsername] = newUser;
+      existing[borrowerId] = newUser;
+      existing[name.toLowerCase()] = newUser;
       localStorage.setItem('apex_registered_users', JSON.stringify(existing));
     } catch { }
 
@@ -162,6 +181,7 @@ class ApiService {
       name,
       fullName: name,
       email: payload.email,
+      phone,
       role: role as any,
       status: 'active',
       title: role === 'ADMIN' ? 'System Administrator' : 'Client Borrower',
@@ -971,7 +991,7 @@ class ApiService {
       return items.map((b: any) => ({
         id: b.id,
         borrowerId: b.borrowerId || `BOR-${b.id?.slice(0, 6)}`,
-        fullName: b.fullName || b.name || 'Johnathan Doe',
+        fullName: b.fullName || b.name || 'Client Borrower',
         avatarUrl: b.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(b.fullName || b.borrowerId || 'borrower')}`,
         nationalId: b.idNumber || b.nationalId || 'STU-ID-8849201',
         phone: b.phone || '+1-555-0201',
@@ -1231,10 +1251,32 @@ class ApiService {
 
     // Static Host / Offline Fallback
     const loans = loanStorageService.getStorage();
-    const targetLoan = loans.find((l) => l.loanId === applicationId || l.id === applicationId) || loans[0];
-    const mockApp = MOCK_APPLICATIONS.find((a) => a.id === applicationId || a.applicationNo === applicationId);
+    const targetLoan = loans.find((l) => l.loanId === applicationId || l.id === applicationId) || null;
+    const mockApp = MOCK_APPLICATIONS.find((a) => a.id === applicationId || a.applicationNo === applicationId) || null;
 
-    const principal = targetLoan ? targetLoan.principal.disbursedAmountUSD : (mockApp?.requestedAmountUSD || 6000);
+    let regUsers: Record<string, any> = {};
+    try {
+      regUsers = JSON.parse(localStorage.getItem('apex_registered_users') || '{}');
+    } catch {}
+
+    const applicantName = targetLoan?.borrower?.nameEn || mockApp?.borrowerName || 'Applicant';
+    const bId = targetLoan?.borrower?.clientCode || targetLoan?.borrower?.id || mockApp?.borrowerId || 'BOR-2026-3838';
+    const matchedUser = (targetLoan?.borrower?.email && regUsers[targetLoan.borrower.email.toLowerCase()]) ||
+                        (bId && regUsers[bId]) ||
+                        regUsers[applicantName.toLowerCase()] ||
+                        Object.values(regUsers).find((u: any) =>
+                          u.name?.toLowerCase() === applicantName.toLowerCase() ||
+                          u.borrowerId === bId
+                        ) || null;
+
+    const email = targetLoan?.borrower?.email || matchedUser?.email || `${applicantName.toLowerCase().replace(/\s+/g, '.')}@student.edu`;
+    const phone = targetLoan?.borrower?.phone || matchedUser?.phone || (mockApp as any)?.phone || '+855 12 000 888';
+    const dateOfBirth = (targetLoan?.borrower as any)?.dateOfBirth || (targetLoan?.borrower as any)?.dob || matchedUser?.dateOfBirth || matchedUser?.dob || '2001-08-15';
+    const gender = (targetLoan?.borrower as any)?.gender || matchedUser?.gender || 'Female';
+    const residentialAddress = (targetLoan?.borrower as any)?.residentialAddress || (targetLoan?.borrower as any)?.address || matchedUser?.address || matchedUser?.residentialAddress || 'Preah Monivong Blvd, Sangkat BKK1, Phnom Penh, Cambodia';
+    const occupation = targetLoan?.borrower?.occupation || matchedUser?.occupation || 'Student / Entrepreneur';
+
+    const principal = targetLoan ? targetLoan.principal.disbursedAmountUSD : (mockApp?.requestedAmountUSD || 5000);
     const term = targetLoan ? targetLoan.principal.termMonths : (mockApp?.requestedTermMonths || 12);
     const rate = targetLoan ? targetLoan.principal.aprPercent : 10.5;
     const monthlyIncome = targetLoan?.borrower?.monthlyIncome || mockApp?.borrowerIncomeUSD || 2500;
@@ -1253,15 +1295,15 @@ class ApiService {
         updatedAt: new Date().toISOString(),
       },
       personalInfo: {
-        fullName: targetLoan?.borrower.nameEn || mockApp?.borrowerName || 'Johnathan Doe',
-        dateOfBirth: '1998-05-12',
-        gender: 'Male',
-        email: targetLoan?.borrower.email || 'johnathan.doe@student.edu',
-        phone: targetLoan?.borrower.phone || '+855 12 000 888',
-        residentialAddress: 'Preah Monivong Blvd, Boeung Keng Kang 1, Phnom Penh',
-        occupation: targetLoan?.borrower.occupation || 'Business Owner / Student',
+        fullName: applicantName,
+        dateOfBirth,
+        gender,
+        email,
+        phone,
+        residentialAddress,
+        occupation,
         employmentInfo: 'Full-time Active Commercial Enterprise',
-        userId: targetLoan?.borrower.id || 'BOR-2026-0001'
+        userId: bId,
       },
       loanInfo: {
         requestedAmount: principal,
@@ -1405,7 +1447,7 @@ class ApiService {
         id: `APP-2026-${Math.floor(1000 + Math.random() * 9000)}`,
         applicationNo: `APP-2026-${Math.floor(1000 + Math.random() * 9000)}`,
         borrowerId: applicationData.borrowerId || 'BOR-2026-0001',
-        borrowerName: applicationData.borrowerName || 'Johnathan Doe',
+        borrowerName: applicationData.borrowerName || 'Applicant',
         borrowerAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
         borrowerIncomeUSD: Number(applicationData.borrowerIncomeUSD) || 2800,
         productId: applicationData.productId || 'PROD-001',

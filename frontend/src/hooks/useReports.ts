@@ -243,7 +243,7 @@ export async function fetchReportsData(
   // Fallback for static host / offline development:
   // Strict in-memory data isolation guard: borrowers can NEVER see records of other borrowers
   if (isBorrower) {
-    const cleanBorrowerName = (currentUser?.fullName || currentUser?.name || 'Johnathan Doe').toLowerCase();
+    const cleanBorrowerName = (currentUser?.fullName || currentUser?.name || (currentUser as any)?.username || '').toLowerCase();
     return MOCK_REPORT_ITEMS.filter((item) => {
       const matchId = borrowerId && item.borrowerId && String(item.borrowerId).toLowerCase() === String(borrowerId).toLowerCase();
       const matchName = cleanBorrowerName && item.borrowerName.toLowerCase().includes(cleanBorrowerName);

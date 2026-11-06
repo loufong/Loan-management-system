@@ -18,7 +18,7 @@ import {
   MOCK_RECEIPTS,
   USER_PROFILES,
 } from '../data/mockData';
-import { loanStorageService } from './loanStorageService';
+import { loanStorageService, LEDGER_UPDATE_EVENT } from './loanStorageService';
 
 const rawBase = (import.meta as any).env?.VITE_API_URL || '';
 const BASE_URL = rawBase
@@ -1161,37 +1161,141 @@ class ApiService {
       notes?: string;
     }
   ): Promise<any> {
-    return await this.request(`/loan-applications/${applicationId}/review`, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    try {
+      if (!isStaticHost) {
+        return await this.request(`/loan-applications/${applicationId}/review`, {
+          method: 'POST',
+          body: JSON.stringify(data),
+        });
+      }
+    } catch (err: any) {
+      if (!isStaticHost && err?.status !== 405 && !err?.message?.includes('405')) {
+        throw err;
+      }
+    }
+
+    const mockApp = MOCK_APPLICATIONS.find(
+      (a) => a.id === applicationId || a.applicationNo === applicationId
+    );
+    if (mockApp) {
+      mockApp.creditOfficerReview = {
+        recommendation: (data.recommendation as any) || 'Recommend Approval',
+        notes: data.notes || 'Underwriting review completed',
+        reviewerName: 'Underwriting Desk',
+        signedAt: new Date().toISOString(),
+      };
+    }
+
+    return {
+      success: true,
+      message: 'Review recorded successfully',
+    };
   }
 
   public async approveApplication(
     applicationId: string,
     terms?: { amount?: number; term?: number; rate?: number; reason?: string }
   ): Promise<any> {
-    return await this.request(`/loan-applications/${applicationId}/approve`, {
-      method: 'POST',
-      body: JSON.stringify({
-        approvedAmount: terms?.amount,
-        approvedTerm: terms?.term,
-        interestRate: terms?.rate,
-        notes: terms?.reason || 'Approved by Executive Committee',
-      }),
-    });
+    try {
+      if (!isStaticHost) {
+        return await this.request(`/loan-applications/${applicationId}/approve`, {
+          method: 'POST',
+          body: JSON.stringify({
+            approvedAmount: terms?.amount,
+            approvedTerm: terms?.term,
+            interestRate: terms?.rate,
+            notes: terms?.reason || 'Approved by Executive Committee',
+          }),
+        });
+      }
+    } catch (err: any) {
+      if (!isStaticHost && err?.status !== 405 && !err?.message?.includes('405')) {
+        throw err;
+      }
+    }
+
+    const updated = await loanStorageService.updateLoanStatus(
+      applicationId,
+      'APPROVED',
+      terms?.reason || 'Approved by Executive Committee',
+      terms
+    );
+
+    const mockApp = MOCK_APPLICATIONS.find(
+      (a) =>
+        a.id === applicationId ||
+        a.applicationNo === applicationId ||
+        a.id?.toLowerCase() === applicationId?.toLowerCase() ||
+        a.applicationNo?.toLowerCase() === applicationId?.toLowerCase()
+    );
+    if (mockApp) {
+      mockApp.status = 'APPROVED';
+      if (terms?.amount) mockApp.requestedAmountUSD = terms.amount;
+      if (terms?.term) mockApp.requestedTermMonths = terms.term;
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event(LEDGER_UPDATE_EVENT));
+    }
+
+    return {
+      success: true,
+      message: 'Application approved successfully',
+      data: {
+        id: updated?.id || applicationId,
+        status: 'APPROVED',
+      },
+    };
   }
 
   public async rejectApplication(
     applicationId: string,
     rejectionReason: string
   ): Promise<any> {
-    return await this.request(`/loan-applications/${applicationId}/reject`, {
-      method: 'POST',
-      body: JSON.stringify({
-        rejectionReason: rejectionReason || 'Credit underwriting criteria not satisfied',
-      }),
-    });
+    try {
+      if (!isStaticHost) {
+        return await this.request(`/loan-applications/${applicationId}/reject`, {
+          method: 'POST',
+          body: JSON.stringify({
+            rejectionReason: rejectionReason || 'Credit underwriting criteria not satisfied',
+          }),
+        });
+      }
+    } catch (err: any) {
+      if (!isStaticHost && err?.status !== 405 && !err?.message?.includes('405')) {
+        throw err;
+      }
+    }
+
+    await loanStorageService.updateLoanStatus(
+      applicationId,
+      'REJECTED',
+      rejectionReason || 'Credit underwriting criteria not satisfied'
+    );
+
+    const mockApp = MOCK_APPLICATIONS.find(
+      (a) =>
+        a.id === applicationId ||
+        a.applicationNo === applicationId ||
+        a.id?.toLowerCase() === applicationId?.toLowerCase() ||
+        a.applicationNo?.toLowerCase() === applicationId?.toLowerCase()
+    );
+    if (mockApp) {
+      mockApp.status = 'REJECTED';
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event(LEDGER_UPDATE_EVENT));
+    }
+
+    return {
+      success: true,
+      message: 'Application marked as REJECTED',
+      data: {
+        id: applicationId,
+        status: 'REJECTED',
+      },
+    };
   }
 
   // --- LOANS & DISBURSEMENTS ---
@@ -1244,15 +1348,54 @@ class ApiService {
       disbursementReference?: string;
     } = {}
   ): Promise<any> {
-    return await this.request(`/loans/${applicationId}/disburse`, {
-      method: 'POST',
-      body: JSON.stringify({
-        disbursementMethod: payload.disbursementMethod || 'BANK_TRANSFER',
-        firstPaymentDate: payload.firstPaymentDate,
-        notes: payload.notes || 'Disbursed via Cashier Operations Desk',
-        disbursementReference: payload.disbursementReference || `DISB-${Date.now().toString().slice(-6)}`,
-      }),
-    });
+    try {
+      if (!isStaticHost) {
+        return await this.request(`/loans/${applicationId}/disburse`, {
+          method: 'POST',
+          body: JSON.stringify({
+            disbursementMethod: payload.disbursementMethod || 'BANK_TRANSFER',
+            firstPaymentDate: payload.firstPaymentDate,
+            notes: payload.notes || 'Disbursed via Cashier Operations Desk',
+            disbursementReference: payload.disbursementReference || `DISB-${Date.now().toString().slice(-6)}`,
+          }),
+        });
+      }
+    } catch (err: any) {
+      if (!isStaticHost && err?.status !== 405 && !err?.message?.includes('405')) {
+        throw err;
+      }
+    }
+
+    const activatedRecord = await loanStorageService.updateLoanStatus(
+      applicationId,
+      'ACTIVE',
+      payload.notes || 'Disbursed via Cashier Operations Desk'
+    );
+
+    const mockApp = MOCK_APPLICATIONS.find(
+      (a) =>
+        a.id === applicationId ||
+        a.applicationNo === applicationId ||
+        a.id?.toLowerCase() === applicationId?.toLowerCase() ||
+        a.applicationNo?.toLowerCase() === applicationId?.toLowerCase()
+    );
+    if (mockApp) {
+      mockApp.status = 'DISBURSED' as any;
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event(LEDGER_UPDATE_EVENT));
+    }
+
+    return {
+      success: true,
+      message: 'Loan disbursed and facility activated successfully',
+      loan: {
+        id: activatedRecord?.id || applicationId,
+        loanNumber: activatedRecord?.loanId || applicationId,
+        status: 'ACTIVE',
+      },
+    };
   }
 
   public async getDisbursements(): Promise<any[]> {

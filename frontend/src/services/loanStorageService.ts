@@ -7,6 +7,7 @@
  */
 
 import { Borrower, PaymentReceipt } from '../types';
+import { MOCK_APPLICATIONS } from '../data/mockData';
 import { kycService } from './kycService';
 
 export const UNIFIED_LEDGER_KEY = 'JAM_SONG_VICH_UNIFIED_LEDGER';
@@ -30,7 +31,7 @@ export interface UnifiedLoanRecord {
   facility: {
     productName: string;
     currency: string;
-    status: 'UNDERWRITING_PENDING' | 'ACTIVE' | 'OVERDUE' | 'REJECTED' | 'MATURED';
+    status: 'UNDERWRITING_PENDING' | 'APPROVED' | 'ACTIVE' | 'OVERDUE' | 'REJECTED' | 'MATURED';
     health: 'PERFORMING' | 'WATCHLIST' | 'GRACE_PERIOD' | 'DEFAULT_RISK';
     branch: string;
   };
@@ -885,22 +886,103 @@ class LoanStorageService {
   }
 
   /**
-   * Allows Super Admin to transition loan: UNDERWRITING_PENDING -> ACTIVE or REJECTED
+   * Allows Super Admin to transition loan: UNDERWRITING_PENDING -> APPROVED -> ACTIVE or REJECTED
    */
   public async updateLoanStatus(
     loanId: string,
-    newStatus: 'ACTIVE' | 'REJECTED' | 'UNDERWRITING_PENDING',
-    adminNotes?: string
+    newStatus: 'ACTIVE' | 'APPROVED' | 'REJECTED' | 'UNDERWRITING_PENDING',
+    adminNotes?: string,
+    terms?: { amount?: number; term?: number; rate?: number }
   ): Promise<UnifiedLoanRecord | null> {
     const list = this.getStorage();
-    const idx = list.findIndex((l) => l.loanId === loanId || l.id === loanId);
-    if (idx === -1) return null;
+    let idx = list.findIndex(
+      (l) =>
+        l.loanId === loanId ||
+        l.id === loanId ||
+        (l as any).applicationNo === loanId ||
+        l.loanId?.toLowerCase() === loanId?.toLowerCase() ||
+        l.id?.toLowerCase() === loanId?.toLowerCase()
+    );
 
-    const item = { ...list[idx] };
-    item.facility.status = newStatus;
-    item.adminNotes = adminNotes;
+    let item: UnifiedLoanRecord;
+    if (idx === -1) {
+      // Find from MOCK_APPLICATIONS if available
+      const mock = MOCK_APPLICATIONS.find(
+        (a) =>
+          a.id === loanId ||
+          a.applicationNo === loanId ||
+          a.id?.toLowerCase() === loanId?.toLowerCase() ||
+          a.applicationNo?.toLowerCase() === loanId?.toLowerCase()
+      );
+      const appAmt = terms?.amount || mock?.requestedAmountUSD || 5000;
+      const appTerm = terms?.term || mock?.requestedTermMonths || 12;
+      const appRate = terms?.rate || 10.5;
 
-    if (newStatus === 'ACTIVE') {
+      item = {
+        id: mock?.id || loanId,
+        loanId: mock?.applicationNo || loanId,
+        borrower: {
+          id: mock?.borrowerId || 'BOR-2026-0001',
+          clientCode: 'CLI-8801',
+          nameEn: mock?.borrowerName || 'Johnathan Doe',
+          nameKh: 'ចនណាថាន ដូ',
+          maskedNationalId: '010****00',
+          phone: '+855 12 000 888',
+          occupation: 'Commercial Borrower',
+          monthlyIncome: mock?.borrowerIncomeUSD || 2500,
+        },
+        facility: {
+          productName: mock?.productName || 'Credit Facility',
+          currency: 'USD',
+          status: newStatus,
+          health: newStatus === 'REJECTED' ? 'DEFAULT_RISK' : 'PERFORMING',
+          branch: 'Phnom Penh Main',
+        },
+        principal: {
+          disbursedAmountUSD: appAmt,
+          aprPercent: appRate,
+          termMonths: appTerm,
+          remainingMonths: appTerm,
+        },
+        repaymentProgress: {
+          totalPaidUSD: 0,
+          outstandingBalanceUSD: appAmt,
+          principalBalanceUSD: appAmt,
+          accruedInterestUSD: 0,
+          percentPaid: 0,
+        },
+        nextScheduledPayment: {
+          dueDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
+          cycleNumber: 1,
+          scheduledEMIUSD: Math.round((appAmt * (1 + appRate / 100)) / appTerm),
+          daysOverdue: 0,
+        },
+        cbcScore: { score: 740, grade: 'Grade A - Prime Risk', color: 'emerald', dtiRatio: 28.5 },
+        collateralStatus: 'Verified Hard Title (Khan Toul Kork, PP)',
+        submittedAt: mock?.createdAt || new Date().toISOString(),
+        schedules: generateAmortizationSchedule(appAmt, appRate, appTerm),
+      };
+      list.unshift(item);
+      idx = 0;
+    } else {
+      item = { ...list[idx] };
+      item.facility.status = newStatus;
+      item.adminNotes = adminNotes;
+      if (terms?.amount) {
+        item.principal.disbursedAmountUSD = terms.amount;
+        item.repaymentProgress.outstandingBalanceUSD = terms.amount;
+        item.repaymentProgress.principalBalanceUSD = terms.amount;
+      }
+      if (terms?.rate) item.principal.aprPercent = terms.rate;
+      if (terms?.term) {
+        item.principal.termMonths = terms.term;
+        item.principal.remainingMonths = terms.term;
+      }
+    }
+
+    if (newStatus === 'APPROVED') {
+      item.facility.health = 'PERFORMING';
+    } else if (newStatus === 'ACTIVE') {
       item.facility.health = 'PERFORMING';
       // Generate official reducing balance schedule
       item.schedules = generateAmortizationSchedule(

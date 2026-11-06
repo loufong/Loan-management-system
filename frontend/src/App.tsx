@@ -656,7 +656,7 @@ export const App: React.FC = () => {
 
       // Map unified pending applications
       const pendingUnifiedApps = (unifiedLoans || [])
-        .filter((u: any) => u?.facility && u.facility.status === 'UNDERWRITING_PENDING')
+        .filter((u: any) => u?.facility && (u.facility.status === 'UNDERWRITING_PENDING' || u.facility.status === 'APPROVED'))
         .map((u: any) => ({
           id: u.id || `app-${Date.now()}`,
           applicationNo: u.loanId || u.id || 'APP-2026-0000',
@@ -672,7 +672,7 @@ export const App: React.FC = () => {
           purpose: 'Commercial Working Capital',
           dtiRatio: 28.5,
           riskTier: 'LOW' as any,
-          status: 'UNDERWRITING_PENDING' as any,
+          status: (u.facility.status === 'APPROVED' ? 'APPROVED' : 'UNDERWRITING_PENDING') as any,
           createdAt: u.submittedAt || new Date().toISOString(),
           documents: [],
         }));
@@ -1316,6 +1316,13 @@ export const App: React.FC = () => {
   ) => {
     try {
       if (decision === 'APPROVED') {
+        setApplications((prev) =>
+          prev.map((a) =>
+            a.id === appId || a.applicationNo === appId
+              ? { ...a, status: 'APPROVED' as any }
+              : a
+          )
+        );
         await api.approveApplication(appId, {
           amount: terms?.amount,
           term: terms?.term,
@@ -1330,6 +1337,13 @@ export const App: React.FC = () => {
           alert('A rejection reason is strictly mandatory.');
           return;
         }
+        setApplications((prev) =>
+          prev.map((a) =>
+            a.id === appId || a.applicationNo === appId
+              ? { ...a, status: 'REJECTED' as any }
+              : a
+          )
+        );
         await api.rejectApplication(appId, terms.reason);
         await reloadAllData();
         alert(`Application ${appId} marked as REJECTED.`);

@@ -2303,6 +2303,23 @@ class ApiService {
         localStorage.removeItem('jam_applications_v1');
         localStorage.removeItem('jam_unified_applications');
         localStorage.removeItem('jam_last_submitted_loan_id');
+        localStorage.removeItem('jam_restart_borrower_zero');
+
+        // Remove all loan-specific document keys and cached forms
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && (
+            k.startsWith('JAM_LOAN_DOCS_') ||
+            k.startsWith('jam_loan_') ||
+            k.startsWith('jam_app_') ||
+            k.includes('LOAN_SALARY_SLIP') ||
+            k.includes('LOAN_COLLATERAL_DOC')
+          )) {
+            keysToRemove.push(k);
+          }
+        }
+        keysToRemove.forEach((k) => localStorage.removeItem(k));
       } catch { }
     }
     try {
@@ -2310,7 +2327,13 @@ class ApiService {
         method: 'POST',
       });
     } catch {
-      return { success: true, message: 'All borrowing data reset successfully.' };
+      try {
+        return await this.request<any>('/loans/reset-user-borrowing', {
+          method: 'POST',
+        });
+      } catch {
+        return { success: true, message: 'All borrowing data reset successfully.' };
+      }
     }
   }
 

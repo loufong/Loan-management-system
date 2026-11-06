@@ -511,17 +511,21 @@ export class AdminCoreController {
     try {
       await prisma.$transaction(async (tx) => {
         // Safely clear payment and schedule ledgers first due to foreign keys
-        try { await (tx as any).payment?.deleteMany(); } catch {}
-        try { await (tx as any).repaymentSchedule?.deleteMany(); } catch {}
-        try { await (tx as any).disbursement?.deleteMany(); } catch {}
-        try { await (tx as any).loan?.deleteMany(); } catch {}
-        try { await (tx as any).loanApplication?.deleteMany(); } catch {}
+        await (tx as any).payment?.deleteMany().catch(() => ({}));
+        await (tx as any).repaymentSchedule?.deleteMany().catch(() => ({}));
+        await (tx as any).disbursement?.deleteMany().catch(() => ({}));
+        await (tx as any).loanDocument?.deleteMany().catch(() => ({}));
+        await (tx as any).loan?.deleteMany().catch(() => ({}));
+        await (tx as any).applicationApproval?.deleteMany().catch(() => ({}));
+        await (tx as any).applicationReview?.deleteMany().catch(() => ({}));
+        await (tx as any).applicationStatusHistory?.deleteMany().catch(() => ({}));
+        await (tx as any).loanApplication?.deleteMany().catch(() => ({}));
       });
 
       sendSuccess(res, {
         message: 'All borrowing records, loan accounts, installments, and payment receipts have been reset to zero.',
         resetTimestamp: new Date().toISOString(),
-        clearedLedgers: ['loans', 'applications', 'repayments', 'payments', 'disbursements'],
+        clearedLedgers: ['loans', 'applications', 'repayments', 'payments', 'disbursements', 'documents', 'approvals'],
       }, 'All borrowing data reset successfully');
     } catch (err) {
       next(err);

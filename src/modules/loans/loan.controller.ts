@@ -157,4 +157,119 @@ export class LoanController {
       next(err);
     }
   }
+
+  /**
+   * Complete reset of all borrowing data for the authenticated user
+   */
+  static async resetUserBorrowing(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user?.id;
+      const isAdmin = (req.user?.role || '').toUpperCase() === 'ADMIN' || (req.user?.role || '').toUpperCase() === 'SUPER_ADMIN';
+
+      // Find all borrowers associated with this user
+      let borrowerIds: string[] = [];
+      if (userId) {
+        const borrowers = await prisma.borrower.findMany({
+          where: {
+            OR: [
+              { id: userId },
+              { email: req.user?.email },
+            ],
+          },
+          select: { id: true },
+        }).catch(() => []);
+        borrowerIds = borrowers.map((b) => b.id);
+        if (userId && !borrowerIds.includes(userId)) {
+          borrowerIds.push(userId);
+        }
+      }
+
+      const loanWhere = isAdmin && !userId
+        ? {}
+        : {
+            OR: [
+              { userId: userId || '' },
+              { borrowerId: { in: borrowerIds } },
+            ],
+          };
+
+      const appWhere = isAdmin && !userId
+        ? {}
+        : {
+            OR: [
+              { createdById: userId || '' },
+              { borrowerId: { in: borrowerIds } },
+            ],
+          };
+
+      // 1. Find matching loans
+      const matchingLoans = await prisma.loan.findMany({
+        where: loanWhere,
+        select: { id: true },
+      }).catch(() => []);
+      const loanIds = matchingLoans.map((l) => l.id);
+
+      // 2. Find matching applications
+      const matchingApps = await prisma.loanApplication.findMany({
+        where: appWhere,
+        select: { id: true },
+      }).catch(() => []);
+      const appIds = matchingApps.map((a) => a.id);
+
+      // Delete payments
+      if (loanIds.length > 0) {
+        await prisma.payment.deleteMany({
+          where: { loanId: { in: loanIds } },
+        }).catch(() => ({}));
+
+        await prisma.repaymentSchedule.deleteMany({
+          where: { loanId: { in: loanIds } },
+        }).catch(() => ({}));
+
+        await prisma.disbursement.deleteMany({
+          where: { loanId: { in: loanIds } },
+        }).catch(() => ({}));
+
+        await prisma.loanDocument.deleteMany({
+          where: {
+            OR: [
+              ...(userId ? [{ uploadedBy: userId }] : []),
+              { entityId: { in: loanIds } },
+            ],
+          },
+        }).catch(() => ({}));
+
+        await prisma.loan.deleteMany({
+          where: { id: { in: loanIds } },
+        }).catch(() => ({}));
+      }
+
+      // Delete application records
+      if (appIds.length > 0) {
+        await prisma.applicationApproval.deleteMany({
+          where: { applicationId: { in: appIds } },
+        }).catch(() => ({}));
+
+        await prisma.applicationReview.deleteMany({
+          where: { applicationId: { in: appIds } },
+        }).catch(() => ({}));
+
+        await prisma.applicationStatusHistory.deleteMany({
+          where: { applicationId: { in: appIds } },
+        }).catch(() => ({}));
+
+        await prisma.loanApplication.deleteMany({
+          where: { id: { in: appIds } },
+        }).catch(() => ({}));
+      }
+
+      sendSuccess(res, {
+        message: 'All borrowing and loan data for this user has been reset successfully.',
+        clearedLoansCount: loanIds.length,
+        clearedApplicationsCount: appIds.length,
+      }, 'Borrowing data reset successfully');
+    } catch (err) {
+      next(err);
+    }
+  }
 }

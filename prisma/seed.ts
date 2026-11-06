@@ -24,7 +24,8 @@ import path from 'path';
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 console.log('Seeding using DATABASE_URL:', process.env.DATABASE_URL);
 
-const prisma = new PrismaClient({
+import { prisma } from '../src/config/prisma';
+const _unusedClient = new PrismaClient({
   datasources: {
     db: {
       url: process.env.DATABASE_URL || 'postgresql://postgres:postgres@127.0.0.1:5432/loansystem_db?schema=public'

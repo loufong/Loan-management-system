@@ -590,6 +590,24 @@ class LoanStorageService {
       localStorage.removeItem('jam_applications_v1');
       localStorage.removeItem('jam_unified_applications');
       localStorage.removeItem('jam_last_submitted_loan_id');
+      localStorage.removeItem('jam_restart_borrower_zero');
+
+      // Purge all loan-specific document keys and form drafts
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && (
+          k.startsWith('JAM_LOAN_DOCS_') ||
+          k.startsWith('jam_loan_') ||
+          k.startsWith('jam_app_') ||
+          k.includes('LOAN_SALARY_SLIP') ||
+          k.includes('LOAN_COLLATERAL_DOC')
+        )) {
+          keysToRemove.push(k);
+        }
+      }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+
       window.dispatchEvent(new Event(LEDGER_UPDATE_EVENT));
     } catch (e) {
       console.warn('Failed to reset borrowing data:', e);

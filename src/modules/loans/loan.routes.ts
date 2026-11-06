@@ -19,6 +19,18 @@ loanRouter.post(
   LoanController.apply
 );
 
+// Reset borrowing data for the user
+loanRouter.post(
+  '/reset-user-borrowing',
+  authorize(UserRole.ADMIN, UserRole.USER),
+  LoanController.resetUserBorrowing
+);
+loanRouter.post(
+  '/reset',
+  authorize(UserRole.ADMIN, UserRole.USER),
+  LoanController.resetUserBorrowing
+);
+
 // 1. Directory of all disbursements (ADMIN)
 loanRouter.get(
   '/disbursements',

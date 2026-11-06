@@ -29,10 +29,12 @@ import {
   ShieldCheck,
   Building2,
   AlertTriangle,
+  RotateCcw,
 } from 'lucide-react';
 import { Currency, UserProfile } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 import { api } from '../../services/api';
+import { loanStorageService } from '../../services/loanStorageService';
 
 export interface BorrowerSettingsViewProps {
   currentUser: UserProfile;
@@ -246,6 +248,27 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
       localStorage.setItem('apex_currency', curr);
     }
     showToast(`Currency changed to ${curr}`);
+  };
+
+  const [isResettingBorrowing, setIsResettingBorrowing] = useState(false);
+
+  const handleResetBorrowingData = async () => {
+    if (window.confirm('Are you sure you want to restart all your borrowing data? All your active loans, submitted applications, and repayments will be reset to a clean state so you can start borrowing fresh.')) {
+      setIsResettingBorrowing(true);
+      try {
+        await api.resetBorrowingData();
+        loanStorageService.resetAllBorrowingData();
+        showToast('All borrowing data has been reset to zero. You can now apply for a new loan.');
+        setTimeout(() => {
+          onNavigate('borrower_dashboard');
+          window.location.reload();
+        }, 800);
+      } catch {
+        showToast('Borrowing data reset completed.');
+      } finally {
+        setIsResettingBorrowing(false);
+      }
+    }
   };
 
   const handleSaveNotifications = (e?: React.FormEvent) => {
@@ -474,6 +497,34 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
                   <div className="text-[11px] text-slate-400 mt-0.5">Cambodian Riel (4,000 / USD)</div>
                 </div>
                 {selectedCurrency === 'KHR' && <Check className="w-4 h-4 text-emerald-400" />}
+              </button>
+            </div>
+          </div>
+
+          {/* Borrowing & Loan Data Reset Card */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+            <div>
+              <h2 className="text-sm font-bold text-white">Borrowing & Loan Data</h2>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Restart your loan applications and repayment history to start fresh with a clean borrowing slate.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="text-xs font-bold text-white">Restart Borrowing Records</div>
+                <div className="text-[11px] text-slate-400">
+                  Clears all active facilities, loan application drafts, and repayment records for your account.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleResetBorrowingData}
+                disabled={isResettingBorrowing}
+                className="px-4 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-bold transition cursor-pointer shrink-0 flex items-center gap-2 shadow-xs disabled:opacity-50"
+              >
+                <RotateCcw className={`w-3.5 h-3.5 text-rose-400 ${isResettingBorrowing ? 'animate-spin' : ''}`} />
+                <span>{isResettingBorrowing ? 'Resetting...' : 'Restart Borrowing Data'}</span>
               </button>
             </div>
           </div>

@@ -79,6 +79,9 @@ async function runPaymentReconciliationTests() {
 
   // --- TEST 1: Business Rule 3 - RBAC Authorization Guard on POST /api/payments ---
   console.log('--- 1. Verification of Role-Based Access Control (RBAC) on POST /api/payments ---');
+  const activeLoan = await prisma.loan.findFirst({ where: { status: 'ACTIVE' } });
+  const testLoanNumber = activeLoan?.loanNumber || 'LN-2026-6042';
+
   // Allowed: ADMIN. Forbidden: USER
   const unauthorizedRoles = [
     { role: 'USER', token: borrowerToken }
@@ -86,7 +89,7 @@ async function runPaymentReconciliationTests() {
 
   for (const { role, token } of unauthorizedRoles) {
     const res = await request(app, 'POST', '/api/payments', {
-      loanId: 'LN-2026-0001',
+      loanId: testLoanNumber,
       paymentAmount: 466.67,
       paymentMethod: 'CASH',
       referenceNo: 'POS-TEST-001'
@@ -105,7 +108,7 @@ async function runPaymentReconciliationTests() {
   console.log('\n--- 2. Request Body Validation for POST /api/payments ---');
   // Missing paymentAmount / amount
   const missingAmountRes = await request(app, 'POST', '/api/payments', {
-    loanId: 'LN-2026-0001',
+    loanId: testLoanNumber,
     paymentMethod: 'CASH',
     referenceNo: 'POS-TEST-002'
   }, {
@@ -117,7 +120,7 @@ async function runPaymentReconciliationTests() {
 
   // Negative amount
   const negAmountRes = await request(app, 'POST', '/api/payments', {
-    loanId: 'LN-2026-0001',
+    loanId: testLoanNumber,
     paymentAmount: -100,
     paymentMethod: 'CASH',
     referenceNo: 'POS-TEST-003'

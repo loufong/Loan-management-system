@@ -19,9 +19,12 @@ import {
   Lock,
   Info,
   XCircle,
+  RotateCcw,
 } from 'lucide-react';
 import { Currency, LoanAccount, LoanApplication, PaymentReceipt, UserProfile } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
+import { api } from '../../services/api';
+import { loanStorageService } from '../../services/loanStorageService';
 
 export interface BorrowerDashboardProps {
   currentUser: UserProfile;
@@ -257,6 +260,23 @@ export const BorrowerDashboard: React.FC<BorrowerDashboardProps> = ({
             >
               <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
               <span>{'Schedule'}</span>
+            </button>
+
+            {/* Quick Restart Borrowing Data Button */}
+            <button
+              type="button"
+              onClick={async () => {
+                if (window.confirm('Restart all borrowing data? All your active loans, pending applications, and repayments will be reset so you can start borrowing fresh.')) {
+                  await api.resetBorrowingData();
+                  loanStorageService.resetAllBorrowingData();
+                  window.location.reload();
+                }
+              }}
+              className="inline-flex items-center justify-center gap-1.5 h-10 px-3 rounded-xl bg-slate-850 hover:bg-rose-950/30 text-slate-400 hover:text-rose-300 font-medium text-xs border border-slate-700/80 hover:border-rose-500/40 shadow-2xs transition-all cursor-pointer select-none whitespace-nowrap active:scale-[0.98]"
+              title="Restart all borrowing data to start fresh"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-slate-400 group-hover:text-rose-400 shrink-0" />
+              <span>{'Restart Data'}</span>
             </button>
           </div>
         </div>

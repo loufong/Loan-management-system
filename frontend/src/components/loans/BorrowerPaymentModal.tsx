@@ -160,7 +160,6 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
 
   // Active KHQR Session & Polling
   const [khqrSession, setKhqrSession] = useState<KhqrPaymentSession | null>(null);
-  const [qrViewMode, setQrViewMode] = useState<'card' | 'code'>('card');
   const [secondsRemaining, setSecondsRemaining] = useState<number>(900); // 15 mins
   const [pollCount, setPollCount] = useState<number>(0);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
@@ -808,64 +807,17 @@ export const BorrowerPaymentModal: React.FC<BorrowerPaymentModalProps> = ({
                   </p>
                 </div>
 
-                {/* QR Display Mode Selector */}
-                <div className="flex items-center justify-center p-1 bg-slate-900 rounded-xl max-w-xs mx-auto border border-slate-800 text-[11px] font-semibold">
-                  <button
-                    type="button"
-                    onClick={() => setQrViewMode('card')}
-                    className={`flex-1 py-1 px-3 rounded-lg transition flex items-center justify-center gap-1.5 ${
-                      qrViewMode === 'card'
-                        ? 'bg-red-600 text-white shadow'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    <span>Official QR Card</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setQrViewMode('code')}
-                    className={`flex-1 py-1 px-3 rounded-lg transition flex items-center justify-center gap-1.5 ${
-                      qrViewMode === 'code'
-                        ? 'bg-slate-800 text-white shadow'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    <span>Bill QR Code</span>
-                  </button>
+                {/* Authentic Scannable ACLEDA KHQR Official Standee Card */}
+                <div className="bg-white p-3 rounded-2xl inline-block shadow-2xl ring-4 ring-red-500/20 relative mx-auto max-w-[280px]">
+                  <img
+                    src={companyKhqrImg}
+                    alt="Official JAM SONG VICH Bakong KHQR Standee"
+                    className="w-60 h-auto mx-auto object-contain rounded-xl"
+                  />
+                  <div className="mt-2 text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                    ACLEDA Bank Plc. • JAM SONG VICH
+                  </div>
                 </div>
-
-                {/* Authentic Scannable ACLEDA KHQR / Dynamic Canvas */}
-                {qrViewMode === 'card' ? (
-                  <div className="bg-white p-3 rounded-2xl inline-block shadow-2xl ring-4 ring-red-500/20 relative mx-auto max-w-[280px]">
-                    <img
-                      src={companyKhqrImg}
-                      alt="Official JAM SONG VICH Bakong KHQR Standee"
-                      className="w-60 h-auto mx-auto object-contain rounded-xl"
-                    />
-                    <div className="mt-2 text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                      ACLEDA Bank Plc. • JAM SONG VICH
-                    </div>
-                  </div>
-                ) : (
-                  <div className="bg-white p-3.5 rounded-2xl inline-block shadow-2xl ring-4 ring-emerald-500/20 relative mx-auto">
-                    {khqrSession.qrDataUrl ? (
-                      <img
-                        src={khqrSession.qrDataUrl}
-                        alt="Bakong KHQR Payment Canvas"
-                        className="w-56 h-56 mx-auto object-contain rounded-lg"
-                      />
-                    ) : (
-                      <div className="w-56 h-56 bg-slate-100 flex items-center justify-center font-mono text-xs text-slate-900 p-2 text-center rounded-lg">
-                        Generating QR Code...
-                      </div>
-                    )}
-
-                    {/* Red KH Center Overlay */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-9 h-9 rounded-xl bg-red-600 border-2 border-white flex items-center justify-center text-white font-black text-[10px] shadow pointer-events-none">
-                      KH
-                    </div>
-                  </div>
-                )}
 
                 {/* Customer Instructions */}
                 <p className="text-xs text-slate-300 leading-relaxed px-4">

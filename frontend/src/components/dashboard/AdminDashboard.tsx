@@ -924,90 +924,57 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* 2. HEADER BAR & SYSTEM MASTER CONTROLS (Deliverable 1)                     */}
+      {/* 2. HEADER BAR & SYSTEM MASTER CONTROLS                                    */}
       {/* ========================================================================= */}
-      <header className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl p-4 sm:p-5 shadow-2xl backdrop-blur-md">
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-          {/* Institution Identity */}
+      <header className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          {/* Identity & Title */}
           <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-amber-400 p-[1.5px] shadow-lg shadow-emerald-950/40 shrink-0">
-              <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-emerald-400" />
-              </div>
+            <div className="w-10 h-10 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center text-emerald-400 shrink-0">
+              <Building2 className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <h1 className="text-sm sm:text-base font-black tracking-wider uppercase text-white font-mono">
-                  JAM SONG VICH
+              <div className="flex items-center gap-2.5">
+                <h1 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                  {focusMode === 'FACILITIES' ? 'Active Facilities & Borrowers' : 'Core Banking Ledger'}
                 </h1>
-                <span className="text-slate-600 font-mono text-xs">|</span>
-                <span className="text-xs font-semibold text-slate-300">
-                  {focusMode === 'FACILITIES' ? 'Active Facilities & Borrowers Ledger' : 'Core Banking / Super Admin Ledger'}
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  LIVE NBC GATEWAY
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  LIVE
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 font-medium tracking-tight mt-0.5">
-                Core Banking System • ប្រព័ន្ធគ្រប់គ្រងឥណទាន • National Bank of Cambodia Clearing Rails
+              <p className="text-xs text-slate-400 mt-0.5">
+                {focusMode === 'FACILITIES'
+                  ? 'Manage active loan facilities, repayments, and borrower records'
+                  : 'Institutional credit facility management and portfolio ledger'}
               </p>
             </div>
           </div>
 
-          {/* Right Status Badges: Bakong Latency + Profile KYC Badge */}
-          <div className="flex items-center gap-2.5 flex-wrap">
-            {/* Bakong Node Latency Pulse Pill */}
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-[#0f172a] border border-[#1e293b] rounded-xl text-xs font-mono text-slate-300 shadow-inner">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-              </span>
-              <span className="text-[11px]">
-                Bakong Core: <span className="text-emerald-400 font-bold">Connected</span> (42ms)
-              </span>
-            </div>
-
-            {/* Direct Trigger to Executive Portfolio Intelligence & Risk Engine */}
+          {/* Right Action */}
+          <div className="flex items-center gap-2.5">
             <button
               onClick={() => onNavigate?.('/admin/analytics')}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-500/15 to-teal-500/15 hover:from-emerald-500/25 hover:to-teal-500/25 border border-emerald-500/30 rounded-xl text-xs font-bold text-emerald-300 shadow-sm transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-950 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-800 hover:border-slate-700 transition cursor-pointer shadow-sm"
               title="Open Executive Analytics & Portfolio Intelligence Suite"
             >
-              <BarChart3 className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Portfolio Intelligence & Risk Engine →</span>
+              <BarChart3 className="w-4 h-4 text-emerald-400" />
+              <span>Portfolio Analytics</span>
             </button>
-
-            {/* Super Admin Profile Badge */}
-            <div className="flex items-center gap-2 px-3 py-1 bg-[#0f172a] border border-[#1e293b] rounded-xl">
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-[10px] font-bold text-emerald-300">
-                SA
-              </div>
-              <div className="text-left">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-bold text-white leading-none">System Administrator</span>
-                  <span className="px-1 py-0.2 rounded text-[9px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    KYC VERIFIED
-                  </span>
-                </div>
-                <span className="text-[10px] text-slate-400 font-mono leading-none">Phnom Penh Main Ledger</span>
-              </div>
-            </div>
           </div>
         </div>
 
-        {/* Scoping & Search Strip (Period & Branch controls removed per user request) */}
-        <div className="mt-4 pt-4 border-t border-[#1e293b] flex flex-col sm:flex-row items-center justify-between gap-3">
+        {/* Controls Strip: Currency Filter + Search */}
+        <div className="pt-3 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-3">
           {/* Currency Mode Filter */}
-          <div className="flex items-center gap-1 bg-[#0f172a] p-1 rounded-xl border border-[#1e293b] w-full sm:w-auto">
+          <div className="inline-flex items-center bg-slate-950/80 p-1 rounded-xl border border-slate-800 w-full sm:w-auto">
             {(['USD', 'KHR', 'CONSOLIDATED'] as CurrencyMode[]).map((mode) => (
               <button
                 key={mode}
                 onClick={() => setCurrencyMode(mode)}
-                className={`px-3 py-1.5 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition cursor-pointer ${
                   currencyMode === mode
-                    ? 'bg-amber-400 text-slate-950 shadow-md'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-slate-800 text-white font-semibold shadow-xs border border-slate-700/60'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
                 }`}
               >
                 {mode === 'CONSOLIDATED' ? 'DUAL' : mode}
@@ -1015,7 +982,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             ))}
           </div>
 
-          {/* Scoped System Search Bar (Ctrl+K) */}
+          {/* Search Bar */}
           <div className="relative w-full sm:max-w-md">
             <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
@@ -1023,10 +990,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               type="text"
               value={globalSearch}
               onChange={(e) => setGlobalSearch(e.target.value)}
-              placeholder="Search CBC ID, Phone, Loan No, National ID..."
-              className="w-full py-1.5 pl-8 pr-12 bg-[#0f172a] border border-[#1e293b] rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              placeholder="Search by borrower, loan ID, phone..."
+              className="w-full py-1.5 pl-8 pr-12 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 focus:border-slate-700 transition"
             />
-            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded border border-slate-700 bg-slate-800 text-[10px] font-mono text-slate-400 pointer-events-none">
+            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded border border-slate-800 bg-slate-900 text-[10px] font-mono text-slate-400 pointer-events-none">
               ⌘K
             </span>
           </div>

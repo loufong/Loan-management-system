@@ -266,4 +266,105 @@ export class PaymentController {
       next(err);
     }
   }
+
+  /**
+   * GET /api/v1/payments/admin/summary
+   * Dynamic calculation of financial summary cards for Super Admin Dashboard
+   */
+  static async getAdminSummary(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const summary = await PaymentService.getAdminPaymentSummary(req.user!);
+      sendSuccess(res, summary, 'Super Admin payment overview summary retrieved successfully');
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * GET /api/v1/payments/admin/all
+   * Super Admin 13-column payment transaction management ledger
+   */
+  static async listAdminPayments(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const filters = {
+        query: req.query.query as string | undefined,
+        search: req.query.search as string | undefined,
+        status: req.query.status as string | undefined,
+        paymentMethod: req.query.paymentMethod as string | undefined,
+        startDate: req.query.startDate as string | undefined,
+        endDate: req.query.endDate as string | undefined,
+        userId: req.query.userId as string | undefined,
+        loanId: req.query.loanId as string | undefined,
+        page: req.query.page ? Number(req.query.page) : 1,
+        limit: req.query.limit ? Number(req.query.limit) : 15
+      };
+
+      const result = await PaymentService.listAdminPayments(filters, req.user!);
+      sendSuccess(res, result.items, 'Admin payment records retrieved successfully', 200, result.meta);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * POST /api/v1/payments/:id/confirm
+   * Super Admin: Verify & confirm pending repayment transaction
+   */
+  static async confirmPayment(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const paymentId = req.params.id;
+      const notes = req.body?.notes;
+      const ipAddress = (req.headers['x-forwarded-for'] as string) || req.ip;
+
+      const result = await PaymentService.confirmPayment(paymentId, req.user!, notes, ipAddress);
+      sendSuccess(res, result, result.message, 200);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * POST /api/v1/payments/:id/reject
+   * Super Admin: Reject invalid payment submission with required reason
+   */
+  static async rejectPayment(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const paymentId = req.params.id;
+      const reason = req.body?.reason;
+      const ipAddress = (req.headers['x-forwarded-for'] as string) || req.ip;
+
+      const result = await PaymentService.rejectPayment(paymentId, req.user!, reason, ipAddress);
+      sendSuccess(res, result, result.message, 200);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * GET /api/v1/payments/admin/user/:userId/history
+   * Super Admin: Complete User Financial Dossier & Repayment Track Record
+   */
+  static async getUserPaymentHistory(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const targetUserId = req.params.userId;
+      const dossier = await PaymentService.getUserPaymentHistory(targetUserId, req.user!);
+      sendSuccess(res, dossier, 'Complete user payment dossier retrieved successfully');
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * GET /api/v1/payments/:id/audit-trail
+   * Super Admin: Retrieve immutable audit trail of payment status changes
+   */
+  static async getPaymentAuditTrail(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const paymentId = req.params.id;
+      const trail = await PaymentService.getPaymentAuditTrail(paymentId, req.user!);
+      sendSuccess(res, trail, 'Payment audit trail retrieved successfully');
+    } catch (err) {
+      next(err);
+    }
+  }
 }

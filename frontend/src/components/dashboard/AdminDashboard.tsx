@@ -40,6 +40,7 @@ import {
   CheckCheck,
   Bell,
   Database,
+  Receipt,
 } from 'lucide-react';
 import { Currency, LoanAccount, Borrower, LoanApplication, PaymentReceipt, UserProfile } from '../../types';
 import { api } from '../../services/api';
@@ -1282,6 +1283,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   1 Mismatch
                 </span>
               )}
+            </button>
+
+            <button
+              onClick={() => onNavigate?.('/admin/payments')}
+              className="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer text-slate-400 hover:text-white hover:bg-slate-900 border border-transparent"
+              title="Super Admin User Payment History Management"
+            >
+              <Receipt className="w-3.5 h-3.5 text-blue-400" />
+              <span>User Payment History</span>
             </button>
           </div>
 

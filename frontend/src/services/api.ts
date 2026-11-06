@@ -18,6 +18,7 @@ import {
   MOCK_RECEIPTS,
   USER_PROFILES,
 } from '../data/mockData';
+import { loanStorageService } from './loanStorageService';
 
 const rawBase = (import.meta as any).env?.VITE_API_URL || '';
 const BASE_URL = rawBase
@@ -1494,6 +1495,106 @@ class ApiService {
 
   public async getPaymentById(id: string): Promise<any> {
     return await this.request<any>(`/payments/${id}`);
+  }
+
+  // --- SUPER ADMIN: USER PAYMENT HISTORY MANAGEMENT MODULE ---
+  public async getAdminPaymentSummary(): Promise<any> {
+    if (isStaticHost) {
+      return await loanStorageService.getAdminPaymentSummary();
+    }
+    try {
+      return await this.request<any>('/payments/admin/summary');
+    } catch {
+      return await loanStorageService.getAdminPaymentSummary();
+    }
+  }
+
+  public async getAdminPayments(filters: {
+    query?: string;
+    search?: string;
+    status?: string;
+    paymentMethod?: string;
+    startDate?: string;
+    endDate?: string;
+    userId?: string;
+    loanId?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ items: any[]; meta: { page: number; limit: number; total: number; totalPages: number } }> {
+    if (isStaticHost) {
+      return await loanStorageService.listAdminPayments(filters);
+    }
+    try {
+      const q = new URLSearchParams();
+      if (filters.query || filters.search) q.append('search', filters.query || filters.search || '');
+      if (filters.status && filters.status !== 'ALL') q.append('status', filters.status);
+      if (filters.paymentMethod && filters.paymentMethod !== 'ALL') q.append('paymentMethod', filters.paymentMethod);
+      if (filters.startDate) q.append('startDate', filters.startDate);
+      if (filters.endDate) q.append('endDate', filters.endDate);
+      if (filters.userId) q.append('userId', filters.userId);
+      if (filters.loanId) q.append('loanId', filters.loanId);
+      if (filters.page) q.append('page', String(filters.page));
+      if (filters.limit) q.append('limit', String(filters.limit));
+
+      const res = await this.request<any>(`/payments/admin/all?${q.toString()}`);
+      return {
+        items: Array.isArray(res) ? res : res?.items || [],
+        meta: res?.meta || { page: filters.page || 1, limit: filters.limit || 15, total: res?.length || 0, totalPages: 1 },
+      };
+    } catch {
+      return await loanStorageService.listAdminPayments(filters);
+    }
+  }
+
+  public async confirmAdminPayment(paymentId: string, notes?: string): Promise<any> {
+    if (isStaticHost) {
+      return await loanStorageService.confirmAdminPayment(paymentId, notes);
+    }
+    try {
+      return await this.request<any>(`/payments/${paymentId}/confirm`, {
+        method: 'POST',
+        body: JSON.stringify({ notes }),
+      });
+    } catch {
+      return await loanStorageService.confirmAdminPayment(paymentId, notes);
+    }
+  }
+
+  public async rejectAdminPayment(paymentId: string, reason: string): Promise<any> {
+    if (isStaticHost) {
+      return await loanStorageService.rejectAdminPayment(paymentId, reason);
+    }
+    try {
+      return await this.request<any>(`/payments/${paymentId}/reject`, {
+        method: 'POST',
+        body: JSON.stringify({ reason }),
+      });
+    } catch {
+      return await loanStorageService.rejectAdminPayment(paymentId, reason);
+    }
+  }
+
+  public async getUserPaymentDossier(userId: string): Promise<any> {
+    if (isStaticHost) {
+      return await loanStorageService.getUserPaymentDossier(userId);
+    }
+    try {
+      return await this.request<any>(`/payments/admin/user/${userId}/history`);
+    } catch {
+      return await loanStorageService.getUserPaymentDossier(userId);
+    }
+  }
+
+  public async getPaymentAuditTrail(paymentId: string): Promise<any[]> {
+    if (isStaticHost) {
+      return await loanStorageService.getPaymentAuditTrail(paymentId);
+    }
+    try {
+      const res = await this.request<any>(`/payments/${paymentId}/audit-trail`);
+      return Array.isArray(res) ? res : res?.items || [];
+    } catch {
+      return await loanStorageService.getPaymentAuditTrail(paymentId);
+    }
   }
 
   // --- USER MANAGEMENT (ADMIN) ---

@@ -28,7 +28,8 @@ import {
   CheckCircle2,
   Check,
   Trash2,
-  ExternalLink
+  ExternalLink,
+  Receipt
 } from 'lucide-react';
 import { Currency, UserProfile, NotificationItem } from '../../types';
 import { notificationStorageService, formatRelativeTime } from '../../services/notificationStorageService';
@@ -226,6 +227,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       path: '/admin/borrowers',
     },
     {
+      id: 'payment_history',
+      label: 'Payment History',
+      icon: Receipt,
+      path: '/admin/payments',
+    },
+    {
       id: 'reports',
       label: 'Reports & Credit Scoring',
       icon: BarChart3,
@@ -296,9 +303,13 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       return ['repayments', 'my-repayments', '/repayments', 'repayment-schedule', '/repayment-schedule', 'user_repayments'].includes(activeNav) ||
         ['/repayments', '/repayment-schedule'].includes(currentPath);
     }
+    if (item.id === 'payment_history') {
+      return ['payment_history', 'admin_payments', '/admin/payments', '/admin/payment-history', 'payments_history'].includes(activeNav) ||
+        ['/admin/payments', '/admin/payment-history'].includes(currentPath);
+    }
     if (item.id === 'cashier') {
-      return ['cashier', 'payments', '/payments', 'pay_installment', 'pay-installment', '/pay-installment', 'user_payments', '/admin/cashier', '/admin/payments'].includes(activeNav) ||
-        ['/payments', '/pay-installment', '/admin/cashier', '/admin/payments'].includes(currentPath);
+      return ['cashier', 'payments', '/payments', 'pay_installment', 'pay-installment', '/pay-installment', 'user_payments', '/admin/cashier'].includes(activeNav) ||
+        ['/payments', '/pay-installment', '/admin/cashier'].includes(currentPath);
     }
     if (item.id === 'profile') {
       return ['profile', '/profile', 'my-profile', '/my-profile', 'user_profile'].includes(activeNav) ||

@@ -1267,4 +1267,675 @@ export class PaymentService {
     const result = await this.verifyKhqrPayment(payment.id, systemUser, 'bakong-webhook');
     return { success: true, result };
   }
+
+  /**
+   * Super Admin: Dynamic Payment Summary Metrics
+   * Calculates dynamic KPI aggregates directly from the database
+   */
+  static async getAdminPaymentSummary(viewer: AuthUser) {
+    if (!isStaffRole(viewer.role)) {
+      throw { statusCode: 403, message: 'Access denied: Super Admin or staff authorization required', code: 'FORBIDDEN' };
+    }
+
+    const [
+      paidAggregate,
+      pendingAggregate,
+      failedAggregate,
+      overdueSchedules,
+      activeLoans
+    ] = await Promise.all([
+      // 1. Total Payments Received & Amount Collected
+      prisma.payment.aggregate({
+        where: { status: { in: [PaymentStatus.PAID, PaymentStatus.SUCCESS] } },
+        _count: { id: true },
+        _sum: { amount: true }
+      }),
+      // 2. Pending Payments
+      prisma.payment.aggregate({
+        where: { status: PaymentStatus.PENDING },
+        _count: { id: true },
+        _sum: { amount: true }
+      }),
+      // 3. Failed Payments
+      prisma.payment.aggregate({
+        where: { status: PaymentStatus.FAILED },
+        _count: { id: true },
+        _sum: { amount: true }
+      }),
+      // 4. Overdue Installments
+      prisma.repaymentSchedule.aggregate({
+        where: {
+          OR: [
+            { status: ScheduleStatus.OVERDUE },
+            {
+              status: { in: [ScheduleStatus.UPCOMING, ScheduleStatus.UNPAID, ScheduleStatus.PARTIAL] },
+              dueDate: { lt: new Date() }
+            }
+          ]
+        },
+        _count: { id: true },
+        _sum: { remainingAmount: true }
+      }),
+      // 5. Total Outstanding Balance across active / overdue loans
+      prisma.loan.aggregate({
+        where: { status: { in: [LoanStatus.ACTIVE, LoanStatus.OVERDUE] } },
+        _sum: { outstandingBalance: true }
+      })
+    ]);
+
+    const totalPaidAmount = Number(paidAggregate._sum.amount || 0);
+    const totalPendingAmount = Number(pendingAggregate._sum.amount || 0);
+    const totalFailedAmount = Number(failedAggregate._sum.amount || 0);
+    const totalOverdueAmount = Number(overdueSchedules._sum.remainingAmount || 0);
+    const totalOutstandingBalance = Number(activeLoans._sum.outstandingBalance || 0);
+
+    return {
+      totalPaymentsReceived: paidAggregate._count.id || 0,
+      totalAmountCollected: totalPaidAmount,
+      totalAmountCollectedUSD: totalPaidAmount,
+      totalAmountCollectedKHR: Math.round(totalPaidAmount * 4100),
+      pendingPaymentsCount: pendingAggregate._count.id || 0,
+      pendingPaymentsAmount: totalPendingAmount,
+      failedPaymentsCount: failedAggregate._count.id || 0,
+      failedPaymentsAmount: totalFailedAmount,
+      overduePaymentsCount: overdueSchedules._count.id || 0,
+      overduePaymentsAmount: totalOverdueAmount,
+      totalOutstandingBalance,
+      totalOutstandingBalanceUSD: totalOutstandingBalance,
+      totalOutstandingBalanceKHR: Math.round(totalOutstandingBalance * 4100),
+      currency: 'USD',
+      calculatedAt: new Date().toISOString()
+    };
+  }
+
+  /**
+   * Super Admin: Paginated & Filtered Payment History Management Table
+   * Returns enriched rows with all 13 required columns
+   */
+  static async listAdminPayments(filters: {
+    query?: string;
+    search?: string;
+    status?: string;
+    paymentMethod?: string;
+    startDate?: string;
+    endDate?: string;
+    userId?: string;
+    loanId?: string;
+    page?: number;
+    limit?: number;
+  }, viewer: AuthUser) {
+    if (!isStaffRole(viewer.role)) {
+      throw { statusCode: 403, message: 'Access denied: Super Admin authorization required', code: 'FORBIDDEN' };
+    }
+
+    const page = Math.max(1, Number(filters.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(filters.limit) || 15));
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.PaymentWhereInput = {};
+
+    // 1. Text search across borrower name, email, phone, referenceNo, receiptNo, loanNumber
+    const search = (filters.query || filters.search || '').trim();
+    if (search) {
+      where.OR = [
+        { receiptNo: { contains: search, mode: 'insensitive' } },
+        { referenceNo: { contains: search, mode: 'insensitive' } },
+        {
+          loan: {
+            OR: [
+              { loanNumber: { contains: search, mode: 'insensitive' } },
+              {
+                borrower: {
+                  OR: [
+                    { fullName: { contains: search, mode: 'insensitive' } },
+                    { email: { contains: search, mode: 'insensitive' } },
+                    { phone: { contains: search, mode: 'insensitive' } },
+                    { borrowerId: { contains: search, mode: 'insensitive' } }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ];
+    }
+
+    // 2. Status filter
+    if (filters.status && filters.status.toUpperCase() !== 'ALL') {
+      const s = filters.status.toUpperCase();
+      if (s === 'PAID') {
+        where.status = { in: [PaymentStatus.PAID, PaymentStatus.SUCCESS] };
+      } else if (s === 'PENDING') {
+        where.status = PaymentStatus.PENDING;
+      } else if (s === 'FAILED') {
+        where.status = PaymentStatus.FAILED;
+      } else if (s === 'PARTIAL') {
+        where.status = PaymentStatus.PARTIAL;
+      } else if (s === 'REFUNDED') {
+        where.status = PaymentStatus.REFUNDED;
+      } else if (s === 'OVERDUE') {
+        // Find payments associated with overdue installments
+        where.installment = { status: ScheduleStatus.OVERDUE };
+      }
+    }
+
+    // 3. Payment Method filter
+    if (filters.paymentMethod && filters.paymentMethod.toUpperCase() !== 'ALL') {
+      const m = filters.paymentMethod.toUpperCase().replace(/[\s-]+/g, '_');
+      if (m === 'CASH') where.paymentMethod = PaymentMethod.CASH;
+      else if (m === 'BANK_TRANSFER' || m === 'TRANSFER') where.paymentMethod = PaymentMethod.BANK_TRANSFER;
+      else if (m === 'CARD' || m === 'CREDIT_CARD') where.paymentMethod = PaymentMethod.CARD;
+      else if (m === 'QR_PAYMENT' || m === 'KHQR' || m === 'QR') where.paymentMethod = PaymentMethod.QR_PAYMENT;
+    }
+
+    // 4. Date range filter
+    if (filters.startDate || filters.endDate) {
+      where.paymentDate = {};
+      if (filters.startDate) where.paymentDate.gte = new Date(filters.startDate);
+      if (filters.endDate) where.paymentDate.lte = new Date(filters.endDate);
+    }
+
+    // 5. Specific Loan filter
+    if (filters.loanId) {
+      if (isUuid(filters.loanId)) {
+        where.loanId = filters.loanId;
+      } else {
+        where.loan = { loanNumber: filters.loanId };
+      }
+    }
+
+    // 6. Specific User filter
+    if (filters.userId) {
+      where.loan = {
+        ...((where.loan as any) || {}),
+        borrower: {
+          OR: [
+            { id: isUuid(filters.userId) ? filters.userId : undefined },
+            { borrowerId: filters.userId },
+            { userId: isUuid(filters.userId) ? filters.userId : undefined }
+          ].filter(Boolean) as any
+        }
+      };
+    }
+
+    const [total, payments] = await Promise.all([
+      prisma.payment.count({ where }),
+      prisma.payment.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { paymentDate: 'desc' },
+        include: {
+          loan: {
+            include: {
+              borrower: true,
+              product: { select: { productName: true } }
+            }
+          },
+          installment: true,
+          receivedByUser: {
+            select: { id: true, username: true, fullName: true, role: true }
+          }
+        }
+      })
+    ]);
+
+    const items = payments.map((p) => {
+      const borrower = p.loan.borrower;
+      const loan = p.loan;
+      const inst = p.installment;
+      const amount = Number(p.amount);
+      const loanAmount = Number(loan.principalAmount);
+      const totalRepayment = Number(loan.totalRepayment);
+      const remainingBalance = Number(loan.outstandingBalance);
+
+      // Determine computed status (support PAID, PENDING, FAILED, OVERDUE, PARTIAL, REFUNDED)
+      let displayStatus = p.status as string;
+      if (p.status === PaymentStatus.SUCCESS || p.status === PaymentStatus.PAID) {
+        displayStatus = 'PAID';
+      } else if (p.status === PaymentStatus.PENDING) {
+        displayStatus = 'PENDING';
+      } else if (p.status === PaymentStatus.PARTIAL) {
+        displayStatus = 'PARTIAL';
+      } else if (p.status === PaymentStatus.FAILED) {
+        displayStatus = 'FAILED';
+      } else if (p.status === PaymentStatus.REFUNDED) {
+        displayStatus = 'REFUNDED';
+      }
+
+      // Check if installment was overdue when payment was attempted or current
+      const isOverdue = inst?.status === ScheduleStatus.OVERDUE || (inst && new Date(inst.dueDate) < new Date() && Number(inst.remainingAmount) > 0);
+      if (displayStatus === 'PENDING' && isOverdue) {
+        displayStatus = 'OVERDUE';
+      }
+
+      return {
+        paymentId: p.receiptNo || p.id,
+        id: p.id,
+        receiptNo: p.receiptNo,
+        userId: borrower?.borrowerId || borrower?.userId || borrower?.id || 'N/A',
+        userInternalId: borrower?.id,
+        userFullName: borrower?.fullName || 'Client Borrower',
+        userEmail: borrower?.email || `${(borrower?.fullName || 'user').toLowerCase().replace(/\s+/g, '.')}@jamsongvich.com`,
+        userPhone: borrower?.phone || 'N/A',
+        loanId: loan.loanNumber || loan.id,
+        loanInternalId: loan.id,
+        productName: loan.product?.productName || 'Standard Facility',
+        loanAmount,
+        interestAmount: Number(loan.interestRate),
+        totalRepaymentAmount: totalRepayment,
+        paymentAmount: amount,
+        currency: p.currency || 'USD',
+        paymentMethod: p.paymentMethod,
+        transactionReference: p.referenceNo,
+        paymentDate: p.paymentDate.toISOString(),
+        dueDate: inst?.dueDate ? new Date(inst.dueDate).toISOString().slice(0, 10) : new Date(loan.startDate).toISOString().slice(0, 10),
+        installmentNo: inst?.installmentNo || 1,
+        installmentDueDate: inst?.dueDate ? new Date(inst.dueDate).toISOString().slice(0, 10) : undefined,
+        remainingBalance,
+        paymentStatus: displayStatus,
+        status: displayStatus,
+        failureReason: p.failureReason,
+        notes: p.notes,
+        paidAt: p.paidAt ? p.paidAt.toISOString() : undefined,
+        verifiedAt: p.verifiedAt ? p.verifiedAt.toISOString() : undefined,
+        confirmedBy: p.receivedByUser?.fullName || (p.status === 'PAID' ? 'System Automated Clearing' : undefined)
+      };
+    });
+
+    return {
+      items,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    };
+  }
+
+  /**
+   * Super Admin: Confirm Pending Payment
+   * Strict ACID PostgreSQL transaction with balance and installment reconciliation
+   */
+  static async confirmPayment(paymentId: string, caller: AuthUser, notes?: string, ipAddress?: string) {
+    if (!isStaffRole(caller.role)) {
+      throw { statusCode: 403, message: 'Access denied: Super Admin authorization required', code: 'FORBIDDEN' };
+    }
+
+    const existingPayment = await prisma.payment.findFirst({
+      where: isUuid(paymentId)
+        ? { OR: [{ id: paymentId }, { receiptNo: paymentId }, { referenceNo: paymentId }] }
+        : { OR: [{ receiptNo: paymentId }, { referenceNo: paymentId }] },
+      include: {
+        loan: {
+          include: {
+            borrower: true,
+            repaymentSchedules: { orderBy: { installmentNo: 'asc' } }
+          }
+        },
+        installment: true
+      }
+    });
+
+    if (!existingPayment) {
+      throw { statusCode: 404, message: 'Payment record not found', code: 'PAYMENT_NOT_FOUND' };
+    }
+
+    if (existingPayment.status === PaymentStatus.PAID || existingPayment.status === PaymentStatus.SUCCESS) {
+      throw { statusCode: 400, message: 'Payment is already confirmed and settled', code: 'ALREADY_PAID' };
+    }
+
+    const paymentAmount = Number(existingPayment.amount);
+    const loan = existingPayment.loan;
+
+    // Database ACID transaction
+    const result = await prisma.$transaction(async (tx) => {
+      const now = new Date();
+
+      // 1. Update Payment status
+      const updatedPayment = await tx.payment.update({
+        where: { id: existingPayment.id },
+        data: {
+          status: PaymentStatus.PAID,
+          paidAt: now,
+          verifiedAt: now,
+          receivedBy: caller.id,
+          notes: notes ? `${existingPayment.notes || ''}\n[Confirmed by Admin]: ${notes}`.trim() : existingPayment.notes
+        }
+      });
+
+      // 2. Reconcile Installment if linked, or allocate via waterfall
+      let targetInstallment = existingPayment.installment;
+      if (!targetInstallment) {
+        targetInstallment = loan.repaymentSchedules.find(
+          (s) => s.status !== ScheduleStatus.PAID && Number(s.remainingAmount) > 0
+        ) || null;
+      }
+
+      let updatedInstallment = null;
+      if (targetInstallment) {
+        const curPaid = Number(targetInstallment.amountPaid);
+        const newPaid = LoanCalculatorService.round2(curPaid + paymentAmount);
+        const totalDue = Number(targetInstallment.totalDue);
+        const newRemaining = Math.max(0, LoanCalculatorService.round2(totalDue - newPaid));
+        const newStatus = newRemaining <= 0 ? ScheduleStatus.PAID : ScheduleStatus.PARTIAL;
+
+        updatedInstallment = await tx.repaymentSchedule.update({
+          where: { id: targetInstallment.id },
+          data: {
+            amountPaid: newPaid,
+            remainingAmount: newRemaining,
+            status: newStatus,
+            settledAt: newRemaining <= 0 ? now : undefined
+          }
+        });
+      }
+
+      // 3. Update Loan facility balances
+      const currentOutstanding = Number(loan.outstandingBalance);
+      const currentTotalPaid = Number(loan.totalPaid);
+      const newTotalPaid = LoanCalculatorService.round2(currentTotalPaid + paymentAmount);
+      const newOutstanding = Math.max(0, LoanCalculatorService.round2(currentOutstanding - paymentAmount));
+      const isLoanFullyRepaid = newOutstanding <= 0;
+
+      const updatedLoan = await tx.loan.update({
+        where: { id: loan.id },
+        data: {
+          totalPaid: newTotalPaid,
+          outstandingBalance: newOutstanding,
+          status: isLoanFullyRepaid ? LoanStatus.COMPLETED : loan.status
+        }
+      });
+
+      // 4. Audit Log
+      await recordAuditLog({
+        userId: caller.id,
+        action: 'CONFIRM_PAYMENT',
+        entityName: 'Payment',
+        entityId: existingPayment.id,
+        details: {
+          adminUsername: caller.username,
+          adminEmail: caller.email,
+          paymentId: existingPayment.id,
+          receiptNo: existingPayment.receiptNo,
+          referenceNo: existingPayment.referenceNo,
+          amountPaid: paymentAmount,
+          loanNumber: loan.loanNumber,
+          previousOutstanding: currentOutstanding,
+          newOutstanding,
+          isLoanFullyRepaid,
+          notes
+        },
+        ipAddress
+      });
+
+      return {
+        payment: updatedPayment,
+        installment: updatedInstallment,
+        loan: updatedLoan,
+        remainingBalance: newOutstanding,
+        isCompleted: isLoanFullyRepaid
+      };
+    });
+
+    return {
+      success: true,
+      message: `Payment ${existingPayment.receiptNo} successfully verified and confirmed. Loan balance updated.`,
+      paymentId: result.payment.id,
+      receiptNo: result.payment.receiptNo,
+      status: 'PAID',
+      confirmedAt: new Date().toISOString(),
+      confirmedBy: caller.fullName,
+      remainingLoanBalance: result.remainingBalance,
+      isCompleted: result.isCompleted
+    };
+  }
+
+  /**
+   * Super Admin: Reject Invalid / Fraudulent Payment
+   * Records failure reason and maintains immutable audit log
+   */
+  static async rejectPayment(paymentId: string, caller: AuthUser, reason: string, ipAddress?: string) {
+    if (!isStaffRole(caller.role)) {
+      throw { statusCode: 403, message: 'Access denied: Super Admin authorization required', code: 'FORBIDDEN' };
+    }
+
+    if (!reason || reason.trim().length < 3) {
+      throw { statusCode: 400, message: 'A rejection reason of at least 3 characters is mandatory', code: 'REASON_REQUIRED' };
+    }
+
+    const payment = await prisma.payment.findFirst({
+      where: isUuid(paymentId)
+        ? { OR: [{ id: paymentId }, { receiptNo: paymentId }, { referenceNo: paymentId }] }
+        : { OR: [{ receiptNo: paymentId }, { referenceNo: paymentId }] },
+      include: {
+        loan: { include: { borrower: true } }
+      }
+    });
+
+    if (!payment) {
+      throw { statusCode: 404, message: 'Payment record not found', code: 'PAYMENT_NOT_FOUND' };
+    }
+
+    if (payment.status === PaymentStatus.PAID || payment.status === PaymentStatus.SUCCESS) {
+      throw { statusCode: 400, message: 'Cannot reject an already confirmed and settled payment', code: 'ALREADY_PAID' };
+    }
+
+    const updated = await prisma.payment.update({
+      where: { id: payment.id },
+      data: {
+        status: PaymentStatus.FAILED,
+        failureReason: reason.trim(),
+        verifiedAt: new Date()
+      }
+    });
+
+    await recordAuditLog({
+      userId: caller.id,
+      action: 'REJECT_PAYMENT',
+      entityName: 'Payment',
+      entityId: payment.id,
+      details: {
+        adminUsername: caller.username,
+        adminEmail: caller.email,
+        paymentId: payment.id,
+        receiptNo: payment.receiptNo,
+        referenceNo: payment.referenceNo,
+        amount: Number(payment.amount),
+        loanNumber: payment.loan.loanNumber,
+        borrowerName: payment.loan.borrower.fullName,
+        reason: reason.trim()
+      },
+      ipAddress
+    });
+
+    return {
+      success: true,
+      message: `Payment submission ${payment.receiptNo} rejected.`,
+      paymentId: updated.id,
+      receiptNo: updated.receiptNo,
+      status: 'FAILED',
+      failureReason: reason.trim()
+    };
+  }
+
+  /**
+   * Super Admin: Complete Payment History Per User (Dossier)
+   * Detailed breakdown across all loans, installments, payments, and balances
+   */
+  static async getUserPaymentHistory(targetUserId: string, viewer: AuthUser) {
+    if (!isStaffRole(viewer.role) && viewer.id !== targetUserId) {
+      throw { statusCode: 403, message: 'Access denied: You can only view your own payment dossier', code: 'FORBIDDEN' };
+    }
+
+    // Find borrower by id, clientCode, borrowerId, or userId
+    const borrower = await prisma.borrower.findFirst({
+      where: {
+        OR: [
+          isUuid(targetUserId) ? { id: targetUserId } : undefined,
+          isUuid(targetUserId) ? { userId: targetUserId } : undefined,
+          { borrowerId: targetUserId },
+          { user: { username: targetUserId } },
+          { user: { email: targetUserId } }
+        ].filter(Boolean) as any
+      },
+      include: {
+        user: { select: { id: true, username: true, email: true, fullName: true, role: true } },
+        loans: {
+          orderBy: { createdAt: 'desc' },
+          include: {
+            product: { select: { productName: true } },
+            repaymentSchedules: { orderBy: { installmentNo: 'asc' } },
+            payments: {
+              orderBy: { paymentDate: 'desc' },
+              include: {
+                installment: true,
+                receivedByUser: { select: { fullName: true } }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!borrower) {
+      throw { statusCode: 404, message: 'User or borrower account not found', code: 'USER_NOT_FOUND' };
+    }
+
+    const allLoans = borrower.loans;
+    const allPayments: any[] = [];
+    const allInstallments: any[] = [];
+
+    let totalBorrowed = 0;
+    let totalRepaid = 0;
+    let totalOutstanding = 0;
+    let lateRecordsCount = 0;
+    let successfulCount = 0;
+    let pendingCount = 0;
+    let failedCount = 0;
+
+    allLoans.forEach((loan) => {
+      totalBorrowed += Number(loan.principalAmount);
+      totalRepaid += Number(loan.totalPaid);
+      totalOutstanding += Number(loan.outstandingBalance);
+
+      loan.repaymentSchedules.forEach((s) => {
+        const isLate = s.status === ScheduleStatus.OVERDUE || (new Date(s.dueDate) < new Date() && s.status !== ScheduleStatus.PAID);
+        if (isLate) lateRecordsCount++;
+
+        allInstallments.push({
+          id: s.id,
+          loanId: loan.id,
+          loanNumber: loan.loanNumber,
+          installmentNo: s.installmentNo,
+          dueDate: s.dueDate.toISOString().slice(0, 10),
+          principalAmount: Number(s.principalAmount),
+          interestAmount: Number(s.interestAmount),
+          totalDue: Number(s.totalDue),
+          amountPaid: Number(s.amountPaid),
+          remainingAmount: Number(s.remainingAmount),
+          status: s.status,
+          settledAt: s.settledAt ? s.settledAt.toISOString() : undefined
+        });
+      });
+
+      loan.payments.forEach((p) => {
+        if (p.status === PaymentStatus.PAID || p.status === PaymentStatus.SUCCESS) successfulCount++;
+        else if (p.status === PaymentStatus.PENDING) pendingCount++;
+        else if (p.status === PaymentStatus.FAILED) failedCount++;
+
+        allPayments.push({
+          id: p.id,
+          paymentId: p.receiptNo || p.id,
+          receiptNo: p.receiptNo,
+          loanId: loan.id,
+          loanNumber: loan.loanNumber,
+          installmentNo: p.installment?.installmentNo || 1,
+          amount: Number(p.amount),
+          currency: p.currency,
+          paymentMethod: p.paymentMethod,
+          referenceNo: p.referenceNo,
+          paymentDate: p.paymentDate.toISOString(),
+          dueDate: p.installment?.dueDate ? new Date(p.installment.dueDate).toISOString().slice(0, 10) : undefined,
+          status: p.status,
+          failureReason: p.failureReason,
+          notes: p.notes,
+          receivedBy: p.receivedByUser?.fullName || 'System'
+        });
+      });
+    });
+
+    // Sort all payments by paymentDate desc
+    allPayments.sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime());
+
+    return {
+      user: {
+        userId: borrower.borrowerId || borrower.id,
+        id: borrower.id,
+        fullName: borrower.fullName,
+        email: borrower.email || borrower.user?.email || 'N/A',
+        phone: borrower.phone || 'N/A',
+        address: borrower.address || 'Phnom Penh, Cambodia',
+        accountStatus: borrower.user ? 'ACTIVE' : 'REGISTERED_BORROWER'
+      },
+      summary: {
+        totalLoansBorrowed: allLoans.length,
+        totalAmountBorrowedUSD: totalBorrowed,
+        totalAmountRepaidUSD: totalRepaid,
+        remainingRepaymentAmountUSD: totalOutstanding,
+        successfulPaymentsCount: successfulCount,
+        pendingPaymentsCount: pendingCount,
+        failedPaymentsCount: failedCount,
+        latePaymentRecordsCount: lateRecordsCount,
+        currency: 'USD'
+      },
+      loans: allLoans.map((l) => ({
+        id: l.id,
+        loanNumber: l.loanNumber,
+        productName: l.product?.productName || 'Standard Facility',
+        principalAmount: Number(l.principalAmount),
+        interestRate: Number(l.interestRate),
+        termMonths: l.termMonths,
+        totalRepayment: Number(l.totalRepayment),
+        totalPaid: Number(l.totalPaid),
+        outstandingBalance: Number(l.outstandingBalance),
+        status: l.status,
+        startDate: l.startDate.toISOString().slice(0, 10),
+        endDate: l.endDate.toISOString().slice(0, 10)
+      })),
+      installments: allInstallments,
+      payments: allPayments
+    };
+  }
+
+  /**
+   * Super Admin: Payment Audit Log Trail
+   */
+  static async getPaymentAuditTrail(paymentId: string, viewer: AuthUser) {
+    if (!isStaffRole(viewer.role)) {
+      throw { statusCode: 403, message: 'Access denied: Super Admin authorization required', code: 'FORBIDDEN' };
+    }
+
+    const logs = await prisma.auditLog.findMany({
+      where: {
+        entityName: 'Payment',
+        entityId: paymentId
+      },
+      orderBy: { timestamp: 'desc' },
+      include: {
+        user: { select: { id: true, username: true, fullName: true, role: true } }
+      }
+    });
+
+    return logs.map((log) => ({
+      id: log.id,
+      action: log.action,
+      adminName: log.user?.fullName || log.user?.username || 'System Administrator',
+      adminRole: log.user?.role || 'ADMIN',
+      details: log.details,
+      ipAddress: log.ipAddress,
+      timestamp: log.timestamp.toISOString()
+    }));
+  }
 }

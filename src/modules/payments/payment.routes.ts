@@ -35,13 +35,27 @@ paymentRouter.post('/:id/verify', PaymentController.verifyPayment);
 paymentRouter.post('/verify', PaymentController.verifyPayment);
 
 // ==========================================
-// 5. Payment Directory & Loan History
+// 5. Super Admin Payment Management & Aggregates
+// ==========================================
+paymentRouter.get('/admin/summary', PaymentController.getAdminSummary);
+paymentRouter.get('/admin/all', PaymentController.listAdminPayments);
+paymentRouter.get('/admin/user/:userId/history', PaymentController.getUserPaymentHistory);
+
+// ==========================================
+// 6. Payment Confirmation & Rejection Desk (Admin Action)
+// ==========================================
+paymentRouter.post('/:id/confirm', PaymentController.confirmPayment);
+paymentRouter.post('/:id/reject', PaymentController.rejectPayment);
+paymentRouter.get('/:id/audit-trail', PaymentController.getPaymentAuditTrail);
+
+// ==========================================
+// 7. Payment Directory & Loan History
 // ==========================================
 paymentRouter.get('/', PaymentController.list);
 paymentRouter.get('/loan/:loanId', PaymentController.listByLoan);
 
 // ==========================================
-// 6. Payment Receipt & Details Retrieval
+// 8. Payment Receipt & Details Retrieval
 // ==========================================
 paymentRouter.get('/:id/receipt', PaymentController.getReceipt);
 paymentRouter.get('/receipt/:receiptNo', PaymentController.getReceipt);

@@ -57,6 +57,7 @@ import { BorrowerPaymentModal } from './components/loans/BorrowerPaymentModal';
 // Screen 6: Cashier Desk & Payment Collection Terminal
 import { CashierPaymentTerminal } from './components/cashier/CashierPaymentTerminal';
 import { PaymentReceiptModal } from './components/cashier/PaymentReceiptModal';
+import { PaymentHistoryManagement } from './components/admin/payments/PaymentHistoryManagement';
 
 // Screen 7: Overdue Delinquency Watchlist
 import { OverdueWatchlist } from './components/overdue/OverdueWatchlist';
@@ -421,7 +422,9 @@ export const App: React.FC = () => {
         setActiveTab('disbursements');
       } else if (path === '/admin/loans') {
         setActiveTab('loans');
-      } else if (path === '/admin/payments' || path === '/admin/cashier') {
+      } else if (path === '/admin/payments' || path === '/admin/payment-history' || path === '/admin/payment_history') {
+        setActiveTab('payment_history');
+      } else if (path === '/admin/cashier') {
         setActiveTab('cashier');
       } else if (path === '/admin/overdue') {
         setActiveTab('overdue');
@@ -830,6 +833,8 @@ export const App: React.FC = () => {
       case 'cashier':
       case 'pay_installment':
         return [{ label: 'Core Banking' }, { label: isBorrowerRole ? 'Pay Installment' : 'Cashier Desk', active: true }];
+      case 'payment_history':
+        return [{ label: 'Executive Operations', onClick: () => handleNavSelection('/admin/payments') }, { label: 'User Payment History Management', active: true }];
       case 'borrowers':
         return [{ label: 'Core Banking', onClick: () => handleNavSelection('/admin/borrowers') }, { label: 'Active Facilities & Borrowers', active: true }];
       case 'borrower-detail':
@@ -1018,19 +1023,25 @@ export const App: React.FC = () => {
     ) {
       targetPath = '/repayments';
     } else if (
+      navTarget === 'payment_history' ||
+      navTarget === 'admin_payments' ||
+      navTarget === '/admin/payments' ||
+      navTarget === '/admin/payment-history' ||
+      navTarget === '/admin/payment_history'
+    ) {
+      targetPath = '/admin/payments';
+    } else if (
       navTarget === 'pay_installment' ||
       navTarget === 'pay-installment' ||
       navTarget === '/pay-installment' ||
       navTarget === 'cashier' ||
       navTarget === 'cashier_desk' ||
       navTarget === 'payments' ||
-      navTarget === 'admin_payments' ||
       navTarget === 'my_repayments' ||
-      navTarget === '/admin/payments' ||
       navTarget === '/admin/cashier' ||
       navTarget === '/payments'
     ) {
-      targetPath = isAdmin ? '/admin/payments' : '/payments';
+      targetPath = isAdmin ? '/admin/cashier' : '/payments';
     } else if (navTarget === 'overdue' || navTarget === 'admin_overdue' || navTarget === '/admin/overdue') {
       targetPath = '/admin/overdue';
     } else if (navTarget === 'reports' || navTarget === 'admin_reports' || navTarget === '/admin/reports' || navTarget === '/reports') {
@@ -1955,6 +1966,14 @@ export const App: React.FC = () => {
                 setSelectedLoanId(loanId);
                 setActiveTab('cashier');
               }}
+            />
+          )}
+
+          {/* SCREEN: Super Admin User Payment History Management */}
+          {activeTab === 'payment_history' && (
+            <PaymentHistoryManagement
+              currency={currency}
+              onNavigate={handleNavSelection}
             />
           )}
 

@@ -80,6 +80,90 @@ export class KycService {
   private static mockStore = new Map<string, KycDocumentItem[]>();
   private static vaultPath = path.join(process.cwd(), '.kyc_vault.json');
 
+  private static isTableAvailable: boolean | null = null;
+  private static isCheckingTable = false;
+
+  private static isUuid(val: string): boolean {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+  }
+
+  private static async canQueryDb(userId?: string): Promise<boolean> {
+    // If a userId is provided and it is not a valid UUID (e.g. "BOR-2026-8801"),
+    // skip Prisma because the DB column is @db.Uuid and will reject non-UUID strings.
+    if (userId && !this.isUuid(userId)) {
+      return false;
+    }
+
+    if (this.isTableAvailable !== null) {
+      return this.isTableAvailable;
+    }
+
+    if (this.isCheckingTable) {
+      return false;
+    }
+
+    this.isCheckingTable = true;
+    try {
+      // Query system catalog to see if table exists without triggering Prisma model validation
+      const check: any[] = await prisma.$queryRawUnsafe(
+        `SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'user_kyc_documents' LIMIT 1`
+      );
+
+      if (check && check.length > 0) {
+        this.isTableAvailable = true;
+        this.isCheckingTable = false;
+        return true;
+      }
+
+      // If table doesn't exist, attempt to auto-create it safely
+      try {
+        await prisma.$executeRawUnsafe(`
+          DO $$ BEGIN
+              CREATE TYPE "KycDocumentType" AS ENUM ('NATIONAL_ID', 'PROOF_OF_RESIDENCE', 'EMPLOYMENT_INCOME_CONTRACT');
+          EXCEPTION WHEN duplicate_object THEN null;
+          END $$;
+
+          DO $$ BEGIN
+              CREATE TYPE "KycVerificationStatus" AS ENUM ('MISSING', 'PENDING_REVIEW', 'VERIFIED', 'REJECTED');
+          EXCEPTION WHEN duplicate_object THEN null;
+          END $$;
+
+          CREATE TABLE IF NOT EXISTS "user_kyc_documents" (
+              "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+              "user_id" UUID NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+              "document_type" "KycDocumentType" NOT NULL,
+              "file_key" VARCHAR(500) NOT NULL,
+              "original_filename" VARCHAR(255) NOT NULL,
+              "file_size_bytes" BIGINT NOT NULL,
+              "mime_type" VARCHAR(100) NOT NULL,
+              "reference_number" VARCHAR(100) NOT NULL,
+              "status" "KycVerificationStatus" NOT NULL DEFAULT 'PENDING_REVIEW',
+              "verified_at" TIMESTAMPTZ(6) NULL,
+              "verified_by" UUID NULL REFERENCES "users"("id") ON DELETE SET NULL,
+              "rejection_reason" TEXT NULL,
+              "uploaded_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              "updated_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              CONSTRAINT "uq_user_kyc_document_type" UNIQUE ("user_id", "document_type")
+          );
+
+          CREATE INDEX IF NOT EXISTS "idx_user_kyc_documents_user_id" ON "user_kyc_documents" ("user_id");
+          CREATE INDEX IF NOT EXISTS "idx_user_kyc_documents_status" ON "user_kyc_documents" ("status");
+        `);
+        this.isTableAvailable = true;
+        this.isCheckingTable = false;
+        return true;
+      } catch {
+        this.isTableAvailable = false;
+        this.isCheckingTable = false;
+        return false;
+      }
+    } catch {
+      this.isTableAvailable = false;
+      this.isCheckingTable = false;
+      return false;
+    }
+  }
+
   private static loadVaultFromDisk(): void {
     try {
       if (fs.existsSync(this.vaultPath)) {
@@ -147,9 +231,9 @@ export class KycService {
     this.loadVaultFromDisk();
     let docs = this.mockStore.get(userId);
 
-    // Try database if available
+    // Try database if available and userId is a valid UUID
     try {
-      if ((prisma as any)?.userKycDocument) {
+      if ((await this.canQueryDb(userId)) && (prisma as any)?.userKycDocument) {
         const dbDocs = await (prisma as any).userKycDocument.findMany({
           where: { userId },
         }).catch(() => null);
@@ -277,9 +361,9 @@ export class KycService {
     this.mockStore.set(userId, existingDocs);
     this.saveVaultToDisk();
 
-    // Persist to Prisma DB if accessible
+    // Persist to Prisma DB if accessible and userId is a valid UUID
     try {
-      if ((prisma as any)?.userKycDocument) {
+      if ((await this.canQueryDb(userId)) && (prisma as any)?.userKycDocument) {
         await (prisma as any).userKycDocument.upsert({
           where: {
             uq_user_document_type: {

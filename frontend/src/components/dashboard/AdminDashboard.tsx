@@ -924,108 +924,114 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* 2. HEADER BAR & SYSTEM MASTER CONTROLS                                    */}
+      {/* 2. HEADER BAR & SYSTEM MASTER CONTROLS (Deliverable 1)                     */}
       {/* ========================================================================= */}
-      <div className="space-y-4">
-        {/* Top Header Row */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold tracking-tight text-white">
-                {focusMode === 'FACILITIES' ? 'Active Facilities & Borrowers' : 'Core Banking Overview'}
-              </h1>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                {portfolioMetrics.activeCount > 0 ? `${portfolioMetrics.activeCount} Active` : 'Active Ledger'}
-              </span>
+      <header className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl p-4 sm:p-5 shadow-2xl backdrop-blur-md">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+          {/* Institution Identity */}
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-amber-400 p-[1.5px] shadow-lg shadow-emerald-950/40 shrink-0">
+              <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+                <Building2 className="w-6 h-6 text-emerald-400" />
+              </div>
             </div>
-            <p className="text-xs text-slate-400 mt-1">
-              {focusMode === 'FACILITIES'
-                ? 'Manage active loan facilities, monitor repayments, and review borrower records.'
-                : 'Executive ledger overview, portfolio health metrics, and facility controls.'}
-            </p>
+            <div>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h1 className="text-sm sm:text-base font-black tracking-wider uppercase text-white font-mono">
+                  JAM SONG VICH
+                </h1>
+                <span className="text-slate-600 font-mono text-xs">|</span>
+                <span className="text-xs font-semibold text-slate-300">
+                  {focusMode === 'FACILITIES' ? 'Active Facilities & Borrowers Ledger' : 'Core Banking / Super Admin Ledger'}
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  LIVE NBC GATEWAY
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 font-medium tracking-tight mt-0.5">
+                Core Banking System • ប្រព័ន្ធគ្រប់គ្រងឥណទាន • National Bank of Cambodia Clearing Rails
+              </p>
+            </div>
           </div>
 
-          {/* Right Action */}
-          <div className="flex items-center gap-2.5">
+          {/* Right Status Badges: Bakong Latency + Profile KYC Badge */}
+          <div className="flex items-center gap-2.5 flex-wrap">
+            {/* Bakong Node Latency Pulse Pill */}
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-[#0f172a] border border-[#1e293b] rounded-xl text-xs font-mono text-slate-300 shadow-inner">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <span className="text-[11px]">
+                Bakong Core: <span className="text-emerald-400 font-bold">Connected</span> (42ms)
+              </span>
+            </div>
+
+            {/* Direct Trigger to Executive Portfolio Intelligence & Risk Engine */}
             <button
               onClick={() => onNavigate?.('/admin/analytics')}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-800 hover:border-slate-700 transition shadow-sm cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-500/15 to-teal-500/15 hover:from-emerald-500/25 hover:to-teal-500/25 border border-emerald-500/30 rounded-xl text-xs font-bold text-emerald-300 shadow-sm transition-all cursor-pointer"
               title="Open Executive Analytics & Portfolio Intelligence Suite"
             >
-              <BarChart3 className="w-4 h-4 text-emerald-400" />
-              <span>Portfolio Analytics</span>
+              <BarChart3 className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Portfolio Intelligence & Risk Engine →</span>
             </button>
+
+            {/* Super Admin Profile Badge */}
+            <div className="flex items-center gap-2 px-3 py-1 bg-[#0f172a] border border-[#1e293b] rounded-xl">
+              <div className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-[10px] font-bold text-emerald-300">
+                SA
+              </div>
+              <div className="text-left">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-white leading-none">System Administrator</span>
+                  <span className="px-1 py-0.2 rounded text-[9px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    KYC VERIFIED
+                  </span>
+                </div>
+                <span className="text-[10px] text-slate-400 font-mono leading-none">Phnom Penh Main Ledger</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Global Filter & Scoping Toolbar */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 shadow-sm flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-          {/* Filter Controls Group */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* Period Toggles (Today, MTD, QTD, YTD) */}
-            <div className="inline-flex items-center bg-slate-950/70 border border-slate-800/80 p-1 rounded-xl">
-              {(['Today', 'MTD', 'QTD', 'YTD'] as PeriodScope[]).map((period) => (
-                <button
-                  key={period}
-                  onClick={() => setPeriodScope(period)}
-                  className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
-                    periodScope === period
-                      ? 'bg-slate-800 text-white font-semibold shadow-xs border border-slate-700/60'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
-                  }`}
-                >
-                  {period}
-                </button>
-              ))}
-            </div>
-
-            {/* Branch Filter Dropdown */}
-            <select
-              value={selectedBranch}
-              onChange={(e) => setSelectedBranch(e.target.value as BranchScope)}
-              className="py-1.5 px-3 bg-slate-950/70 border border-slate-800/80 rounded-xl text-xs font-medium text-slate-200 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 cursor-pointer"
-            >
-              <option value="All Branches">All Branches (Consolidated)</option>
-              <option value="Phnom Penh Main">Phnom Penh Main Branch</option>
-              <option value="Siem Reap">Siem Reap Branch</option>
-              <option value="Battambang">Battambang Branch</option>
-            </select>
-
-            {/* Currency Mode Filter */}
-            <div className="inline-flex items-center bg-slate-950/70 border border-slate-800/80 p-1 rounded-xl">
-              {(['USD', 'KHR', 'CONSOLIDATED'] as CurrencyMode[]).map((mode) => (
-                <button
-                  key={mode}
-                  onClick={() => setCurrencyMode(mode)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
-                    currencyMode === mode
-                      ? 'bg-slate-800 text-white font-semibold shadow-xs border border-slate-700/60'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
-                  }`}
-                >
-                  {mode === 'CONSOLIDATED' ? 'DUAL' : mode}
-                </button>
-              ))}
-            </div>
+        {/* Scoping & Search Strip (Period & Branch controls removed per user request) */}
+        <div className="mt-4 pt-4 border-t border-[#1e293b] flex flex-col sm:flex-row items-center justify-between gap-3">
+          {/* Currency Mode Filter */}
+          <div className="flex items-center gap-1 bg-[#0f172a] p-1 rounded-xl border border-[#1e293b] w-full sm:w-auto">
+            {(['USD', 'KHR', 'CONSOLIDATED'] as CurrencyMode[]).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setCurrencyMode(mode)}
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
+                  currencyMode === mode
+                    ? 'bg-amber-400 text-slate-950 shadow-md'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {mode === 'CONSOLIDATED' ? 'DUAL' : mode}
+              </button>
+            ))}
           </div>
 
-          {/* Search Bar */}
-          <div className="relative w-full lg:w-80">
-            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          {/* Scoped System Search Bar (Ctrl+K) */}
+          <div className="relative w-full sm:max-w-md">
+            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               ref={searchInputRef}
               type="text"
               value={globalSearch}
               onChange={(e) => setGlobalSearch(e.target.value)}
-              placeholder="Search borrower, loan ID, phone..."
-              className="w-full py-1.5 pl-9 pr-11 bg-slate-950/70 border border-slate-800/80 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 focus:border-slate-700 transition"
+              placeholder="Search CBC ID, Phone, Loan No, National ID..."
+              className="w-full py-1.5 pl-8 pr-12 bg-[#0f172a] border border-[#1e293b] rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
             />
-            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded border border-slate-800 bg-slate-900 text-[10px] font-mono text-slate-400 pointer-events-none">
+            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded border border-slate-700 bg-slate-800 text-[10px] font-mono text-slate-400 pointer-events-none">
               ⌘K
             </span>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* ========================================================================= */}
       {/* 2. OPERATIONAL PORTFOLIO OVERVIEW CARDS (Active, Borrowed, Balance, Repaid)*/}

@@ -509,7 +509,7 @@ export class AuthService {
           username: createdUser.username,
           email: createdUser.email,
           fullName: createdUser.fullName,
-          role: createdUser.role === UserRole.ADMIN ? 'admin' : 'user',
+          role: (createdUser.role === UserRole.ADMIN || createdUser.role === UserRole.SUPER_ADMIN) ? 'admin' : 'user',
           emailVerified: true,
         },
       };
@@ -566,7 +566,7 @@ export class AuthService {
 
       const permissions = getPermissionsForRole(user.role);
       const defaultAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.username)}`;
-      const normalizedRole = user.role === UserRole.ADMIN ? 'admin' : 'user';
+      const normalizedRole = (user.role === UserRole.ADMIN || user.role === UserRole.SUPER_ADMIN) ? 'admin' : 'user';
 
       try {
         await recordAuditLog({
@@ -1064,7 +1064,7 @@ export class AuthService {
     }
 
     const defaultAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.username)}`;
-    const normalizedRole = user.role === UserRole.ADMIN ? 'admin' : 'user';
+    const normalizedRole = (user.role === UserRole.ADMIN || user.role === UserRole.SUPER_ADMIN) ? 'admin' : 'user';
 
     // Step 9 & Response Format
     return {

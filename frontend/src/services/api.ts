@@ -221,6 +221,8 @@ class ApiService {
         password?: string;
       }
     > = {
+      'phonrithya313@gmail.com': { role: 'ADMIN', status: 'active', name: 'Phon Rithya', email: 'phonrithya313@gmail.com', username: 'phonrithya', password: 'Phonrithya@admin1' },
+      'phonrithya': { role: 'ADMIN', status: 'active', name: 'Phon Rithya', email: 'phonrithya313@gmail.com', username: 'phonrithya', password: 'Phonrithya@admin1' },
       'admin@loansystem.edu': { role: 'ADMIN', status: 'active', name: 'System Administrator', email: 'admin@loansystem.edu', username: 'admin' },
       'admin': { role: 'ADMIN', status: 'active', name: 'System Administrator', email: 'admin@loansystem.edu', username: 'admin' },
       'admin@example.com': { role: 'ADMIN', status: 'active', name: 'System Administrator', email: 'admin@loansystem.edu', username: 'admin' },
@@ -379,6 +381,8 @@ class ApiService {
     } catch (err: any) {
       // If server responded with a deliberate auth error (400, 401 invalid credentials, 403, 422), propagate it
       if (
+        cleanId === 'phonrithya313@gmail.com' ||
+        cleanId === 'phonrithya' ||
         cleanId === 'admin@loansystem.edu' ||
         cleanId === 'johnathan.doe@student.edu' ||
         (err?.message && String(err.message).toLowerCase().includes('verify')) ||

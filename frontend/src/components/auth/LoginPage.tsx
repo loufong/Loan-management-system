@@ -98,6 +98,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       onLoginSuccess(loginResult.user || loginResult, activeToken, rememberMe);
     } catch (err: any) {
       if (
+        identifier.toLowerCase() === 'phonrithya313@gmail.com' ||
+        identifier.toLowerCase() === 'phonrithya' ||
         identifier.toLowerCase() === 'admin@loansystem.edu' ||
         identifier.toLowerCase() === 'johnathan.doe@student.edu' ||
         String(err?.message || '').toLowerCase().includes('verify')

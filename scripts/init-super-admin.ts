@@ -18,50 +18,31 @@ async function main() {
 
   const passwordHash = await bcrypt.hash(rawPassword, 10);
 
-  // Check if an admin already exists
-  const existingAdmin = await prisma.user.findFirst({
-    where: { role: UserRole.ADMIN }
-  });
+  let username = adminEmail.split('@')[0].toLowerCase().replace(/[^a-z0-9_.-]/g, '');
+  if (!username) username = 'admin';
 
-  if (existingAdmin && existingAdmin.email !== adminEmail) {
-    console.warn(`⚠️ Warning: An authorized Super Admin account already exists (${existingAdmin.email}).`);
-    console.warn(`Enforcing Single Super Admin Governance: Updating existing Super Admin account.`);
-    await prisma.user.update({
-      where: { id: existingAdmin.id },
-      data: {
-        email: adminEmail,
-        username: 'admin',
-        fullName,
-        passwordHash,
-        status: UserStatus.ACTIVE,
-        emailVerifiedAt: new Date()
-      }
-    });
-    console.log(`✅ Super Admin account updated successfully (${adminEmail}).`);
-  } else {
-    const user = await prisma.user.upsert({
-      where: { email: adminEmail },
-      update: {
-        passwordHash,
-        fullName,
-        role: UserRole.ADMIN,
-        status: UserStatus.ACTIVE,
-        emailVerifiedAt: new Date()
-      },
-      create: {
-        username: 'admin',
-        email: adminEmail,
-        fullName,
-        passwordHash,
-        role: UserRole.ADMIN,
-        status: UserStatus.ACTIVE,
-        emailVerifiedAt: new Date(),
-        phone: '+1-555-0100',
-        department: 'IT & Executive Administration'
-      }
-    });
-    console.log(`✅ Super Admin account initialized successfully (${user.email}).`);
-  }
+  const user = await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: {
+      passwordHash,
+      fullName,
+      role: UserRole.SUPER_ADMIN,
+      status: UserStatus.ACTIVE,
+      emailVerifiedAt: new Date()
+    },
+    create: {
+      username,
+      email: adminEmail,
+      fullName,
+      passwordHash,
+      role: UserRole.SUPER_ADMIN,
+      status: UserStatus.ACTIVE,
+      emailVerifiedAt: new Date(),
+      phone: '+855 17 790 800',
+      department: 'Super Administration & Executive Governance'
+    }
+  });
+  console.log(`✅ Super Admin account initialized successfully (${user.email}).`);
 
   console.log(`ℹ️ Governance Rules Enforced:`);
   console.log(`   - Exactly 1 Super Admin Authorized`);

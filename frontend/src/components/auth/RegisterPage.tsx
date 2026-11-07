@@ -25,7 +25,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
   onRegisterSuccess,
   onNavigateToLogin,
 }) => {
-  const { language, setLanguage, t } = useLanguage();
+  const { t } = useLanguage();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -124,8 +124,8 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
   return (
     <div className="min-h-screen w-full bg-[#F8FAFC] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans antialiased text-[#0F172A]">
       <div className="sm:mx-auto sm:w-full sm:max-w-[480px]">
-        {/* Top Controls: Back to Sign In & Language Switcher */}
-        <div className="flex items-center justify-between mb-3">
+        {/* Top Controls: Back to Sign In */}
+        <div className="flex items-center justify-start mb-3">
           <button
             type="button"
             onClick={onNavigateToLogin}
@@ -134,32 +134,6 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
             <ArrowLeft className="w-3.5 h-3.5 text-slate-500" />
             <span>{t('Sign In', 'Sign In')}</span>
           </button>
-
-          {/* Language Switcher */}
-          <div className="inline-flex items-center p-0.5 bg-slate-100 border border-[#E2E8F0] rounded-[6px]">
-            <button
-              type="button"
-              onClick={() => setLanguage('en')}
-              className={`px-2.5 py-1 text-xs font-semibold rounded-[4px] transition-colors cursor-pointer ${
-                language === 'en'
-                  ? 'bg-white text-[#2563EB] shadow-xs'
-                  : 'text-[#64748B] hover:text-[#0F172A]'
-              }`}
-            >
-              EN
-            </button>
-            <button
-              type="button"
-              onClick={() => setLanguage('km')}
-              className={`px-2.5 py-1 text-xs font-semibold rounded-[4px] transition-colors cursor-pointer ${
-                language === 'km'
-                  ? 'bg-white text-[#2563EB] shadow-xs'
-                  : 'text-[#64748B] hover:text-[#0F172A]'
-              }`}
-            >
-              ខ្មែរ
-            </button>
-          </div>
         </div>
 
         {/* Institutional Branding Header */}

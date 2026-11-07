@@ -33,7 +33,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   initialRole,
 }) => {
   const { login } = useAuth();
-  const { language, setLanguage, t } = useLanguage();
+  const { t } = useLanguage();
   const [showCoreBankingView, setShowCoreBankingView] = useState<boolean>(() => {
     return window.location.search.includes('view=core') || window.location.hash.includes('view=core');
   });
@@ -122,8 +122,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   return (
     <div className="min-h-screen w-full bg-[#F8FAFC] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans antialiased text-[#0F172A]">
       <div className="sm:mx-auto sm:w-full sm:max-w-[480px]">
-        {/* Top Controls: Core Banking Screen & Language Switcher */}
-        <div className="flex items-center justify-between mb-3">
+        {/* Top Controls: Core Banking Screen */}
+        <div className="flex items-center justify-start mb-3">
           <button
             type="button"
             onClick={() => setShowCoreBankingView(true)}
@@ -133,32 +133,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
             <span>Core Banking Screen</span>
           </button>
-
-          {/* Language Switcher */}
-          <div className="inline-flex items-center p-0.5 bg-slate-100 border border-[#E2E8F0] rounded-[6px]">
-            <button
-              type="button"
-              onClick={() => setLanguage('en')}
-              className={`px-2.5 py-1 text-xs font-semibold rounded-[4px] transition-colors cursor-pointer ${
-                language === 'en'
-                  ? 'bg-white text-[#2563EB] shadow-xs'
-                  : 'text-[#64748B] hover:text-[#0F172A]'
-              }`}
-            >
-              EN
-            </button>
-            <button
-              type="button"
-              onClick={() => setLanguage('km')}
-              className={`px-2.5 py-1 text-xs font-semibold rounded-[4px] transition-colors cursor-pointer ${
-                language === 'km'
-                  ? 'bg-white text-[#2563EB] shadow-xs'
-                  : 'text-[#64748B] hover:text-[#0F172A]'
-              }`}
-            >
-              ខ្មែរ
-            </button>
-          </div>
         </div>
 
         {/* Institutional Branding Header */}

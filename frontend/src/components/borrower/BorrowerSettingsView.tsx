@@ -1,34 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import {
   Sliders,
-  Globe,
   Bell,
   Shield,
-  KeyRound,
-  Lock,
-  Smartphone,
-  Laptop,
-  CheckCircle2,
-  AlertCircle,
-  ExternalLink,
-  LogOut,
-  Send,
-  Mail,
-  MessageSquare,
-  DollarSign,
-  Save,
+  Landmark,
   Check,
   Eye,
   EyeOff,
-  RefreshCw,
-  Landmark,
-  QrCode,
-  CreditCard,
-  ChevronRight,
+  CheckCircle2,
+  AlertCircle,
+  ExternalLink,
   X,
-  ShieldCheck,
-  Building2,
-  AlertTriangle,
+  CreditCard,
+  Smartphone,
+  Laptop,
 } from 'lucide-react';
 import { Currency, UserProfile } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
@@ -82,7 +67,7 @@ function getClientDeviceInfo() {
   };
 }
 
-// Human-crafted, accessible Toggle Switch
+// Clean, accessible Toggle Switch
 const ToggleSwitch: React.FC<{
   checked: boolean;
   onChange: (val: boolean) => void;
@@ -94,13 +79,13 @@ const ToggleSwitch: React.FC<{
     aria-checked={checked}
     disabled={disabled}
     onClick={() => onChange(!checked)}
-    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-      checked ? 'bg-emerald-500' : 'bg-slate-800'
+    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+      checked ? 'bg-blue-600' : 'bg-slate-700'
     } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
   >
     <span
-      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-        checked ? 'translate-x-5' : 'translate-x-0'
+      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out ${
+        checked ? 'translate-x-4' : 'translate-x-0'
       }`}
     />
   </button>
@@ -110,10 +95,9 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
   currentUser,
   currency: appCurrency,
   onToggleCurrency,
-  onNavigate,
   onShowToast,
 }) => {
-  const { language, setLanguage, t } = useLanguage();
+  const { language, setLanguage } = useLanguage();
 
   // Active Tab: 'general' | 'notifications' | 'security' | 'banking'
   const [activeTab, setActiveTab] = useState<'general' | 'notifications' | 'security' | 'banking'>('general');
@@ -332,7 +316,6 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
     showToast('Signed out of other devices.');
   };
 
-  const borrowerName = currentUser?.fullName || currentUser?.name || currentUser?.username || 'Client User';
   const borrowerEmail = currentUser?.email || (currentUser?.username ? `${currentUser.username}@student.edu` : 'user@student.edu');
   const borrowerPhone = currentUser?.phone || '+855 12 000 888';
   const maskedPhone = borrowerPhone.replace(/(\+855\s*\d{2})\d+(\d{3})/, '$1 ••• $2');
@@ -348,7 +331,7 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
     <div className="max-w-4xl mx-auto space-y-6 pb-12 font-sans text-slate-100">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 border border-emerald-500/40 text-emerald-400 shadow-xl text-xs font-semibold animate-fade-in">
+        <div className="fixed top-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white shadow-xl text-xs font-semibold animate-fade-in">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{toastMessage}</span>
         </div>
@@ -356,14 +339,14 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
 
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">Settings</h1>
-        <p className="text-sm text-slate-400 mt-1">
+        <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Settings</h1>
+        <p className="text-xs sm:text-sm text-slate-400 mt-1">
           Manage your account preferences, notifications, and security.
         </p>
       </div>
 
-      {/* Clean Tab Navigation Pills */}
-      <div className="flex items-center gap-2 border-b border-slate-800 pb-3 overflow-x-auto no-scrollbar">
+      {/* Clean Segmented Tab Navigation */}
+      <div className="flex items-center gap-1.5 p-1 bg-slate-900/80 border border-slate-800 rounded-lg max-w-fit overflow-x-auto no-scrollbar">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -372,10 +355,10 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+              className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-medium transition cursor-pointer whitespace-nowrap ${
                 isActive
-                  ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-xs'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-850 border border-transparent'
+                  ? 'bg-slate-800 text-white shadow-xs'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850/50'
               }`}
             >
               <Icon className="w-3.5 h-3.5 shrink-0" />
@@ -386,98 +369,129 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
       </div>
 
       {/* ========================================================================= */}
-      {/* TAB 1: GENERAL (Language & Currency)                                      */}
+      {/* TAB 1: GENERAL (Display Language & Currency)                              */}
       {/* ========================================================================= */}
       {activeTab === 'general' && (
-        <div className="space-y-6">
+        <div className="space-y-5">
           {/* Display Language Card */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-            <div>
-              <h2 className="text-sm font-bold text-white">Display Language</h2>
+          <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-5 sm:p-6 space-y-4">
+            <div className="border-b border-slate-800/70 pb-3">
+              <h2 className="text-sm font-semibold text-white">Display Language</h2>
               <p className="text-xs text-slate-400 mt-0.5">
                 Choose the language you prefer for the interface.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl">
               <button
                 type="button"
                 onClick={() => handleLanguageSelect('en')}
-                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                className={`p-3.5 rounded-lg border text-left transition flex items-center justify-between cursor-pointer ${
                   language === 'en'
-                    ? 'bg-slate-950 border-emerald-500 ring-1 ring-emerald-500/30'
-                    : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-400'
+                    ? 'bg-slate-800/90 border-blue-500/80 ring-1 ring-blue-500/20'
+                    : 'bg-slate-950/40 border-slate-800 hover:border-slate-700 text-slate-400'
                 }`}
               >
-                <div>
-                  <div className="text-xs font-bold text-white">English (US)</div>
-                  <div className="text-[11px] text-slate-400 mt-0.5">Standard English</div>
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                      language === 'en' ? 'border-blue-500 bg-blue-500' : 'border-slate-600'
+                    }`}
+                  >
+                    {language === 'en' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold text-white">English (US)</div>
+                    <div className="text-[11px] text-slate-400 mt-0.5">Standard English</div>
+                  </div>
                 </div>
-                {language === 'en' && <Check className="w-4 h-4 text-emerald-400" />}
               </button>
 
               <button
                 type="button"
                 onClick={() => handleLanguageSelect('km')}
-                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                className={`p-3.5 rounded-lg border text-left transition flex items-center justify-between cursor-pointer ${
                   language === 'km'
-                    ? 'bg-slate-950 border-emerald-500 ring-1 ring-emerald-500/30'
-                    : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-400'
+                    ? 'bg-slate-800/90 border-blue-500/80 ring-1 ring-blue-500/20'
+                    : 'bg-slate-950/40 border-slate-800 hover:border-slate-700 text-slate-400'
                 }`}
               >
-                <div>
-                  <div className="text-xs font-bold text-white font-suwannaphum">ភាសាខ្មែរ (Khmer)</div>
-                  <div className="text-[11px] text-slate-400 mt-0.5 font-suwannaphum">ភាសាខ្មែរ</div>
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                      language === 'km' ? 'border-blue-500 bg-blue-500' : 'border-slate-600'
+                    }`}
+                  >
+                    {language === 'km' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold text-white font-suwannaphum">ភាសាខ្មែរ (Khmer)</div>
+                    <div className="text-[11px] text-slate-400 mt-0.5 font-suwannaphum">ភាសាខ្មែរ</div>
+                  </div>
                 </div>
-                {language === 'km' && <Check className="w-4 h-4 text-emerald-400" />}
               </button>
             </div>
           </div>
 
           {/* Default Currency Card */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-            <div>
-              <h2 className="text-sm font-bold text-white">Default Currency</h2>
+          <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-5 sm:p-6 space-y-4">
+            <div className="border-b border-slate-800/70 pb-3">
+              <h2 className="text-sm font-semibold text-white">Default Currency</h2>
               <p className="text-xs text-slate-400 mt-0.5">
                 Select your primary currency for loan calculations and balances.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl">
               <button
                 type="button"
                 onClick={() => handleCurrencySelect('USD')}
-                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                className={`p-3.5 rounded-lg border text-left transition flex items-center justify-between cursor-pointer ${
                   selectedCurrency === 'USD'
-                    ? 'bg-slate-950 border-emerald-500 ring-1 ring-emerald-500/30'
-                    : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-400'
+                    ? 'bg-slate-800/90 border-blue-500/80 ring-1 ring-blue-500/20'
+                    : 'bg-slate-950/40 border-slate-800 hover:border-slate-700 text-slate-400'
                 }`}
               >
-                <div>
-                  <div className="text-xs font-bold text-white">USD ($)</div>
-                  <div className="text-[11px] text-slate-400 mt-0.5">United States Dollar</div>
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                      selectedCurrency === 'USD' ? 'border-blue-500 bg-blue-500' : 'border-slate-600'
+                    }`}
+                  >
+                    {selectedCurrency === 'USD' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold text-white">USD ($)</div>
+                    <div className="text-[11px] text-slate-400 mt-0.5">United States Dollar</div>
+                  </div>
                 </div>
-                {selectedCurrency === 'USD' && <Check className="w-4 h-4 text-emerald-400" />}
               </button>
 
               <button
                 type="button"
                 onClick={() => handleCurrencySelect('KHR')}
-                className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                className={`p-3.5 rounded-lg border text-left transition flex items-center justify-between cursor-pointer ${
                   selectedCurrency === 'KHR'
-                    ? 'bg-slate-950 border-emerald-500 ring-1 ring-emerald-500/30'
-                    : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-400'
+                    ? 'bg-slate-800/90 border-blue-500/80 ring-1 ring-blue-500/20'
+                    : 'bg-slate-950/40 border-slate-800 hover:border-slate-700 text-slate-400'
                 }`}
               >
-                <div>
-                  <div className="text-xs font-bold text-white">KHR (៛)</div>
-                  <div className="text-[11px] text-slate-400 mt-0.5">Cambodian Riel (4,000 / USD)</div>
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                      selectedCurrency === 'KHR' ? 'border-blue-500 bg-blue-500' : 'border-slate-600'
+                    }`}
+                  >
+                    {selectedCurrency === 'KHR' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold text-white">KHR (៛)</div>
+                    <div className="text-[11px] text-slate-400 mt-0.5">Cambodian Riel (4,000 / USD)</div>
+                  </div>
                 </div>
-                {selectedCurrency === 'KHR' && <Check className="w-4 h-4 text-emerald-400" />}
               </button>
             </div>
           </div>
-
         </div>
       )}
 
@@ -485,14 +499,14 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
       {/* TAB 2: NOTIFICATIONS (Telegram, SMS, Email)                               */}
       {/* ========================================================================= */}
       {activeTab === 'notifications' && (
-        <form onSubmit={handleSaveNotifications} className="space-y-6">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl divide-y divide-slate-800">
+        <form onSubmit={handleSaveNotifications} className="space-y-5">
+          <div className="bg-slate-900/70 border border-slate-800 rounded-xl divide-y divide-slate-800/70">
             {/* Telegram Alerts */}
-            <div className="p-6 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div className="p-5 sm:p-6 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               <div className="space-y-1.5 max-w-lg">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-white">Telegram Alerts</span>
-                  <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                  <span className="text-sm font-semibold text-white">Telegram Alerts</span>
+                  <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
                     Active
                   </span>
                 </div>
@@ -508,13 +522,13 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
                       value={telegramUsername}
                       onChange={(e) => setTelegramUsername(e.target.value)}
                       placeholder="@your_username"
-                      className="px-3 py-1 bg-slate-950 border border-slate-700 rounded-lg text-xs font-mono text-sky-400 focus:outline-none focus:border-sky-500 w-48"
+                      className="px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-md text-xs font-mono text-slate-200 focus:outline-none focus:border-blue-500 w-48"
                     />
                     <a
                       href="https://t.me"
                       target="_blank"
                       rel="noreferrer"
-                      className="text-xs text-sky-400 hover:underline inline-flex items-center gap-1"
+                      className="text-xs text-blue-400 hover:underline inline-flex items-center gap-1"
                     >
                       <span>Open Telegram</span>
                       <ExternalLink className="w-3 h-3" />
@@ -530,9 +544,9 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
             </div>
 
             {/* SMS Reminders */}
-            <div className="p-6 flex items-start justify-between gap-4">
+            <div className="p-5 sm:p-6 flex items-start justify-between gap-4">
               <div className="space-y-1 max-w-lg">
-                <div className="text-sm font-bold text-white">SMS Reminders</div>
+                <div className="text-sm font-semibold text-white">SMS Reminders</div>
                 <p className="text-xs text-slate-400 leading-relaxed">
                   Receive an SMS text message to <strong className="text-slate-300 font-mono">{maskedPhone}</strong> 3 days before any payment is due.
                 </p>
@@ -545,9 +559,9 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
             </div>
 
             {/* Email Statements */}
-            <div className="p-6 flex items-start justify-between gap-4">
+            <div className="p-5 sm:p-6 flex items-start justify-between gap-4">
               <div className="space-y-1 max-w-lg">
-                <div className="text-sm font-bold text-white">Email Receipts</div>
+                <div className="text-sm font-semibold text-white">Email Receipts</div>
                 <p className="text-xs text-slate-400 leading-relaxed">
                   Receive monthly statements and payment receipts at <strong className="text-slate-300 font-mono">{borrowerEmail}</strong>.
                 </p>
@@ -564,7 +578,7 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
             <button
               type="submit"
               disabled={isSavingPreferences}
-              className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition cursor-pointer shadow-md shadow-emerald-500/20 disabled:opacity-50"
+              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs transition cursor-pointer disabled:opacity-50"
             >
               {isSavingPreferences ? 'Saving...' : 'Save Preferences'}
             </button>
@@ -576,25 +590,25 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
       {/* TAB 3: SECURITY (Password, 2FA, Devices)                                   */}
       {/* ========================================================================= */}
       {activeTab === 'security' && (
-        <div className="space-y-6">
+        <div className="space-y-5">
           {/* Change Password Card */}
-          <form onSubmit={handlePasswordSubmit} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-            <div>
-              <h2 className="text-sm font-bold text-white">Change Password</h2>
+          <form onSubmit={handlePasswordSubmit} className="bg-slate-900/70 border border-slate-800 rounded-xl p-5 sm:p-6 space-y-4">
+            <div className="border-b border-slate-800/70 pb-3">
+              <h2 className="text-sm font-semibold text-white">Change Password</h2>
               <p className="text-xs text-slate-400 mt-0.5">
                 Update your password to keep your account secure.
               </p>
             </div>
 
             {passError && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
+              <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{passError}</span>
               </div>
             )}
 
             {passChangeSuccess && (
-              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2">
+              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 shrink-0" />
                 <span>Password updated successfully!</span>
               </div>
@@ -611,12 +625,12 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     placeholder="Enter current password"
-                    className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono text-xs focus:outline-none focus:border-emerald-500"
+                    className="w-full h-10 px-3.5 pr-10 bg-slate-950/60 border border-slate-800 rounded-lg text-white font-mono text-xs focus:outline-none focus:border-blue-500"
                   />
                   <button
                     type="button"
                     onClick={() => setShowCurrentPass(!showCurrentPass)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1"
                   >
                     {showCurrentPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -634,12 +648,12 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="Min 8 characters"
-                      className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono text-xs focus:outline-none focus:border-emerald-500"
+                      className="w-full h-10 px-3.5 pr-10 bg-slate-950/60 border border-slate-800 rounded-lg text-white font-mono text-xs focus:outline-none focus:border-blue-500"
                     />
                     <button
                       type="button"
                       onClick={() => setShowNewPass(!showNewPass)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1"
                     >
                       {showNewPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -656,12 +670,12 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Re-enter password"
-                      className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white font-mono text-xs focus:outline-none focus:border-emerald-500"
+                      className="w-full h-10 px-3.5 pr-10 bg-slate-950/60 border border-slate-800 rounded-lg text-white font-mono text-xs focus:outline-none focus:border-blue-500"
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPass(!showConfirmPass)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1"
                     >
                       {showConfirmPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -670,11 +684,11 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
               </div>
             </div>
 
-            <div className="pt-2">
+            <div className="pt-1">
               <button
                 type="submit"
                 disabled={isChangingPass}
-                className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition cursor-pointer shadow-md shadow-emerald-500/20 disabled:opacity-50"
+                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs transition cursor-pointer disabled:opacity-50"
               >
                 {isChangingPass ? 'Updating...' : 'Update Password'}
               </button>
@@ -682,16 +696,16 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
           </form>
 
           {/* Two-Factor Authentication Card */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+          <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-5 sm:p-6 space-y-3">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-sm font-bold text-white">Two-Factor Authentication (2FA)</h2>
+                <h2 className="text-sm font-semibold text-white">Two-Factor Authentication (2FA)</h2>
                 <p className="text-xs text-slate-400 mt-0.5">
                   Add an extra layer of security when signing in.
                 </p>
               </div>
 
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 whitespace-nowrap">
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20 whitespace-nowrap">
                 {twoFactorMode === 'DIRECT' ? 'Direct Access' : twoFactorMode === 'BAKONG' ? 'Bakong Auth' : 'Email OTP'}
               </span>
             </div>
@@ -707,17 +721,17 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
             <button
               type="button"
               onClick={() => setIs2FaModalOpen(true)}
-              className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 hover:underline cursor-pointer"
+              className="text-xs font-semibold text-blue-400 hover:text-blue-300 hover:underline cursor-pointer"
             >
               Change 2FA Method
             </button>
           </div>
 
           {/* Active Devices Card */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+          <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-5 sm:p-6 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-bold text-white">Active Devices</h2>
+                <h2 className="text-sm font-semibold text-white">Active Devices</h2>
                 <p className="text-xs text-slate-400 mt-0.5">
                   Devices currently signed into your account.
                 </p>
@@ -736,14 +750,21 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
               {activeSessions.map((sess) => (
                 <div
                   key={sess.id}
-                  className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between text-xs"
+                  className="p-3 rounded-lg bg-slate-950/60 border border-slate-800/80 flex items-center justify-between text-xs"
                 >
-                  <div className="space-y-0.5">
-                    <div className="font-semibold text-white">{sess.device}</div>
-                    <div className="text-slate-400 font-mono text-[11px]">{sess.ip} • {sess.location}</div>
+                  <div className="flex items-center gap-3">
+                    {sess.device.includes('iPhone') || sess.device.includes('Android') ? (
+                      <Smartphone className="w-4 h-4 text-slate-400" />
+                    ) : (
+                      <Laptop className="w-4 h-4 text-slate-400" />
+                    )}
+                    <div className="space-y-0.5">
+                      <div className="font-semibold text-white">{sess.device}</div>
+                      <div className="text-slate-400 font-mono text-[11px]">{sess.ip} • {sess.location}</div>
+                    </div>
                   </div>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                    sess.isCurrent ? 'bg-emerald-500/15 text-emerald-400' : 'text-slate-400'
+                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold ${
+                    sess.isCurrent ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'text-slate-400'
                   }`}>
                     {sess.isCurrent ? 'This Device' : sess.lastActive}
                   </span>
@@ -758,10 +779,10 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
       {/* TAB 4: BANK ACCOUNTS (Connected ACLEDA & Bakong)                           */}
       {/* ========================================================================= */}
       {activeTab === 'banking' && (
-        <div className="space-y-6">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-            <div>
-              <h2 className="text-sm font-bold text-white">Connected Accounts</h2>
+        <div className="space-y-5">
+          <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-5 sm:p-6 space-y-4">
+            <div className="border-b border-slate-800/70 pb-3">
+              <h2 className="text-sm font-semibold text-white">Connected Accounts</h2>
               <p className="text-xs text-slate-400 mt-0.5">
                 Bank accounts linked to your profile for loan disbursement and repayments.
               </p>
@@ -769,15 +790,15 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* ACLEDA Bank */}
-              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+              <div className="p-4 rounded-lg bg-slate-950/60 border border-slate-800 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-blue-500/15 text-blue-400 font-bold text-xs flex items-center justify-center">
+                    <div className="w-7 h-7 rounded-md bg-blue-500/15 text-blue-400 font-bold text-xs flex items-center justify-center">
                       AC
                     </div>
-                    <span className="text-xs font-bold text-white">ACLEDA Bank Plc.</span>
+                    <span className="text-xs font-semibold text-white">ACLEDA Bank Plc.</span>
                   </div>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400">
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                     Verified
                   </span>
                 </div>
@@ -788,15 +809,15 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
               </div>
 
               {/* Bakong KHQR */}
-              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+              <div className="p-4 rounded-lg bg-slate-950/60 border border-slate-800 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-rose-500/15 text-rose-400 font-bold text-xs flex items-center justify-center">
+                    <div className="w-7 h-7 rounded-md bg-rose-500/15 text-rose-400 font-bold text-xs flex items-center justify-center">
                       KH
                     </div>
-                    <span className="text-xs font-bold text-white">Bakong KHQR</span>
+                    <span className="text-xs font-semibold text-white">Bakong KHQR</span>
                   </div>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-400">
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-sky-500/10 text-sky-400 border border-sky-500/20">
                     Active
                   </span>
                 </div>
@@ -812,14 +833,14 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
 
       {/* 2FA Selection Modal */}
       {is2FaModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 max-w-md w-full shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <h3 className="text-sm font-bold text-white">Select 2FA Method</h3>
+              <h3 className="text-sm font-semibold text-white">Select 2FA Method</h3>
               <button
                 type="button"
                 onClick={() => setIs2FaModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+                className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -829,57 +850,57 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
               <button
                 type="button"
                 onClick={() => handleSelect2FaMode('DIRECT')}
-                className={`w-full p-3.5 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                className={`w-full p-3 rounded-lg border text-left transition cursor-pointer flex items-center justify-between ${
                   twoFactorMode === 'DIRECT'
-                    ? 'bg-slate-950 border-emerald-500 ring-1 ring-emerald-500/30'
+                    ? 'bg-slate-800 border-blue-500 ring-1 ring-blue-500/20'
                     : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
                 }`}
               >
                 <div>
-                  <div className="text-xs font-bold text-white">Direct Access (Recommended)</div>
+                  <div className="text-xs font-semibold text-white">Direct Access (Recommended)</div>
                   <div className="text-[11px] text-slate-400 mt-0.5">Quick password sign-in without OTP delay.</div>
                 </div>
-                {twoFactorMode === 'DIRECT' && <Check className="w-4 h-4 text-emerald-400" />}
+                {twoFactorMode === 'DIRECT' && <Check className="w-4 h-4 text-blue-400" />}
               </button>
 
               <button
                 type="button"
                 onClick={() => handleSelect2FaMode('BAKONG')}
-                className={`w-full p-3.5 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                className={`w-full p-3 rounded-lg border text-left transition cursor-pointer flex items-center justify-between ${
                   twoFactorMode === 'BAKONG'
-                    ? 'bg-slate-950 border-sky-500 ring-1 ring-sky-500/30'
+                    ? 'bg-slate-800 border-blue-500 ring-1 ring-blue-500/20'
                     : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
                 }`}
               >
                 <div>
-                  <div className="text-xs font-bold text-white">Bakong Authenticator</div>
+                  <div className="text-xs font-semibold text-white">Bakong Authenticator</div>
                   <div className="text-[11px] text-slate-400 mt-0.5">Biometric approval via Bakong app.</div>
                 </div>
-                {twoFactorMode === 'BAKONG' && <Check className="w-4 h-4 text-sky-400" />}
+                {twoFactorMode === 'BAKONG' && <Check className="w-4 h-4 text-blue-400" />}
               </button>
 
               <button
                 type="button"
                 onClick={() => handleSelect2FaMode('EMAIL')}
-                className={`w-full p-3.5 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                className={`w-full p-3 rounded-lg border text-left transition cursor-pointer flex items-center justify-between ${
                   twoFactorMode === 'EMAIL'
-                    ? 'bg-slate-950 border-amber-500 ring-1 ring-amber-500/30'
+                    ? 'bg-slate-800 border-blue-500 ring-1 ring-blue-500/20'
                     : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
                 }`}
               >
                 <div>
-                  <div className="text-xs font-bold text-white">Email Code (OTP)</div>
+                  <div className="text-xs font-semibold text-white">Email Code (OTP)</div>
                   <div className="text-[11px] text-slate-400 mt-0.5">6-digit PIN sent to {borrowerEmail}.</div>
                 </div>
-                {twoFactorMode === 'EMAIL' && <Check className="w-4 h-4 text-amber-400" />}
+                {twoFactorMode === 'EMAIL' && <Check className="w-4 h-4 text-blue-400" />}
               </button>
             </div>
 
-            <div className="pt-2">
+            <div className="pt-1">
               <button
                 type="button"
                 onClick={() => setIs2FaModalOpen(false)}
-                className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-750 text-white font-semibold text-xs transition cursor-pointer"
+                className="w-full py-2 rounded-lg bg-slate-800 hover:bg-slate-750 text-white font-medium text-xs transition cursor-pointer"
               >
                 Done
               </button>

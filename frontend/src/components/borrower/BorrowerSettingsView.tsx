@@ -16,7 +16,6 @@ import {
   Laptop,
 } from 'lucide-react';
 import { Currency, UserProfile } from '../../types';
-import { useLanguage } from '../../context/LanguageContext';
 import { api } from '../../services/api';
 
 export interface BorrowerSettingsViewProps {
@@ -97,7 +96,6 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
   onToggleCurrency,
   onShowToast,
 }) => {
-  const { language, setLanguage } = useLanguage();
 
   // Active Tab: 'general' | 'notifications' | 'security' | 'banking'
   const [activeTab, setActiveTab] = useState<'general' | 'notifications' | 'security' | 'banking'>('general');
@@ -214,15 +212,6 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
   };
 
   // Handlers
-  const handleLanguageSelect = (lang: 'en' | 'km') => {
-    setLanguage(lang as any);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('jam_language', lang);
-      localStorage.setItem('apex_language', lang);
-    }
-    showToast(lang === 'en' ? 'Language set to English' : 'ភាសាត្រូវបានកំណត់ជា ភាសាខ្មែរ');
-  };
-
   const handleCurrencySelect = (curr: Currency) => {
     setSelectedCurrency(curr);
     onToggleCurrency(curr);
@@ -369,70 +358,10 @@ export const BorrowerSettingsView: React.FC<BorrowerSettingsViewProps> = ({
       </div>
 
       {/* ========================================================================= */}
-      {/* TAB 1: GENERAL (Display Language & Currency)                              */}
+      {/* TAB 1: GENERAL (Default Currency)                                         */}
       {/* ========================================================================= */}
       {activeTab === 'general' && (
         <div className="space-y-5">
-          {/* Display Language Card */}
-          <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-5 sm:p-6 space-y-4">
-            <div className="border-b border-slate-800/70 pb-3">
-              <h2 className="text-sm font-semibold text-white">Display Language</h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Choose the language you prefer for the interface.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl">
-              <button
-                type="button"
-                onClick={() => handleLanguageSelect('en')}
-                className={`p-3.5 rounded-lg border text-left transition flex items-center justify-between cursor-pointer ${
-                  language === 'en'
-                    ? 'bg-slate-800/90 border-blue-500/80 ring-1 ring-blue-500/20'
-                    : 'bg-slate-950/40 border-slate-800 hover:border-slate-700 text-slate-400'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
-                      language === 'en' ? 'border-blue-500 bg-blue-500' : 'border-slate-600'
-                    }`}
-                  >
-                    {language === 'en' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                  </div>
-                  <div>
-                    <div className="text-xs font-semibold text-white">English (US)</div>
-                    <div className="text-[11px] text-slate-400 mt-0.5">Standard English</div>
-                  </div>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleLanguageSelect('km')}
-                className={`p-3.5 rounded-lg border text-left transition flex items-center justify-between cursor-pointer ${
-                  language === 'km'
-                    ? 'bg-slate-800/90 border-blue-500/80 ring-1 ring-blue-500/20'
-                    : 'bg-slate-950/40 border-slate-800 hover:border-slate-700 text-slate-400'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
-                      language === 'km' ? 'border-blue-500 bg-blue-500' : 'border-slate-600'
-                    }`}
-                  >
-                    {language === 'km' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                  </div>
-                  <div>
-                    <div className="text-xs font-semibold text-white font-suwannaphum">ភាសាខ្មែរ (Khmer)</div>
-                    <div className="text-[11px] text-slate-400 mt-0.5 font-suwannaphum">ភាសាខ្មែរ</div>
-                  </div>
-                </div>
-              </button>
-            </div>
-          </div>
-
           {/* Default Currency Card */}
           <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-5 sm:p-6 space-y-4">
             <div className="border-b border-slate-800/70 pb-3">

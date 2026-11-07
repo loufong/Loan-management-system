@@ -20,7 +20,7 @@ export const AccessDeniedPage: React.FC<AccessDeniedPageProps> = ({
   currentUserRole = 'Client Borrower',
   currentUserName = 'Fong Ly',
 }) => {
-  const { language, setLanguage, t } = useLanguage();
+  const { t } = useLanguage();
   const isDev =
     import.meta.env.DEV ||
     (typeof window !== 'undefined' &&
@@ -52,31 +52,6 @@ export const AccessDeniedPage: React.FC<AccessDeniedPageProps> = ({
 
   return (
     <div className="relative min-h-screen w-full bg-[#F8FAFC] flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:px-8 font-sans antialiased text-[#0F172A]">
-      {/* Language Switcher Pill */}
-      <div className="absolute top-4 right-4 flex items-center bg-white border border-[#E2E8F0] rounded-[6px] p-0.5 text-[11px] font-semibold shadow-xs">
-        <button
-          type="button"
-          onClick={() => setLanguage('km')}
-          className={`px-2.5 py-1 rounded-[4px] transition-colors ${
-            language === 'km'
-              ? 'bg-[#2563EB] text-white font-bold'
-              : 'text-[#64748B] hover:text-[#0F172A]'
-          }`}
-        >
-          KH
-        </button>
-        <button
-          type="button"
-          onClick={() => setLanguage('en')}
-          className={`px-2.5 py-1 rounded-[4px] transition-colors ${
-            language === 'en'
-              ? 'bg-[#2563EB] text-white font-bold'
-              : 'text-[#64748B] hover:text-[#0F172A]'
-          }`}
-        >
-          EN
-        </button>
-      </div>
 
       <div className="w-full max-w-[520px]">
         {/* Brand Header */}

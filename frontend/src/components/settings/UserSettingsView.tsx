@@ -542,7 +542,7 @@ export const UserSettingsView: React.FC<UserSettingsViewProps> = ({
           { id: 'profile', label: t('tab_profile', 'Profile & Identity'), icon: User },
           { id: 'security', label: t('tab_security', 'Security & Devices'), icon: ShieldCheck },
           { id: 'notifications', label: t('tab_notifications', 'Notifications & Alerts'), icon: Bell },
-          { id: 'preferences', label: t('tab_preferences', 'Preferences & Language'), icon: Globe },
+          { id: 'preferences', label: t('tab_preferences', 'Preferences'), icon: Sliders },
           { id: 'banking', label: t('tab_banking', 'Bank & Payouts'), icon: CreditCard },
           { id: 'privacy', label: t('tab_privacy', 'Data & Privacy'), icon: FileText },
         ].map((tab) => {
@@ -1081,37 +1081,6 @@ export const UserSettingsView: React.FC<UserSettingsViewProps> = ({
             </div>
           </div>
 
-          {/* Language Preference */}
-          <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-6 space-y-4">
-            <div className="border-b border-[#E2E8F0] pb-3">
-              <h2 className="text-base font-bold text-[#0F172A]">Interface Language</h2>
-              <p className="text-xs text-[#64748B] mt-0.5">
-                Standard English Latin banking interface.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-              <div
-                className="p-4 rounded-[8px] border-2 border-[#2563EB] bg-blue-50/40 shadow-xs flex items-center justify-between"
-              >
-                <div className="flex items-center gap-3.5">
-                  <span className="text-2xl">🇺🇸</span>
-                  <div>
-                    <div className="text-xs font-bold text-[#0F172A] flex items-center gap-1.5">
-                      <span>English (US)</span>
-                      <span className="px-1.5 py-0.2 bg-[#2563EB] text-white text-[10px] font-semibold rounded">
-                        Selected
-                      </span>
-                    </div>
-                    <div className="text-[11px] text-[#64748B] mt-0.5">International Banking Standard</div>
-                  </div>
-                </div>
-                <div className="w-4 h-4 rounded-full border border-[#2563EB] bg-[#2563EB] flex items-center justify-center">
-                  <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Theme & Display Mode */}
           <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-6 space-y-4">

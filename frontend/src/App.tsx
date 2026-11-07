@@ -1360,10 +1360,11 @@ export const App: React.FC = () => {
           )
         );
 
-        // Update local unified storage first to guarantee persistence across reloads
+        // Update local unified storage first to guarantee persistence across reloads:
+        // Set to ACTIVE immediately so the borrower gets their active loan and repayment schedule
         await loanStorageService.updateLoanStatus(
           appId,
-          'APPROVED',
+          'ACTIVE',
           terms?.reason || 'Approved by Executive Committee',
           terms
         );
@@ -1376,14 +1377,21 @@ export const App: React.FC = () => {
               rate: terms?.rate,
               reason: terms?.reason || 'Approved by Executive Committee',
             });
+            // Automatically disburse/activate in backend ledger without manual cashier queue
+            await api.disburseLoan(appId, {
+              disbursementMethod: 'BANK_TRANSFER',
+              disbursementReference: `DISB-${Date.now().toString().slice(-6)}`,
+              firstPaymentDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
+              notes: 'Auto-activated upon Committee Approval'
+            }).catch(() => null);
           } catch (apiErr: any) {
             console.warn('API approveApplication issue, synced with unified storage:', apiErr);
           }
         }
 
         await reloadAllData();
-        alert(`Application ${appId} for ${applicantName} successfully APPROVED! Facility ready in Disbursements queue.`);
-        setActiveTab('disbursements');
+        alert(`Application ${targetApp?.applicationNo || appId} for ${applicantName} successfully APPROVED! Facility is now active.`);
+        setActiveTab('approvals');
       } else {
         if (!terms?.reason?.trim()) {
           alert('A rejection reason is strictly mandatory.');
@@ -1777,7 +1785,6 @@ export const App: React.FC = () => {
                 currentUserRole={activeRole}
                 currentUserName={currentUser.name}
                 onExecutiveDecision={handleExecutiveDecision}
-                onNavigateToDisbursements={() => setActiveTab('disbursements')}
               />
             )
           )}
@@ -1904,7 +1911,6 @@ export const App: React.FC = () => {
               currentUserRole={activeRole}
               currentUserName={currentUser.name}
               onExecutiveDecision={handleExecutiveDecision}
-              onNavigateToDisbursements={() => setActiveTab('disbursements')}
             />
           )}
 

@@ -996,7 +996,7 @@ class LoanStorageService {
         facility: {
           productName: mock?.productName || 'Credit Facility',
           currency: 'USD',
-          status: newStatus,
+          status: newStatus === 'APPROVED' ? 'ACTIVE' : newStatus,
           health: newStatus === 'REJECTED' ? 'DEFAULT_RISK' : 'PERFORMING',
           branch: 'Phnom Penh Main',
         },
@@ -1042,9 +1042,8 @@ class LoanStorageService {
       }
     }
 
-    if (newStatus === 'APPROVED') {
-      item.facility.health = 'PERFORMING';
-    } else if (newStatus === 'ACTIVE') {
+    if (newStatus === 'APPROVED' || newStatus === 'ACTIVE') {
+      item.facility.status = 'ACTIVE';
       item.facility.health = 'PERFORMING';
       // Generate official reducing balance schedule
       item.schedules = generateAmortizationSchedule(

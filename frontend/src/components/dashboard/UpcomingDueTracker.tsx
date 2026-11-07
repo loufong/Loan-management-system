@@ -606,14 +606,7 @@ export const UpcomingDueTracker: React.FC<UpcomingDueTrackerProps> = ({
                           <Send className="w-3.5 h-3.5" />
                           <span className="hidden lg:inline">Remind</span>
                         </button>
-                        <button
-                          onClick={() => onRecordPayment && onRecordPayment(row)}
-                          title="Record / Confirm Repayment"
-                          className="p-1.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/30 rounded-lg transition cursor-pointer flex items-center gap-1 text-[11px] font-bold"
-                        >
-                          <Receipt className="w-3.5 h-3.5" />
-                          <span className="hidden lg:inline">Pay</span>
-                        </button>
+
                         <button
                           onClick={() => onViewLedger && onViewLedger(row)}
                           title="View Facility Ledger & Dossier"

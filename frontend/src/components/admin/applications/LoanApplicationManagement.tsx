@@ -143,7 +143,7 @@ export const LoanApplicationManagement: React.FC<LoanApplicationManagementProps>
     let regUsers: Record<string, any> = {};
     try {
       regUsers = JSON.parse(localStorage.getItem('apex_registered_users') || '{}');
-    } catch {}
+    } catch { }
 
     const appEmail = (app as any).email || (app as any).borrowerEmail;
     const appPhone = (app as any).phone || (app as any).borrowerPhone;
@@ -497,11 +497,10 @@ export const LoanApplicationManagement: React.FC<LoanApplicationManagementProps>
             <button
               key={tab.id}
               onClick={() => setSelectedStatusTab(tab.id)}
-              className={`px-3 py-1.5 rounded-[6px] transition cursor-pointer ${
-                selectedStatusTab === tab.id
+              className={`px-3 py-1.5 rounded-[6px] transition cursor-pointer ${selectedStatusTab === tab.id
                   ? 'bg-[#0F172A] text-white font-bold'
                   : 'text-[#64748B] hover:text-[#0F172A] hover:bg-slate-100'
-              }`}
+                }`}
             >
               {tab.label}
             </button>
@@ -670,15 +669,10 @@ export const LoanApplicationManagement: React.FC<LoanApplicationManagementProps>
                             </>
                           )}
 
-                          {app.status === 'APPROVED' && onNavigateToDisbursements && (
-                            <button
-                              type="button"
-                              onClick={onNavigateToDisbursements}
-                              className="px-2.5 py-1 rounded-[6px] bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold transition cursor-pointer inline-flex items-center gap-1"
-                              title="Go to Disbursements Queue"
-                            >
-                              <span>Disburse ➔</span>
-                            </button>
+                          {app.status === 'APPROVED' && (
+                            <span className="px-2 py-0.5 rounded-[4px] bg-emerald-50 text-emerald-700 text-[11px] font-semibold border border-emerald-200">
+                              Active
+                            </span>
                           )}
                         </div>
                       </td>
@@ -733,38 +727,34 @@ export const LoanApplicationManagement: React.FC<LoanApplicationManagementProps>
               <button
                 type="button"
                 onClick={() => setActiveDossierTab('dossier')}
-                className={`py-3 border-b-2 transition cursor-pointer ${
-                  activeDossierTab === 'dossier'
+                className={`py-3 border-b-2 transition cursor-pointer ${activeDossierTab === 'dossier'
                     ? 'border-[#2563EB] text-[#2563EB]'
                     : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
-                }`}
+                  }`}
               >
                 1. Full Application Dossier
               </button>
               <button
                 type="button"
                 onClick={() => setActiveDossierTab('checklist')}
-                className={`py-3 border-b-2 transition cursor-pointer flex items-center gap-1.5 ${
-                  activeDossierTab === 'checklist'
+                className={`py-3 border-b-2 transition cursor-pointer flex items-center gap-1.5 ${activeDossierTab === 'checklist'
                     ? 'border-[#2563EB] text-[#2563EB]'
                     : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
-                }`}
+                  }`}
               >
                 <span>2. Verification Checklist</span>
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
-                  isChecklistComplete ? 'bg-emerald-100 text-[#16A34A]' : 'bg-amber-100 text-[#D97706]'
-                }`}>
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${isChecklistComplete ? 'bg-emerald-100 text-[#16A34A]' : 'bg-amber-100 text-[#D97706]'
+                  }`}>
                   {verifiedChecklistCount}/9
                 </span>
               </button>
               <button
                 type="button"
                 onClick={() => setActiveDossierTab('history')}
-                className={`py-3 border-b-2 transition cursor-pointer ${
-                  activeDossierTab === 'history'
+                className={`py-3 border-b-2 transition cursor-pointer ${activeDossierTab === 'history'
                     ? 'border-[#2563EB] text-[#2563EB]'
                     : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
-                }`}
+                  }`}
               >
                 3. Review History & Audit Trail
               </button>
@@ -989,9 +979,8 @@ export const LoanApplicationManagement: React.FC<LoanApplicationManagementProps>
                         <div
                           key={item.key}
                           onClick={() => toggleChecklistItem(item.key)}
-                          className={`p-3.5 flex items-center justify-between gap-3 cursor-pointer transition select-none ${
-                            isChecked ? 'bg-emerald-50/40 text-[#0F172A]' : 'hover:bg-slate-50 text-[#64748B]'
-                          }`}
+                          className={`p-3.5 flex items-center justify-between gap-3 cursor-pointer transition select-none ${isChecked ? 'bg-emerald-50/40 text-[#0F172A]' : 'hover:bg-slate-50 text-[#64748B]'
+                            }`}
                         >
                           <div className="flex items-center gap-2.5">
                             {isChecked ? (
@@ -1001,9 +990,8 @@ export const LoanApplicationManagement: React.FC<LoanApplicationManagementProps>
                             )}
                             <span className={isChecked ? 'font-semibold text-[#0F172A]' : ''}>{item.label}</span>
                           </div>
-                          <span className={`text-[10px] font-mono px-2 py-0.5 rounded-[4px] font-semibold ${
-                            isChecked ? 'bg-emerald-100 text-[#16A34A]' : 'bg-slate-100 text-slate-500'
-                          }`}>
+                          <span className={`text-[10px] font-mono px-2 py-0.5 rounded-[4px] font-semibold ${isChecked ? 'bg-emerald-100 text-[#16A34A]' : 'bg-slate-100 text-slate-500'
+                            }`}>
                             {isChecked ? 'VERIFIED' : 'PENDING'}
                           </span>
                         </div>
@@ -1056,7 +1044,7 @@ export const LoanApplicationManagement: React.FC<LoanApplicationManagementProps>
                               </span>
                             </td>
                             <td className="text-[#0F172A] font-semibold">
-                              Sanctioned by Executive Credit Committee. Transferred to Cashier Disbursements queue.
+                              Sanctioned by Executive Credit Committee. Facility activated for borrower repayment.
                             </td>
                           </tr>
                         )}
@@ -1111,38 +1099,27 @@ export const LoanApplicationManagement: React.FC<LoanApplicationManagementProps>
                   (activeApp.status as string) === 'PENDING' ||
                   (activeApp.status as string) === 'UNDER_REVIEW' ||
                   (activeApp.status as string) === 'UNDERWRITING_PENDING') && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => openRejectModalFor(activeApp)}
-                      className="px-3 py-1.5 rounded-[6px] bg-[#DC2626] hover:bg-rose-700 text-white text-xs font-semibold transition cursor-pointer shadow-xs inline-flex items-center gap-1"
-                    >
-                      <XCircle className="w-3.5 h-3.5" />
-                      <span>Reject Application</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => openApproveModalFor(activeApp)}
-                      className="px-4 py-1.5 rounded-[6px] bg-[#16A34A] hover:bg-emerald-700 text-white text-xs font-bold transition cursor-pointer shadow-xs inline-flex items-center gap-1"
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>Approve Loan</span>
-                    </button>
-                  </>
-                )}
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => openRejectModalFor(activeApp)}
+                        className="px-3 py-1.5 rounded-[6px] bg-[#DC2626] hover:bg-rose-700 text-white text-xs font-semibold transition cursor-pointer shadow-xs inline-flex items-center gap-1"
+                      >
+                        <XCircle className="w-3.5 h-3.5" />
+                        <span>Reject Application</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => openApproveModalFor(activeApp)}
+                        className="px-4 py-1.5 rounded-[6px] bg-[#16A34A] hover:bg-emerald-700 text-white text-xs font-bold transition cursor-pointer shadow-xs inline-flex items-center gap-1"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Approve Loan</span>
+                      </button>
+                    </>
+                  )}
 
-                {activeApp.status === 'APPROVED' && onNavigateToDisbursements && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedAppId(null);
-                      onNavigateToDisbursements();
-                    }}
-                    className="px-3 py-1.5 rounded-[6px] bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold transition cursor-pointer"
-                  >
-                    Go to Disbursements Queue ➔
-                  </button>
-                )}
+
               </div>
             </div>
           </div>
@@ -1227,7 +1204,7 @@ export const LoanApplicationManagement: React.FC<LoanApplicationManagementProps>
               <div className="p-3 rounded-[6px] bg-emerald-50 border border-emerald-200 text-[#16A34A] text-xs space-y-1">
                 <p className="font-bold">✓ Audit Action Notice:</p>
                 <p className="text-[11px]">
-                  Confirming this action will update the application status to <strong>APPROVED</strong>, record your administrator ID, and move the facility to the Cashier Disbursements Queue.
+                  Confirming this action will update the application status to <strong>APPROVED</strong>, record your administrator ID, and activate the facility for borrower repayment.
                 </p>
               </div>
             </div>

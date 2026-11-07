@@ -1630,24 +1630,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                   <span>View Payment Schedule</span>
                                 </button>
 
-                                {/* 2. Manual Payment / Waiver */}
-                                <button
-                                  onClick={() => {
-                                    setSelectedLoanForManualPayment(row);
-                                    setManualPaymentForm({
-                                      amount: row.nextScheduledPayment.scheduledEMIUSD || 542.80,
-                                      paymentType: 'REPAYMENT',
-                                      paymentMethod: 'BAKONG',
-                                      referenceNumber: `BK-${row.loanId}-MAN`,
-                                      note: `Manual repayment for installment cycle #${row.nextScheduledPayment.cycleNumber}`,
-                                    });
-                                    setOpenActionMenuId(null);
-                                  }}
-                                  className="w-full px-3 py-2 text-slate-300 hover:text-white hover:bg-slate-800/70 flex items-center gap-2.5 transition cursor-pointer"
-                                >
-                                  <DollarSign className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                                  <span>Record Payment / Waiver</span>
-                                </button>
+
 
                                 <div className="my-1 border-t border-[#1e293b]" />
 
@@ -1853,7 +1836,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs rounded-xl shadow transition flex items-center justify-center gap-1.5"
                   >
                     <Check className="w-3.5 h-3.5" />
-                    <span>Approve & Authorize Disbursement</span>
+                    <span>Approve Application</span>
                   </button>
 
                   <div className="grid grid-cols-2 gap-1.5">
@@ -1903,15 +1886,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           loans={displayLedger}
           currency={currencyMode === 'KHR' ? 'KHR' : 'USD'}
           onViewLedger={(loan) => setSelectedLoanForLedger(loan as any)}
-          onRecordPayment={(loan) => {
-            setSelectedLoanForManualPayment(loan as any);
-            setManualPaymentForm(prev => ({
-              ...prev,
-              amount: loan.nextScheduledPayment?.scheduledEMIUSD || 542.80,
-              paymentType: 'REPAYMENT',
-              note: `Direct repayment settlement for cycle #${loan.nextScheduledPayment?.cycleNumber}`
-            }));
-          }}
           onSendReminder={(loan) => {
             setSelectedLoanForAlert(loan as any);
           }}
@@ -2018,141 +1992,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* 8B. MODAL 1B: MANUAL REPAYMENT / INTEREST WAIVER ENTRY                     */}
-      {/* ========================================================================= */}
-      {selectedLoanForManualPayment && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl w-full max-w-lg shadow-2xl p-5 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#1e293b]">
-              <div>
-                <h3 className="text-sm font-bold text-white font-mono flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-emerald-400" />
-                  Manual Entry & Ledger Waiver: {selectedLoanForManualPayment.loanId}
-                </h3>
-                <p className="text-[11px] text-slate-400">
-                  Borrower: {selectedLoanForManualPayment.borrower.nameEn} ({selectedLoanForManualPayment.borrower.clientCode})
-                </p>
-              </div>
-              <button
-                onClick={() => setSelectedLoanForManualPayment(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            {/* Entry Type Toggle */}
-            <div className="grid grid-cols-2 gap-2 bg-[#0f172a] p-1 rounded-xl border border-[#1e293b]">
-              <button
-                type="button"
-                onClick={() => setManualPaymentForm({ ...manualPaymentForm, paymentType: 'REPAYMENT' })}
-                className={`py-2 px-3 rounded-lg text-xs font-mono font-bold transition ${manualPaymentForm.paymentType === 'REPAYMENT'
-                    ? 'bg-emerald-500 text-slate-950 shadow'
-                    : 'text-slate-400 hover:text-white'
-                  }`}
-              >
-                Installment Repayment
-              </button>
-              <button
-                type="button"
-                onClick={() => setManualPaymentForm({ ...manualPaymentForm, paymentType: 'WAIVER' })}
-                className={`py-2 px-3 rounded-lg text-xs font-mono font-bold transition ${manualPaymentForm.paymentType === 'WAIVER'
-                    ? 'bg-amber-400 text-slate-950 shadow'
-                    : 'text-slate-400 hover:text-white'
-                  }`}
-              >
-                Interest / Penalty Waiver
-              </button>
-            </div>
-
-            <div className="space-y-3 text-xs">
-              <div>
-                <label className="text-[11px] font-mono text-slate-400 block mb-1">
-                  Amount ({currencyMode === 'KHR' ? 'KHR' : 'USD'})
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={manualPaymentForm.amount}
-                  onChange={(e) => setManualPaymentForm({ ...manualPaymentForm, amount: parseFloat(e.target.value) || 0 })}
-                  className="w-full py-2 px-3 bg-[#0f172a] border border-[#1e293b] rounded-xl text-white font-mono text-sm focus:ring-1 focus:ring-emerald-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-mono text-slate-400 block mb-1">
-                  External Reference / Voucher # (e.g. ACLEDA / Bakong Hash / Cash Receipt)
-                </label>
-                <input
-                  type="text"
-                  value={manualPaymentForm.referenceNumber}
-                  onChange={(e) => setManualPaymentForm({ ...manualPaymentForm, referenceNumber: e.target.value })}
-                  className="w-full py-2 px-3 bg-[#0f172a] border border-[#1e293b] rounded-xl text-white font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-mono text-slate-400 block mb-1">
-                  Super Admin Justification & Regulatory Reason
-                </label>
-                <textarea
-                  rows={2}
-                  value={manualPaymentForm.note}
-                  onChange={(e) => setManualPaymentForm({ ...manualPaymentForm, note: e.target.value })}
-                  className="w-full py-2 px-3 bg-[#0f172a] border border-[#1e293b] rounded-xl text-white text-xs"
-                />
-              </div>
-            </div>
-
-            {/* Double-entry Ledger Preview */}
-            <div className="bg-[#0f172a] p-3 rounded-xl border border-[#1e293b] space-y-1.5 text-xs font-mono">
-              <span className="text-[10px] text-slate-500 uppercase tracking-wider block">
-                Accounting Journal Impact (NBC Microfinance Standards):
-              </span>
-              {manualPaymentForm.paymentType === 'REPAYMENT' ? (
-                <>
-                  <div className="flex items-center justify-between text-slate-300">
-                    <span>Dr: 1010-BAKONG / CASH-ON-HAND</span>
-                    <span className="text-emerald-400 font-bold">+{fmt(manualPaymentForm.amount)}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-slate-300">
-                    <span>Cr: 1200-LOANS-RECEIVABLE</span>
-                    <span className="text-emerald-400 font-bold">-{fmt(manualPaymentForm.amount)}</span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="flex items-center justify-between text-slate-300">
-                    <span>Dr: 6100-INTEREST-PENALTY-WAIVER</span>
-                    <span className="text-amber-400 font-bold">+{fmt(manualPaymentForm.amount)}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-slate-300">
-                    <span>Cr: 1210-INTEREST-RECEIVABLE</span>
-                    <span className="text-amber-400 font-bold">-{fmt(manualPaymentForm.amount)}</span>
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div className="pt-3 border-t border-[#1e293b] flex items-center justify-end gap-2">
-              <button
-                onClick={() => setSelectedLoanForManualPayment(null)}
-                className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs rounded-xl"
-              >
-                Cancel
-              </button>
-              <button
-                disabled={isSubmittingManualPayment}
-                onClick={handleManualPaymentSubmit}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs rounded-xl shadow transition"
-              >
-                {isSubmittingManualPayment ? 'Posting Ledger...' : 'Post to General Ledger'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ========================================================================= */}
       {/* 9. MODAL 2: RESTRUCTURE / ADJUST TERMS (Reducing-Balance Engine)           */}
@@ -2252,7 +2092,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <div>
                 <h3 className="text-sm font-bold text-white font-mono flex items-center gap-2">
                   <Lock className="w-4 h-4 text-emerald-400" />
-                  Secondary 2FA Authorization & Atomic Disbursement
+                  Secondary 2FA Authorization & Approval
                 </h3>
                 <p className="text-[11px] text-slate-400">
                   Target: {selectedAppForDisburse.applicationNumber} ({selectedAppForDisburse.borrowerName})
@@ -2309,7 +2149,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 onClick={handleAuthorizeDisbursement}
                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs rounded-xl shadow transition"
               >
-                {isAuthorizingDisbursement ? 'Booking Ledger...' : 'Confirm & Disburse via Bakong'}
+                {isAuthorizingDisbursement ? 'Booking Ledger...' : 'Confirm Approval'}
               </button>
             </div>
           </div>

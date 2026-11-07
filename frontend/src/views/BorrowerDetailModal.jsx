@@ -13,13 +13,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 
-export interface BorrowerDetailModalProps {
-  borrower: any;
-  onClose: () => void;
-  onAddLoan?: (borrower: any) => void;
-}
-
-export const BorrowerDetailModal: React.FC<BorrowerDetailModalProps> = ({
+export const BorrowerDetailModal = ({
   borrower,
   onClose,
   onAddLoan

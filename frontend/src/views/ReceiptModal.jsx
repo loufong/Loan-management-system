@@ -1,23 +1,7 @@
 import React from 'react';
 import { X, Printer, CheckCircle2 } from 'lucide-react';
 
-export interface ReceiptModalProps {
-  receipt: {
-    receiptNumber: string;
-    loanCode: string;
-    borrowerName: string;
-    amountPaid: number;
-    currency: 'USD' | 'KHR';
-    method: string;
-    principalPortion?: number;
-    interestPortion?: number;
-    cashierName?: string;
-    paymentDate?: string;
-  };
-  onClose: () => void;
-}
-
-export const ReceiptModal: React.FC<ReceiptModalProps> = ({ receipt, onClose }) => {
+export const ReceiptModal = ({ receipt, onClose }) => {
   const handlePrint = () => {
     window.print();
   };

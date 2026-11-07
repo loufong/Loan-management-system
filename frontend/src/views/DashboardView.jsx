@@ -16,8 +16,8 @@ import {
 import { MOCK_LOANS, MOCK_BORROWERS, MOCK_RECEIPTS } from '../data/mockData';
 import { CleanPaymentModal } from '../components/loans/CleanPaymentModal';
 
-export const DashboardView: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNavigate }) => {
-  const [selectedCollectLoan, setSelectedCollectLoan] = useState<any>(null);
+export const DashboardView = ({ onNavigate }) => {
+  const [selectedCollectLoan, setSelectedCollectLoan] = useState(null);
 
   // Top Metrics Calculation
   const totalOutstandingUSD = 1845200;
@@ -86,7 +86,7 @@ export const DashboardView: React.FC<{ onNavigate?: (tab: string) => void }> = (
     status: 'CONFIRMED'
   }));
 
-  const handleQuickCollect = (item: any) => {
+  const handleQuickCollect = (item) => {
     setSelectedCollectLoan({
       id: item.loanId || item.id,
       loanCode: item.loanCode,

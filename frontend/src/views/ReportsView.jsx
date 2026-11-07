@@ -15,7 +15,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useReports, ReportItem } from '../hooks/useReports';
 
-export const ReportsView: React.FC = () => {
+export const ReportsView = () => {
   const { user, profile } = useAuth();
   const currentUser = profile || user;
   const role = (currentUser?.role || '').toLowerCase();
@@ -28,9 +28,7 @@ export const ReportsView: React.FC = () => {
     }
   }, [isAllowed]);
 
-  const [reportType, setReportType] = useState<
-    'Active Loan Portfolio' | 'Overdue & Aging Analysis (PAR 30/60/90)' | 'Daily Cashier Collection Sheet'
-  >('Active Loan Portfolio');
+  const [reportType, setReportType] = useState('Active Loan Portfolio');
 
   const { reports, isLoading, error } = useReports({ reportType });
 
@@ -179,7 +177,7 @@ export const ReportsView: React.FC = () => {
         ].map((type) => (
           <button
             key={type}
-            onClick={() => setReportType(type as any)}
+            onClick={() => setReportType(type)}
             className={`px-4 py-2 rounded-2xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
               reportType === type
                 ? 'bg-slate-800 text-white shadow border border-slate-700'

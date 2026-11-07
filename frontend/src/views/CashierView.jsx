@@ -14,12 +14,12 @@ import {
 import { MOCK_LOANS } from '../data/mockData';
 import { ReceiptModal } from './ReceiptModal';
 
-export const CashierView: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState<string>('LN-2026-0042');
-  const [currency, setCurrency] = useState<'USD' | 'KHR'>('USD');
-  const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'KHQR' | 'Bank Transfer'>('Cash');
-  const [amountTenderedStr, setAmountTenderedStr] = useState<string>('500');
-  const [generatedReceipt, setGeneratedReceipt] = useState<any | null>(null);
+export const CashierView = () => {
+  const [searchQuery, setSearchQuery] = useState('LN-2026-0042');
+  const [currency, setCurrency] = useState('USD');
+  const [paymentMethod, setPaymentMethod] = useState('Cash');
+  const [amountTenderedStr, setAmountTenderedStr] = useState('500');
+  const [generatedReceipt, setGeneratedReceipt] = useState(null);
 
   // Matched Loan Facility
   const matchedLoan = useMemo(() => {
@@ -165,7 +165,7 @@ export const CashierView: React.FC = () => {
                 <button
                   key={m.id}
                   type="button"
-                  onClick={() => setPaymentMethod(m.id as any)}
+                  onClick={() => setPaymentMethod(m.id)}
                   className={`p-3 rounded-2xl border flex flex-col items-center gap-1.5 transition text-xs font-bold ${
                     isSelected
                       ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400'

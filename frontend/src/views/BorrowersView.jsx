@@ -15,16 +15,16 @@ import {
 import { MOCK_BORROWERS } from '../data/mockData';
 import { BorrowerDetailModal } from './BorrowerDetailModal';
 
-export const BorrowersView: React.FC<{ onNavigate?: (tab: string, params?: any) => void }> = ({
+export const BorrowersView = ({
   onNavigate
 }) => {
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [filterTab, setFilterTab] = useState<'ALL' | 'ACTIVE' | 'GOOD' | 'OVERDUE'>('ALL');
-  const [selectedBorrower, setSelectedBorrower] = useState<any | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterTab, setFilterTab] = useState('ALL');
+  const [selectedBorrower, setSelectedBorrower] = useState(null);
 
   // Normalize borrowers list
   const borrowerList = useMemo(() => {
-    return MOCK_BORROWERS.map((b: any, index: number) => {
+    return MOCK_BORROWERS.map((b, index) => {
       const code = b.code || `BOR-2026-${String(index + 1).padStart(4, '0')}`;
       const nameEn = b.nameEn || b.name || 'Client';
       const nameKh = b.nameKh || '';

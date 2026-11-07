@@ -15,28 +15,28 @@ import {
 import { generateRepaymentSchedule } from '../utils/loanEngine';
 import { MOCK_BORROWERS } from '../data/mockData';
 
-export const CreateLoanWizard: React.FC<{ onComplete?: () => void }> = ({ onComplete }) => {
-  const [currentStep, setCurrentStep] = useState<number>(1);
+export const CreateLoanWizard = ({ onComplete }) => {
+  const [currentStep, setCurrentStep] = useState(1);
 
   // Step 1: Borrower Selection
-  const [selectedBorrowerId, setSelectedBorrowerId] = useState<string>(
+  const [selectedBorrowerId, setSelectedBorrowerId] = useState(
     MOCK_BORROWERS[0]?.id || 'bor-1'
   );
-  const [borrowerSearch, setBorrowerSearch] = useState<string>('');
+  const [borrowerSearch, setBorrowerSearch] = useState('');
 
   // Step 2: Loan Terms & Engine
-  const [principal, setPrincipal] = useState<number>(5000);
-  const [currency, setCurrency] = useState<'USD' | 'KHR'>('USD');
-  const [termMonths, setTermMonths] = useState<number>(12);
-  const [interestRateMonthly, setInterestRateMonthly] = useState<number>(1.5);
-  const [method, setMethod] = useState<'reducing' | 'flat'>('reducing');
-  const [isScheduleDrawerOpen, setIsScheduleDrawerOpen] = useState<boolean>(false);
+  const [principal, setPrincipal] = useState(5000);
+  const [currency, setCurrency] = useState('USD');
+  const [termMonths, setTermMonths] = useState(12);
+  const [interestRateMonthly, setInterestRateMonthly] = useState(1.5);
+  const [method, setMethod] = useState('reducing');
+  const [isScheduleDrawerOpen, setIsScheduleDrawerOpen] = useState(false);
 
   // Step 3: Collateral & Verification
-  const [collateralType, setCollateralType] = useState<string>('Hard Title (LMAP)');
-  const [forcedSaleValue, setForcedSaleValue] = useState<number>(15000);
-  const [uploadedFiles, setUploadedFiles] = useState<string[]>(['deed_lmap_scan_01.pdf']);
-  const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
+  const [collateralType, setCollateralType] = useState('Hard Title (LMAP)');
+  const [forcedSaleValue, setForcedSaleValue] = useState(15000);
+  const [uploadedFiles, setUploadedFiles] = useState(['deed_lmap_scan_01.pdf']);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   // Live Loan Calculation via loanEngine.ts
   const calculationResult = useMemo(() => {

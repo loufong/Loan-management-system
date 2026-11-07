@@ -18,7 +18,7 @@ import { CleanPaymentModal } from '../components/loans/CleanPaymentModal';
 import { useAuth } from '../context/AuthContext';
 import { MOCK_LOANS, MOCK_RECEIPTS } from '../data/mockData';
 
-export const MyLoansView: React.FC = () => {
+export const MyLoansView = () => {
   const { user, profile } = useAuth();
   const currentBorrower = profile || user;
   const borrowerName = currentBorrower?.fullName || currentBorrower?.name || currentBorrower?.username || 'Client User';
@@ -31,10 +31,10 @@ export const MyLoansView: React.FC = () => {
     );
   }, []);
 
-  const [activeTab, setActiveTab] = useState<'schedule' | 'receipts'>('schedule');
-  const [isScheduleOpen, setIsScheduleOpen] = useState<boolean>(true);
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState<boolean>(false);
-  const [selectedInstallmentId, setSelectedInstallmentId] = useState<string | undefined>(undefined);
+  const [activeTab, setActiveTab] = useState('schedule');
+  const [isScheduleOpen, setIsScheduleOpen] = useState(true);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedInstallmentId, setSelectedInstallmentId] = useState(undefined);
 
   // Financial Metrics
   const principalBalance = activeLoan?.remainingPrincipalUSD || 3850;
@@ -45,7 +45,7 @@ export const MyLoansView: React.FC = () => {
 
   // Installment Schedule Rows
   const schedules = useMemo(() => {
-    return (activeLoan?.schedules || []).map((s: any, idx: number) => {
+    return (activeLoan?.schedules || []).map((s, idx) => {
       const num = s.installmentNo || idx + 1;
       let status = (s.status || 'UNPAID').toUpperCase();
       if (num < 4) status = 'PAID';
@@ -62,12 +62,12 @@ export const MyLoansView: React.FC = () => {
     });
   }, [activeLoan]);
 
-  const handlePayInstallment = (installmentId?: string) => {
+  const handlePayInstallment = (installmentId) => {
     setSelectedInstallmentId(installmentId);
     setIsPaymentModalOpen(true);
   };
 
-  const handlePrintReceipt = (receiptNo: string) => {
+  const handlePrintReceipt = (receiptNo) => {
     window.print();
   };
 
@@ -210,7 +210,7 @@ export const MyLoansView: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 font-mono">
-                  {schedules.map((row: any) => {
+                  {schedules.map((row) => {
                     const isPaid = row.status === 'PAID';
                     const isOverdue = row.status === 'OVERDUE';
                     return (
@@ -265,7 +265,7 @@ export const MyLoansView: React.FC = () => {
           <div className="space-y-4">
             <h3 className="text-sm font-bold text-white">Settlement Receipts</h3>
             <div className="divide-y divide-slate-800/80">
-              {MOCK_RECEIPTS.slice(0, 5).map((rec: any) => (
+              {MOCK_RECEIPTS.slice(0, 5).map((rec) => (
                 <div key={rec.id || rec.receiptNumber} className="py-3.5 flex items-center justify-between">
                   <div className="space-y-0.5">
                     <div className="font-mono text-sm font-bold text-white flex items-center gap-2">

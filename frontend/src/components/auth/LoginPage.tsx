@@ -37,12 +37,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   const [showCoreBankingView, setShowCoreBankingView] = useState<boolean>(() => {
     return window.location.search.includes('view=core') || window.location.hash.includes('view=core');
   });
-  const [usernameOrEmail, setUsernameOrEmail] = useState<string>(() => {
-    return initialRole === 'admin' ? 'admin@loansystem.edu' : '';
-  });
-  const [password, setPassword] = useState<string>(() => {
-    return initialRole === 'admin' ? 'Password123!' : '';
-  });
+  const [usernameOrEmail, setUsernameOrEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
   const [rememberMe, setRememberMe] = useState<boolean>(true);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -136,7 +132,31 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <span>Core Banking Screen</span>
           </button>
 
-          
+          {/* Language Switcher */}
+          <div className="inline-flex items-center p-0.5 bg-slate-100 border border-[#E2E8F0] rounded-[6px]">
+            <button
+              type="button"
+              onClick={() => setLanguage('en')}
+              className={`px-2.5 py-1 text-xs font-semibold rounded-[4px] transition-colors cursor-pointer ${
+                language === 'en'
+                  ? 'bg-white text-[#2563EB] shadow-xs'
+                  : 'text-[#64748B] hover:text-[#0F172A]'
+              }`}
+            >
+              EN
+            </button>
+            <button
+              type="button"
+              onClick={() => setLanguage('km')}
+              className={`px-2.5 py-1 text-xs font-semibold rounded-[4px] transition-colors cursor-pointer ${
+                language === 'km'
+                  ? 'bg-white text-[#2563EB] shadow-xs'
+                  : 'text-[#64748B] hover:text-[#0F172A]'
+              }`}
+            >
+              ខ្មែរ
+            </button>
+          </div>
         </div>
 
         {/* Institutional Branding Header */}
@@ -179,45 +199,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               <span className="leading-snug flex-1">{error}</span>
             </div>
           )}
-
-          {/* Quick Demo Credentials 1-Click Fill */}
-          <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-[6px] p-3 text-xs space-y-2">
-            <div className="flex items-center justify-between text-[#0F172A] font-semibold">
-              <span>{'Select Account (1-Click Fill):'}</span>
-              <span className="text-[11px] font-normal text-[#64748B]">Password: Password123!</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setUsernameOrEmail('admin@loansystem.edu');
-                  setPassword('Password123!');
-                  setError(null);
-                }}
-                className="p-2 bg-white border border-[#E2E8F0] hover:border-[#2563EB] hover:bg-blue-50/40 rounded-[5px] text-left transition-all cursor-pointer flex flex-col"
-              >
-                <span className="font-bold text-[11px] text-[#2563EB]">
-                  {'Administrator'}
-                </span>
-                <span className="text-[10px] text-[#64748B] truncate">admin@loansystem.edu</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setUsernameOrEmail('johnathan.doe@student.edu');
-                  setPassword('Password123!');
-                  setError(null);
-                }}
-                className="p-2 bg-white border border-[#E2E8F0] hover:border-[#059669] hover:bg-emerald-50/40 rounded-[5px] text-left transition-all cursor-pointer flex flex-col"
-              >
-                <span className="font-bold text-[11px] text-[#059669]">
-                  {'Client User (Borrower)'}
-                </span>
-                <span className="text-[10px] text-[#64748B] truncate">johnathan.doe@student.edu</span>
-              </button>
-            </div>
-          </div>
 
           {/* Login Form */}
           <form onSubmit={handleLogin} className="space-y-4">

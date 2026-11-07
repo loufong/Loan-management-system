@@ -144,7 +144,7 @@ class ApiService {
     const name = payload.fullName || `${payload.firstName || ''} ${payload.lastName || ''}`.trim() || payload.username;
     const role = payload.role || 'USER';
     const borrowerId = `BOR-2026-${Math.floor(1000 + Math.random() * 9000)}`;
-    const phone = payload.phone || '+855 12 000 888';
+    const phone = payload.phone?.trim() || '';
     const dateOfBirth = payload.dateOfBirth || '2001-08-15';
     const gender = payload.gender || 'Female';
     const address = payload.residentialAddress || 'Preah Monivong Blvd, Sangkat BKK1, Phnom Penh, Cambodia';
@@ -219,8 +219,15 @@ class ApiService {
         username: string;
         borrowerId?: string;
         password?: string;
+        phone?: string;
+        fullName?: string;
+        address?: string;
+        occupation?: string;
+        monthlyIncome?: number;
       }
     > = {
+      'luofong03@gmail.com': { role: 'BORROWER', status: 'active', name: 'Jin', fullName: 'Jin', email: 'luofong03@gmail.com', username: 'jin', borrowerId: 'BOR-2026-3838', phone: '+855 010487718', password: 'Password123!', address: 'Phnom Penh, Cambodia', occupation: 'SME Commercial Merchant', monthlyIncome: 1200 },
+      'jin': { role: 'BORROWER', status: 'active', name: 'Jin', fullName: 'Jin', email: 'luofong03@gmail.com', username: 'jin', borrowerId: 'BOR-2026-3838', phone: '+855 010487718', password: 'Password123!', address: 'Phnom Penh, Cambodia', occupation: 'SME Commercial Merchant', monthlyIncome: 1200 },
       'phonrithya313@gmail.com': { role: 'ADMIN', status: 'active', name: 'Phon Rithya', email: 'phonrithya313@gmail.com', username: 'phonrithya', password: 'Phonrithya@admin1' },
       'phonrithya': { role: 'ADMIN', status: 'active', name: 'Phon Rithya', email: 'phonrithya313@gmail.com', username: 'phonrithya', password: 'Phonrithya@admin1' },
       'admin@loansystem.edu': { role: 'ADMIN', status: 'active', name: 'System Administrator', email: 'admin@loansystem.edu', username: 'admin' },
@@ -260,10 +267,12 @@ class ApiService {
           role: isPrivileged ? 'ADMIN' : 'BORROWER',
           status: 'active',
           name: displayName || 'Demo User',
+          fullName: displayName || 'Demo User',
           email: cleanId.includes('@') ? cleanId : `${cleanId}@apex.local`,
           username: cleanId.includes('@') ? cleanId.split('@')[0] : cleanId,
           borrowerId: isPrivileged ? undefined : `BOR-2026-${Math.floor(1000 + Math.random() * 9000)}`,
           password: password,
+          phone: '',
         };
       } else {
         record.count += 1;
@@ -295,21 +304,31 @@ class ApiService {
     this.setToken(token);
 
     const userRole = normalizeUserRole(account.role);
+    const userPhone = (account as any).phone || (account as any).phoneNumber || '';
+    const userAvatar = (account as any).avatarUrl || (account as any).avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(account.username)}`;
+    const userAddress = (account as any).address || (account as any).residentialAddress || 'Phnom Penh, Cambodia';
+    const userOccupation = (account as any).occupation || (account as any).position || (userRole === 'BORROWER' ? 'SME Commercial Merchant' : 'System Administrator');
+    const userMonthlyIncome = (account as any).monthlyIncome || 1200;
+
     const user: UserProfile = {
-      id: `usr-${cleanId.replace(/[^a-z0-9]/g, '-')}`,
+      id: (account as any).id || (account as any).borrowerId || `usr-${cleanId.replace(/[^a-z0-9]/g, '-')}`,
       username: account.username,
       name: account.name,
-      fullName: account.name,
+      fullName: (account as any).fullName || account.name,
       email: account.email,
+      phone: userPhone,
+      address: userAddress,
+      occupation: userOccupation,
+      monthlyIncome: userMonthlyIncome,
       role: userRole,
       status: account.status,
       title: userRole === 'ADMIN' ? 'System Administrator' : userRole === 'MANAGER' ? 'Branch Manager' : userRole === 'CASHIER' ? 'Head Cashier' : userRole === 'LOAN_OFFICER' ? 'Loan Officer' : userRole === 'CREDIT_OFFICER' ? 'Credit Analyst' : 'Client Borrower',
       department: userRole === 'ADMIN' || userRole === 'MANAGER' ? 'Executive Administration' : userRole === 'CASHIER' ? 'Treasury & Cashier' : userRole === 'LOAN_OFFICER' || userRole === 'CREDIT_OFFICER' ? 'Credit & Underwriting' : 'Client Services',
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(account.username)}`,
-      avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(account.username)}`,
-      branch: 'Phnom Penh Main Branch',
+      avatar: userAvatar,
+      avatarUrl: userAvatar,
+      branch: (account as any).branch || 'Phnom Penh Main Branch',
       borrowerId: account.borrowerId,
-      createdAt: '2026-01-01',
+      createdAt: (account as any).createdAt || '2026-01-01',
       lastLogin: new Date().toISOString(),
     };
 
@@ -934,32 +953,40 @@ class ApiService {
     monthlyIncome?: number | string;
     nationalId?: string;
   }): Promise<UserProfile> {
-    const res = await this.request<any>('/auth/profile', {
-      method: 'PUT',
-      body: JSON.stringify(payload),
-    });
-    const u = res.user || res;
     let cachedUser: any = {};
     try {
       const raw = localStorage.getItem('apex_user') || sessionStorage.getItem('apex_user');
       if (raw) cachedUser = JSON.parse(raw);
     } catch { }
 
+    let u: any = {};
+    if (!isStaticHost) {
+      try {
+        const res = await this.request<any>('/auth/profile', {
+          method: 'PUT',
+          body: JSON.stringify(payload),
+        });
+        u = res.user || res;
+      } catch (err) {
+        console.warn('Backend updateProfile skipped, persisting to local storage:', err);
+      }
+    }
+
     const updatedProfile: UserProfile = {
       ...cachedUser,
       id: u.id || cachedUser.id,
       name: u.fullName || payload.fullName || cachedUser.name,
       fullName: u.fullName || payload.fullName || cachedUser.fullName,
-      phone: u.phone !== undefined ? u.phone : (payload.phone || cachedUser.phone),
+      phone: payload.phone !== undefined ? payload.phone : (u.phone !== undefined ? u.phone : cachedUser.phone),
       position: u.position || payload.position || cachedUser.position,
       title: u.position || payload.position || cachedUser.title,
       department: u.department || payload.department || cachedUser.department,
-      address: payload.address !== undefined ? payload.address : cachedUser.address,
+      address: payload.address !== undefined ? payload.address : (u.address || cachedUser.address),
       occupation: payload.occupation !== undefined ? payload.occupation : (cachedUser.occupation || payload.position),
-      monthlyIncome: payload.monthlyIncome !== undefined ? payload.monthlyIncome : cachedUser.monthlyIncome,
+      monthlyIncome: payload.monthlyIncome !== undefined ? (typeof payload.monthlyIncome === 'number' ? payload.monthlyIncome : parseFloat(payload.monthlyIncome) || 0) : cachedUser.monthlyIncome,
       nationalId: payload.nationalId !== undefined ? payload.nationalId : cachedUser.nationalId,
-      avatarUrl: payload.avatarUrl || cachedUser.avatarUrl,
-      avatar: payload.avatarUrl || cachedUser.avatar,
+      avatarUrl: payload.avatarUrl !== undefined ? payload.avatarUrl : cachedUser.avatarUrl,
+      avatar: payload.avatarUrl !== undefined ? payload.avatarUrl : cachedUser.avatar,
     };
 
     if (localStorage.getItem('apex_token')) {
@@ -967,6 +994,30 @@ class ApiService {
     } else {
       sessionStorage.setItem('apex_user', JSON.stringify(updatedProfile));
     }
+
+    // Sync to apex_registered_users if present
+    try {
+      const stored = JSON.parse(localStorage.getItem('apex_registered_users') || '{}');
+      const email = (updatedProfile.email || '').toLowerCase();
+      const username = (updatedProfile.username || '').toLowerCase();
+      const borrowerId = updatedProfile.borrowerId;
+
+      const patchEntry = (acc: any) => {
+        if (!acc) return;
+        if (payload.fullName) { acc.name = payload.fullName; acc.fullName = payload.fullName; }
+        if (payload.phone !== undefined) { acc.phone = payload.phone; }
+        if (payload.address !== undefined) { acc.address = payload.address; acc.residentialAddress = payload.address; }
+        if (payload.occupation !== undefined) { acc.occupation = payload.occupation; }
+        if (payload.monthlyIncome !== undefined) { acc.monthlyIncome = payload.monthlyIncome; }
+        if (payload.avatarUrl !== undefined) { acc.avatarUrl = payload.avatarUrl; acc.avatar = payload.avatarUrl; }
+      };
+
+      if (email && stored[email]) patchEntry(stored[email]);
+      if (username && stored[username]) patchEntry(stored[username]);
+      if (borrowerId && stored[borrowerId]) patchEntry(stored[borrowerId]);
+
+      localStorage.setItem('apex_registered_users', JSON.stringify(stored));
+    } catch { }
 
     return updatedProfile;
   }
@@ -1174,7 +1225,7 @@ class ApiService {
         userId: l.borrower.id,
         applicantName: l.borrower.nameEn,
         email: l.borrower.email || 'borrower@jamsongvich.com',
-        phone: l.borrower.phone || '+855 12 000 888',
+        phone: l.borrower.phone || '',
         requestedAmount: l.principal.disbursedAmountUSD,
         loanDuration: l.principal.termMonths,
         productName: l.facility.productName,
@@ -1285,7 +1336,7 @@ class ApiService {
                         ) || null;
 
     const email = targetLoan?.borrower?.email || matchedUser?.email || `${applicantName.toLowerCase().replace(/\s+/g, '.')}@student.edu`;
-    const phone = targetLoan?.borrower?.phone || matchedUser?.phone || (mockApp as any)?.phone || '+855 12 000 888';
+    const phone = targetLoan?.borrower?.phone || matchedUser?.phone || (mockApp as any)?.phone || '';
     const dateOfBirth = (targetLoan?.borrower as any)?.dateOfBirth || (targetLoan?.borrower as any)?.dob || matchedUser?.dateOfBirth || matchedUser?.dob || '2001-08-15';
     const gender = (targetLoan?.borrower as any)?.gender || matchedUser?.gender || 'Female';
     const residentialAddress = (targetLoan?.borrower as any)?.residentialAddress || (targetLoan?.borrower as any)?.address || matchedUser?.address || matchedUser?.residentialAddress || 'Preah Monivong Blvd, Sangkat BKK1, Phnom Penh, Cambodia';

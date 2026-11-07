@@ -27,6 +27,8 @@ import {
   EyeOff,
   Sparkles,
   RefreshCw,
+  Camera,
+  Trash2,
 } from 'lucide-react';
 
 export interface UserProfileViewProps {
@@ -51,6 +53,8 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
   const [phone, setPhone] = useState(currentUser.phone || '');
   const [position, setPosition] = useState(currentUser.position || currentUser.title || '');
   const [department, setDepartment] = useState(currentUser.department || '');
+  const [avatarUrl, setAvatarUrl] = useState(currentUser.avatarUrl || currentUser.avatar || '');
+  const avatarInputRef = React.useRef<HTMLInputElement>(null);
 
   // Form Feedback
   const [isSaving, setIsSaving] = useState(false);
@@ -95,6 +99,53 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
     }
   };
 
+  const handleAvatarFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setSaveError('Please select a valid image file (PNG, JPG, WEBP).');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 400;
+          const MAX_HEIGHT = 400;
+          let width = img.width;
+          let height = img.height;
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height = Math.round((height * MAX_WIDTH) / width);
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width = Math.round((width * MAX_HEIGHT) / height);
+              height = MAX_HEIGHT;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            setAvatarUrl(canvas.toDataURL('image/jpeg', 0.88));
+          } else {
+            setAvatarUrl(event.target?.result as string);
+          }
+        } catch {
+          setAvatarUrl(event.target?.result as string);
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+    if (e.target) e.target.value = '';
+  };
+
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaveError(null);
@@ -113,6 +164,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
         phone: phone.trim() || undefined,
         position: position.trim() || undefined,
         department: department.trim() || undefined,
+        avatarUrl: avatarUrl.trim() || '',
       });
 
       if (onUpdateUser) {
@@ -182,15 +234,30 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
       <div className="bg-white border border-[#E2E8F0] rounded-[8px] p-6 shadow-xs">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="w-16 h-16 rounded-full bg-slate-900 border-2 border-white shadow-xs flex items-center justify-center text-xl font-bold text-white shrink-0">
-                {currentUser.fullName
-                  ? currentUser.fullName.charAt(0).toUpperCase()
-                  : currentUser.name
-                  ? currentUser.name.charAt(0).toUpperCase()
-                  : 'U'}
+            <div className="relative group">
+              <div className="w-16 h-16 rounded-full bg-slate-900 border-2 border-white shadow-xs flex items-center justify-center text-xl font-bold text-white shrink-0 overflow-hidden">
+                {currentUser.avatarUrl && (currentUser.avatarUrl.startsWith('data:') || currentUser.avatarUrl.startsWith('http')) ? (
+                  <img src={currentUser.avatarUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  currentUser.fullName
+                    ? currentUser.fullName.charAt(0).toUpperCase()
+                    : currentUser.name
+                    ? currentUser.name.charAt(0).toUpperCase()
+                    : 'U'
+                )}
               </div>
-              <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white" title="Online & Active" />
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('edit');
+                  avatarInputRef.current?.click();
+                }}
+                className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity cursor-pointer"
+                title="Change Photo"
+              >
+                <Camera className="w-4 h-4" />
+              </button>
+              <span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white pointer-events-none" title="Online & Active" />
             </div>
 
             <div>
@@ -354,7 +421,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                   <Phone className="w-3.5 h-3.5" />
                   {t('Phone Number', 'Phone Number')}
                 </span>
-                <span className="font-mono text-[#0F172A]">{currentUser.phone || '012 345 678'}</span>
+                <span className="font-mono text-[#0F172A]">{currentUser.phone || 'Not provided'}</span>
               </div>
 
               <div className="flex items-center justify-between py-1 border-b border-slate-50">
@@ -587,6 +654,53 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                 </div>
                 <div>
                   <span className="font-medium text-[#0F172A]">Branch:</span> {currentUser.branch || 'Phnom Penh Main Branch'}
+                </div>
+              </div>
+            </div>
+
+            {/* Profile Photo Upload */}
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-[6px] space-y-3">
+              <label className="block text-xs font-semibold text-[#0F172A]">
+                Profile Photo
+              </label>
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-full bg-slate-900 border-2 border-white shadow-xs flex items-center justify-center text-lg font-bold text-white shrink-0 overflow-hidden">
+                  {avatarUrl && (avatarUrl.startsWith('data:') || avatarUrl.startsWith('http')) ? (
+                    <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    fullName ? fullName.charAt(0).toUpperCase() : 'U'
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={avatarInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/jpg"
+                      className="hidden"
+                      onChange={handleAvatarFileSelect}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => avatarInputRef.current?.click()}
+                      className="px-3 py-1.5 rounded-[4px] text-xs font-semibold bg-[#2563EB] hover:bg-blue-700 text-white transition flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                      <span>Upload Photo</span>
+                    </button>
+                    {avatarUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setAvatarUrl('')}
+                        className="px-2.5 py-1.5 rounded-[4px] text-xs font-medium text-slate-600 hover:text-rose-600 hover:bg-rose-50 border border-slate-300 transition flex items-center gap-1 cursor-pointer"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        <span>Remove</span>
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-[#64748B]">Upload an image from your device (PNG, JPG, WEBP).</p>
                 </div>
               </div>
             </div>

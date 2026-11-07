@@ -752,7 +752,7 @@ class LoanStorageService {
 
     const borrowerNameEn = payload.borrowerName || 'Applicant';
     const borrowerEmail = payload.borrowerEmail || ((payload as any).email || `${borrowerNameEn.toLowerCase().replace(/\s+/g, '.')}@student.edu`);
-    const borrowerPhone = payload.borrowerPhone || (payload as any).phone || '+855 12 000 888';
+    const borrowerPhone = payload.borrowerPhone || (payload as any).phone || '';
     const clientCode = payload.borrowerId?.startsWith('BOR-') ? payload.borrowerId : `BOR-2026-${Math.floor(1000 + Math.random() * 9000)}`;
 
     const newRecord: UnifiedLoanRecord = {
@@ -985,7 +985,7 @@ class LoanStorageService {
           nameEn: bName,
           nameKh: bName,
           maskedNationalId: '010****00',
-          phone: (mock as any)?.phone || regUser?.phone || '+855 12 000 888',
+          phone: (mock as any)?.phone || regUser?.phone || '',
           email: (mock as any)?.email || regUser?.email || `${bName.toLowerCase().replace(/\s+/g, '.')}@student.edu`,
           occupation: (mock as any)?.occupation || regUser?.occupation || 'Student / Entrepreneur',
           monthlyIncome: mock?.borrowerIncomeUSD || 2500,
@@ -1262,6 +1262,28 @@ class LoanStorageService {
       createdAt: '2026-01-01',
     });
 
+    // Baseline registered client borrower (Jin)
+    map.set('bor-3838', {
+      id: 'bor-3838',
+      borrowerId: 'BOR-2026-3838',
+      fullName: 'Jin',
+      avatarUrl: '',
+      nationalId: '0108928374',
+      phone: '+855 010487718',
+      email: 'luofong03@gmail.com',
+      address: 'Phnom Penh, Cambodia',
+      occupation: 'SME Commercial Merchant',
+      monthlyIncomeUSD: 1200,
+      status: 'ACTIVE',
+      kycStatus: 'VERIFIED',
+      activeLoansCount: 0,
+      totalBorrowedUSD: 0,
+      totalRepaidUSD: 0,
+      totalOutstandingUSD: 0,
+      dtiRatio: 15.0,
+      createdAt: '2026-01-01',
+    });
+
     for (const l of loans) {
       const b = l.borrower;
       const bId = b.id || 'bor-8801';
@@ -1313,7 +1335,7 @@ class LoanStorageService {
             fullName: u.name,
             avatarUrl: '',
             nationalId: '010****89',
-            phone: u.phone || '+855 12 000 888',
+            phone: u.phone || '',
             email: u.email || `${u.name.toLowerCase().replace(/\s+/g, '.')}@student.edu`,
             address: u.address || 'Preah Monivong Blvd, Phnom Penh, Kingdom of Cambodia',
             occupation: u.occupation || 'Student / Entrepreneur',

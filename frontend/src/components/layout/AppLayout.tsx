@@ -329,6 +329,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   const currentNav = navLinks.find(isItemActive) || navLinks[0];
   const displayName = currentUser?.name || currentUser?.fullName || currentUser?.username || 'User';
   const displayAvatar = (displayName.slice(0, 2) || 'US').toUpperCase();
+  const avatarPhoto = currentUser?.avatarUrl || currentUser?.avatar;
+  const hasValidAvatarPhoto = Boolean(avatarPhoto && (avatarPhoto.startsWith('data:') || avatarPhoto.startsWith('http')));
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-950 text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-slate-950">
@@ -438,8 +440,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             <div className="flex flex-col gap-2 p-2 rounded-xl bg-slate-950/60 border border-slate-800">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs shrink-0">
-                    {displayAvatar}
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden">
+                    {hasValidAvatarPhoto ? (
+                      <img src={avatarPhoto} alt={displayName} className="w-full h-full object-cover" />
+                    ) : (
+                      displayAvatar
+                    )}
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-white truncate">{displayName}</p>
@@ -457,8 +463,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs">
-                {displayAvatar}
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs overflow-hidden">
+                {hasValidAvatarPhoto ? (
+                  <img src={avatarPhoto} alt={displayName} className="w-full h-full object-cover" />
+                ) : (
+                  displayAvatar
+                )}
               </div>
               <button
                 onClick={onLogout}
@@ -773,8 +783,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
             {/* Authenticated User Badge with Avatar */}
             <div className="hidden sm:flex items-center gap-2.5 pl-3 border-l border-slate-800">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs shrink-0">
-                {(currentUser?.fullName || currentUser?.name || currentUser?.username || 'User').slice(0, 2).toUpperCase()}
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden">
+                {hasValidAvatarPhoto ? (
+                  <img src={avatarPhoto} alt={displayName} className="w-full h-full object-cover" />
+                ) : (
+                  (currentUser?.fullName || currentUser?.name || currentUser?.username || 'User').slice(0, 2).toUpperCase()
+                )}
               </div>
               <div className="text-left hidden md:block">
                 <span className="text-xs font-bold text-white block leading-tight truncate">

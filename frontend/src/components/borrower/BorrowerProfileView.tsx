@@ -35,6 +35,9 @@ import {
   AlertCircle,
   Briefcase,
   DollarSign,
+  Camera,
+  Trash2,
+  Upload,
 } from 'lucide-react';
 import { Currency, UserProfile } from '../../types';
 import { useAuth } from '../../context/AuthContext';
@@ -68,7 +71,7 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
   // Edit Profile State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editFullName, setEditFullName] = useState(currentUser?.fullName || currentUser?.name || '');
-  const [editPhone, setEditPhone] = useState(currentUser?.phone || '+855 12 000 888');
+  const [editPhone, setEditPhone] = useState(currentUser?.phone || '');
   const [editAddress, setEditAddress] = useState(currentUser?.address || 'Phnom Penh, Cambodia');
   const [editOccupation, setEditOccupation] = useState(currentUser?.occupation || currentUser?.position || 'SME Commercial Merchant');
   const [editMonthlyIncome, setEditMonthlyIncome] = useState(currentUser?.monthlyIncome ? String(currentUser.monthlyIncome) : '1200');
@@ -77,16 +80,106 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
   const [profileSuccessNotice, setProfileSuccessNotice] = useState<string | null>(null);
   const [profileErrorNotice, setProfileErrorNotice] = useState<string | null>(null);
 
+  const directAvatarFileInputRef = useRef<HTMLInputElement>(null);
+  const modalAvatarFileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (currentUser) {
       setEditFullName(currentUser.fullName || currentUser.name || '');
-      setEditPhone(currentUser.phone || '+855 12 000 888');
+      setEditPhone(currentUser.phone || '');
       if (currentUser.address) setEditAddress(currentUser.address);
       if (currentUser.occupation || currentUser.position) setEditOccupation(currentUser.occupation || currentUser.position || '');
       if (currentUser.monthlyIncome) setEditMonthlyIncome(String(currentUser.monthlyIncome));
-      if (currentUser.avatarUrl || currentUser.avatar) setEditAvatarUrl(currentUser.avatarUrl || currentUser.avatar || '');
+      if (currentUser.avatarUrl !== undefined || currentUser.avatar !== undefined) {
+        setEditAvatarUrl(currentUser.avatarUrl || currentUser.avatar || '');
+      }
     }
   }, [currentUser]);
+
+  const compressImageFile = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      if (!file.type.startsWith('image/')) {
+        reject(new Error('Please select a valid image file (PNG, JPG, WEBP).'));
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 400;
+            const MAX_HEIGHT = 400;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+              if (width > MAX_WIDTH) {
+                height = Math.round((height * MAX_WIDTH) / width);
+                width = MAX_WIDTH;
+              }
+            } else {
+              if (height > MAX_HEIGHT) {
+                width = Math.round((width * MAX_HEIGHT) / height);
+                height = MAX_HEIGHT;
+              }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, width, height);
+              const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+              resolve(dataUrl);
+            } else {
+              resolve(event.target?.result as string);
+            }
+          } catch {
+            resolve(event.target?.result as string);
+          }
+        };
+        img.onerror = () => reject(new Error('Could not parse image.'));
+        img.src = event.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('Failed to read image file.'));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleDirectAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const dataUrl = await compressImageFile(file);
+      setEditAvatarUrl(dataUrl);
+      const updated = await authUpdateProfile({ avatarUrl: dataUrl });
+      if (onUpdateUser) onUpdateUser(updated);
+      setProfileSuccessNotice('Profile picture uploaded successfully!');
+      setTimeout(() => setProfileSuccessNotice(null), 3000);
+    } catch (err: any) {
+      setProfileErrorNotice(err?.message || 'Failed to upload photo.');
+      setTimeout(() => setProfileErrorNotice(null), 3000);
+    } finally {
+      if (e.target) e.target.value = '';
+    }
+  };
+
+  const handleModalAvatarFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const dataUrl = await compressImageFile(file);
+      setEditAvatarUrl(dataUrl);
+      setProfileErrorNotice(null);
+    } catch (err: any) {
+      setProfileErrorNotice(err?.message || 'Failed to select photo.');
+    } finally {
+      if (e.target) e.target.value = '';
+    }
+  };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,7 +206,7 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
         position: editOccupation.trim() || undefined,
         occupation: editOccupation.trim() || undefined,
         monthlyIncome: editMonthlyIncome ? parseFloat(editMonthlyIncome) || 0 : undefined,
-        avatarUrl: editAvatarUrl.trim() || undefined,
+        avatarUrl: editAvatarUrl.trim() || '',
       });
 
       if (onUpdateUser) {
@@ -491,9 +584,9 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
         {/* User Identity Header Card */}
         <div className="bg-slate-950 border border-slate-800/80 rounded-2xl p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-5">
           <div className="flex items-center gap-4">
-            {/* Real Photograph KYC Avatar with Verified Ring */}
-            <div className="relative shrink-0">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 p-0.5 shadow-lg shadow-blue-950/50">
+            {/* Real Photograph KYC Avatar with Verified Ring & Upload Trigger */}
+            <div className="relative group shrink-0">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 p-0.5 shadow-lg shadow-blue-950/50 overflow-hidden">
                 <img
                   src={
                     currentUser?.avatarUrl ||
@@ -505,7 +598,26 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
                   className="w-full h-full object-cover rounded-[14px]"
                 />
               </div>
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center font-bold text-xs shadow-md">
+
+              {/* Upload photo overlay button on hover */}
+              <button
+                type="button"
+                onClick={() => directAvatarFileInputRef.current?.click()}
+                className="absolute inset-0 rounded-2xl bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white text-[10px] font-semibold transition-opacity duration-150 cursor-pointer backdrop-blur-xs"
+                title="Upload Profile Picture"
+              >
+                <Camera className="w-4 h-4 mb-0.5 text-blue-400" />
+                <span>Upload</span>
+              </button>
+              <input
+                ref={directAvatarFileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/jpg"
+                className="hidden"
+                onChange={handleDirectAvatarUpload}
+              />
+
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center font-bold text-xs shadow-md pointer-events-none">
                 ✓
               </div>
             </div>
@@ -526,7 +638,7 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
               <div className="flex items-center gap-3 pt-1 text-[11px] text-slate-400">
                 <span className="flex items-center gap-1">
                   <Phone className="w-3 h-3 text-slate-500" />
-                  {currentUser?.phone || editPhone || '+855 12 000 888'}
+                  {currentUser?.phone || editPhone || 'Not provided'}
                 </span>
                 <span>•</span>
                 <span className="flex items-center gap-1">
@@ -603,7 +715,7 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
 
             <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
               <span className="text-[11px] text-slate-400 font-medium">Primary Phone</span>
-              <div className="font-semibold text-white font-mono truncate">{currentUser?.phone || editPhone}</div>
+              <div className="font-semibold text-white font-mono truncate">{currentUser?.phone || editPhone || 'Not provided'}</div>
             </div>
 
             <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
@@ -1596,37 +1708,87 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
                 />
               </div>
 
-              {/* Profile Avatar Selection */}
+              {/* Profile Avatar Upload */}
               <div>
                 <label className="text-xs font-semibold text-slate-200 block mb-1.5">
-                  Choose Profile Picture
+                  Profile Photo
                 </label>
-                <div className="flex items-center gap-3 overflow-x-auto py-1">
-                  {[
-                    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256',
-                    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=256',
-                    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=256',
-                    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=256',
-                    'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=256',
-                  ].map((url, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setEditAvatarUrl(url)}
-                      className={`relative w-11 h-11 rounded-xl p-0.5 shrink-0 transition cursor-pointer ${
-                        editAvatarUrl === url || (!editAvatarUrl && idx === 0)
-                          ? 'ring-2 ring-blue-500'
-                          : 'opacity-60 hover:opacity-100'
-                      }`}
-                    >
-                      <img src={url} alt={`avatar-${idx}`} className="w-full h-full object-cover rounded-[10px]" />
-                      {(editAvatarUrl === url || (!editAvatarUrl && idx === 0)) && (
-                        <div className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[9px] font-bold">
-                          ✓
-                        </div>
+                <div className="flex items-center gap-4 p-3 bg-slate-950/80 border border-slate-800 rounded-xl">
+                  {/* Current Preview */}
+                  <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-slate-700 bg-slate-900 shrink-0">
+                    {editAvatarUrl ? (
+                      <img
+                        src={editAvatarUrl}
+                        alt="Profile Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-slate-500">
+                        <User className="w-6 h-6" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Upload Actions */}
+                  <div className="flex-1 space-y-1.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <input
+                        ref={modalAvatarFileInputRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,image/jpg"
+                        className="hidden"
+                        onChange={handleModalAvatarFileSelect}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => modalAvatarFileInputRef.current?.click()}
+                        className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white transition flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Camera className="w-3.5 h-3.5" />
+                        <span>Upload Photo</span>
+                      </button>
+
+                      {editAvatarUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setEditAvatarUrl('')}
+                          className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-slate-800 transition flex items-center gap-1 cursor-pointer"
+                          title="Remove photo"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          <span>Remove</span>
+                        </button>
                       )}
-                    </button>
-                  ))}
+                    </div>
+                    <p className="text-[11px] text-slate-400">
+                      Upload an image file from your device (PNG, JPG, WEBP).
+                    </p>
+                  </div>
+                </div>
+
+                {/* Optional sample avatars row */}
+                <div className="mt-2.5">
+                  <span className="text-[11px] text-slate-400 block mb-1.5">Or choose a sample avatar:</span>
+                  <div className="flex items-center gap-2.5 overflow-x-auto py-1">
+                    {[
+                      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256',
+                      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=256',
+                      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=256',
+                      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=256',
+                      'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=256',
+                    ].map((url, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setEditAvatarUrl(url)}
+                        className={`relative w-9 h-9 rounded-lg p-0.5 shrink-0 transition cursor-pointer ${
+                          editAvatarUrl === url ? 'ring-2 ring-blue-500' : 'opacity-60 hover:opacity-100'
+                        }`}
+                      >
+                        <img src={url} alt={`preset-${idx}`} className="w-full h-full object-cover rounded-md" />
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 

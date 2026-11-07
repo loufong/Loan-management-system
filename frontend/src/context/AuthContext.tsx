@@ -475,8 +475,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       occupation: data.occupation !== undefined ? data.occupation : (user as any).occupation,
       monthlyIncome: data.monthlyIncome !== undefined ? data.monthlyIncome : (user as any).monthlyIncome,
       nationalId: data.nationalId !== undefined ? data.nationalId : user.nationalId,
-      avatarUrl: data.avatarUrl || user.avatarUrl,
-      avatar: data.avatarUrl || user.avatar,
+      avatarUrl: data.avatarUrl !== undefined ? data.avatarUrl : user.avatarUrl,
+      avatar: data.avatarUrl !== undefined ? data.avatarUrl : user.avatar,
     };
     setUser(updated);
     setSession(updated, token || '', true);

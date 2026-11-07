@@ -166,6 +166,8 @@ model User {
   otps                   Otp[]
   otpVerifications       OtpVerification[]
   passwordResets         PasswordReset[]
+  loginHistories         LoginHistory[]
+  userSessions           UserSession[]
 
   @@index([role])
   @@index([status])
@@ -736,4 +738,49 @@ model UserKycDocument {
   @@index([status])
   @@index([referenceNumber])
   @@map("user_kyc_documents")
+}
+
+
+// ==========================================
+// 23. LOGIN HISTORY ENTITY
+// ==========================================
+model LoginHistory {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String?   @map("user_id") @db.Uuid
+  email         String    @db.VarChar(255)
+  ipAddress     String?   @map("ip_address") @db.VarChar(45)
+  userAgent     String?   @map("user_agent") @db.Text
+  status        String    @db.VarChar(20) // SUCCESS, FAILED, LOCKED
+  failureReason String?   @map("failure_reason") @db.VarChar(255)
+  loginTime     DateTime  @default(now()) @map("login_time") @db.Timestamptz(6)
+  logoutTime    DateTime? @map("logout_time") @db.Timestamptz(6)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // Relations
+  user          User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([email])
+  @@map("login_history")
+}
+
+// ==========================================
+// 24. USER SESSION ENTITY
+// ==========================================
+model UserSession {
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  sessionTokenHash String    @unique @map("session_token_hash") @db.VarChar(255)
+  ipAddress        String?   @map("ip_address") @db.VarChar(45)
+  userAgent        String?   @map("user_agent") @db.Text
+  expiresAt        DateTime  @map("expires_at") @db.Timestamptz(6)
+  lastActivity     DateTime  @default(now()) @map("last_activity") @db.Timestamptz(6)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // Relations
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([sessionTokenHash])
+  @@map("user_sessions")
 }

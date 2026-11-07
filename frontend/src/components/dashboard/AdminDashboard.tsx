@@ -43,6 +43,7 @@ import {
   Receipt,
 } from 'lucide-react';
 import { Currency, LoanAccount, Borrower, LoanApplication, PaymentReceipt, UserProfile } from '../../types';
+import { UpcomingDueTracker } from './UpcomingDueTracker';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { loanStorageService, UnifiedLoanRecord, LEDGER_UPDATE_EVENT } from '../../services/loanStorageService';
@@ -57,7 +58,7 @@ export interface AdminDashboardProps {
   applications?: LoanApplication[];
   receipts?: PaymentReceipt[];
   focusMode?: 'OVERVIEW' | 'FACILITIES';
-  initialViewMode?: 'LEDGER' | 'UNDERWRITING' | 'RECONCILIATION';
+  initialViewMode?: 'LEDGER' | 'UNDERWRITING' | 'RECONCILIATION' | 'UPCOMING_DUES';
 }
 
 type PeriodScope = 'Today' | 'MTD' | 'QTD' | 'YTD';
@@ -128,7 +129,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [currencyMode, setCurrencyMode] = useState<CurrencyMode>(initialCurrency === 'KHR' ? 'KHR' : 'USD');
   const [globalSearch, setGlobalSearch] = useState('');
   const [activeTab, setActiveTab] = useState<TableFilterTab>('ALL');
-  const [viewMode, setViewMode] = useState<'LEDGER' | 'UNDERWRITING' | 'RECONCILIATION'>(initialViewMode);
+  const [viewMode, setViewMode] = useState<'LEDGER' | 'UNDERWRITING' | 'RECONCILIATION' | 'UPCOMING_DUES'>(initialViewMode);
   const [facilitySubTab, setFacilitySubTab] = useState<'TABLE' | 'BORROWERS'>('TABLE');
 
   useEffect(() => {
@@ -1270,19 +1271,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </button>
 
             <button
-              onClick={() => setViewMode('RECONCILIATION')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${viewMode === 'RECONCILIATION'
+              onClick={() => setViewMode('UPCOMING_DUES')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${viewMode === 'UPCOMING_DUES' || viewMode === 'RECONCILIATION'
                   ? 'bg-slate-800 text-white border border-slate-700 shadow'
                   : 'text-slate-400 hover:text-white hover:bg-slate-900'
                 }`}
+              title="Track live countdown and repayment deadlines for borrowers with approaching due dates"
             >
-              <RefreshCw className="w-3.5 h-3.5 text-teal-400" />
-              <span>Bakong KHQR Reconciliation Feed</span>
-              {reconciliationFeed?.anomaly?.hasAnomaly && (
-                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-rose-500/20 text-rose-300 font-mono font-bold animate-pulse">
-                  1 Mismatch
-                </span>
-              )}
+              <Clock className="w-3.5 h-3.5 text-amber-400" />
+              <span>Upcoming Payment Due Tracker</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-500/20 text-amber-300 font-mono font-bold">
+                {displayLedger.filter(l => (l.nextScheduledPayment?.daysOverdue ?? 0) <= 7).length} Due Soon
+              </span>
             </button>
 
             <button
@@ -1896,179 +1896,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* 7. VIEW 3: LIVE BAKONG KHQR SETTLEMENT FEED (Deliverable 5)               */}
+      {/* 7. VIEW 3: LIVE UPCOMING REPAYMENT DUE DATE & TIME TRACKER                */}
       {/* ========================================================================= */}
-      {viewMode === 'RECONCILIATION' && (
-        <section className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl p-5 shadow-2xl space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-[#1e293b]">
-            <div>
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider font-mono flex items-center gap-2">
-                <RefreshCw className="w-4 h-4 text-teal-400" />
-                Live Bakong KHQR Settlement & Reconciliation Feed
-              </h2>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                Real-time transaction stream from National Bank of Cambodia Bakong core settlement switch.
-              </p>
-            </div>
-            <div className="flex items-center gap-2 text-xs font-mono">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-              <span className="text-emerald-400 font-bold">Node #02 Active</span>
-            </div>
-          </div>
-
-          {/* Reconciliation Anomaly Box */}
-          {reconciliationFeed?.anomaly && (
-            <div className="bg-rose-950/40 border border-rose-500/40 rounded-2xl p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-rose-400" />
-                  <span className="text-xs font-bold text-rose-300 font-mono uppercase tracking-wider">
-                    Reconciliation Anomaly Detected
-                  </span>
-                </div>
-                <span className="text-[10px] font-mono text-slate-400">
-                  {reconciliationFeed.anomaly.detectedAt}
-                </span>
-              </div>
-              <p className="text-xs text-slate-300 font-sans leading-relaxed">
-                {reconciliationFeed.anomaly.issueDescription}
-              </p>
-              <div className="flex items-center justify-between pt-2 border-t border-rose-500/20 text-xs font-mono">
-                <div>
-                  <span className="text-slate-400 text-[10px] block">Bill Reference</span>
-                  <span className="text-white font-bold">{reconciliationFeed.anomaly.billReference}</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 text-[10px] block">Expected EMI</span>
-                  <span className="text-slate-300 font-bold">{fmt(reconciliationFeed.anomaly.expectedAmountUSD)}</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 text-[10px] block">Scanned Amount</span>
-                  <span className="text-emerald-400 font-bold">{fmt(reconciliationFeed.anomaly.scannedAmountUSD)}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    disabled={anomalyResolving !== null}
-                    onClick={() => handleResolveAnomaly('PREPAYMENT')}
-                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs rounded-xl shadow transition"
-                  >
-                    {anomalyResolving === 'PREPAYMENT' ? 'Applying...' : 'Apply as Principal Prepayment'}
-                  </button>
-                  <button
-                    disabled={anomalyResolving !== null}
-                    onClick={() => handleResolveAnomaly('REFUND')}
-                    className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-rose-300 border border-rose-500/30 text-xs rounded-xl transition"
-                  >
-                    {anomalyResolving === 'REFUND' ? 'Refunding...' : 'Refund to Bakong ID'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Real-time Ledger Stream */}
-          <div className="overflow-x-auto">
-            <div className="flex items-center justify-between p-3 bg-[#0f172a] border-b border-[#1e293b]">
-              <span className="text-xs font-mono text-slate-300 font-bold">Live Incoming / Settled Clearing Rails</span>
-              <button
-                onClick={handle1ClickReconcile}
-                className="px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-slate-950 font-bold text-xs rounded-xl shadow transition flex items-center gap-1.5"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                <span>Reconcile Unmatched Settlement</span>
-              </button>
-            </div>
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-[#0f172a]/80 border-b border-[#1e293b] text-slate-400 font-mono uppercase tracking-wider text-[10px]">
-                  <th className="py-2.5 px-4">Timestamp</th>
-                  <th className="py-2.5 px-4 font-mono">Settlement Hash</th>
-                  <th className="py-2.5 px-4">Payer Account</th>
-                  <th className="py-2.5 px-4">Bill Reference</th>
-                  <th className="py-2.5 px-4">Originating Bank</th>
-                  <th className="py-2.5 px-4 text-right">Settled Amount</th>
-                  <th className="py-2.5 px-4 text-center">Reconciliation Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#1e293b]/70 font-mono">
-                {(reconciliationFeed?.transactions?.length > 0
-                  ? reconciliationFeed.transactions
-                  : [
-                    {
-                      id: 'tx-01',
-                      timestamp: '2026-10-31 10:14:02',
-                      settlementHash: 'd41d8cd98f00b204e9800998ecf8427e',
-                      payerAccount: 'bakong:sokha.chan@aclb',
-                      billReference: 'LN-2026-6042-INS05',
-                      originatingBank: 'ABA Bank KHQR',
-                      settledAmountUSD: 122.50,
-                      status: 'MATCHED',
-                    },
-                    {
-                      id: 'tx-02',
-                      timestamp: '2026-10-31 10:11:38',
-                      settlementHash: 'e2fc714c4727ee9395f324cd2e7f331f',
-                      payerAccount: 'bakong:sereyroth.mom@wing',
-                      billReference: 'LN-2026-1184-INS02',
-                      originatingBank: 'ACLEDA Bank Plc.',
-                      settledAmountUSD: 1650.00,
-                      status: 'MATCHED',
-                    },
-                    {
-                      id: 'tx-03',
-                      timestamp: '2026-10-31 09:58:19',
-                      settlementHash: '79cfeb94595de33b3326c06ab16efdcb',
-                      payerAccount: 'bakong:rithy.khem@canadia',
-                      billReference: 'LN-2026-9041-INS04',
-                      originatingBank: 'Wing Bank (Cambodia)',
-                      settledAmountUSD: 1083.50,
-                      status: 'MATCHED',
-                    },
-                    {
-                      id: 'tx-04',
-                      timestamp: '2026-10-31 09:42:10',
-                      settlementHash: '3b890a8274f829a1b0294829fa019284',
-                      payerAccount: 'bakong:unknown.payer@aclb',
-                      billReference: 'LN-2026-7719-UNM',
-                      originatingBank: 'Canadia Bank',
-                      settledAmountUSD: 300.00,
-                      status: 'FLAGGED UNMATCHED',
-                    },
-                  ]
-                ).map((tx: any) => (
-                  <tr key={tx.id} className="hover:bg-slate-900/60 transition">
-                    <td className="py-2.5 px-4 text-slate-400">{tx.timestamp}</td>
-                    <td className="py-2.5 px-4 text-[10px] text-slate-300">
-                      <span className="font-mono bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
-                        {tx.settlementHash ? `${tx.settlementHash.slice(0, 10)}...` : (tx.bakongMD5Hash ? `${tx.bakongMD5Hash.slice(0, 10)}...` : 'BK-HASH-881')}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-4 text-white font-mono">{tx.payerAccount || 'bakong:client@khqr'}</td>
-                    <td className="py-2.5 px-4 text-emerald-400 font-bold">{tx.billReference}</td>
-                    <td className="py-2.5 px-4 text-slate-300 font-sans">{tx.originatingBank}</td>
-                    <td className="py-2.5 px-4 text-right text-white font-bold">{fmt(tx.settledAmountUSD)}</td>
-                    <td className="py-2.5 px-4 text-center">
-                      {tx.status === 'FLAGGED UNMATCHED' ? (
-                        <button
-                          onClick={handle1ClickReconcile}
-                          className="inline-flex items-center gap-1 text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded text-[10px] font-bold border border-rose-500/20 hover:bg-rose-500/20 transition cursor-pointer"
-                        >
-                          <AlertCircle className="w-3 h-3" />
-                          FLAGGED UNMATCHED (Click to Reconcile)
-                        </button>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-emerald-400 text-[10px] font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          MATCHED
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+      {(viewMode === 'UPCOMING_DUES' || viewMode === 'RECONCILIATION') && (
+        <UpcomingDueTracker
+          loans={displayLedger}
+          currency={currencyMode === 'KHR' ? 'KHR' : 'USD'}
+          onViewLedger={(loan) => setSelectedLoanForLedger(loan as any)}
+          onRecordPayment={(loan) => {
+            setSelectedLoanForManualPayment(loan as any);
+            setManualPaymentForm(prev => ({
+              ...prev,
+              amount: loan.nextScheduledPayment?.scheduledEMIUSD || 542.80,
+              paymentType: 'REPAYMENT',
+              note: `Direct repayment settlement for cycle #${loan.nextScheduledPayment?.cycleNumber}`
+            }));
+          }}
+          onSendReminder={(loan) => {
+            setSelectedLoanForAlert(loan as any);
+          }}
+        />
       )}
 
       {/* ========================================================================= */}

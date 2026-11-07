@@ -121,6 +121,16 @@ export class AuthService {
       record.blockedUntil = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes block
     }
     this.failedLoginAttempts.set(key, record);
+    try {
+      (prisma as any).loginHistory?.create?.({
+        data: {
+          email: key,
+          status: record.count >= 5 ? 'LOCKED' : 'FAILED',
+          failureReason: record.count >= 5 ? 'Too many failed login attempts' : 'Invalid credentials',
+          loginTime: new Date(),
+        },
+      }).catch(() => {});
+    } catch {}
   }
 
   private static clearFailedAttempts(key: string): void {
@@ -1007,6 +1017,33 @@ export class AuthService {
       logger.error('Failed to create refresh token session in database:', err);
     }
 
+    // Record in dedicated login_history and user_sessions tables
+    try {
+      await (prisma as any).loginHistory?.create?.({
+        data: {
+          userId: user.id,
+          email: user.email,
+          ipAddress: dto.ipAddress || null,
+          userAgent: dto.userAgent || null,
+          status: 'SUCCESS',
+          loginTime: now,
+        },
+      });
+    } catch {}
+
+    try {
+      await (prisma as any).userSession?.create?.({
+        data: {
+          userId: user.id,
+          sessionTokenHash: tokenHash,
+          ipAddress: dto.ipAddress || null,
+          userAgent: dto.userAgent || null,
+          expiresAt,
+          lastActivity: now,
+        },
+      });
+    } catch {}
+
     const permissions = getPermissionsForRole(user.role);
 
     try {
@@ -1159,6 +1196,23 @@ export class AuthService {
       // Optional
     }
 
+    try {
+      await (prisma as any).loginHistory?.updateMany?.({
+        where: { userId, logoutTime: null },
+        data: { logoutTime: now },
+      });
+      if (rawRefreshToken) {
+        const tokenHash = crypto.createHash('sha256').update(rawRefreshToken).digest('hex');
+        await (prisma as any).userSession?.deleteMany?.({
+          where: { sessionTokenHash: tokenHash },
+        });
+      } else if (userId) {
+        await (prisma as any).userSession?.deleteMany?.({
+          where: { userId },
+        });
+      }
+    } catch {}
+
     return { message: 'Logged out successfully' };
   }
 
@@ -1187,10 +1241,10 @@ export class AuthService {
     const newHash = await bcrypt.hash(dto.newPassword, 10);
     const now = new Date();
 
-    await prisma.$transaction([
-      prisma.user.update({ where: { id: userId }, data: { passwordHash: newHash } }),
-      prisma.refreshToken.updateMany({ where: { userId, isRevoked: false }, data: { isRevoked: true, revokedAt: now } }),
-    ]);
+    await prisma.user.update({ where: { id: userId }, data: { passwordHash: newHash } });
+    try {
+      await prisma.refreshToken.updateMany({ where: { userId, isRevoked: false }, data: { isRevoked: true, revokedAt: now } });
+    } catch {}
 
     try {
       await recordAuditLog({

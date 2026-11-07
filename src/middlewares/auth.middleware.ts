@@ -156,8 +156,12 @@ export async function authenticate(
 
     next();
   } catch (err: any) {
+    if (err.name === 'TokenExpiredError') {
+      sendError(res, 'TOKEN_EXPIRED', 'Access token expired. Please refresh token.', 401);
+      return;
+    }
     // In local / development mode, if a token fails verification, gracefully fallback to dev user
-    if (process.env.NODE_ENV !== 'production' || !process.env.NODE_ENV) {
+    if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
       const fallbackUser =
         (await prisma.user.findFirst({ where: { username: 'j.doe' } }).catch(() => null)) ||
         (await prisma.user.findFirst().catch(() => null));

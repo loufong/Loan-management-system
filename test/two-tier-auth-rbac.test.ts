@@ -291,8 +291,8 @@ async function runTests() {
   console.log('--- TEST 11: Disabled/inactive user -> cannot login ---');
   const testHash = await bcrypt.hash('Password123!', 10);
   await prisma.user.upsert({
-    where: { email: 'inactive@example.com' },
-    update: { status: UserStatus.INACTIVE, emailVerifiedAt: new Date(), passwordHash: testHash },
+    where: { username: 'inactive_user' },
+    update: { status: UserStatus.INACTIVE, emailVerifiedAt: new Date(), passwordHash: testHash, email: 'inactive@example.com' },
     create: {
       username: 'inactive_user',
       email: 'inactive@example.com',

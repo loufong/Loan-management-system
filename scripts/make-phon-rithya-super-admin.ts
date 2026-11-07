@@ -82,3 +82,4 @@ main().catch((err) => {
   console.error('❌ Failed to setup Super Admin:', err);
   process.exit(1);
 });
+

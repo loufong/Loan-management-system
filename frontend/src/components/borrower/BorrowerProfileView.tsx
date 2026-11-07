@@ -587,16 +587,17 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
             {/* Real Photograph KYC Avatar with Verified Ring & Upload Trigger */}
             <div className="relative group shrink-0">
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 p-0.5 shadow-lg shadow-blue-950/50 overflow-hidden">
-                <img
-                  src={
-                    currentUser?.avatarUrl ||
-                    currentUser?.avatar ||
-                    editAvatarUrl ||
-                    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256"
-                  }
-                  alt={displayName}
-                  className="w-full h-full object-cover rounded-[14px]"
-                />
+                {currentUser?.avatarUrl || currentUser?.avatar || editAvatarUrl ? (
+                  <img
+                    src={currentUser?.avatarUrl || currentUser?.avatar || editAvatarUrl}
+                    alt={displayName}
+                    className="w-full h-full object-cover rounded-[14px]"
+                  />
+                ) : (
+                  <div className="w-full h-full rounded-[14px] bg-slate-900 flex items-center justify-center text-white font-bold text-xl font-mono">
+                    {(displayName.slice(0, 2) || 'US').toUpperCase()}
+                  </div>
+                )}
               </div>
 
               {/* Upload photo overlay button on hover */}
@@ -1723,8 +1724,8 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-500">
-                        <User className="w-6 h-6" />
+                      <div className="w-full h-full flex items-center justify-center text-slate-400 font-bold font-mono">
+                        {(displayName.slice(0, 2) || 'US').toUpperCase()}
                       </div>
                     )}
                   </div>
@@ -1763,31 +1764,6 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
                     <p className="text-[11px] text-slate-400">
                       Upload an image file from your device (PNG, JPG, WEBP).
                     </p>
-                  </div>
-                </div>
-
-                {/* Optional sample avatars row */}
-                <div className="mt-2.5">
-                  <span className="text-[11px] text-slate-400 block mb-1.5">Or choose a sample avatar:</span>
-                  <div className="flex items-center gap-2.5 overflow-x-auto py-1">
-                    {[
-                      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256',
-                      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=256',
-                      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=256',
-                      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=256',
-                      'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=256',
-                    ].map((url, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => setEditAvatarUrl(url)}
-                        className={`relative w-9 h-9 rounded-lg p-0.5 shrink-0 transition cursor-pointer ${
-                          editAvatarUrl === url ? 'ring-2 ring-blue-500' : 'opacity-60 hover:opacity-100'
-                        }`}
-                      >
-                        <img src={url} alt={`preset-${idx}`} className="w-full h-full object-cover rounded-md" />
-                      </button>
-                    ))}
                   </div>
                 </div>
               </div>

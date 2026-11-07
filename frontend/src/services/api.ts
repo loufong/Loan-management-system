@@ -928,6 +928,11 @@ class ApiService {
     phone?: string;
     position?: string;
     department?: string;
+    address?: string;
+    avatarUrl?: string;
+    occupation?: string;
+    monthlyIncome?: number | string;
+    nationalId?: string;
   }): Promise<UserProfile> {
     const res = await this.request<any>('/auth/profile', {
       method: 'PUT',
@@ -949,6 +954,12 @@ class ApiService {
       position: u.position || payload.position || cachedUser.position,
       title: u.position || payload.position || cachedUser.title,
       department: u.department || payload.department || cachedUser.department,
+      address: payload.address !== undefined ? payload.address : cachedUser.address,
+      occupation: payload.occupation !== undefined ? payload.occupation : (cachedUser.occupation || payload.position),
+      monthlyIncome: payload.monthlyIncome !== undefined ? payload.monthlyIncome : cachedUser.monthlyIncome,
+      nationalId: payload.nationalId !== undefined ? payload.nationalId : cachedUser.nationalId,
+      avatarUrl: payload.avatarUrl || cachedUser.avatarUrl,
+      avatar: payload.avatarUrl || cachedUser.avatar,
     };
 
     if (localStorage.getItem('apex_token')) {

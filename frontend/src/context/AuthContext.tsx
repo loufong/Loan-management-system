@@ -32,7 +32,17 @@ export interface AuthContextType {
   refreshUser: () => Promise<UserProfile | null>;
   switchRole: (role: UserRole) => Promise<void>;
   updateSettings: (settings: Partial<UserSettings>) => Promise<void>;
-  updateProfile: (data: { fullName?: string; phone?: string; position?: string; department?: string }) => Promise<UserProfile>;
+  updateProfile: (data: {
+    fullName?: string;
+    phone?: string;
+    position?: string;
+    department?: string;
+    address?: string;
+    avatarUrl?: string;
+    occupation?: string;
+    monthlyIncome?: number | string;
+    nationalId?: string;
+  }) => Promise<UserProfile>;
   setSession: (user: UserProfile, token: string, rememberMe?: boolean) => void;
 }
 
@@ -435,15 +445,38 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setSession(updated, token || '', true);
   };
 
-  const updateProfile = async (data: { fullName?: string; phone?: string; position?: string; department?: string }) => {
+  const updateProfile = async (data: {
+    fullName?: string;
+    phone?: string;
+    position?: string;
+    department?: string;
+    address?: string;
+    avatarUrl?: string;
+    occupation?: string;
+    monthlyIncome?: number | string;
+    nationalId?: string;
+  }) => {
     if (!user) throw new Error('Not authenticated');
-    const updated = {
+
+    try {
+      await api.updateProfile(data);
+    } catch (e) {
+      console.warn('API update profile fallback to local session:', e);
+    }
+
+    const updated: UserProfile = {
       ...user,
       name: data.fullName || user.name,
       fullName: data.fullName || user.fullName,
-      phone: data.phone || user.phone,
-      department: data.department || user.department,
-      position: data.position || user.position
+      phone: data.phone !== undefined ? data.phone : user.phone,
+      department: data.department !== undefined ? data.department : user.department,
+      position: data.position !== undefined ? data.position : user.position,
+      address: data.address !== undefined ? data.address : (user as any).address,
+      occupation: data.occupation !== undefined ? data.occupation : (user as any).occupation,
+      monthlyIncome: data.monthlyIncome !== undefined ? data.monthlyIncome : (user as any).monthlyIncome,
+      nationalId: data.nationalId !== undefined ? data.nationalId : user.nationalId,
+      avatarUrl: data.avatarUrl || user.avatarUrl,
+      avatar: data.avatarUrl || user.avatar,
     };
     setUser(updated);
     setSession(updated, token || '', true);

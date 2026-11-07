@@ -2188,6 +2188,7 @@ export const App: React.FC = () => {
                 currentUser={currentUser}
                 currency={currency}
                 onNavigate={handleNavSelection}
+                onUpdateUser={(updated) => setCurrentUser(updated)}
               />
             ) : (
               <UserProfileView

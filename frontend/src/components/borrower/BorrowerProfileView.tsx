@@ -31,8 +31,13 @@ import {
   QrCode,
   ZoomIn,
   ZoomOut,
+  Edit3,
+  AlertCircle,
+  Briefcase,
+  DollarSign,
 } from 'lucide-react';
 import { Currency, UserProfile } from '../../types';
+import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import {
   kycService,
@@ -47,15 +52,85 @@ export interface BorrowerProfileViewProps {
   currentUser: UserProfile;
   currency: Currency;
   onNavigate: (route: string) => void;
+  onUpdateUser?: (updated: UserProfile) => void;
 }
 
 export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
   currentUser,
   currency: appCurrency,
   onNavigate,
+  onUpdateUser,
 }) => {
+  const { updateProfile: authUpdateProfile } = useAuth();
   const { language } = useLanguage();
   const [activeCurrency, setActiveCurrency] = useState<Currency>(appCurrency || 'USD');
+
+  // Edit Profile State
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editFullName, setEditFullName] = useState(currentUser?.fullName || currentUser?.name || '');
+  const [editPhone, setEditPhone] = useState(currentUser?.phone || '+855 12 000 888');
+  const [editAddress, setEditAddress] = useState(currentUser?.address || 'Phnom Penh, Cambodia');
+  const [editOccupation, setEditOccupation] = useState(currentUser?.occupation || currentUser?.position || 'SME Commercial Merchant');
+  const [editMonthlyIncome, setEditMonthlyIncome] = useState(currentUser?.monthlyIncome ? String(currentUser.monthlyIncome) : '1200');
+  const [editAvatarUrl, setEditAvatarUrl] = useState(currentUser?.avatarUrl || currentUser?.avatar || '');
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileSuccessNotice, setProfileSuccessNotice] = useState<string | null>(null);
+  const [profileErrorNotice, setProfileErrorNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (currentUser) {
+      setEditFullName(currentUser.fullName || currentUser.name || '');
+      setEditPhone(currentUser.phone || '+855 12 000 888');
+      if (currentUser.address) setEditAddress(currentUser.address);
+      if (currentUser.occupation || currentUser.position) setEditOccupation(currentUser.occupation || currentUser.position || '');
+      if (currentUser.monthlyIncome) setEditMonthlyIncome(String(currentUser.monthlyIncome));
+      if (currentUser.avatarUrl || currentUser.avatar) setEditAvatarUrl(currentUser.avatarUrl || currentUser.avatar || '');
+    }
+  }, [currentUser]);
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileErrorNotice(null);
+
+    const cleanName = editFullName.trim();
+    if (!cleanName || cleanName.length < 2) {
+      setProfileErrorNotice('Full Name must be at least 2 characters.');
+      return;
+    }
+
+    const cleanPhone = editPhone.trim();
+    if (!cleanPhone || cleanPhone.length < 8) {
+      setProfileErrorNotice('Please enter a valid phone number (at least 8 digits).');
+      return;
+    }
+
+    setIsSavingProfile(true);
+    try {
+      const updated = await authUpdateProfile({
+        fullName: cleanName,
+        phone: cleanPhone,
+        address: editAddress.trim() || undefined,
+        position: editOccupation.trim() || undefined,
+        occupation: editOccupation.trim() || undefined,
+        monthlyIncome: editMonthlyIncome ? parseFloat(editMonthlyIncome) || 0 : undefined,
+        avatarUrl: editAvatarUrl.trim() || undefined,
+      });
+
+      if (onUpdateUser) {
+        onUpdateUser(updated);
+      }
+
+      setProfileSuccessNotice('Profile updated successfully!');
+      setTimeout(() => {
+        setProfileSuccessNotice(null);
+        setIsEditModalOpen(false);
+      }, 1200);
+    } catch (err: any) {
+      setProfileErrorNotice(err?.message || 'Failed to update profile. Please try again.');
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
 
   // KYC Live State
   const [kycSummary, setKycSummary] = useState<FrontendKycSummary | null>(null);
@@ -418,9 +493,14 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
           <div className="flex items-center gap-4">
             {/* Real Photograph KYC Avatar with Verified Ring */}
             <div className="relative shrink-0">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 p-0.5 shadow-lg shadow-emerald-950/50">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 p-0.5 shadow-lg shadow-blue-950/50">
                 <img
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256"
+                  src={
+                    currentUser?.avatarUrl ||
+                    currentUser?.avatar ||
+                    editAvatarUrl ||
+                    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256"
+                  }
                   alt={displayName}
                   className="w-full h-full object-cover rounded-[14px]"
                 />
@@ -441,12 +521,12 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
                 </span>
               </div>
               <p className="text-xs text-slate-400 font-medium">
-                SME Commercial Merchant • Verified National ID holder
+                {currentUser?.occupation || currentUser?.position || editOccupation || 'SME Commercial Merchant • Verified National ID holder'}
               </p>
               <div className="flex items-center gap-3 pt-1 text-[11px] text-slate-400">
                 <span className="flex items-center gap-1">
                   <Phone className="w-3 h-3 text-slate-500" />
-                  {currentUser?.phone || '+855 12 000 888'}
+                  {currentUser?.phone || editPhone || '+855 12 000 888'}
                 </span>
                 <span>•</span>
                 <span className="flex items-center gap-1">
@@ -458,7 +538,16 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
           </div>
 
           {/* Quick Credit Status & Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setIsEditModalOpen(true)}
+              className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <Edit3 className="w-3.5 h-3.5 text-blue-400" />
+              <span>Edit Profile</span>
+            </button>
+
             <button
               type="button"
               onClick={() => onNavigate('apply')}
@@ -481,6 +570,66 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
                 </>
               )}
             </button>
+          </div>
+        </div>
+
+        {/* Personal & Account Information Card */}
+        <div className="bg-slate-950 border border-slate-800/80 rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div>
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono flex items-center gap-2">
+                <User className="w-4 h-4 text-blue-400" />
+                <span>Personal & Contact Information</span>
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Primary contact details and verified borrower identity information on file.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsEditModalOpen(true)}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-500/30 transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>Edit Details</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
+              <span className="text-[11px] text-slate-400 font-medium">Full Legal Name</span>
+              <div className="font-semibold text-white truncate">{displayName}</div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
+              <span className="text-[11px] text-slate-400 font-medium">Primary Phone</span>
+              <div className="font-semibold text-white font-mono truncate">{currentUser?.phone || editPhone}</div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
+              <span className="text-[11px] text-slate-400 font-medium">Email Address</span>
+              <div className="font-semibold text-white truncate">{currentUser?.email || (currentUser?.username ? `${currentUser.username}@student.edu` : 'user@student.edu')}</div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
+              <span className="text-[11px] text-slate-400 font-medium">National ID / CBC No.</span>
+              <div className="font-semibold text-emerald-400 font-mono truncate">{currentUser?.nationalId || '0108928374'}</div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1 sm:col-span-2">
+              <span className="text-[11px] text-slate-400 font-medium">Residential Address</span>
+              <div className="font-semibold text-white truncate">{currentUser?.address || editAddress}</div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
+              <span className="text-[11px] text-slate-400 font-medium">Occupation / Profession</span>
+              <div className="font-semibold text-white truncate">{currentUser?.occupation || currentUser?.position || editOccupation}</div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
+              <span className="text-[11px] text-slate-400 font-medium">Monthly Income</span>
+              <div className="font-semibold text-white font-mono truncate">{formatMoney(parseFloat(editMonthlyIncome) || 1200)}</div>
+            </div>
           </div>
         </div>
       </div>
@@ -1327,6 +1476,185 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
                   }`}
                 >
                   {isUploading ? 'Encrypting & Transmitting...' : 'Upload & Submit for Review'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Profile Modal */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-4 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150 my-8">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400">
+                  <Edit3 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">Edit Profile Details</h3>
+                  <p className="text-xs text-slate-400">Update your borrower contact and profile information</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEditModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {profileSuccessNotice && (
+              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>{profileSuccessNotice}</span>
+              </div>
+            )}
+
+            {profileErrorNotice && (
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{profileErrorNotice}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveProfile} className="space-y-4 text-xs">
+              {/* Full Name */}
+              <div>
+                <label className="text-xs font-semibold text-slate-200 block mb-1">
+                  Full Name <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={editFullName}
+                  onChange={(e) => setEditFullName(e.target.value)}
+                  placeholder="Enter full name"
+                  required
+                  className="w-full h-10 px-3.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              {/* Phone & Monthly Income */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-200 block mb-1">
+                    Phone Number <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    value={editPhone}
+                    onChange={(e) => setEditPhone(e.target.value)}
+                    placeholder="+855 12 345 678"
+                    required
+                    className="w-full h-10 px-3.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs font-mono focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-200 block mb-1">
+                    Monthly Income (USD)
+                  </label>
+                  <input
+                    type="number"
+                    value={editMonthlyIncome}
+                    onChange={(e) => setEditMonthlyIncome(e.target.value)}
+                    placeholder="1200"
+                    min="0"
+                    step="50"
+                    className="w-full h-10 px-3.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs font-mono focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              {/* Residential Address */}
+              <div>
+                <label className="text-xs font-semibold text-slate-200 block mb-1">
+                  Residential Address
+                </label>
+                <input
+                  type="text"
+                  value={editAddress}
+                  onChange={(e) => setEditAddress(e.target.value)}
+                  placeholder="Street address, Sangkat, Khan, City"
+                  className="w-full h-10 px-3.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              {/* Occupation / Position */}
+              <div>
+                <label className="text-xs font-semibold text-slate-200 block mb-1">
+                  Occupation / Profession
+                </label>
+                <input
+                  type="text"
+                  value={editOccupation}
+                  onChange={(e) => setEditOccupation(e.target.value)}
+                  placeholder="e.g. SME Merchant, Software Engineer, Teacher"
+                  className="w-full h-10 px-3.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              {/* Profile Avatar Selection */}
+              <div>
+                <label className="text-xs font-semibold text-slate-200 block mb-1.5">
+                  Choose Profile Picture
+                </label>
+                <div className="flex items-center gap-3 overflow-x-auto py-1">
+                  {[
+                    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256',
+                    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=256',
+                    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=256',
+                    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=256',
+                    'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=256',
+                  ].map((url, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setEditAvatarUrl(url)}
+                      className={`relative w-11 h-11 rounded-xl p-0.5 shrink-0 transition cursor-pointer ${
+                        editAvatarUrl === url || (!editAvatarUrl && idx === 0)
+                          ? 'ring-2 ring-blue-500'
+                          : 'opacity-60 hover:opacity-100'
+                      }`}
+                    >
+                      <img src={url} alt={`avatar-${idx}`} className="w-full h-full object-cover rounded-[10px]" />
+                      {(editAvatarUrl === url || (!editAvatarUrl && idx === 0)) && (
+                        <div className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[9px] font-bold">
+                          ✓
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Modal Action Buttons */}
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-300 font-medium text-xs transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingProfile}
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  {isSavingProfile ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Save Changes</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>

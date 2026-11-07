@@ -36,6 +36,9 @@ export interface UserProfile {
   branch: string;
   borrowerId?: string;
   nationalId?: string;
+  address?: string;
+  occupation?: string;
+  monthlyIncome?: number | string;
   settings?: UserSettings;
   createdAt?: string;
   lastLogin?: string;

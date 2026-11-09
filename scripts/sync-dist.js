@@ -38,9 +38,24 @@ if (fs.existsSync(root404)) {
   console.log('[sync-dist] Synced 404.html -> frontend/dist and public/');
 }
 
-// 3. Copy all assets from frontend/dist/assets to root/assets and public/assets
+// 3. Clean stale index bundles and copy all assets from frontend/dist/assets
 if (fs.existsSync(distAssetsDir)) {
   const assetFiles = fs.readdirSync(distAssetsDir);
+
+  // Clean stale hashed index bundles from root/assets and public/assets
+  [rootAssetsDir, publicAssetsDir].forEach(targetDir => {
+    if (fs.existsSync(targetDir)) {
+      const existingFiles = fs.readdirSync(targetDir);
+      existingFiles.forEach(file => {
+        // If it's a hashed bundle (e.g. index-*.js, index-*.css) and not in current dist, remove it
+        if (/^index-.*\.(js|css|map)$/i.test(file) && !assetFiles.includes(file)) {
+          fs.unlinkSync(path.join(targetDir, file));
+          console.log(`[sync-dist] Pruned stale asset: ${file} from ${path.relative(rootDir, targetDir)}`);
+        }
+      });
+    }
+  });
+
   assetFiles.forEach(file => {
     const src = path.join(distAssetsDir, file);
     fs.copyFileSync(src, path.join(rootAssetsDir, file));

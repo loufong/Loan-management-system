@@ -648,18 +648,18 @@ export const App: React.FC = () => {
       const combinedLoans = isLedgerReset
         ? activeUnifiedLoans
         : [
-            ...apiLoans,
-            ...activeUnifiedLoans.filter(
-              (ul: any) => !apiLoans.some((al: any) => al.loanNumber === ul.loanNumber || al.id === ul.id)
-            ),
-          ];
+          ...apiLoans,
+          ...activeUnifiedLoans.filter(
+            (ul: any) => !apiLoans.some((al: any) => al.loanNumber === ul.loanNumber || al.id === ul.id)
+          ),
+        ];
       setLoans(combinedLoans as any[]);
 
       // Map unified pending applications
       let globalRegUsers: Record<string, any> = {};
       try {
         globalRegUsers = JSON.parse(localStorage.getItem('apex_registered_users') || '{}');
-      } catch {}
+      } catch { }
 
       const pendingUnifiedApps = (unifiedLoans || [])
         .filter((u: any) => u?.facility && (u.facility.status === 'UNDERWRITING_PENDING' || u.facility.status === 'APPROVED'))
@@ -667,12 +667,12 @@ export const App: React.FC = () => {
           const applicantName = u.borrower?.nameEn || u.borrower?.fullName || 'Client Borrower';
           const bId = u.borrower?.clientCode || u.borrower?.id || 'BOR-2026-8801';
           const matchedUser = (u.borrower?.email && globalRegUsers[u.borrower.email.toLowerCase()]) ||
-                              globalRegUsers[bId] ||
-                              globalRegUsers[applicantName.toLowerCase()] ||
-                              Object.values(globalRegUsers).find((ru: any) =>
-                                ru.name?.toLowerCase() === applicantName.toLowerCase() ||
-                                ru.borrowerId === bId
-                              ) || null;
+            globalRegUsers[bId] ||
+            globalRegUsers[applicantName.toLowerCase()] ||
+            Object.values(globalRegUsers).find((ru: any) =>
+              ru.name?.toLowerCase() === applicantName.toLowerCase() ||
+              ru.borrowerId === bId
+            ) || null;
 
           const email = u.borrower?.email || matchedUser?.email || `${applicantName.toLowerCase().replace(/\s+/g, '.')}@student.edu`;
           const phone = u.borrower?.phone || matchedUser?.phone || '+855 12 000 888';
@@ -714,11 +714,11 @@ export const App: React.FC = () => {
       const combinedApps = isLedgerReset
         ? pendingUnifiedApps
         : [
-            ...pendingUnifiedApps,
-            ...apiApps.filter(
-              (ap: any) => !pendingUnifiedApps.some((pa: any) => pa.applicationNo === ap.applicationNo || pa.id === ap.id)
-            ),
-          ];
+          ...pendingUnifiedApps,
+          ...apiApps.filter(
+            (ap: any) => !pendingUnifiedApps.some((pa: any) => pa.applicationNo === ap.applicationNo || pa.id === ap.id)
+          ),
+        ];
       setApplications(combinedApps as any[]);
 
       const unifiedReceipts = loanStorageService.getReceipts();
@@ -838,14 +838,14 @@ export const App: React.FC = () => {
 
   const handleMarkNotificationRead = (id: string) => {
     notificationStorageService.markAsRead(id);
-    api.markNotificationRead(id).catch(() => {});
+    api.markNotificationRead(id).catch(() => { });
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
     );
   };
 
   const handleMarkAllNotificationsRead = async () => {
-    await api.markAllNotificationsRead().catch(() => {});
+    await api.markAllNotificationsRead().catch(() => { });
     notificationStorageService.markAllAsRead();
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
   };
@@ -1817,8 +1817,8 @@ export const App: React.FC = () => {
                     <button
                       onClick={() => setOriginationMode('SELF')}
                       className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${originationMode === 'SELF'
-                          ? 'bg-emerald-500 text-slate-950 shadow-md'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                        ? 'bg-emerald-500 text-slate-950 shadow-md'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-900'
                         }`}
                     >
                       <UserCheck className="w-3.5 h-3.5" />
@@ -1827,8 +1827,8 @@ export const App: React.FC = () => {
                     <button
                       onClick={() => setOriginationMode('CLIENT')}
                       className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${originationMode === 'CLIENT'
-                          ? 'bg-emerald-500 text-slate-950 shadow-md'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                        ? 'bg-emerald-500 text-slate-950 shadow-md'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-900'
                         }`}
                     >
                       <Building2 className="w-3.5 h-3.5" />
@@ -2255,8 +2255,8 @@ export const App: React.FC = () => {
                     <button
                       onClick={() => setRepaymentViewMode('SELF')}
                       className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${repaymentViewMode === 'SELF'
-                          ? 'bg-emerald-500 text-slate-950 shadow-md'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                        ? 'bg-emerald-500 text-slate-950 shadow-md'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-900'
                         }`}
                     >
                       <Landmark className="w-3.5 h-3.5" />
@@ -2265,8 +2265,8 @@ export const App: React.FC = () => {
                     <button
                       onClick={() => setRepaymentViewMode('CLIENT')}
                       className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${repaymentViewMode === 'CLIENT'
-                          ? 'bg-emerald-500 text-slate-950 shadow-md'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                        ? 'bg-emerald-500 text-slate-950 shadow-md'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-900'
                         }`}
                     >
                       <Wallet className="w-3.5 h-3.5" />

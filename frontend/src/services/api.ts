@@ -19,6 +19,7 @@ import {
   USER_PROFILES,
 } from '../data/mockData';
 import { loanStorageService, LEDGER_UPDATE_EVENT } from './loanStorageService';
+import { safeLocalStorageSet } from '../utils/storageGuard';
 
 const rawBase = (import.meta as any).env?.VITE_API_URL || '';
 const BASE_URL = rawBase
@@ -172,7 +173,7 @@ class ApiService {
       existing[cleanUsername] = newUser;
       existing[borrowerId] = newUser;
       existing[name.toLowerCase()] = newUser;
-      localStorage.setItem('apex_registered_users', JSON.stringify(existing));
+      safeLocalStorageSet('apex_registered_users', JSON.stringify(existing));
     } catch { }
 
     return {
@@ -333,9 +334,13 @@ class ApiService {
     };
 
     if (localStorage.getItem('apex_token')) {
-      localStorage.setItem('apex_user', JSON.stringify(user));
+      safeLocalStorageSet('apex_user', JSON.stringify(user));
     } else {
-      sessionStorage.setItem('apex_user', JSON.stringify(user));
+      try {
+        sessionStorage.setItem('apex_user', JSON.stringify(user));
+      } catch {
+        safeLocalStorageSet('apex_user', JSON.stringify(user));
+      }
     }
 
     return { token, user };
@@ -881,7 +886,7 @@ class ApiService {
         const cleanEmail = payload.email.trim().toLowerCase();
         if (stored[cleanEmail]) {
           stored[cleanEmail].password = payload.newPassword;
-          localStorage.setItem('apex_registered_users', JSON.stringify(stored));
+          safeLocalStorageSet('apex_registered_users', JSON.stringify(stored));
         }
       } catch { }
       return {
@@ -932,7 +937,7 @@ class ApiService {
       const stored = JSON.parse(localStorage.getItem('apex_registered_users') || '{}');
       if (stored[email]) {
         stored[email].password = payload.newPassword;
-        localStorage.setItem('apex_registered_users', JSON.stringify(stored));
+        safeLocalStorageSet('apex_registered_users', JSON.stringify(stored));
       }
     } catch { }
 
@@ -989,10 +994,23 @@ class ApiService {
       avatar: payload.avatarUrl !== undefined ? payload.avatarUrl : cachedUser.avatar,
     };
 
+    // Sanitize avatar if it is a massive base64 string
+    const sanitizedProfile = { ...updatedProfile };
+    if (sanitizedProfile.avatar && typeof sanitizedProfile.avatar === 'string' && sanitizedProfile.avatar.length > 20000) {
+      sanitizedProfile.avatar = sanitizedProfile.username ? sanitizedProfile.username.substring(0, 2).toUpperCase() : 'US';
+    }
+    if (sanitizedProfile.avatarUrl && typeof sanitizedProfile.avatarUrl === 'string' && sanitizedProfile.avatarUrl.length > 20000) {
+      delete sanitizedProfile.avatarUrl;
+    }
+
     if (localStorage.getItem('apex_token')) {
-      localStorage.setItem('apex_user', JSON.stringify(updatedProfile));
+      safeLocalStorageSet('apex_user', JSON.stringify(sanitizedProfile));
     } else {
-      sessionStorage.setItem('apex_user', JSON.stringify(updatedProfile));
+      try {
+        sessionStorage.setItem('apex_user', JSON.stringify(sanitizedProfile));
+      } catch {
+        safeLocalStorageSet('apex_user', JSON.stringify(sanitizedProfile));
+      }
     }
 
     // Sync to apex_registered_users if present
@@ -1009,14 +1027,20 @@ class ApiService {
         if (payload.address !== undefined) { acc.address = payload.address; acc.residentialAddress = payload.address; }
         if (payload.occupation !== undefined) { acc.occupation = payload.occupation; }
         if (payload.monthlyIncome !== undefined) { acc.monthlyIncome = payload.monthlyIncome; }
-        if (payload.avatarUrl !== undefined) { acc.avatarUrl = payload.avatarUrl; acc.avatar = payload.avatarUrl; }
+        if (payload.avatarUrl !== undefined) {
+          const isLargeDataUrl = typeof payload.avatarUrl === 'string' && (payload.avatarUrl.length > 20000 || payload.avatarUrl.startsWith('data:'));
+          if (!isLargeDataUrl) {
+            acc.avatarUrl = payload.avatarUrl;
+            acc.avatar = payload.avatarUrl;
+          }
+        }
       };
 
       if (email && stored[email]) patchEntry(stored[email]);
       if (username && stored[username]) patchEntry(stored[username]);
       if (borrowerId && stored[borrowerId]) patchEntry(stored[borrowerId]);
 
-      localStorage.setItem('apex_registered_users', JSON.stringify(stored));
+      safeLocalStorageSet('apex_registered_users', JSON.stringify(stored));
     } catch { }
 
     return updatedProfile;

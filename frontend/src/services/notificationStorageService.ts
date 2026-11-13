@@ -6,6 +6,7 @@
  */
 
 import { NotificationItem } from '../types';
+import { safeLocalStorageSet } from '../utils/storageGuard';
 
 export const NOTIFICATIONS_STORAGE_KEY = 'jam_notifications_v1';
 export const NOTIFICATIONS_UPDATE_EVENT = 'jam_notifications_updated';
@@ -172,7 +173,7 @@ class NotificationStorageService {
   public saveNotifications(notifications: NotificationItem[]): void {
     if (typeof window === 'undefined') return;
     try {
-      localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notifications));
+      safeLocalStorageSet(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notifications));
       window.dispatchEvent(new CustomEvent(NOTIFICATIONS_UPDATE_EVENT, { detail: notifications }));
     } catch (e) {
       console.warn('[NotificationStorageService] Error saving notifications:', e);

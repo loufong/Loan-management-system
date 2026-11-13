@@ -34,6 +34,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { loanStorageService } from '../../services/loanStorageService';
 import { kycService, FrontendKycSummary } from '../../services/kycService';
 import { kycVaultStorage } from '../../services/kycVaultStorage';
+import { safeLocalStorageSet } from '../../utils/storageGuard';
 
 export interface BorrowerApplyLoanViewProps {
   currentUser: UserProfile;
@@ -127,12 +128,22 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
         if (savedDocsStr) {
           const parsed = JSON.parse(savedDocsStr);
           if (parsed.salarySlip && isMounted) {
-            setSalarySlipDoc(parsed.salarySlip);
-            setUploadedSalarySlip(parsed.salarySlip.fileName);
+            let slip = parsed.salarySlip;
+            if (!slip.dataUrl || slip.dataUrl.startsWith('vault://')) {
+              const vaultData = await kycVaultStorage.getFile(clientId, 'LOAN_SALARY_SLIP');
+              if (vaultData) slip = { ...slip, dataUrl: vaultData };
+            }
+            setSalarySlipDoc(slip);
+            setUploadedSalarySlip(slip.fileName);
           }
           if (parsed.collateralDoc && isMounted) {
-            setCollateralDoc(parsed.collateralDoc);
-            setUploadedCollateralDoc(parsed.collateralDoc.fileName);
+            let col = parsed.collateralDoc;
+            if (!col.dataUrl || col.dataUrl.startsWith('vault://')) {
+              const vaultData = await kycVaultStorage.getFile(clientId, 'LOAN_COLLATERAL_DOC');
+              if (vaultData) col = { ...col, dataUrl: vaultData };
+            }
+            setCollateralDoc(col);
+            setUploadedCollateralDoc(col.fileName);
           }
         } else {
           // Check if permanent KYC vault has uploaded employment / residence docs
@@ -309,6 +320,66 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
     }).format(amountUSD);
   };
 
+  const compressDocFile = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      if (file.type === 'application/pdf') {
+        const reader = new FileReader();
+        reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(file);
+        return;
+      }
+
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => resolve('');
+
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxDim = 1400;
+
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressedUrl = canvas.toDataURL('image/jpeg', 0.82);
+            resolve(compressedUrl);
+          } else {
+            resolve(img.src);
+          }
+        } catch {
+          resolve(img.src);
+        }
+      };
+
+      img.onerror = () => {
+        const fallbackReader = new FileReader();
+        fallbackReader.onload = () => resolve(typeof fallbackReader.result === 'string' ? fallbackReader.result : '');
+        fallbackReader.onerror = () => resolve('');
+        fallbackReader.readAsDataURL(file);
+      };
+
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleSalarySlipSelect = async (file: File) => {
     setDocError(null);
     const MAX_BYTES = 10 * 1024 * 1024;
@@ -323,18 +394,12 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
     }
 
     try {
-      const dataUrl = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
-        reader.onerror = () => resolve('');
-        reader.readAsDataURL(file);
-      });
-
+      const dataUrl = await compressDocFile(file);
       const clientId = effectiveBorrowerId;
       const docData: LoanAttachedDoc = {
         fileName: file.name,
         fileSize: file.size,
-        mimeType: file.type || (file.name.endsWith('.pdf') ? 'application/pdf' : 'image/png'),
+        mimeType: file.type || (file.name.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg'),
         dataUrl,
         uploadedAt: new Date().toISOString(),
       };
@@ -349,9 +414,10 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
       });
 
       const currentSaved = JSON.parse(localStorage.getItem(`JAM_LOAN_DOCS_${clientId}`) || '{}');
-      localStorage.setItem(
+      const sanitizedDocData = { ...docData, dataUrl: 'vault://LOAN_SALARY_SLIP' };
+      safeLocalStorageSet(
         `JAM_LOAN_DOCS_${clientId}`,
-        JSON.stringify({ ...currentSaved, salarySlip: docData })
+        JSON.stringify({ ...currentSaved, salarySlip: sanitizedDocData })
       );
     } catch (err: any) {
       setDocError('Failed to read or store salary slip file.');
@@ -372,18 +438,12 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
     }
 
     try {
-      const dataUrl = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
-        reader.onerror = () => resolve('');
-        reader.readAsDataURL(file);
-      });
-
+      const dataUrl = await compressDocFile(file);
       const clientId = effectiveBorrowerId;
       const docData: LoanAttachedDoc = {
         fileName: file.name,
         fileSize: file.size,
-        mimeType: file.type || (file.name.endsWith('.pdf') ? 'application/pdf' : 'image/png'),
+        mimeType: file.type || (file.name.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg'),
         dataUrl,
         uploadedAt: new Date().toISOString(),
       };
@@ -398,9 +458,10 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
       });
 
       const currentSaved = JSON.parse(localStorage.getItem(`JAM_LOAN_DOCS_${clientId}`) || '{}');
-      localStorage.setItem(
+      const sanitizedDocData = { ...docData, dataUrl: 'vault://LOAN_COLLATERAL_DOC' };
+      safeLocalStorageSet(
         `JAM_LOAN_DOCS_${clientId}`,
-        JSON.stringify({ ...currentSaved, collateralDoc: docData })
+        JSON.stringify({ ...currentSaved, collateralDoc: sanitizedDocData })
       );
     } catch (err: any) {
       setDocError('Failed to read or store collateral document file.');
@@ -414,7 +475,7 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
     const clientId = effectiveBorrowerId;
     const currentSaved = JSON.parse(localStorage.getItem(`JAM_LOAN_DOCS_${clientId}`) || '{}');
     delete currentSaved.salarySlip;
-    localStorage.setItem(`JAM_LOAN_DOCS_${clientId}`, JSON.stringify(currentSaved));
+    safeLocalStorageSet(`JAM_LOAN_DOCS_${clientId}`, JSON.stringify(currentSaved));
   };
 
   const handleRemoveCollateralDoc = () => {
@@ -424,7 +485,7 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
     const clientId = effectiveBorrowerId;
     const currentSaved = JSON.parse(localStorage.getItem(`JAM_LOAN_DOCS_${clientId}`) || '{}');
     delete currentSaved.collateralDoc;
-    localStorage.setItem(`JAM_LOAN_DOCS_${clientId}`, JSON.stringify(currentSaved));
+    safeLocalStorageSet(`JAM_LOAN_DOCS_${clientId}`, JSON.stringify(currentSaved));
   };
 
   const handleProceedToStep3 = () => {
@@ -440,15 +501,15 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
 
   const handleSaveDraft = () => {
     const clientId = effectiveBorrowerId;
-    localStorage.setItem(
+    safeLocalStorageSet(
       `JAM_LOAN_DRAFT_${clientId}`,
       JSON.stringify({
         product: selectedProduct,
         amount: loanAmountUSD,
         tenure: tenureMonths,
         income: monthlyIncomeUSD,
-        salarySlip: salarySlipDoc,
-        collateralDoc,
+        salarySlip: salarySlipDoc ? { ...salarySlipDoc, dataUrl: 'vault://LOAN_SALARY_SLIP' } : null,
+        collateralDoc: collateralDoc ? { ...collateralDoc, dataUrl: 'vault://LOAN_COLLATERAL_DOC' } : null,
       })
     );
     setDraftSavedToast(true);
@@ -1089,24 +1150,26 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
 
                     {salarySlipDoc && (
                       <div className="flex items-center gap-2">
-                        {salarySlipDoc.dataUrl && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setPreviewTargetDoc({
-                                title: 'Monthly Salary Slip / Bank Statement',
-                                fileName: salarySlipDoc.fileName,
-                                mimeType: salarySlipDoc.mimeType,
-                                dataUrl: salarySlipDoc.dataUrl!,
-                              });
-                              setIsPreviewZoomed(false);
-                            }}
-                            className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-slate-300 flex items-center gap-1 transition cursor-pointer"
-                          >
-                            <Eye className="w-3.5 h-3.5 text-sky-400" />
-                            <span>View</span>
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            let url = salarySlipDoc.dataUrl;
+                            if (!url || url.startsWith('vault://')) {
+                              url = (await kycVaultStorage.getFile(effectiveBorrowerId, 'LOAN_SALARY_SLIP')) || '';
+                            }
+                            setPreviewTargetDoc({
+                              title: 'Monthly Salary Slip / Bank Statement',
+                              fileName: salarySlipDoc.fileName,
+                              mimeType: salarySlipDoc.mimeType,
+                              dataUrl: url || '',
+                            });
+                            setIsPreviewZoomed(false);
+                          }}
+                          className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-slate-300 flex items-center gap-1 transition cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5 text-sky-400" />
+                          <span>View</span>
+                        </button>
                         <button
                           type="button"
                           onClick={() => salarySlipInputRef.current?.click()}
@@ -1193,24 +1256,26 @@ export const BorrowerApplyLoanView: React.FC<BorrowerApplyLoanViewProps> = ({
 
                     {collateralDoc && (
                       <div className="flex items-center gap-2">
-                        {collateralDoc.dataUrl && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setPreviewTargetDoc({
-                                title: 'Collateral Document',
-                                fileName: collateralDoc.fileName,
-                                mimeType: collateralDoc.mimeType,
-                                dataUrl: collateralDoc.dataUrl!,
-                              });
-                              setIsPreviewZoomed(false);
-                            }}
-                            className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-slate-300 flex items-center gap-1 transition cursor-pointer"
-                          >
-                            <Eye className="w-3.5 h-3.5 text-sky-400" />
-                            <span>View</span>
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            let url = collateralDoc.dataUrl;
+                            if (!url || url.startsWith('vault://')) {
+                              url = (await kycVaultStorage.getFile(effectiveBorrowerId, 'LOAN_COLLATERAL_DOC')) || '';
+                            }
+                            setPreviewTargetDoc({
+                              title: 'Collateral Document',
+                              fileName: collateralDoc.fileName,
+                              mimeType: collateralDoc.mimeType,
+                              dataUrl: url || '',
+                            });
+                            setIsPreviewZoomed(false);
+                          }}
+                          className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-slate-300 flex items-center gap-1 transition cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5 text-sky-400" />
+                          <span>View</span>
+                        </button>
                         <button
                           type="button"
                           onClick={() => collateralDocInputRef.current?.click()}

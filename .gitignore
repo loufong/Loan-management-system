@@ -13,4 +13,5 @@ frontend/.vite/
 .env.local
 .env.*.local
 .DS_Store
+.kyc_vault.json
 

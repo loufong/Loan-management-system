@@ -147,6 +147,67 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
     });
   };
 
+  const compressDocFile = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      if (file.type === 'application/pdf') {
+        const reader = new FileReader();
+        reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(file);
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(file);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 1400;
+            const MAX_HEIGHT = 1400;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+              if (width > MAX_WIDTH) {
+                height = Math.round((height * MAX_WIDTH) / width);
+                width = MAX_WIDTH;
+              }
+            } else {
+              if (height > MAX_HEIGHT) {
+                width = Math.round((width * MAX_HEIGHT) / height);
+                height = MAX_HEIGHT;
+              }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, width, height);
+              const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+              resolve(dataUrl);
+            } else {
+              resolve(event.target?.result as string);
+            }
+          } catch {
+            resolve(event.target?.result as string);
+          }
+        };
+        img.onerror = () => resolve(event.target?.result as string);
+        img.src = event.target?.result as string;
+      };
+      reader.onerror = () => resolve('');
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleDirectAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -363,16 +424,11 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
     setUploadError(null);
     setUploadProgress(20);
 
-    // Save front side photo permanently to IndexedDB + LocalStorage vault
+    // Save front side photo permanently to IndexedDB vault
     let cachedFileDataUrl = '';
     if (selectedFile) {
       try {
-        cachedFileDataUrl = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
-          reader.onerror = () => resolve('');
-          reader.readAsDataURL(selectedFile);
-        });
+        cachedFileDataUrl = await compressDocFile(selectedFile);
         if (cachedFileDataUrl) {
           await kycVaultStorage.saveFile(
             clientId,
@@ -401,12 +457,7 @@ export const BorrowerProfileView: React.FC<BorrowerProfileViewProps> = ({
     let cachedBackDataUrl = '';
     if (uploadTargetDocType === 'NATIONAL_ID' && selectedBackFile) {
       try {
-        cachedBackDataUrl = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
-          reader.onerror = () => resolve('');
-          reader.readAsDataURL(selectedBackFile);
-        });
+        cachedBackDataUrl = await compressDocFile(selectedBackFile);
         if (cachedBackDataUrl) {
           await kycVaultStorage.saveFile(clientId, 'NATIONAL_ID_BACK', cachedBackDataUrl, {
             fileName: selectedBackFile.name,

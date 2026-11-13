@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { safeLocalStorageSet } from '../utils/storageGuard';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder-project.supabase.co';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-anon-key';
@@ -41,7 +42,7 @@ export async function logAuthEvent(params: {
       // Local fallback for offline/demo auditing
       const localLogs = JSON.parse(localStorage.getItem('apex_audit_logs') || '[]');
       localLogs.unshift({ ...payload, id: `log-${Date.now()}`, email: params.email });
-      localStorage.setItem('apex_audit_logs', JSON.stringify(localLogs.slice(0, 100)));
+      safeLocalStorageSet('apex_audit_logs', JSON.stringify(localLogs.slice(0, 100)));
     }
   } catch (err) {
     console.warn('Audit log write error:', err);

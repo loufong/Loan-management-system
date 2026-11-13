@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { UserProfile, UserRole, UserSettings } from '../types';
 import { supabase, isSupabaseConfigured, logAuthEvent } from '../lib/supabaseClient';
 import { api } from '../services/api';
+import { safeLocalStorageSet, safeLocalStorageGet, safeLocalStorageRemove } from '../utils/storageGuard';
 
 export interface StaffProfile {
   id: string;
@@ -105,12 +106,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setToken(newToken);
     setUser(newUser);
     api.setToken(newToken);
+
+    // Sanitize user object to prevent storing multi-megabyte base64 strings in auth storage
+    const sanitizedUser = { ...newUser };
+    if (sanitizedUser.avatar && typeof sanitizedUser.avatar === 'string' && sanitizedUser.avatar.length > 20000) {
+      sanitizedUser.avatar = sanitizedUser.username ? sanitizedUser.username.substring(0, 2).toUpperCase() : 'US';
+    }
+    if (sanitizedUser.avatarUrl && typeof sanitizedUser.avatarUrl === 'string' && sanitizedUser.avatarUrl.length > 20000) {
+      delete sanitizedUser.avatarUrl;
+    }
+
+    const userPayload = JSON.stringify(sanitizedUser);
+
     if (rememberMe) {
-      localStorage.setItem('apex_token', newToken);
-      localStorage.setItem('apex_user', JSON.stringify(newUser));
+      safeLocalStorageSet('apex_token', newToken);
+      safeLocalStorageSet('apex_user', userPayload);
     } else {
-      sessionStorage.setItem('apex_token', newToken);
-      sessionStorage.setItem('apex_user', JSON.stringify(newUser));
+      try {
+        sessionStorage.setItem('apex_token', newToken);
+        sessionStorage.setItem('apex_user', userPayload);
+      } catch {
+        safeLocalStorageSet('apex_token', newToken);
+        safeLocalStorageSet('apex_user', userPayload);
+      }
     }
   };
 
@@ -318,7 +336,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         setSession(formattedUser, authData.session?.access_token || 'sb-token', rememberMe);
         setProfile(formattedProfile);
-        localStorage.setItem('apex_staff_profile', JSON.stringify(formattedProfile));
+        safeLocalStorageSet('apex_staff_profile', JSON.stringify(formattedProfile));
 
         await logAuthEvent({
           userId: authData.user.id,

@@ -10,6 +10,7 @@
  */
 
 import { FrontendKycDocument, KycDocType } from './kycService';
+import { safeLocalStorageSet } from '../utils/storageGuard';
 
 const DB_NAME = 'JamSongVich_KycVault_DB';
 const DB_VERSION = 1;
@@ -45,18 +46,17 @@ class KycVaultStorageService {
   private cleanLegacyGlobalStorage(): void {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
-        const legacyDocTypes = [
-          'NATIONAL_ID',
-          'NATIONAL_ID_FRONT',
-          'NATIONAL_ID_BACK',
-          'PROOF_OF_RESIDENCE',
-          'EMPLOYMENT_INCOME_CONTRACT',
-          'LOAN_SALARY_SLIP',
-          'LOAN_COLLATERAL_DOC',
-        ];
-        legacyDocTypes.forEach((dt) => {
-          localStorage.removeItem(`kyc_file_${dt}`);
-          localStorage.removeItem(`kyc_photo_${dt}`);
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && (k.startsWith('kyc_file_') || k.startsWith('kyc_photo_'))) {
+            keysToRemove.push(k);
+          }
+        }
+        keysToRemove.forEach((k) => {
+          try {
+            localStorage.removeItem(k);
+          } catch {}
         });
         localStorage.removeItem('JAM_KYC_DOCUMENTS_STORE_V1');
       }
@@ -120,12 +120,8 @@ class KycVaultStorageService {
     // 1. User-scoped memory cache
     this.memoryFiles.set(key, dataUrl);
 
-    // 2. User-scoped LocalStorage cache
-    try {
-      localStorage.setItem(`kyc_file_${key}`, dataUrl);
-    } catch {
-      // LocalStorage might be full for large images, handled gracefully by IndexedDB
-    }
+    // 2. Multi-megabyte file data is persisted safely in IndexedDB (never localStorage)
+    // to strictly preserve the 5MB browser localStorage quota for session auth.
 
     // 3. Permanent IndexedDB storage
     const db = await this.initDb();
@@ -220,11 +216,16 @@ class KycVaultStorageService {
   public async saveDocuments(userId: string, docs: FrontendKycDocument[]): Promise<void> {
     const cleanUserId = (userId || 'anonymous').trim();
 
-    // 1. User-scoped LocalStorage permanent save
+    // 1. User-scoped LocalStorage permanent save (sanitized of giant data: URLs)
     try {
-      localStorage.setItem(`JAM_KYC_DOCS_${cleanUserId}`, JSON.stringify(docs));
+      const sanitizedDocs = docs.map((d) => ({
+        ...d,
+        viewUrl: d.viewUrl && d.viewUrl.startsWith('data:') ? `vault://${d.documentType}` : d.viewUrl,
+        backViewUrl: d.backViewUrl && d.backViewUrl.startsWith('data:') ? `vault://back/${d.documentType}` : d.backViewUrl,
+      }));
+      safeLocalStorageSet(`JAM_KYC_DOCS_${cleanUserId}`, JSON.stringify(sanitizedDocs));
     } catch (e) {
-      console.warn('[KycVaultStorage] LocalStorage write error:', e);
+      console.warn('[KycVaultStorage] LocalStorage write note:', e);
     }
 
     // 2. User-scoped IndexedDB permanent save

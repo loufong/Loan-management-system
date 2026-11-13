@@ -9,6 +9,7 @@
 import { Borrower, PaymentReceipt } from '../types';
 import { MOCK_APPLICATIONS } from '../data/mockData';
 import { kycService } from './kycService';
+import { safeLocalStorageSet } from '../utils/storageGuard';
 
 export const UNIFIED_LEDGER_KEY = 'JAM_SONG_VICH_UNIFIED_LEDGER';
 export const UNIFIED_RECEIPTS_KEY = 'JAM_SONG_VICH_RECEIPTS_LEDGER';
@@ -660,7 +661,7 @@ class LoanStorageService {
   private saveStorage(records: UnifiedLoanRecord[]): void {
     if (typeof window === 'undefined') return;
     try {
-      localStorage.setItem(UNIFIED_LEDGER_KEY, JSON.stringify(records));
+      safeLocalStorageSet(UNIFIED_LEDGER_KEY, JSON.stringify(records));
       // Dispatch DOM notification event
       window.dispatchEvent(new Event(LEDGER_UPDATE_EVENT));
     } catch (e) {
@@ -699,7 +700,7 @@ class LoanStorageService {
   public saveReceipts(receipts: PaymentReceipt[]): void {
     if (typeof window === 'undefined') return;
     try {
-      localStorage.setItem(UNIFIED_RECEIPTS_KEY, JSON.stringify(receipts));
+      safeLocalStorageSet(UNIFIED_RECEIPTS_KEY, JSON.stringify(receipts));
       window.dispatchEvent(new Event(LEDGER_UPDATE_EVENT));
     } catch (e) {
       console.warn('Failed to save receipts:', e);
@@ -831,7 +832,7 @@ class LoanStorageService {
       if (borrowerEmail) reg[borrowerEmail.toLowerCase()] = { ...reg[borrowerEmail.toLowerCase()], ...profile };
       if (clientCode) reg[clientCode] = { ...reg[clientCode], ...profile };
       reg[borrowerNameEn.toLowerCase()] = { ...reg[borrowerNameEn.toLowerCase()], ...profile };
-      localStorage.setItem('apex_registered_users', JSON.stringify(reg));
+      safeLocalStorageSet('apex_registered_users', JSON.stringify(reg));
     } catch {}
 
     // Online Mode API attempt
